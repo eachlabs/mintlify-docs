@@ -1,0 +1,830 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "EachLabs.ai Official API v1",
+    "description": "Official EachLabs.ai API V1.\nThis API provides access to our comprehensive AI model catalog and other resources.\n",
+    "version": "1.0.0",
+    "contact": {
+      "name": "API Support",
+      "email": "support@eachlabs.ai"
+    },
+    "x-logo": {
+      "url": "./logo-white.svg",
+      "altText": "EachLabs"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://api.eachlabs.ai",
+      "description": "Production server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "AI Models",
+      "description": "Endpoints for listing and retrieving AI models and other resources."
+    },
+    {
+      "name": "AI Models Prediction",
+      "description": "Endpoints for managing model predictions"
+    },
+    {
+      "name": "Webhooks",
+      "description": "Endpoints for retrieving webhook information and delivery history.\n\n**Note:** Currently, webhooks are only supported for Workflows V2. We are actively expanding webhook support to other services and will update this documentation as new integrations become available.\n"
+    }
+  ],
+  "paths": {
+    "/v1/models": {
+      "get": {
+        "tags": [
+          "AI Models"
+        ],
+        "summary": "List AI models",
+        "description": "Retrieve a paginated list of AI models with optional filters",
+        "operationId": "listModels",
+        "parameters": [
+          {
+            "name": "name",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by model name (case-insensitive search)",
+            "example": "nano-banana-pro-edit"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 50,
+              "minimum": 1,
+              "maximum": 500
+            },
+            "description": "Maximum number of results to return",
+            "example": 20
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "minimum": 0
+            },
+            "description": "Number of results to skip for pagination",
+            "example": 0
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Model"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/v1/model": {
+      "get": {
+        "tags": [
+          "AI Models"
+        ],
+        "summary": "Get model details",
+        "description": "Retrieve detailed information about a specific model by slug",
+        "operationId": "getModel",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "slug",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Model slug identifier",
+            "example": "nano-banana-pro-edit"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Model details retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/v1/prediction": {
+      "post": {
+        "tags": [
+          "AI Models Prediction"
+        ],
+        "summary": "Create Model Prediction",
+        "description": "Create a new prediction for a specific model",
+        "operationId": "createPrediction",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePredictionRequest"
+              },
+              "example": {
+                "model": "flux-1-1-pro",
+                "version": "1.0.0",
+                "input": {
+                  "prompt": "A beautiful sunset over the ocean with vibrant colors",
+                  "aspect_ratio": "16:9"
+                },
+                "webhook_url": "https://your-app.com/webhook",
+                "webhook_secret": "your-secret-key"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Prediction created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatePredictionResponse"
+                },
+                "example": {
+                  "status": "success",
+                  "message": "Prediction created successfully",
+                  "predictionID": "abc123-def456-ghi789"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/v1/prediction/{id}": {
+      "get": {
+        "tags": [
+          "AI Models Prediction"
+        ],
+        "summary": "Get Model Prediction",
+        "description": "Retrieve the status and results of a model prediction by its ID",
+        "operationId": "getPrediction",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Prediction ID",
+            "example": "abc123-def456-ghi789"
+          }
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Prediction retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Prediction"
+                },
+                "example": {
+                  "id": "abc123-def456-ghi789",
+                  "input": {
+                    "prompt": "A beautiful sunset over the ocean with vibrant colors",
+                    "aspect_ratio": "16:9"
+                  },
+                  "status": "success",
+                  "output": "https://storage.example.com/predictions/abc123/image.jpg",
+                  "logs": null,
+                  "metrics": {
+                    "predict_time": 12.5,
+                    "cost": 0.05
+                  },
+                  "urls": {
+                    "cancel": "https://api.eachlabs.ai/v1/prediction/abc123-def456-ghi789/cancel",
+                    "get": "https://api.eachlabs.ai/v1/prediction/abc123-def456-ghi789"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Prediction not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "Prediction not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/v1/webhooks": {
+      "get": {
+        "tags": [
+          "Webhooks"
+        ],
+        "summary": "List webhooks",
+        "description": "Retrieve a paginated list of webhooks for the authenticated organization",
+        "operationId": "listWebhooks",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            },
+            "description": "Maximum number of webhooks to return",
+            "example": 50
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            },
+            "description": "Number of webhooks to skip for pagination",
+            "example": 0
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of webhooks",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListWebhooksResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/v1/webhooks/{execution_id}": {
+      "get": {
+        "tags": [
+          "Webhooks"
+        ],
+        "summary": "Get webhook by execution ID",
+        "description": "Retrieve details of a specific webhook including delivery attempts by execution ID",
+        "operationId": "getWebhook",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "execution_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Execution ID for tracking the webhook",
+            "example": "abc123-def456-ghi789"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Webhook details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookWithAttempts"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key",
+        "description": "API key for authentication"
+      }
+    },
+    "schemas": {
+      "Model": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "example": "Nano Banana Pro Edit"
+          },
+          "slug": {
+            "type": "string",
+            "example": "nano-banana-pro-edit"
+          },
+          "version": {
+            "type": "string",
+            "example": "1.0"
+          },
+          "output_type": {
+            "type": "string",
+            "example": "array"
+          },
+          "request_schema": {
+            "type": "object",
+            "description": "JSON Schema for API requests to this model.\nDefines the structure, types, and validation rules for making requests.\n",
+            "example": {
+              "type": "object",
+              "required": [
+                "prompt"
+              ],
+              "properties": {
+                "prompt": {
+                  "type": "string",
+                  "minLength": 10,
+                  "maxLength": 500
+                },
+                "num_images": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 4,
+                  "default": 1
+                }
+              }
+            }
+          }
+        }
+      },
+      "ModelDetail": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "example": "Nano Banana Pro Edit"
+          },
+          "slug": {
+            "type": "string",
+            "example": "nano-banana-pro-edit"
+          },
+          "version": {
+            "type": "string",
+            "example": "1.0"
+          },
+          "output_type": {
+            "type": "string",
+            "example": "array"
+          },
+          "request_schema": {
+            "type": "object",
+            "description": "JSON Schema for API requests to this model.\nDefines the structure, types, and validation rules for making requests.\n",
+            "example": {
+              "type": "object",
+              "required": [
+                "prompt"
+              ],
+              "properties": {
+                "prompt": {
+                  "type": "string",
+                  "minLength": 10,
+                  "maxLength": 500
+                }
+              }
+            }
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "example": "error message"
+          }
+        }
+      },
+      "CreatePredictionRequest": {
+        "type": "object",
+        "required": [
+          "model",
+          "version",
+          "input"
+        ],
+        "properties": {
+          "model": {
+            "type": "string",
+            "description": "Model slug or identifier",
+            "example": "flux-1-1-pro"
+          },
+          "version": {
+            "type": "string",
+            "description": "Model version",
+            "example": "1.0.0"
+          },
+          "input": {
+            "type": "object",
+            "description": "Input parameters for the prediction",
+            "additionalProperties": true,
+            "example": {
+              "prompt": "A beautiful sunset over the ocean with vibrant colors",
+              "aspect_ratio": "16:9"
+            }
+          },
+          "webhook_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Optional webhook URL to receive prediction result asynchronously",
+            "example": "https://your-app.com/webhook"
+          },
+          "webhook_secret": {
+            "type": "string",
+            "description": "Optional secret used to sign webhook requests",
+            "example": "your-secret-key"
+          }
+        }
+      },
+      "CreatePredictionResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "Status of the prediction creation request",
+            "example": "success"
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable message about the prediction creation",
+            "example": "Prediction created successfully"
+          },
+          "predictionID": {
+            "type": "string",
+            "description": "Unique prediction identifier",
+            "example": "abc123-def456-ghi789"
+          }
+        }
+      },
+      "Prediction": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique prediction identifier",
+            "example": "abc123-def456-ghi789"
+          },
+          "input": {
+            "type": "object",
+            "description": "Input parameters used for the prediction",
+            "additionalProperties": true,
+            "example": {
+              "prompt": "A beautiful sunset over the ocean with vibrant colors",
+              "aspect_ratio": "16:9"
+            }
+          },
+          "status": {
+            "type": "string",
+            "description": "Current status of the prediction",
+            "enum": [
+              "starting",
+              "processing",
+              "success",
+              "failed",
+              "cancelled"
+            ],
+            "example": "success"
+          },
+          "output": {
+            "description": "Prediction output (type varies based on model)",
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array"
+              },
+              {
+                "type": "object"
+              }
+            ],
+            "example": "https://storage.example.com/predictions/abc123/image.jpg"
+          },
+          "logs": {
+            "type": "string",
+            "nullable": true,
+            "description": "Execution logs from the prediction",
+            "example": null
+          },
+          "metrics": {
+            "type": "object",
+            "description": "Performance and cost metrics",
+            "properties": {
+              "predict_time": {
+                "type": "number",
+                "description": "Time taken for prediction in seconds",
+                "example": 12.5
+              },
+              "cost": {
+                "type": "number",
+                "description": "Cost of the prediction in USD",
+                "example": 0.05
+              }
+            }
+          },
+          "urls": {
+            "type": "object",
+            "description": "Related API endpoints",
+            "properties": {
+              "cancel": {
+                "type": "string",
+                "format": "uri",
+                "description": "URL to cancel the prediction",
+                "example": "https://api.eachlabs.ai/v1/prediction/abc123-def456-ghi789/cancel"
+              },
+              "get": {
+                "type": "string",
+                "format": "uri",
+                "description": "URL to get the prediction",
+                "example": "https://api.eachlabs.ai/v1/prediction/abc123-def456-ghi789"
+              }
+            }
+          }
+        }
+      },
+      "Webhook": {
+        "type": "object",
+        "description": "Webhook information without attempts",
+        "properties": {
+          "execution_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "Execution identifier for tracking",
+            "example": "abc123-def456-ghi789"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Target URL for webhook delivery",
+            "example": "https://api.example.com/webhook"
+          },
+          "request": {
+            "type": "string",
+            "description": "Original request payload",
+            "example": "{\"event\":\"prediction.completed\"}"
+          },
+          "headers": {
+            "type": "object",
+            "description": "Headers included in the webhook request",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "example": {
+              "Content-Type": "application/json"
+            }
+          },
+          "source": {
+            "type": "string",
+            "description": "Service that triggered the webhook",
+            "example": "api-gateway"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the webhook was created",
+            "example": "2025-12-14T10:30:00Z"
+          }
+        },
+        "required": [
+          "url",
+          "request",
+          "source",
+          "created_at"
+        ]
+      },
+      "WebhookWithAttempts": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Webhook"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "attempts": {
+                "type": "array",
+                "description": "Delivery attempts for this webhook",
+                "items": {
+                  "$ref": "#/components/schemas/WebhookAttempt"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "WebhookAttempt": {
+        "type": "object",
+        "description": "Individual webhook delivery attempt",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "SUCCESS",
+              "FAILED"
+            ],
+            "description": "Status of the delivery attempt",
+            "example": "SUCCESS"
+          },
+          "status_code": {
+            "type": "integer",
+            "nullable": true,
+            "description": "HTTP status code from target URL",
+            "example": 200
+          },
+          "response": {
+            "type": "string",
+            "nullable": true,
+            "description": "Response body from target URL",
+            "example": "{\"received\":true}"
+          },
+          "error_message": {
+            "type": "string",
+            "nullable": true,
+            "description": "Error message if delivery failed",
+            "example": "connection timeout"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the attempt was made",
+            "example": "2025-12-14T10:30:05Z"
+          }
+        },
+        "required": [
+          "status",
+          "created_at"
+        ]
+      },
+      "ListWebhooksResponse": {
+        "type": "object",
+        "properties": {
+          "webhooks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Webhook"
+            }
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Applied limit",
+            "example": 50
+          },
+          "offset": {
+            "type": "integer",
+            "description": "Applied offset",
+            "example": 0
+          }
+        },
+        "required": [
+          "webhooks",
+          "limit",
+          "offset"
+        ]
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Bad request",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": "slug parameter is required"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Resource not found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": "Failed to fetch model: model not found"
+            }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "Authentication required or invalid credentials",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": "Invalid or missing API key"
+            }
+          }
+        }
+      },
+      "InternalServerError": {
+        "description": "Internal server error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": "Failed to fetch models: internal error"
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,1860 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Workflows Engine API",
+    "description": "# Workflows Engine API\n\nExecute and monitor AI workflows with a simple, consistent API.\n\n## Quick Start\n\n1. **Trigger a workflow** - POST to `/{workflowID}/trigger` with your inputs\n2. **Monitor execution** - GET `/executions/{executionID}` to check status\n3. **Optional**: Provide a `webhook_url` to receive automatic notifications when complete\n\n---\n\n## Webhook Notifications\n\nWhen you provide a `webhook_url` when triggering a workflow, the Workflows Engine will automatically \n**POST** to your endpoint with the execution results when the workflow completes (successfully or with an error).\n\n### Key Features\n\n- ✅ **Consistent Payload**: The webhook payload has the same structure as the response from `GET /executions/{executionID}`\n- ✅ **Automatic Retries**: Failed webhook deliveries are automatically retried with exponential backoff\n- ✅ **Simple Integration**: No authentication required - your endpoint just needs to accept POST requests\n\n### Webhook Request\n\nThe engine will POST to your `webhook_url` with:\n\n- **Method**: `POST`\n- **Content-Type**: `application/json`\n- **Body**: Execution details (see payload structure below)\n\n### Example Webhook Payload\n\n```json\n{\n  \"execution_id\": \"69ae8c7b-7500-4a45-b7c0-348b8cc2665b\",\n  \"workflow_id\": \"50741f40-8621-4d46-8a91-dff4d873be98\",\n  \"status\": \"completed\",\n  \"started_at\": \"2025-12-04T11:48:10Z\",\n  \"inputs\": {\n    \"story\": \"tell an epic story of a rat graduating from law\"\n  },\n  \"step_outputs\": {\n    \"step1\": {\n      \"step_id\": \"step1\",\n      \"status\": \"completed\",\n      \"output\": \"Once upon a time in Ratropolis...\",\n      \"primary\": \"Once upon a time in Ratropolis...\",\n      \"metadata\": {\n        \"model\": \"openai-chatgpt-5\",\n        \"version\": \"0.0.1\",\n        \"params\": {\n          \"system_prompt\": \"You are a helpful assistant\",\n          \"max_output_tokens\": 512\n        }\n      }\n    },\n    \"step2\": {\n      \"step_id\": \"step2\",\n      \"status\": \"completed\",\n      \"output\": [\n        \"https://storage.googleapis.com/uploads/image1.png\",\n        \"https://storage.googleapis.com/uploads/image2.png\"\n      ],\n      \"primary\": \"https://storage.googleapis.com/uploads/image1.png\",\n      \"metadata\": {\n        \"model\": \"nano-banana-pro\",\n        \"params\": {\n          \"num_images\": 2,\n          \"aspect_ratio\": \"16:9\"\n        }\n      }\n    }\n  },\n  \"output\": [\n    \"https://storage.googleapis.com/uploads/image1.png\",\n    \"https://storage.googleapis.com/uploads/image2.png\"\n  ]\n}\n```\n\n### Example Webhook Handler\n\n```python\n@app.post(\"/webhooks/workflow-completed\")\nasync def handle_workflow_webhook(request: Request):\n    execution = await request.json()\n    \n    if execution[\"status\"] == \"completed\":\n        # Process successful execution\n        final_output = execution[\"output\"]\n        step_details = execution[\"step_outputs\"]\n        print(f\"Workflow completed: {final_output}\")\n        \n    elif execution[\"status\"] == \"failed\":\n        # Handle failure\n        error = execution.get(\"error_cause\", \"Unknown error\")\n        print(f\"Workflow failed: {error}\")\n    \n    return {\"received\": True}\n```\n\nYour webhook endpoint should return a `200 OK` status to acknowledge receipt.\n\n---\n\n## Fallback Configuration\n\nModel steps support an optional **fallback configuration** that automatically retries with an alternative \nmodel if the primary model invocation fails. This provides resilience against temporary model outages \nor rate limits.\n\n### How Fallback Works\n\nWhen a model step has fallback configured, the workflow engine will:\n\n1. **Execute the primary model** with its configured parameters\n2. **If the primary attempt fails**, automatically execute the fallback model configuration\n3. **Mark the step as failed only if both primary and fallback attempts fail**\n\n### Fallback Configuration\n\nAdd a `fallback` object to any model step in your workflow definition:\n\n```json\n{\n  \"step_id\": \"generate_image\",\n  \"type\": \"model\",\n  \"model\": \"flux-dev\",\n  \"params\": {\n    \"prompt\": \"{{inputs.prompt}}\",\n    \"num_images\": 1\n  },\n  \"fallback\": {\n    \"enabled\": true,\n    \"model\": \"flux-1-1-pro\",\n    \"params\": {\n      \"prompt\": \"{{inputs.prompt}}\",\n      \"guidance_scale\": 7.5\n    }\n  }\n}\n```\n\n### Fallback Properties\n\n| Property | Type | Description |\n|----------|------|-------------|\n| `enabled` | boolean | Enable or disable fallback for this step (default: `true`) |\n| `model` | string | Alternative AI model identifier to use on failure |\n| `version` | string | Fallback model version (defaults to primary version when omitted) |\n| `params` | object | Model-specific parameters for the fallback (supports template variables) |\n\n### Detecting Fallback Usage\n\nWhen a fallback is used, the step's metadata in execution results will include:\n\n- `fallback_used: true` - Indicates the step completed using the fallback configuration\n- `primary_error` - Human-readable description of why the primary attempt failed\n\n### Example Execution Response with Fallback\n\n```json\n{\n  \"step_id\": \"generate_image\",\n  \"status\": \"completed\",\n  \"output\": \"https://storage.googleapis.com/uploads/image.png\",\n  \"metadata\": {\n    \"model\": \"flux-1-1-pro\",\n    \"fallback_used\": true,\n    \"primary_error\": \"Primary model flux-dev failed: rate limit exceeded\"\n  }\n}\n```\n\n---\n\n## Unlisted Workflows\n\nVersions can be \"unlisted\" - accessible via direct link but hidden from public listings.\n\n**Visibility states:**\n- **Private** (default): Organization only\n- **Unlisted**: Accessible via link, hidden from public listings\n- **Public**: Visible in listings and accessible to everyone\n\n**Setting unlisted:** Use `allowed_to_share: true` when creating or updating a version.\n\n```bash\n# Create unlisted version\nPUT /workflows/{workflowID}/versions/v1 { \"allowed_to_share\": true, ... }\n```\n\n**Behavior:**\n- `allowed_to_share: true` → Creates/updates as unlisted\n- `allowed_to_share: false` → Creates/updates as private\n- No effect on public versions (never downgraded)\n",
+    "version": "1.0.0",
+    "x-logo": {
+      "url": "./logo-white.svg",
+      "altText": "Eachlabs Logo"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://workflows.eachlabs.run/api/v1",
+      "description": "Production server"
+    }
+  ],
+  "security": [
+    {
+      "ApiKeyAuth": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Categories",
+      "description": "Workflow categories for organization"
+    },
+    {
+      "name": "Workflows",
+      "description": "Workflow and version management"
+    },
+    {
+      "name": "Executions",
+      "description": "Workflow execution and monitoring"
+    },
+    {
+      "name": "Public Workflows",
+      "description": "Access public and unlisted workflows by organization nickname"
+    }
+  ],
+  "paths": {
+    "/categories": {
+      "get": {
+        "tags": [
+          "Categories"
+        ],
+        "summary": "List categories",
+        "description": "Retrieve all available workflow categories.\n\nCategories help organize workflows into logical collections.\nUse the category slugs when creating or updating workflows.\n",
+        "operationId": "listCategories",
+        "responses": {
+          "200": {
+            "description": "Categories retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoriesResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/workflows": {
+      "post": {
+        "tags": [
+          "Workflows"
+        ],
+        "summary": "Create workflow",
+        "description": "Create a new workflow with an initial version and generate its state machine.\n\nThis endpoint creates both the workflow metadata and its first version in a single operation.\nThe workflow definition must include at least one step.\n",
+        "operationId": "createWorkflow",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateWorkflowRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Workflow created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/workflows/{workflowID}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/WorkflowID"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Workflows"
+        ],
+        "summary": "Get workflow details",
+        "description": "Retrieve detailed information about a workflow including all its versions.\n\nYou can specify either the workflow UUID or slug as the workflowID parameter.\n",
+        "operationId": "getWorkflow",
+        "responses": {
+          "200": {
+            "description": "Workflow details retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowDetail"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Workflows"
+        ],
+        "summary": "Update workflow",
+        "description": "Update workflow metadata such as name, description, categories, and visibility.\n\nNote: To update the workflow definition (steps), use the version endpoints instead.\nLocked workflows cannot be modified unless you're unlocking them.\n",
+        "operationId": "updateWorkflow",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateWorkflowRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Workflow updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/workflows/{workflowID}/versions/{versionID}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/WorkflowID"
+        },
+        {
+          "name": "versionID",
+          "in": "path",
+          "required": true,
+          "description": "Version identifier (e.g., \"v1\", \"v2\")",
+          "schema": {
+            "type": "string",
+            "example": "v1"
+          }
+        }
+      ],
+      "put": {
+        "tags": [
+          "Workflows"
+        ],
+        "summary": "Create or update workflow version",
+        "description": "Create a new workflow version or update an existing one.\n\nThis operation will:\n- Create/update the version in the database\n- Generate or update the AWS Step Functions state machine\n- Set this version as the latest version for the workflow\n\n**Important**: Once a version is locked, it cannot be modified.\n",
+        "operationId": "upsertWorkflowVersion",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpsertVersionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Workflow version created or updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowVersionSummary"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/{workflowID}/trigger": {
+      "parameters": [
+        {
+          "name": "workflowID",
+          "in": "path",
+          "required": true,
+          "description": "Unique workflow identifier",
+          "schema": {
+            "type": "string",
+            "example": "wf_abc123"
+          }
+        }
+      ],
+      "post": {
+        "tags": [
+          "Executions"
+        ],
+        "summary": "Trigger workflow",
+        "description": "Start an execution of the workflow.\n\nBy default, this triggers the latest version of the workflow.\nYou can optionally specify a version_id in the request body to trigger a specific version.\n\nThe workflow is executed asynchronously - you'll receive an execution ID immediately,\nthen poll `/executions/{executionID}` to check status and retrieve results.\n",
+        "operationId": "triggerWorkflow",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TriggerWorkflowRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Workflow execution started",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExecutionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/{workflowID}/bulk-trigger": {
+      "parameters": [
+        {
+          "name": "workflowID",
+          "in": "path",
+          "required": true,
+          "description": "Unique workflow identifier",
+          "schema": {
+            "type": "string",
+            "example": "wf_abc123"
+          }
+        }
+      ],
+      "post": {
+        "tags": [
+          "Executions"
+        ],
+        "summary": "Bulk trigger workflow",
+        "description": "Start multiple executions of the same workflow with different inputs in parallel.\n\nThis endpoint is useful for batch processing scenarios where you need to run the same\nworkflow multiple times with different input parameters.\n\n**Key Features:**\n- Maximum 10 executions per request\n- All executions share the same `bulk_id` for tracking\n- Executions run in parallel\n- Partial failures are allowed - some executions may succeed while others fail\n- Optional webhook notification when all executions complete\n\n**Bulk ID:**\nAll executions from a bulk trigger share a unique `bulk_id` that can be used to:\n- Query all executions from a single bulk operation\n- Track batch progress\n- Correlate webhook notifications\n\n**Webhook Behavior:**\nWhen a `webhook_url` is provided, the notification payload includes the `bulk_id`\nfield to help you identify and correlate executions from the same bulk operation.\n",
+        "operationId": "bulkTriggerWorkflow",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkTriggerWorkflowRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Bulk workflow executions started",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkTriggerWorkflowResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/workflows/{workflowID}/executions": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/WorkflowID"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Executions"
+        ],
+        "summary": "List workflow executions",
+        "description": "Retrieve a paginated list of executions for a specific workflow.\n\n**Filtering by Bulk ID:**\nWhen a `bulk_id` query parameter is provided, the endpoint returns only executions\nfrom that specific bulk operation. This allows you to:\n- Track progress of a batch of executions\n- Retrieve all executions triggered via the bulk-trigger endpoint\n- Correlate webhook notifications from the same bulk operation\n\n**Usage Example:**\n```bash\n# 1. Trigger a bulk operation\nPOST /workflows/wf-123/bulk-trigger\n{\n  \"inputs\": [\n    {\"prompt\": \"sunset\"},\n    {\"prompt\": \"mountains\"},\n    {\"prompt\": \"ocean\"}\n  ]\n}\n# Returns: { \"bulk_id\": \"550e8400-e29b-41d4-a716-446655440000\", ... }\n\n# 2. List all executions from that bulk operation\nGET /workflows/wf-123/executions?bulk_id=550e8400-e29b-41d4-a716-446655440000\n```\n\n**Note:** When filtering by `bulk_id`, pagination still applies using the same\n`offset` and `limit` parameters.\n",
+        "operationId": "listWorkflowExecutions",
+        "parameters": [
+          {
+            "name": "bulk_id",
+            "in": "query",
+            "description": "**Optional**: Filter executions by bulk operation ID.\n\nWhen provided, only returns executions from the specified bulk trigger operation.\nThe `bulk_id` is returned when you trigger a workflow via the bulk-trigger endpoint.\n",
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "example": "550e8400-e29b-41d4-a716-446655440000"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Pagination offset - number of items to skip.\n\nThe response includes a `offset` field pointing to the next page if more results exist.\n",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0,
+              "minimum": 0,
+              "example": 0
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum number of executions to return per page.\n\nDefault: 50\nMaximum: 100\n",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 50,
+              "minimum": 1,
+              "maximum": 100,
+              "example": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of workflow executions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListExecutionsResponse"
+                },
+                "examples": {
+                  "normal": {
+                    "summary": "Normal workflow execution list",
+                    "value": {
+                      "executions": [
+                        {
+                          "execution_id": "exec-1",
+                          "flow_id": "wf-123",
+                          "flow_name": "Text to Image Generator",
+                          "version_id": "v1",
+                          "status": "completed",
+                          "started_at": "2025-12-20T10:00:00Z",
+                          "ended_at": "2025-12-20T10:05:00Z",
+                          "created_at": "2025-12-20T10:00:00Z",
+                          "updated_at": "2025-12-20T10:05:00Z"
+                        },
+                        {
+                          "execution_id": "exec-2",
+                          "flow_id": "wf-123",
+                          "flow_name": "Text to Image Generator",
+                          "version_id": "v1",
+                          "status": "running",
+                          "started_at": "2025-12-20T10:10:00Z",
+                          "created_at": "2025-12-20T10:10:00Z",
+                          "updated_at": "2025-12-20T10:10:00Z"
+                        }
+                      ],
+                      "offset": 2,
+                      "total_count": 142
+                    }
+                  },
+                  "bulk_filtered": {
+                    "summary": "Executions filtered by bulk_id",
+                    "value": {
+                      "executions": [
+                        {
+                          "execution_id": "exec-1",
+                          "flow_id": "wf-123",
+                          "flow_name": "Batch Image Generator",
+                          "version_id": "v1",
+                          "status": "completed",
+                          "started_at": "2025-12-20T10:00:00Z",
+                          "ended_at": "2025-12-20T10:05:00Z",
+                          "created_at": "2025-12-20T10:00:00Z",
+                          "updated_at": "2025-12-20T10:05:00Z"
+                        },
+                        {
+                          "execution_id": "exec-2",
+                          "flow_id": "wf-123",
+                          "flow_name": "Batch Image Generator",
+                          "version_id": "v1",
+                          "status": "completed",
+                          "started_at": "2025-12-20T10:00:01Z",
+                          "ended_at": "2025-12-20T10:05:15Z",
+                          "created_at": "2025-12-20T10:00:01Z",
+                          "updated_at": "2025-12-20T10:05:15Z"
+                        },
+                        {
+                          "execution_id": "exec-3",
+                          "flow_id": "wf-123",
+                          "flow_name": "Batch Image Generator",
+                          "version_id": "v1",
+                          "status": "completed",
+                          "started_at": "2025-12-20T10:00:02Z",
+                          "ended_at": "2025-12-20T10:04:58Z",
+                          "created_at": "2025-12-20T10:00:02Z",
+                          "updated_at": "2025-12-20T10:04:58Z"
+                        }
+                      ],
+                      "total_count": 3
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/executions/{executionID}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/ExecutionID"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Executions"
+        ],
+        "summary": "Get execution details",
+        "description": "Get the current status and output of a workflow execution",
+        "operationId": "getExecution",
+        "responses": {
+          "200": {
+            "description": "Execution details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExecutionDetails"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/public/@{nickname}/workflows/{slug}/versions/{versionID}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/Nickname"
+        },
+        {
+          "$ref": "#/components/parameters/Slug"
+        },
+        {
+          "$ref": "#/components/parameters/VersionID"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Public Workflows"
+        ],
+        "summary": "Get public workflow version",
+        "description": "Retrieve a specific version of a public or unlisted workflow by organization nickname.\n\n**No authentication required** for unlisted workflows.\n\nExample:\n```\nGET /api/v1/public/@acme-corp/workflows/my-generator/versions/v1\n```\n",
+        "operationId": "getPublicWorkflowVersionByNickname",
+        "responses": {
+          "200": {
+            "description": "Workflow version details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowVersionSummary"
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/public/@{nickname}/workflows/{slug}/versions/{versionID}/trigger": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/Nickname"
+        },
+        {
+          "$ref": "#/components/parameters/Slug"
+        },
+        {
+          "$ref": "#/components/parameters/VersionID"
+        }
+      ],
+      "post": {
+        "tags": [
+          "Public Workflows"
+        ],
+        "summary": "Trigger public workflow version",
+        "description": "Trigger a public or unlisted workflow using the organization nickname, workflow slug, and version.\n\n**Authentication required** - provide API key via `X-API-Key` header or `api_key` in request body.\n\nExample:\n```\nPOST /api/v1/public/@acme-corp/workflows/my-generator/versions/v1/trigger\nHeaders: X-API-Key: your-api-key\nBody: { \"inputs\": { \"prompt\": \"...\" } }\n```\n\nOr with API key in body:\n```\nPOST /api/v1/public/@acme-corp/workflows/my-generator/versions/v1/trigger\nBody: { \"api_key\": \"your-api-key\", \"inputs\": { \"prompt\": \"...\" } }\n```\n",
+        "operationId": "triggerPublicWorkflowVersionByNickname",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TriggerWorkflowRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Workflow execution started",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExecutionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key",
+        "description": "API key for authentication"
+      }
+    },
+    "parameters": {
+      "WorkflowID": {
+        "name": "workflowID",
+        "in": "path",
+        "required": true,
+        "description": "Unique workflow identifier",
+        "schema": {
+          "type": "string",
+          "example": "wf_abc123"
+        }
+      },
+      "ExecutionID": {
+        "name": "executionID",
+        "in": "path",
+        "required": true,
+        "description": "Execution identifier",
+        "schema": {
+          "type": "string",
+          "example": "exec_xyz789"
+        }
+      },
+      "Nickname": {
+        "name": "nickname",
+        "in": "path",
+        "required": true,
+        "description": "Organization nickname (without @ prefix)",
+        "schema": {
+          "type": "string",
+          "example": "acme-corp"
+        }
+      },
+      "Slug": {
+        "name": "slug",
+        "in": "path",
+        "required": true,
+        "description": "Workflow slug",
+        "schema": {
+          "type": "string",
+          "example": "my-image-generator"
+        }
+      },
+      "VersionID": {
+        "name": "versionID",
+        "in": "path",
+        "required": true,
+        "description": "Version identifier",
+        "schema": {
+          "type": "string",
+          "example": "v1"
+        }
+      }
+    },
+    "schemas": {
+      "CategoriesResponse": {
+        "type": "object",
+        "required": [
+          "categories"
+        ],
+        "properties": {
+          "categories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Category"
+            },
+            "description": "List of available workflow categories"
+          }
+        },
+        "example": {
+          "categories": [
+            {
+              "slug": "image-generation",
+              "label": "Image Generation",
+              "description": "Workflows for generating images",
+              "is_default": true,
+              "created_at": "2025-12-01T10:00:00Z",
+              "updated_at": "2025-12-01T10:00:00Z"
+            },
+            {
+              "slug": "text-processing",
+              "label": "Text Processing",
+              "description": "Workflows for processing text",
+              "is_default": true,
+              "created_at": "2025-12-01T10:00:00Z",
+              "updated_at": "2025-12-01T10:00:00Z"
+            }
+          ]
+        }
+      },
+      "Category": {
+        "type": "object",
+        "required": [
+          "slug",
+          "label"
+        ],
+        "properties": {
+          "slug": {
+            "type": "string",
+            "description": "Unique category identifier (used in API requests)",
+            "example": "image-generation"
+          },
+          "label": {
+            "type": "string",
+            "description": "Human-readable category name",
+            "example": "Image Generation"
+          },
+          "description": {
+            "type": "string",
+            "description": "Category description",
+            "example": "Workflows for generating images"
+          },
+          "is_default": {
+            "type": "boolean",
+            "description": "Whether this is a default system category",
+            "example": true
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "RFC3339 timestamp when category was created",
+            "example": "2025-12-01T10:00:00Z"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "RFC3339 timestamp when category was last updated",
+            "example": "2025-12-01T10:00:00Z"
+          }
+        }
+      },
+      "CreateWorkflowRequest": {
+        "type": "object",
+        "required": [
+          "name",
+          "description",
+          "definition"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Human-readable workflow name",
+            "example": "Text to Image Generator"
+          },
+          "description": {
+            "type": "string",
+            "description": "Detailed description of what the workflow does",
+            "example": "Generates images from text prompts using AI models"
+          },
+          "categories": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of category slugs to organize the workflow",
+            "example": [
+              "image-generation",
+              "ai"
+            ]
+          },
+          "locked": {
+            "type": "boolean",
+            "description": "Whether the workflow is locked from modifications",
+            "default": false
+          },
+          "production": {
+            "type": "boolean",
+            "description": "Whether this is a production workflow",
+            "default": false
+          },
+          "definition": {
+            "type": "object",
+            "description": "The workflow definition containing steps, input schema, and metadata.\nThis follows the workflow DSL format.\n",
+            "properties": {
+              "version": {
+                "type": "string",
+                "description": "Version identifier for this workflow",
+                "example": "v1"
+              },
+              "steps": {
+                "type": "array",
+                "description": "Array of step definitions",
+                "items": {
+                  "type": "object"
+                },
+                "example": [
+                  {
+                    "step_id": "step1",
+                    "type": "model",
+                    "model": "openai-chatgpt-5",
+                    "params": {
+                      "system_prompt": "You are a helpful assistant",
+                      "user_prompt": "{{inputs.prompt}}"
+                    },
+                    "fallback": {
+                      "enabled": true,
+                      "model": "anthropic-claude-4",
+                      "params": {
+                        "system_prompt": "You are a helpful assistant",
+                        "user_prompt": "{{inputs.prompt}}"
+                      }
+                    }
+                  }
+                ]
+              },
+              "input_schema": {
+                "type": "object",
+                "description": "JSON Schema for validating workflow inputs",
+                "example": {
+                  "type": "object",
+                  "properties": {
+                    "prompt": {
+                      "type": "string",
+                      "description": "Text prompt for generation"
+                    }
+                  },
+                  "required": [
+                    "prompt"
+                  ]
+                }
+              },
+              "metadata": {
+                "type": "object",
+                "description": "Additional workflow metadata",
+                "example": {
+                  "output_mapping": {
+                    "result": "{{step1.output}}"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "UpdateWorkflowRequest": {
+        "type": "object",
+        "description": "Update workflow metadata. All fields are optional - only provided fields will be updated.\n\nNote: To update the workflow definition (steps), use the version endpoints instead.\n",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Human-readable workflow name",
+            "example": "Text to Image Generator v2"
+          },
+          "description": {
+            "type": "string",
+            "description": "Detailed description of what the workflow does",
+            "example": "Enhanced image generation with multiple models"
+          },
+          "categories": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of category slugs",
+            "example": [
+              "image-generation",
+              "ai",
+              "production"
+            ]
+          },
+          "locked": {
+            "type": "boolean",
+            "description": "Lock/unlock the workflow from modifications"
+          },
+          "production": {
+            "type": "boolean",
+            "description": "Mark as production workflow"
+          }
+        }
+      },
+      "UpsertVersionRequest": {
+        "type": "object",
+        "required": [
+          "version_id",
+          "definition"
+        ],
+        "properties": {
+          "version_id": {
+            "type": "string",
+            "description": "Version identifier (e.g., \"v1\", \"v2\", \"v1.1\")",
+            "example": "v2"
+          },
+          "definition": {
+            "type": "object",
+            "description": "The complete workflow definition for this version.\nThis follows the workflow DSL format and must include all steps.\n",
+            "properties": {
+              "version": {
+                "type": "string",
+                "description": "Version identifier (should match version_id)",
+                "example": "v2"
+              },
+              "steps": {
+                "type": "array",
+                "description": "Array of step definitions",
+                "items": {
+                  "type": "object"
+                },
+                "example": [
+                  {
+                    "step_id": "generate_text",
+                    "type": "model",
+                    "model": "openai-chatgpt-5",
+                    "params": {
+                      "system_prompt": "You are a helpful assistant",
+                      "user_prompt": "{{inputs.prompt}}"
+                    }
+                  },
+                  {
+                    "step_id": "generate_image",
+                    "type": "model",
+                    "model": "flux-dev",
+                    "params": {
+                      "prompt": "{{generate_text.output}}",
+                      "num_images": 2
+                    },
+                    "fallback": {
+                      "enabled": true,
+                      "model": "flux-1-1-pro",
+                      "params": {
+                        "prompt": "{{generate_text.output}}",
+                        "guidance_scale": 7.5
+                      }
+                    }
+                  }
+                ]
+              },
+              "input_schema": {
+                "type": "object",
+                "description": "JSON Schema for validating workflow inputs"
+              },
+              "metadata": {
+                "type": "object",
+                "description": "Additional workflow metadata including output mappings"
+              }
+            }
+          },
+          "locked": {
+            "type": "boolean",
+            "description": "Whether to lock this version from further modifications",
+            "default": false
+          },
+          "production": {
+            "type": "boolean",
+            "description": "Whether this is a production version",
+            "default": false
+          },
+          "allowed_to_share": {
+            "type": "boolean",
+            "description": "Toggle unlisted sharing for this version.\n\n- `true` → Makes version \"unlisted\" (accessible via link, hidden from public listings)\n- `false` → Makes version \"private\" (organization only)\n- No effect on public versions\n- New versions default to private when omitted\n",
+            "default": false
+          }
+        }
+      },
+      "WorkflowDetail": {
+        "type": "object",
+        "description": "Complete workflow information including all versions",
+        "required": [
+          "workflow_id",
+          "name",
+          "description"
+        ],
+        "properties": {
+          "workflow_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique workflow identifier",
+            "example": "50741f40-8621-4d46-8a91-dff4d873be98"
+          },
+          "slug": {
+            "type": "string",
+            "description": "URL-friendly workflow identifier",
+            "example": "text-to-image-generator"
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable workflow name",
+            "example": "Text to Image Generator"
+          },
+          "description": {
+            "type": "string",
+            "description": "Workflow description",
+            "example": "Generates images from text prompts"
+          },
+          "categories": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Category slugs",
+            "example": [
+              "image-generation",
+              "ai"
+            ]
+          },
+          "locked": {
+            "type": "boolean",
+            "description": "Whether workflow is locked",
+            "example": false
+          },
+          "production": {
+            "type": "boolean",
+            "description": "Whether this is a production workflow",
+            "example": false
+          },
+          "latest_version_id": {
+            "type": "string",
+            "description": "Most recently updated version ID",
+            "example": "v2"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "archived",
+              "deleted"
+            ],
+            "description": "Workflow lifecycle status",
+            "example": "active"
+          },
+          "trigger_count": {
+            "type": "integer",
+            "description": "Total number of times this workflow has been triggered",
+            "example": 42
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "RFC3339 timestamp when workflow was created",
+            "example": "2025-12-01T10:00:00Z"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "RFC3339 timestamp when workflow was last updated",
+            "example": "2025-12-07T15:30:00Z"
+          },
+          "versions": {
+            "type": "array",
+            "description": "List of all versions for this workflow",
+            "items": {
+              "$ref": "#/components/schemas/WorkflowVersionSummary"
+            }
+          }
+        }
+      },
+      "WorkflowVersionSummary": {
+        "type": "object",
+        "description": "Summary information about a workflow version",
+        "required": [
+          "version_id",
+          "slug"
+        ],
+        "properties": {
+          "version_id": {
+            "type": "string",
+            "description": "Version identifier",
+            "example": "v1"
+          },
+          "slug": {
+            "type": "string",
+            "description": "Workflow slug (inherited from parent workflow)",
+            "example": "text-to-image-generator"
+          },
+          "locked": {
+            "type": "boolean",
+            "description": "Whether this version is locked from modifications",
+            "example": false
+          },
+          "production": {
+            "type": "boolean",
+            "description": "Whether this is a production version",
+            "example": true
+          },
+          "allowed_to_share": {
+            "type": "boolean",
+            "description": "True if version is unlisted (accessible via direct link but hidden from public listings).",
+            "example": false
+          },
+          "trigger_count": {
+            "type": "integer",
+            "description": "Number of times this specific version has been triggered",
+            "example": 15
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "RFC3339 timestamp when version was created",
+            "example": "2025-12-01T10:00:00Z"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "RFC3339 timestamp when version was last updated",
+            "example": "2025-12-05T14:20:00Z"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "archived",
+              "deleted"
+            ],
+            "description": "Version lifecycle status",
+            "example": "active"
+          },
+          "definition": {
+            "type": "object",
+            "description": "The complete workflow definition (only included in detail responses).\nContains steps, input schema, and metadata.\n"
+          }
+        }
+      },
+      "TriggerWorkflowRequest": {
+        "type": "object",
+        "properties": {
+          "version_id": {
+            "type": "string",
+            "description": "**Optional**: Specific version to trigger.\n\nIf not provided, triggers the latest version of the workflow.\nThis allows you to execute specific versions for testing or comparison.\n",
+            "example": "v1"
+          },
+          "inputs": {
+            "type": "object",
+            "description": "Input parameters defined in the workflow definition for the workflow",
+            "example": {
+              "text": "tell me a story"
+            }
+          },
+          "webhook_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "**Optional webhook URL for execution completion notifications.**\n\nWhen provided, the engine will POST an `ExecutionDetails` payload to this URL\nwhen the workflow finishes (either successfully or with an error).\n\nSee the **Webhooks** section for detailed information about webhook behavior and payload structure.\n",
+            "example": "https://your-api.com/webhooks/workflow-completed"
+          }
+        }
+      },
+      "BulkTriggerWorkflowRequest": {
+        "type": "object",
+        "required": [
+          "inputs"
+        ],
+        "properties": {
+          "version_id": {
+            "type": "string",
+            "description": "**Optional**: Specific version to trigger for all executions.\n\nIf not provided, triggers the latest version of the workflow.\n",
+            "example": "v1"
+          },
+          "inputs": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 10,
+            "description": "Array of input parameter objects. Each item in the array will result in a separate workflow execution.\n\n**Constraints:**\n- Minimum 1 input required\n- Maximum 10 inputs per request\n\nAll inputs must conform to the workflow's input schema.\n",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "example": [
+              {
+                "prompt": "Generate image of a sunset",
+                "style": "photorealistic"
+              },
+              {
+                "prompt": "Generate image of mountains",
+                "style": "artistic"
+              },
+              {
+                "prompt": "Generate image of ocean",
+                "style": "minimalist"
+              }
+            ]
+          },
+          "webhook_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "**Optional webhook URL for execution completion notifications.**\n\nWhen provided, webhook notifications for all executions in this bulk operation\nwill include a `bulk_id` field to help you correlate them.\n\nEach execution sends its own webhook notification when it completes.\n",
+            "example": "https://your-api.com/webhooks/workflow-completed"
+          }
+        }
+      },
+      "BulkTriggerWorkflowResponse": {
+        "type": "object",
+        "required": [
+          "bulk_id",
+          "executions"
+        ],
+        "properties": {
+          "bulk_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier for this bulk operation. All executions from this bulk trigger\nshare this ID, which can be used to query and track them together.\n",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "executions": {
+            "type": "array",
+            "description": "Array of execution responses, one per input in the request.\nThe order matches the order of inputs in the request.\n\n**Partial Failures:**\nIf some inputs fail validation, those entries will have `status: \"failed\"`\nwith an error message, while successful triggers will have `status: \"queued\"`.\n",
+            "items": {
+              "$ref": "#/components/schemas/ExecutionResponse"
+            },
+            "example": [
+              {
+                "execution_id": "exec-1",
+                "status": "queued",
+                "started_at": "2025-12-20T10:00:00Z"
+              },
+              {
+                "execution_id": "exec-2",
+                "status": "queued",
+                "started_at": "2025-12-20T10:00:01Z"
+              },
+              {
+                "status": "failed",
+                "message": "invalid input: missing required field 'prompt'"
+              }
+            ]
+          }
+        }
+      },
+      "ExecutionResponse": {
+        "type": "object",
+        "description": "Response from triggering a workflow execution",
+        "properties": {
+          "execution_id": {
+            "type": "string",
+            "description": "Unique execution identifier (only present for successful triggers)",
+            "example": "exec_xyz789"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "queued",
+              "failed"
+            ],
+            "description": "Execution status immediately after triggering.\n- `queued`: Workflow execution has been queued and will start shortly\n- `failed`: Trigger failed due to validation or system error\n",
+            "example": "queued"
+          },
+          "started_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "RFC3339 timestamp when the execution was queued (only present for successful triggers)"
+          },
+          "message": {
+            "type": "string",
+            "description": "Error message (only present when status is \"failed\")",
+            "example": "invalid input: missing required field"
+          }
+        },
+        "example": {
+          "execution_id": "e2dba2bb-bc1d-4651-b6bf-fbbbebdee104",
+          "status": "queued",
+          "started_at": "2025-12-03T10:21:09Z"
+        }
+      },
+      "ListExecutionsResponse": {
+        "type": "object",
+        "description": "Paginated list of workflow executions",
+        "required": [
+          "executions",
+          "total_count"
+        ],
+        "properties": {
+          "executions": {
+            "type": "array",
+            "description": "Array of execution summaries",
+            "items": {
+              "$ref": "#/components/schemas/ExecutionSummary"
+            }
+          },
+          "offset": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Offset for the next page of results.\n\nIf null, there are no more results to fetch.\n",
+            "example": 50
+          },
+          "total_count": {
+            "type": "integer",
+            "format": "int32",
+            "description": "Total number of executions matching the query",
+            "example": 142
+          }
+        },
+        "example": {
+          "executions": [
+            {
+              "execution_id": "exec-1",
+              "flow_id": "wf-123",
+              "flow_name": "Text to Image Generator",
+              "version_id": "v1",
+              "status": "completed",
+              "started_at": "2025-12-20T10:00:00Z",
+              "ended_at": "2025-12-20T10:05:00Z",
+              "created_at": "2025-12-20T10:00:00Z",
+              "updated_at": "2025-12-20T10:05:00Z"
+            },
+            {
+              "execution_id": "exec-2",
+              "flow_id": "wf-123",
+              "flow_name": "Text to Image Generator",
+              "version_id": "v1",
+              "status": "running",
+              "started_at": "2025-12-20T10:10:00Z",
+              "created_at": "2025-12-20T10:10:00Z",
+              "updated_at": "2025-12-20T10:10:00Z"
+            }
+          ],
+          "offset": 2,
+          "total_count": 142
+        }
+      },
+      "ExecutionSummary": {
+        "type": "object",
+        "description": "Summary information about a workflow execution, used in list responses.\n\nContains less detail than `ExecutionDetails` to optimize list queries.\n",
+        "required": [
+          "execution_id",
+          "flow_id",
+          "flow_name",
+          "version_id",
+          "status",
+          "created_at"
+        ],
+        "properties": {
+          "execution_id": {
+            "type": "string",
+            "description": "Unique execution identifier",
+            "example": "exec-1"
+          },
+          "flow_id": {
+            "type": "string",
+            "description": "Workflow identifier (UUID)",
+            "example": "wf-123"
+          },
+          "flow_name": {
+            "type": "string",
+            "description": "Human-readable workflow name",
+            "example": "Text to Image Generator"
+          },
+          "version_id": {
+            "type": "string",
+            "description": "Version identifier for this execution",
+            "example": "v1"
+          },
+          "api_key": {
+            "type": "string",
+            "description": "User/API key identifier that triggered this execution",
+            "example": "user-456"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "running",
+              "completed",
+              "failed",
+              "cancelled"
+            ],
+            "description": "Current execution status",
+            "example": "completed"
+          },
+          "started_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "RFC3339 timestamp when the execution started (omitted if not started yet)",
+            "example": "2025-12-20T10:00:00Z"
+          },
+          "ended_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "RFC3339 timestamp when the execution completed (omitted for running executions)",
+            "example": "2025-12-20T10:05:00Z"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "RFC3339 timestamp when the execution was created",
+            "example": "2025-12-20T10:00:00Z"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "RFC3339 timestamp when the execution was last updated",
+            "example": "2025-12-20T10:05:00Z"
+          },
+          "deleted_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "RFC3339 timestamp when the execution was soft-deleted (if applicable)",
+            "example": null
+          },
+          "inputs": {
+            "type": "object",
+            "description": "Input parameters provided when triggering the workflow",
+            "additionalProperties": true,
+            "example": {
+              "prompt": "Generate an image of a sunset"
+            }
+          },
+          "step_results": {
+            "description": "Brief summary of step execution results.\n\nStructure varies - may be an object with step IDs as keys, or an array.\n",
+            "oneOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "array",
+                "items": {}
+              }
+            ]
+          },
+          "output": {
+            "type": "string",
+            "description": "Simple string output from the workflow (if available).\n\nFor complex outputs, use `output_json` instead.\n",
+            "example": "https://storage.googleapis.com/uploads/image.png"
+          },
+          "output_json": {
+            "type": "object",
+            "description": "Structured JSON output from the workflow (if available).\n\nContains the full workflow output when output mapping is configured.\n",
+            "additionalProperties": true,
+            "example": {
+              "image_url": "https://storage.googleapis.com/uploads/image.png",
+              "generation_time": 2.45
+            }
+          },
+          "cost": {
+            "description": "Cost information for this execution (if available).\n\nStructure varies by provider and workflow configuration.\n",
+            "oneOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "number"
+              }
+            ]
+          }
+        }
+      },
+      "ExecutionDetails": {
+        "type": "object",
+        "description": "Execution details returned by both `GET /executions/{id}` and webhook notifications.\n\n### Webhook Notifications\nWhen you provide a `webhook_url` when triggering a workflow, this same structure\nwill be POSTed to your webhook URL when the execution completes.\n",
+        "required": [
+          "execution_id",
+          "workflow_id",
+          "status"
+        ],
+        "properties": {
+          "execution_id": {
+            "type": "string",
+            "description": "Unique execution identifier (UUID format)",
+            "example": "69ae8c7b-7500-4a45-b7c0-348b8cc2665b"
+          },
+          "workflow_id": {
+            "type": "string",
+            "description": "Workflow identifier (UUID format)",
+            "example": "50741f40-8621-4d46-8a91-dff4d873be98"
+          },
+          "bulk_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Bulk operation identifier (only present for executions triggered via bulk-trigger endpoint).\n\nAll executions from the same bulk operation share this ID, allowing you to:\n- Query all executions from a bulk operation together\n- Track batch progress\n- Correlate webhook notifications from related executions\n",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "running",
+              "completed",
+              "failed",
+              "cancelled"
+            ],
+            "description": "Current execution status:\n- `running` - Workflow is currently executing\n- `completed` - Workflow finished successfully  \n- `failed` - Workflow encountered an error\n- `cancelled` - Workflow was cancelled by user\n",
+            "example": "completed"
+          },
+          "started_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "RFC3339 timestamp when the execution started",
+            "example": "2025-12-04T11:48:10Z"
+          },
+          "completed_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "RFC3339 timestamp when the execution completed (omitted for running executions)",
+            "example": "2025-12-04T11:50:53Z"
+          },
+          "inputs": {
+            "type": "object",
+            "description": "Input parameters provided when triggering the workflow",
+            "additionalProperties": true,
+            "example": {
+              "story": "tell an epic story of a rat graduating from law"
+            }
+          },
+          "step_outputs": {
+            "type": "object",
+            "description": "Complete outputs from all workflow steps. Each key is a step ID (e.g., \"step1\", \"step2\"),\nand the value is a `StepOutput` object containing detailed information about that step's execution.\n",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/StepOutput"
+            },
+            "example": {
+              "step1": {
+                "step_id": "step1",
+                "status": "completed",
+                "started_at": "2025-12-04T11:48:10Z",
+                "completed_at": "2025-12-04T11:48:39Z",
+                "output": "Once upon a time...",
+                "primary": "Once upon a time...",
+                "metadata": {
+                  "model": "openai-chatgpt-5",
+                  "version": "0.0.1",
+                  "params": {
+                    "system_prompt": "You are a helpful assistant",
+                    "user_prompt": "tell an epic story of a rat graduating from law",
+                    "max_output_tokens": 512
+                  }
+                }
+              },
+              "step2": {
+                "step_id": "step2",
+                "status": "completed",
+                "started_at": "2025-12-04T11:48:39Z",
+                "completed_at": "2025-12-04T11:50:53Z",
+                "output": [
+                  "https://storage.googleapis.com/uploads/image1.png",
+                  "https://storage.googleapis.com/uploads/image2.png"
+                ],
+                "primary": "https://storage.googleapis.com/uploads/image1.png",
+                "metadata": {
+                  "model": "nano-banana-pro",
+                  "version": "0.0.1",
+                  "params": {
+                    "prompt": "Generate images based on the story",
+                    "num_images": 2,
+                    "aspect_ratio": "16:9",
+                    "resolution": "1K",
+                    "output_format": "png"
+                  }
+                }
+              }
+            }
+          },
+          "output": {
+            "description": "Output from the last completed step in the workflow.\nThis provides quick access to the final result without navigating step_outputs.\n\n**Important**: This field is only populated when the workflow status is `completed`.\n- For `running` workflows: null (even if some steps have completed)\n- For `failed` workflows: null\n- For `cancelled` workflows: null\n- For `completed` workflows: contains output from the chronologically last step\n\nThe last step is determined by the latest `completed_at` timestamp.\nThe value is extracted from the step's `output` field, or `primary` field as fallback.\n\nThe type varies based on the workflow's final step:\n- Text generation steps return a string\n- Image generation steps return an array of URLs\n- Structured data steps return an object\n",
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {}
+              },
+              {
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "example": [
+              "https://storage.googleapis.com/uploads/image1.png",
+              "https://storage.googleapis.com/uploads/image2.png"
+            ]
+          },
+          "error": {
+            "type": "string",
+            "description": "High-level error message (only present if status is \"failed\")",
+            "example": "ExecutionFailed"
+          },
+          "error_cause": {
+            "type": "string",
+            "description": "Detailed error cause with context (only present if status is \"failed\")",
+            "example": "Step 'generate_image' failed: Model timeout after 30s"
+          }
+        }
+      },
+      "StepOutput": {
+        "type": "object",
+        "description": "Detailed information about a single step's execution within a workflow.\nEach step in the workflow produces one of these objects.\n",
+        "required": [
+          "step_id",
+          "status"
+        ],
+        "properties": {
+          "step_id": {
+            "type": "string",
+            "description": "Unique identifier for this step within the workflow",
+            "example": "step1"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "queued",
+              "running",
+              "completed",
+              "failed",
+              "cancelled"
+            ],
+            "description": "Current status of this step:\n- `queued` - Step is waiting to execute\n- `running` - Step is currently executing\n- `completed` - Step finished successfully\n- `failed` - Step encountered an error\n- `cancelled` - Step was skipped due to an earlier failure in the workflow\n",
+            "example": "completed"
+          },
+          "started_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "RFC3339 timestamp when the step started executing (omitted for queued steps)",
+            "example": "2025-12-04T11:48:10Z"
+          },
+          "completed_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "RFC3339 timestamp when the step finished (only present if completed or failed)",
+            "example": "2025-12-04T11:48:39Z"
+          },
+          "output": {
+            "description": "The step's output data. The structure depends on the step type:\n- Text generation: string\n- Image generation: array of URLs\n- Structured data: object\n- Multi-output steps: array or object with multiple values\n",
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {}
+              },
+              {
+                "type": "object"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              }
+            ],
+            "example": "Once upon a time in the city of Ratropolis..."
+          },
+          "primary": {
+            "description": "The primary output value from this step. For steps that return multiple values\n(e.g., generating multiple images), this field contains the first/main result\nfor quick access.\n",
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "object"
+              }
+            ],
+            "example": "https://storage.googleapis.com/uploads/image1.png"
+          },
+          "input": {
+            "type": "object",
+            "description": "The complete resolved input payload sent to this step handler.\n\nThis includes the full step configuration with all template values resolved:\n- `step_id` - The step identifier\n- `type` or `model` - The step type or model name\n- `version` - API version (if applicable)\n- `params` or `inputs` - All parameters with values from previous steps resolved\n\nValues like `{{step1.output}}` are replaced with actual data from prior steps.\n",
+            "additionalProperties": true,
+            "example": {
+              "step_id": "generate_image",
+              "model": "flux-dev",
+              "version": "1.0.0",
+              "params": {
+                "prompt": "Generate an image of a rat graduating from law school",
+                "num_images": 2
+              }
+            }
+          },
+          "metadata": {
+            "type": "object",
+            "description": "Step configuration and runtime information. Fields vary by step type:\n\n**Model steps** include:\n- `model` - The AI model identifier (e.g., \"openai-chatgpt-5\")\n- `version` - API version for the step handler (e.g., \"0.0.1\")\n- `params` - All parameters sent to the model\n- `prediction_id` - External prediction ID (when completed)\n- `processed_at` - Processing timestamp (when completed)\n- `fallback_used` - Present and `true` when the primary attempt failed and the fallback configuration was used\n- `primary_error` - Human-readable error message from the primary attempt when fallback was used\n\n**HTTP steps** include:\n- `type` - Always \"http\"\n- `method` - HTTP method (e.g., \"GET\", \"POST\")\n- `url` - Request URL\n- `params` - Request parameters\n- `elapsed_seconds` - Request duration (when completed)\n\n**Python steps** include:\n- `type` - Always \"python\"\n- `params` - Input parameters\n- `execution_time` - Execution duration in seconds (when completed)\n- `processed_at` - Processing timestamp (when completed)\n",
+            "properties": {
+              "model": {
+                "type": "string",
+                "description": "The AI model used (model steps only)",
+                "example": "openai-chatgpt-5"
+              },
+              "version": {
+                "type": "string",
+                "description": "API version (model steps only)",
+                "example": "0.0.1"
+              },
+              "type": {
+                "type": "string",
+                "description": "Step type (http or python steps)",
+                "enum": [
+                  "http",
+                  "python"
+                ],
+                "example": "http"
+              },
+              "method": {
+                "type": "string",
+                "description": "HTTP method (http steps only)",
+                "example": "POST"
+              },
+              "url": {
+                "type": "string",
+                "description": "Request URL (http steps only)",
+                "example": "https://api.example.com/endpoint"
+              },
+              "params": {
+                "type": "object",
+                "description": "Complete parameters sent to the step, including resolved values",
+                "additionalProperties": true,
+                "example": {
+                  "system_prompt": "You are a helpful assistant",
+                  "user_prompt": "tell an epic story of a rat graduating from law",
+                  "max_output_tokens": 512
+                }
+              },
+              "prediction_id": {
+                "type": "string",
+                "description": "External prediction ID (model steps, when completed)",
+                "example": "6yxkzw4th9rme0ct1re8q42xer"
+              },
+              "processed_at": {
+                "type": "string",
+                "format": "date-time",
+                "description": "Processing timestamp (when available)",
+                "example": "2025-12-04T11:48:39Z"
+              },
+              "fallback_used": {
+                "type": "boolean",
+                "description": "Indicates that the step completed successfully using a configured fallback after the primary attempt failed (model steps only).\n",
+                "example": true
+              },
+              "primary_error": {
+                "type": "string",
+                "description": "Original error message from the primary attempt when a fallback configuration was used (model steps only).\n",
+                "example": "primary model failed due to timeout"
+              },
+              "elapsed_seconds": {
+                "type": "number",
+                "description": "Execution duration in seconds (when completed)",
+                "example": 2.45
+              },
+              "execution_time": {
+                "type": "number",
+                "description": "Python execution time in seconds (python steps, when completed)",
+                "example": 0.123
+              }
+            }
+          },
+          "error": {
+            "type": "string",
+            "description": "Error message if the step failed",
+            "example": "ModelTimeout"
+          },
+          "error_cause": {
+            "type": "string",
+            "description": "Detailed error information if the step failed",
+            "example": "Model request timed out after 30 seconds"
+          }
+        }
+      },
+      "FallbackConfig": {
+        "type": "object",
+        "description": "Fallback configuration for model steps. When configured, the workflow engine will \nautomatically retry with the fallback model if the primary model invocation fails.\n",
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "default": true,
+            "description": "Enable or disable fallback for this step",
+            "example": true
+          },
+          "model": {
+            "type": "string",
+            "description": "Fallback AI model identifier to use if the primary model fails.\nShould be compatible with the expected output format.\n",
+            "example": "flux-1-1-pro"
+          },
+          "version": {
+            "type": "string",
+            "description": "Fallback model version. When omitted, defaults to the primary model's version.\n",
+            "example": "1.0.0"
+          },
+          "params": {
+            "type": "object",
+            "description": "Fallback-specific model parameters. Supports template variables like `{{inputs.prompt}}`\nand `{{step_id.output}}` for referencing workflow inputs and previous step outputs.\n",
+            "additionalProperties": true,
+            "example": {
+              "prompt": "{{inputs.prompt}}",
+              "guidance_scale": 7.5
+            }
+          }
+        },
+        "example": {
+          "enabled": true,
+          "model": "flux-1-1-pro",
+          "params": {
+            "prompt": "{{inputs.prompt}}",
+            "guidance_scale": 7.5
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "required": [
+          "error"
+        ],
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Error message"
+          }
+        }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Bad request - Invalid input",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "Unauthorized - Invalid or missing API key",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "Forbidden - Operation not allowed (e.g., workflow is locked)",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Not found - Resource does not exist",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      }
+    }
+  }
+}
