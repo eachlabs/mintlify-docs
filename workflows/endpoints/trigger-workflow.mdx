@@ -1,0 +1,108 @@
+---
+title: "Trigger Workflow"
+description: "Start an execution of a workflow."
+---
+
+## Endpoint
+
+```
+POST https://workflows.eachlabs.run/api/v1/{workflowID}/trigger
+```
+
+The workflow executes asynchronously — you'll receive an execution ID immediately, then poll or use webhooks to get results.
+
+## Path Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `workflowID` | string | Yes | Workflow UUID |
+
+## Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `version_id` | string | No | Specific version to trigger (defaults to latest) |
+| `inputs` | object | No | Input parameters matching the workflow's input schema |
+| `webhook_url` | string | No | URL to receive completion notification |
+
+## Code Examples
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://workflows.eachlabs.run/api/v1/WF_ID/trigger \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: YOUR_API_KEY" \
+  -d '{
+    "inputs": {
+      "prompt": "A majestic mountain landscape"
+    },
+    "webhook_url": "https://your-app.com/webhooks/workflow"
+  }'
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    "https://workflows.eachlabs.run/api/v1/WF_ID/trigger",
+    headers={
+        "Content-Type": "application/json",
+        "X-API-Key": "YOUR_API_KEY"
+    },
+    json={
+        "inputs": {"prompt": "A majestic mountain landscape"},
+        "webhook_url": "https://your-app.com/webhooks/workflow"
+    }
+)
+
+data = response.json()
+print(f"Execution ID: {data['execution_id']}")
+```
+
+```javascript JavaScript
+const response = await fetch(
+  "https://workflows.eachlabs.run/api/v1/WF_ID/trigger",
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-API-Key": "YOUR_API_KEY",
+    },
+    body: JSON.stringify({
+      inputs: { prompt: "A majestic mountain landscape" },
+      webhook_url: "https://your-app.com/webhooks/workflow",
+    }),
+  }
+);
+const { execution_id } = await response.json();
+console.log(`Execution ID: ${execution_id}`);
+```
+</CodeGroup>
+
+## Response
+
+**Status: `202 Accepted`**
+
+```json
+{
+  "execution_id": "e2dba2bb-bc1d-4651-b6bf-fbbbebdee104",
+  "status": "queued",
+  "started_at": "2025-12-03T10:21:09Z"
+}
+```
+
+### Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `execution_id` | string | Unique execution ID for tracking |
+| `status` | string | `"queued"` — execution has been queued |
+| `started_at` | string | ISO 8601 timestamp |
+
+## Error Responses
+
+| Status | Body | Description |
+|--------|------|-------------|
+| `400` | `{"error": "invalid input: missing required field 'prompt'"}` | Input validation failure |
+| `401` | `{"error": "Invalid or missing API key"}` | Authentication failure |
+| `404` | `{"error": "workflow not found"}` | Invalid workflow ID |

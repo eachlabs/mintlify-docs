@@ -1,0 +1,64 @@
+---
+title: "each::workflows Overview"
+description: "Chain multiple AI models into automated pipelines with the Workflows Engine."
+---
+
+## What is each::workflows?
+
+each::workflows lets you chain multiple AI models together into automated, multi-step pipelines. Define steps, wire outputs to inputs, and execute complex AI tasks with a single API call.
+
+```
+Text Prompt → Image Generation → Video Animation → Upscaling
+
+              ┬─ Branch 1: Video ──┐
+Input Image → ├─ Branch 2: Edit   ─┤→ Conditional → Upscale (video or image)
+              └─ Branch 3: Generate┘
+```
+
+## Key Features
+
+- **Multi-step pipelines** — Chain any combination of AI models
+- **Parallel branching** — Execute multiple branches concurrently for independent tasks
+- **Conditional logic** — Route execution based on step outputs using choice steps
+- **Parameter references** — Wire step outputs to subsequent step inputs using `{{template}}` syntax
+- **Fallback configuration** — Automatic retry with alternative models on failure
+- **Versioning** — Create and manage multiple workflow versions
+- **Bulk execution** — Trigger up to 10 executions in parallel
+- **Webhooks** — Receive notifications when executions complete
+- **Public & unlisted sharing** — Share workflows via direct link or public listing
+
+## Base URL
+
+```
+https://workflows.eachlabs.run/api/v1
+```
+
+## How It Works
+
+<Steps>
+  <Step title="Create a workflow">
+    Define your workflow with steps, input schema, and model configurations.
+  </Step>
+  <Step title="Trigger execution">
+    Provide inputs and start an execution. The engine runs steps sequentially, executes parallel branches concurrently, and evaluates conditions to route execution.
+  </Step>
+  <Step title="Monitor & retrieve results">
+    Poll the execution endpoint or receive results via webhook.
+  </Step>
+</Steps>
+
+## Endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/categories` | List workflow categories |
+| `POST` | `/workflows` | Create a workflow |
+| `GET` | `/workflows/{id}` | Get workflow details |
+| `PUT` | `/workflows/{id}` | Update workflow metadata |
+| `PUT` | `/workflows/{id}/versions/{versionID}` | Create/update a version |
+| `POST` | `/{id}/trigger` | Trigger execution |
+| `POST` | `/{id}/bulk-trigger` | Bulk trigger (up to 10) |
+| `GET` | `/workflows/{id}/executions` | List executions |
+| `GET` | `/executions/{executionID}` | Get execution details |
+| `GET` | `/public/@{nickname}/workflows/{slug}/versions/{versionID}` | Get public workflow |
+| `POST` | `/public/@{nickname}/workflows/{slug}/versions/{versionID}/trigger` | Trigger public workflow |

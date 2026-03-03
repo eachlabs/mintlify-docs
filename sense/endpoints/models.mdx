@@ -1,0 +1,64 @@
+---
+title: "List Models"
+description: "List available models (OpenAI compatible)."
+---
+
+## Endpoint
+
+```
+GET https://eachsense-agent.core.eachlabs.run/v1/models
+```
+
+## Code Examples
+
+<CodeGroup>
+```bash cURL
+curl https://eachsense-agent.core.eachlabs.run/v1/models \
+  -H "X-API-Key: YOUR_API_KEY"
+```
+
+```python Python
+from openai import OpenAI
+
+client = OpenAI(
+    api_key="YOUR_API_KEY",
+    base_url="https://eachsense-agent.core.eachlabs.run/v1"
+)
+
+models = client.models.list()
+for model in models.data:
+    print(f"{model.id} — owned by {model.owned_by}")
+```
+
+```javascript JavaScript
+import OpenAI from "openai";
+
+const client = new OpenAI({
+  apiKey: "YOUR_API_KEY",
+  baseURL: "https://eachsense-agent.core.eachlabs.run/v1",
+});
+
+const models = await client.models.list();
+models.data.forEach((m) => console.log(`${m.id} — ${m.owned_by}`));
+```
+</CodeGroup>
+
+## Response
+
+```json
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "eachsense/beta",
+      "object": "model",
+      "created": 1708345678,
+      "owned_by": "eachlabs"
+    }
+  ]
+}
+```
+
+<Note>
+  The agent orchestrates 500+ underlying AI models, but exposes a single `eachsense/beta` model through the OpenAI-compatible interface. Model selection happens automatically based on your request.
+</Note>

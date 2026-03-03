@@ -1,0 +1,105 @@
+---
+title: "Workflows via Sense"
+description: "Create, execute, and manage multi-step AI workflows through natural language."
+---
+
+## Overview
+
+each::sense can create and execute [each::workflows](/workflows/overview) entirely through natural language — no API calls to the workflows engine required.
+
+## Creating Workflows
+
+Describe what you want and the agent builds the workflow:
+
+```bash
+curl -X POST https://eachsense-agent.core.eachlabs.run/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: YOUR_API_KEY" \
+  -d '{
+    "messages": [{
+      "role": "user",
+      "content": "Create a workflow that: 1) Generates a portrait, 2) Animates it into a video, 3) Adds lip sync with audio"
+    }],
+    "stream": true
+  }'
+```
+
+The agent emits workflow events as it builds:
+
+```
+data: {"type":"status","message":"Creating workflow..."}
+data: {"type":"workflow_created","workflow_id":"wf_abc123","version_id":"v1","steps_count":3}
+data: {"type":"text_response","content":"I've created your workflow!"}
+data: {"type":"complete","status":"ok"}
+data: [DONE]
+```
+
+## Executing Workflows
+
+### By Name
+
+```json
+{
+  "messages": [{
+    "role": "user",
+    "content": "Run my portrait-to-video workflow with description='Professional woman, 30s'"
+  }]
+}
+```
+
+### By ID
+
+```json
+{
+  "messages": [{
+    "role": "user",
+    "content": "Execute this workflow with description: Professional headshot"
+  }],
+  "workflow_id": "wf_abc123",
+  "version_id": "v1"
+}
+```
+
+### Execution Progress Events
+
+```
+data: {"type":"execution_started","execution_id":"exec_xyz"}
+data: {"type":"execution_progress","step_id":"step1","step_status":"completed","completed_steps":1,"total_steps":3}
+data: {"type":"execution_progress","step_id":"step2","step_status":"running","completed_steps":1,"total_steps":3}
+data: {"type":"execution_progress","step_id":"step2","step_status":"completed","output":"https://...","completed_steps":2,"total_steps":3}
+data: {"type":"execution_completed","status":"completed","output":"https://..."}
+data: [DONE]
+```
+
+## Updating Workflows
+
+Use the `/workflow` endpoint to modify existing workflows:
+
+```json
+{
+  "message": "Add a subtitle step at the end",
+  "workflow_id": "wf_abc123",
+  "version_id": "v1"
+}
+```
+
+## Checking Execution Status
+
+```json
+{
+  "messages": [{
+    "role": "user",
+    "content": "Check the status of execution exec_xyz789"
+  }]
+}
+```
+
+## Parameter References
+
+In workflows created by the agent, use `$` syntax:
+
+| Reference | Description |
+|-----------|-------------|
+| `$.inputs.{field}` | Workflow input field |
+| `$.step{N}.primary` | Primary output of step N |
+| `$.step{N}.outputs.{field}` | Specific output field |

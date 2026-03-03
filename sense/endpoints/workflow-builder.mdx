@@ -1,0 +1,110 @@
+---
+title: "Workflow Builder"
+description: "Build or update multi-step AI workflows using natural language."
+---
+
+## Endpoint
+
+```
+POST https://eachsense-agent.core.eachlabs.run/workflow
+```
+
+## Request Body
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `message` | string | Yes | Workflow description or modification instruction |
+| `workflow_id` | string | No | Existing workflow to update |
+| `version_id` | string | No | Version to update |
+| `stream` | boolean | No | Enable SSE streaming (default: `true`) |
+| `session_id` | string | No | Session ID |
+
+## Code Examples
+
+### Create a New Workflow
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://eachsense-agent.core.eachlabs.run/workflow \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: YOUR_API_KEY" \
+  -d '{
+    "message": "Create a workflow that generates a portrait image then animates it into a 5-second video",
+    "stream": true
+  }'
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    "https://eachsense-agent.core.eachlabs.run/workflow",
+    headers={
+        "Content-Type": "application/json",
+        "X-API-Key": "YOUR_API_KEY"
+    },
+    json={
+        "message": "Create a workflow that generates a portrait then animates it",
+        "stream": False
+    }
+)
+print(response.json())
+```
+</CodeGroup>
+
+### Update an Existing Workflow
+
+```bash
+curl -X POST https://eachsense-agent.core.eachlabs.run/workflow \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: YOUR_API_KEY" \
+  -d '{
+    "message": "Add a final step to upscale the video to 4K",
+    "workflow_id": "wf_abc123",
+    "version_id": "v1",
+    "stream": true
+  }'
+```
+
+## Streaming Response Events
+
+```
+data: {"type":"status","message":"Creating workflow..."}
+
+data: {"type":"workflow_created","workflow_id":"wf_abc123","version_id":"v1","input_schema":{...},"steps_count":3}
+
+data: {"type":"text_response","content":"I've created your workflow!"}
+
+data: {"type":"complete","status":"ok","workflow_id":"wf_abc123"}
+
+data: [DONE]
+```
+
+### Update Events
+
+```
+data: {"type":"workflow_fetched","workflow_name":"portrait-to-video","existing_steps":3}
+
+data: {"type":"workflow_built","steps_count":4,"definition":{...}}
+
+data: {"type":"workflow_updated","success":true,"workflow_id":"wf_abc123","version_id":"v2"}
+
+data: {"type":"complete","status":"ok"}
+
+data: [DONE]
+```
+
+## Non-Streaming Response
+
+```json
+{
+  "success": true,
+  "workflow_id": "wf_abc123",
+  "version_id": "v1",
+  "definition": {
+    "steps": [...],
+    "input_schema": {...}
+  },
+  "message": "Workflow created successfully"
+}
+```

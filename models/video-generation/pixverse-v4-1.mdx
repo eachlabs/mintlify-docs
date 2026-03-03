@@ -1,0 +1,124 @@
+---
+title: "PixVerse v4.1"
+description: "Generate stylized, creative videos quickly from text prompts using PixVerse v4.1."
+---
+
+## Model Overview
+
+| Property     | Value              |
+|--------------|--------------------|
+| **Slug**     | `pixverse-v4-1`    |
+| **Version**  | `1.0.0`            |
+| **Category** | Video Generation   |
+| **Output**   | Video (URL)        |
+| **Speed**    | Fast               |
+| **Best For** | Stylized, creative videos |
+
+## Input Parameters
+
+| Parameter    | Type    | Required | Default  | Description                          |
+|--------------|---------|----------|----------|--------------------------------------|
+| prompt       | string  | Yes      | -        | Text description of the video        |
+| duration     | integer | No       | 5        | Video duration in seconds            |
+| aspect_ratio | string  | No       | `16:9`   | Output aspect ratio                  |
+| seed         | integer | No       | random   | Random seed                          |
+
+## Code Examples
+
+### each::api
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST https://api.eachlabs.ai/v1/prediction \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: $EACHLABS_API_KEY" \
+  -d '{
+    "model": "pixverse-v4-1",
+    "version": "1.0.0",
+    "input": {
+      "prompt": "A drone shot flying over a mountain lake at sunrise",
+      "duration": 5,
+      "aspect_ratio": "16:9"
+    }
+  }'
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    "https://api.eachlabs.ai/v1/prediction",
+    headers={"X-API-Key": "YOUR_API_KEY"},
+    json={
+        "model": "pixverse-v4-1",
+        "version": "1.0.0",
+        "input": {
+            "prompt": "A drone shot flying over a mountain lake at sunrise",
+            "duration": 5,
+            "aspect_ratio": "16:9"
+        }
+    }
+)
+prediction_id = response.json()["predictionID"]
+```
+
+```javascript JavaScript
+const response = await fetch("https://api.eachlabs.ai/v1/prediction", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "X-API-Key": "YOUR_API_KEY",
+  },
+  body: JSON.stringify({
+    model: "pixverse-v4-1",
+    version: "1.0.0",
+    input: {
+      prompt: "A drone shot flying over a mountain lake at sunrise",
+      duration: 5,
+      aspect_ratio: "16:9",
+    },
+  }),
+});
+const { predictionID } = await response.json();
+```
+
+</CodeGroup>
+
+### each::sense
+
+```python each::sense
+from openai import OpenAI
+
+client = OpenAI(api_key="YOUR_API_KEY", base_url="https://eachsense-agent.core.eachlabs.run/v1")
+
+response = client.chat.completions.create(
+    model="eachsense/beta",
+    messages=[{"role": "user", "content": "Generate a drone shot over a mountain lake at sunrise using pixverse-v4-1"}],
+)
+```
+
+## Tips
+
+- Fast generation with creative and stylized output.
+- Good for social media content and artistic videos.
+- Best for shorter clips where visual style is a priority.
+
+## Related Models
+
+<CardGroup cols={2}>
+  <Card title="Wan v2.6 Text-to-Video" href="/models/video-generation/wan-v2-6-text-to-video">
+    Open-source text-to-video with solid quality.
+  </Card>
+  <Card title="Veo 3.1 Fast" href="/models/video-generation/veo3-1-fast">
+    Speed-optimized variant of Google's Veo.
+  </Card>
+</CardGroup>
+
+<Note>
+Use `GET /v1/model?slug=pixverse-v4-1` to retrieve the full model schema including all available parameters and their constraints.
+</Note>
+
+<Note>
+Video generation is an async process. Predictions may take longer to complete depending on duration and model load. Poll the prediction status endpoint to check for completion.
+</Note>

@@ -1,0 +1,124 @@
+---
+title: "ElevenLabs TTS"
+description: "Industry-leading text-to-speech with natural, expressive voices. Supports multiple voices and languages."
+---
+
+## Model Info
+
+| Property | Value |
+|----------|-------|
+| **Slug** | `elevenlabs-tts` |
+| **Version** | `1.0.0` |
+| **Category** | Audio & Music |
+| **Output Type** | Audio (URL) |
+| **Speed** | Very Fast |
+| **Best For** | Natural text-to-speech |
+
+## Input Parameters
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `text` | string | Yes | — | Text to convert to speech |
+| `voice` | string | No | `rachel` | Voice ID or name to use |
+| `model_id` | string | No | `eleven_multilingual_v2` | TTS model variant |
+| `stability` | float | No | 0.5 | Voice stability (0.0-1.0). Lower = more expressive |
+| `similarity_boost` | float | No | 0.75 | Voice similarity enforcement (0.0-1.0) |
+
+## Code Examples
+
+### each::api
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.eachlabs.ai/v1/prediction \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: $EACHLABS_API_KEY" \
+  -d '{
+    "model": "elevenlabs-tts",
+    "version": "1.0.0",
+    "input": {
+      "text": "Welcome to each labs, the generative media platform.",
+      "voice": "rachel",
+      "stability": 0.5
+    }
+  }'
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    "https://api.eachlabs.ai/v1/prediction",
+    headers={"X-API-Key": "YOUR_API_KEY"},
+    json={
+        "model": "elevenlabs-tts",
+        "version": "1.0.0",
+        "input": {
+            "text": "Welcome to each labs, the generative media platform.",
+            "voice": "rachel",
+            "stability": 0.5
+        }
+    }
+)
+prediction_id = response.json()["predictionID"]
+```
+
+```javascript JavaScript
+const response = await fetch("https://api.eachlabs.ai/v1/prediction", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "X-API-Key": "YOUR_API_KEY",
+  },
+  body: JSON.stringify({
+    model: "elevenlabs-tts",
+    version: "1.0.0",
+    input: {
+      text: "Welcome to each labs, the generative media platform.",
+      voice: "rachel",
+      stability: 0.5,
+    },
+  }),
+});
+const { predictionID } = await response.json();
+```
+</CodeGroup>
+
+### each::sense
+
+```python each::sense
+from openai import OpenAI
+
+client = OpenAI(
+    api_key="YOUR_API_KEY",
+    base_url="https://eachsense-agent.core.eachlabs.run/v1"
+)
+
+response = client.chat.completions.create(
+    model="eachsense/beta",
+    messages=[{"role": "user", "content": "Convert this text to speech using elevenlabs-tts: Welcome to each labs, the generative media platform."}],
+)
+```
+
+## Tips
+
+- Lower `stability` values produce more expressive, dynamic speech
+- Higher `similarity_boost` keeps the voice closer to the reference
+- Supports multiple languages with the multilingual model
+- Max duration is approximately 10 minutes of audio per request
+- Use SSML-like punctuation (commas, periods, dashes) to control pacing
+
+## Related Models
+
+<CardGroup cols={2}>
+  <Card title="Mureka Music" href="/models/audio-music/mureka-generate-music">
+    AI music generation from text descriptions.
+  </Card>
+  <Card title="Stable Audio 2.5" href="/models/audio-music/stable-audio-2-5">
+    Sound effects and short audio generation.
+  </Card>
+</CardGroup>
+
+<Note>
+Call `GET /v1/model?slug=elevenlabs-tts` for the full parameter schema.
+</Note>

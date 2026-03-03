@@ -1,0 +1,136 @@
+---
+title: "each::labs Documentation"
+description: "The generative media platform — 500+ AI models, multi-step workflows, and an intelligent agent interface. Build with each::api, each::workflows, and each::sense."
+---
+
+each::labs is a generative media platform for developers and AI agents. Access 500+ production-ready AI models through a single API key.
+
+## Products
+
+<CardGroup cols={2}>
+  <Card title="each::api" icon="bolt" href="/api/overview">
+    Direct model access. Run image, video, audio, and 3D generation models with a single endpoint. Async predictions with webhook delivery.
+  </Card>
+  <Card title="each::workflows" icon="diagram-project" href="/workflows/overview">
+    Multi-step pipelines. Chain models together with parameter passing, versioning, fallback configs, and bulk execution.
+  </Card>
+  <Card title="each::sense" icon="brain" href="/sense/overview">
+    AI agent interface. OpenAI-compatible endpoint that understands natural language — auto-selects models, generates media, and builds workflows.
+  </Card>
+  <Card title="Models" icon="cube" href="/models/overview">
+    Curated model catalog. Browse top AI models for image, video, audio generation with comparison tables and usage examples.
+  </Card>
+</CardGroup>
+
+## Quick Start
+
+<Steps>
+  <Step title="Get your API key">
+    Sign up at [eachlabs.ai](https://eachlabs.ai) and create an API key from [Settings → API Keys](https://eachlabs.ai/settings/api-keys).
+  </Step>
+  <Step title="Generate an image">
+
+    <CodeGroup>
+    ```bash cURL
+    curl -X POST https://api.eachlabs.ai/v1/prediction \
+      -H "Content-Type: application/json" \
+      -H "X-API-Key: $EACHLABS_API_KEY" \
+      -d '{
+        "model": "flux-1-1-pro",
+        "version": "1.0.0",
+        "input": {
+          "prompt": "A cinematic landscape at golden hour",
+          "aspect_ratio": "16:9"
+        }
+      }'
+    ```
+
+    ```python Python
+    import requests
+
+    response = requests.post(
+        "https://api.eachlabs.ai/v1/prediction",
+        headers={"X-API-Key": "YOUR_API_KEY"},
+        json={
+            "model": "flux-1-1-pro",
+            "version": "1.0.0",
+            "input": {
+                "prompt": "A cinematic landscape at golden hour",
+                "aspect_ratio": "16:9"
+            }
+        }
+    )
+
+    prediction_id = response.json()["predictionID"]
+    ```
+
+    ```javascript JavaScript
+    const response = await fetch("https://api.eachlabs.ai/v1/prediction", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-API-Key": "YOUR_API_KEY",
+      },
+      body: JSON.stringify({
+        model: "flux-1-1-pro",
+        version: "1.0.0",
+        input: {
+          prompt: "A cinematic landscape at golden hour",
+          aspect_ratio: "16:9",
+        },
+      }),
+    });
+
+    const { predictionID } = await response.json();
+    ```
+    </CodeGroup>
+  </Step>
+  <Step title="Or use the AI agent">
+    Skip model selection entirely — let each::sense handle it:
+
+    ```python
+    from openai import OpenAI
+
+    client = OpenAI(
+        api_key="YOUR_API_KEY",
+        base_url="https://eachsense-agent.core.eachlabs.run/v1"
+    )
+
+    response = client.chat.completions.create(
+        model="eachsense/beta",
+        messages=[{"role": "user", "content": "Generate a cinematic landscape at golden hour"}],
+    )
+    ```
+  </Step>
+</Steps>
+
+## Base URLs
+
+| Product | Base URL | Protocol |
+|---------|----------|----------|
+| each::api | `https://api.eachlabs.ai` | REST |
+| each::workflows | `https://workflows.eachlabs.run/api/v1` | REST |
+| each::sense | `https://eachsense-agent.core.eachlabs.run` | REST + SSE |
+
+## For AI Agents
+
+each::sense is fully OpenAI-compatible. Point any agent framework at the base URL with your API key:
+
+```python
+# Works with LangChain, CrewAI, AutoGen, or any OpenAI-compatible client
+client = OpenAI(
+    api_key="YOUR_API_KEY",
+    base_url="https://eachsense-agent.core.eachlabs.run/v1"
+)
+```
+
+Machine-readable documentation index available at [`/llms.txt`](/llms.txt).
+
+<CardGroup cols={2}>
+  <Card title="Authentication" icon="key" href="/authentication">
+    API key setup and security best practices.
+  </Card>
+  <Card title="Error Reference" icon="triangle-exclamation" href="/errors">
+    HTTP status codes and error handling across all products.
+  </Card>
+</CardGroup>

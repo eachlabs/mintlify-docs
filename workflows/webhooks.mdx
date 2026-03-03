@@ -1,0 +1,147 @@
+---
+title: "Webhooks"
+description: "Receive automatic notifications when workflow executions complete."
+---
+
+## Overview
+
+Provide a `webhook_url` when triggering a workflow to receive an HTTP POST with execution results when it completes (successfully or with an error).
+
+## Setting Up
+
+Include `webhook_url` in your trigger request:
+
+```bash
+curl -X POST https://workflows.eachlabs.run/api/v1/WF_ID/trigger \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: YOUR_API_KEY" \
+  -d '{
+    "inputs": {"prompt": "A sunset landscape"},
+    "webhook_url": "https://your-app.com/webhooks/workflow-completed"
+  }'
+```
+
+## Webhook Request
+
+- **Method:** `POST`
+- **Content-Type:** `application/json`
+- **Body:** Same structure as [Get Execution](/workflows/endpoints/get-execution) response
+
+## Payload Examples
+
+### Successful Execution
+
+```json
+{
+  "execution_id": "69ae8c7b-7500-4a45-b7c0-348b8cc2665b",
+  "workflow_id": "50741f40-8621-4d46-8a91-dff4d873be98",
+  "status": "completed",
+  "started_at": "2025-12-04T11:48:10Z",
+  "inputs": {
+    "prompt": "A sunset landscape"
+  },
+  "step_outputs": {
+    "step1": {
+      "step_id": "step1",
+      "status": "completed",
+      "output": "A breathtaking panoramic view...",
+      "primary": "A breathtaking panoramic view...",
+      "metadata": {
+        "model": "openai-chatgpt-5"
+      }
+    },
+    "step2": {
+      "step_id": "step2",
+      "status": "completed",
+      "output": ["https://storage.googleapis.com/uploads/image.png"],
+      "primary": "https://storage.googleapis.com/uploads/image.png",
+      "metadata": {
+        "model": "flux-1-1-pro"
+      }
+    }
+  },
+  "output": ["https://storage.googleapis.com/uploads/image.png"]
+}
+```
+
+### Failed Execution
+
+```json
+{
+  "execution_id": "69ae8c7b-7500-4a45-b7c0-348b8cc2665b",
+  "workflow_id": "50741f40-8621-4d46-8a91-dff4d873be98",
+  "status": "failed",
+  "started_at": "2025-12-04T11:48:10Z",
+  "inputs": {
+    "prompt": "A sunset landscape"
+  },
+  "error": "ExecutionFailed",
+  "error_cause": "Step 'generate_image' failed: Model timeout after 30s"
+}
+```
+
+### Bulk Trigger Webhook
+
+When triggered via bulk-trigger, the payload includes `bulk_id`:
+
+```json
+{
+  "execution_id": "exec-1",
+  "workflow_id": "50741f40-8621-4d46-8a91-dff4d873be98",
+  "bulk_id": "550e8400-e29b-41d4-a716-446655440000",
+  "status": "completed",
+  "output": ["https://storage.googleapis.com/uploads/image.png"]
+}
+```
+
+Each execution in a bulk operation sends its own webhook notification.
+
+## Handler Examples
+
+<CodeGroup>
+```python Python (FastAPI)
+from fastapi import FastAPI, Request
+
+app = FastAPI()
+
+@app.post("/webhooks/workflow-completed")
+async def handle_workflow_webhook(request: Request):
+    execution = await request.json()
+
+    if execution["status"] == "completed":
+        final_output = execution["output"]
+        step_details = execution["step_outputs"]
+        print(f"Workflow completed: {final_output}")
+    elif execution["status"] == "failed":
+        error = execution.get("error_cause", "Unknown error")
+        print(f"Workflow failed: {error}")
+
+    return {"received": True}
+```
+
+```javascript JavaScript (Express)
+app.post("/webhooks/workflow-completed", (req, res) => {
+  const execution = req.body;
+
+  if (execution.status === "completed") {
+    console.log(`Workflow completed: ${execution.output}`);
+    // Process step_outputs if needed
+  } else if (execution.status === "failed") {
+    console.error(`Workflow failed: ${execution.error_cause}`);
+  }
+
+  res.json({ received: true });
+});
+```
+</CodeGroup>
+
+## Retry Behavior
+
+Failed webhook deliveries are automatically retried with exponential backoff. Your endpoint should return a `200 OK` to acknowledge receipt.
+
+## Best Practices
+
+- Return `200 OK` immediately, process data asynchronously
+- Implement idempotency using `execution_id` as a deduplication key
+- Handle both `completed` and `failed` statuses
+- For bulk operations, correlate webhooks using `bulk_id`

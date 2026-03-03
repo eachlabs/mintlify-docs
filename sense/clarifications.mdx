@@ -1,0 +1,95 @@
+---
+title: "Clarifications"
+description: "Handling interactive choices and clarification requests from the agent."
+---
+
+## When Clarifications Happen
+
+The agent asks for clarification when:
+
+1. **Ambiguous request** — Could be interpreted multiple ways
+2. **Missing information** — Required details not provided
+3. **Multiple options** — Several valid approaches exist
+4. **Safety confirmation** — High-impact operations need confirmation
+
+## Clarification Event
+
+```json
+{
+  "type": "clarification_needed",
+  "question": "What style would you like for your portrait?",
+  "options": [
+    "Photorealistic - Natural appearance",
+    "Artistic - Painterly look",
+    "Anime - Japanese animation style",
+    "Cinematic - Movie poster aesthetic"
+  ],
+  "context": "Each style produces very different results.",
+  "requires_response": true
+}
+```
+
+## Common Scenarios
+
+| Scenario | Example Question |
+|----------|-----------------|
+| Style selection | "What visual style do you prefer?" |
+| Aspect ratio | "What aspect ratio should the image be?" |
+| Video duration | "How long should the video be?" |
+| Edit type | "What type of edit would you like?" |
+| Model selection | "Which model would you prefer?" |
+
+## Responding to Clarifications
+
+Always use the same `session_id` when responding:
+
+### Natural Language (Recommended)
+
+```json
+{
+  "messages": [{"role": "user", "content": "Make it anime style with vibrant colors"}],
+  "session_id": "my-session"
+}
+```
+
+### Select an Option
+
+```json
+{
+  "messages": [{"role": "user", "content": "Option 3: Anime"}],
+  "session_id": "my-session"
+}
+```
+
+### Provide All Details Upfront
+
+To avoid clarifications entirely, be specific in your initial request:
+
+```json
+{
+  "messages": [{
+    "role": "user",
+    "content": "Generate an anime-style portrait, 1:1 aspect ratio, cyberpunk background, neon lighting"
+  }]
+}
+```
+
+## Non-Streaming Clarifications
+
+When `stream: false`, check for `clarification_needed: true`:
+
+```json
+{
+  "success": true,
+  "clarification_needed": true,
+  "question": "What style would you prefer?",
+  "options": ["Photorealistic", "Artistic", "Anime"],
+  "session_id": "session_abc123"
+}
+```
+
+## Behavior Mode Impact
+
+- **`agent` mode** — Agent makes assumptions when possible, asks only when truly ambiguous
+- **`ask` mode** — Agent always asks before executing
+- **`plan` mode** — Agent shows plan and asks for approval

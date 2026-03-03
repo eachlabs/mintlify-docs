@@ -1,0 +1,122 @@
+---
+title: "Quickstart"
+description: "Create and run your first workflow in minutes."
+---
+
+## 1. Create a Workflow
+
+Create a two-step workflow that generates text and then creates an image from it:
+
+```bash
+curl -X POST https://workflows.eachlabs.run/api/v1/workflows \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: YOUR_API_KEY" \
+  -d '{
+    "name": "Text to Image Generator",
+    "description": "Generates images from text prompts using AI models",
+    "categories": ["image-generation"],
+    "definition": {
+      "version": "v1",
+      "input_schema": {
+        "type": "object",
+        "required": ["prompt"],
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "description": "Text prompt for generation"
+          }
+        }
+      },
+      "steps": [
+        {
+          "step_id": "generate_text",
+          "type": "model",
+          "model": "openai-chatgpt-5",
+          "params": {
+            "system_prompt": "You are a creative image prompt writer",
+            "user_prompt": "{{inputs.prompt}}"
+          }
+        },
+        {
+          "step_id": "generate_image",
+          "type": "model",
+          "model": "flux-1-1-pro",
+          "params": {
+            "prompt": "{{generate_text.output}}"
+          }
+        }
+      ]
+    }
+  }'
+```
+
+Response:
+
+```json
+{
+  "workflow_id": "50741f40-8621-4d46-8a91-dff4d873be98",
+  "slug": "text-to-image-generator",
+  "name": "Text to Image Generator",
+  "latest_version_id": "v1",
+  "status": "active"
+}
+```
+
+## 2. Trigger the Workflow
+
+```bash
+curl -X POST https://workflows.eachlabs.run/api/v1/50741f40-8621-4d46-8a91-dff4d873be98/trigger \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: YOUR_API_KEY" \
+  -d '{
+    "inputs": {
+      "prompt": "A majestic mountain landscape at golden hour"
+    }
+  }'
+```
+
+Response:
+
+```json
+{
+  "execution_id": "e2dba2bb-bc1d-4651-b6bf-fbbbebdee104",
+  "status": "queued",
+  "started_at": "2025-12-03T10:21:09Z"
+}
+```
+
+## 3. Check Execution Status
+
+```bash
+curl https://workflows.eachlabs.run/api/v1/executions/e2dba2bb-bc1d-4651-b6bf-fbbbebdee104 \
+  -H "X-API-Key: YOUR_API_KEY"
+```
+
+Response (completed):
+
+```json
+{
+  "execution_id": "e2dba2bb-bc1d-4651-b6bf-fbbbebdee104",
+  "workflow_id": "50741f40-8621-4d46-8a91-dff4d873be98",
+  "status": "completed",
+  "output": "https://storage.googleapis.com/uploads/image.png",
+  "step_outputs": {
+    "generate_text": {
+      "step_id": "generate_text",
+      "status": "completed",
+      "output": "A breathtaking panoramic view of..."
+    },
+    "generate_image": {
+      "step_id": "generate_image",
+      "status": "completed",
+      "output": "https://storage.googleapis.com/uploads/image.png"
+    }
+  }
+}
+```
+
+## Next Steps
+
+- Learn about [workflow structure](/workflows/concepts/workflow-structure) and step types
+- Add [fallback models](/workflows/concepts/fallback-configuration) for resilience
+- Use [webhooks](/workflows/webhooks) for async notifications

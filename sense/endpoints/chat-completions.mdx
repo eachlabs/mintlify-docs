@@ -1,0 +1,161 @@
+---
+title: "Chat Completions"
+description: "OpenAI-compatible chat completions endpoint — the primary interface for all each::sense interactions."
+---
+
+## Endpoint
+
+```
+POST https://eachsense-agent.core.eachlabs.run/v1/chat/completions
+```
+
+## Request Body
+
+```typescript
+interface ChatCompletionRequest {
+  // Required
+  messages: Array<{
+    role: "user" | "assistant" | "system";
+    content: string;
+  }>;
+
+  // OpenAI compatible
+  model?: string;              // Default: "eachsense/beta"
+  stream?: boolean;            // Default: true
+
+  // each::labs extensions
+  session_id?: string;         // Conversation continuity
+  mode?: "max" | "eco";        // Quality mode (default: "max")
+  behavior?: "agent" | "plan" | "ask";  // Behavior mode
+  image_urls?: string[];       // Image inputs (max 4)
+  workflow_id?: string;        // For workflow operations
+  version_id?: string;         // Workflow version
+  web_search?: boolean;        // Enable web search (default: true)
+  enable_safety_checker?: boolean;  // NSFW filter (default: true)
+}
+```
+
+### Parameters
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `messages` | array | Yes | — | OpenAI-compatible message array |
+| `model` | string | No | `"eachsense/beta"` | Model identifier |
+| `stream` | boolean | No | `true` | Enable SSE streaming |
+| `session_id` | string | No | — | Session ID for conversation continuity |
+| `mode` | string | No | `"max"` | Quality mode: `"max"` or `"eco"` |
+| `behavior` | string | No | `"agent"` | `"agent"`, `"plan"`, or `"ask"` |
+| `image_urls` | string[] | No | — | Image URLs for analysis/editing (max 4) |
+| `workflow_id` | string | No | — | Target workflow for execution |
+| `version_id` | string | No | — | Workflow version |
+| `web_search` | boolean | No | `true` | Enable web search capability |
+| `enable_safety_checker` | boolean | No | `true` | NSFW content filter |
+
+## Code Examples
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://eachsense-agent.core.eachlabs.run/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: YOUR_API_KEY" \
+  -d '{
+    "messages": [{"role": "user", "content": "Generate a sunset over mountains"}],
+    "stream": true,
+    "session_id": "my-session",
+    "mode": "max"
+  }'
+```
+
+```python Python
+from openai import OpenAI
+
+client = OpenAI(
+    api_key="YOUR_API_KEY",
+    base_url="https://eachsense-agent.core.eachlabs.run/v1"
+)
+
+response = client.chat.completions.create(
+    model="eachsense/beta",
+    messages=[{"role": "user", "content": "Generate a sunset over mountains"}],
+    stream=False
+)
+
+print(response.choices[0].message.content)
+```
+
+```javascript JavaScript
+import OpenAI from "openai";
+
+const client = new OpenAI({
+  apiKey: "YOUR_API_KEY",
+  baseURL: "https://eachsense-agent.core.eachlabs.run/v1",
+});
+
+const response = await client.chat.completions.create({
+  model: "eachsense/beta",
+  messages: [{ role: "user", content: "Generate a sunset over mountains" }],
+  stream: false,
+});
+
+console.log(response.choices[0].message.content);
+```
+</CodeGroup>
+
+## Response (Non-Streaming)
+
+```json
+{
+  "id": "chatcmpl-abc123",
+  "object": "chat.completion",
+  "created": 1708345678,
+  "model": "eachsense/beta",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "Here's your generated image of a sunset over mountains!"
+      },
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 15,
+    "completion_tokens": 25,
+    "total_tokens": 40
+  },
+  "generations": ["https://storage.eachlabs.ai/xxx.png"],
+  "task_id": "task_abc123",
+  "session_id": "my-session"
+}
+```
+
+### Extended Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `generations` | string[] | URLs of generated media |
+| `task_id` | string | Unique task identifier |
+| `session_id` | string | Session ID for continuity |
+| `workflow_id` | string | Created/used workflow ID |
+
+## Response (Streaming)
+
+See [Streaming](/sense/streaming/overview) for the full SSE streaming format with 18 event types.
+
+```
+data: {"id":"chatcmpl-xxx","object":"chat.completion.chunk","model":"eachsense/beta","choices":[{"index":0,"delta":{"content":"I'll generate..."},"finish_reason":null}],"eachlabs":{"type":"text_response"}}
+
+data: {"id":"chatcmpl-xxx","object":"chat.completion.chunk","model":"eachsense/beta","choices":[{"index":0,"delta":{},"finish_reason":"stop"}],"eachlabs":{"type":"generation_response","url":"https://..."}}
+
+data: [DONE]
+```
+
+## Error Responses
+
+| Status | Body | Description |
+|--------|------|-------------|
+| `401` | `{"detail": "API key is required."}` | Missing API key |
+| `401` | `{"detail": "Invalid API key."}` | Invalid API key |
+| `422` | `{"detail": [{"loc": ["body","messages"], "msg": "field required"}]}` | Missing messages |
+| `429` | `{"detail": "Rate limit exceeded."}` | Rate limited |

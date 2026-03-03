@@ -1,0 +1,101 @@
+---
+title: "Get Webhook"
+description: "Retrieve webhook details and delivery attempts by execution ID."
+---
+
+## Endpoint
+
+```
+GET https://api.eachlabs.ai/v1/webhooks/{execution_id}
+```
+
+## Path Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `execution_id` | string | Yes | Execution ID for tracking the webhook |
+
+## Code Examples
+
+<CodeGroup>
+```bash cURL
+curl https://api.eachlabs.ai/v1/webhooks/abc123-def456-ghi789 \
+  -H "X-API-Key: YOUR_API_KEY"
+```
+
+```python Python
+import requests
+
+response = requests.get(
+    "https://api.eachlabs.ai/v1/webhooks/abc123-def456-ghi789",
+    headers={"X-API-Key": "YOUR_API_KEY"}
+)
+
+webhook = response.json()
+print(f"URL: {webhook['url']}")
+for attempt in webhook.get("attempts", []):
+    print(f"  {attempt['status']} — {attempt['created_at']}")
+```
+
+```javascript JavaScript
+const response = await fetch(
+  "https://api.eachlabs.ai/v1/webhooks/abc123-def456-ghi789",
+  { headers: { "X-API-Key": "YOUR_API_KEY" } }
+);
+const webhook = await response.json();
+
+console.log(`URL: ${webhook.url}`);
+webhook.attempts?.forEach((a) => {
+  console.log(`  ${a.status} — ${a.created_at}`);
+});
+```
+</CodeGroup>
+
+## Response
+
+```json
+{
+  "execution_id": "abc123-def456-ghi789",
+  "url": "https://api.example.com/webhook",
+  "request": "{\"event\":\"prediction.completed\"}",
+  "headers": {
+    "Content-Type": "application/json"
+  },
+  "source": "api-gateway",
+  "created_at": "2025-12-14T10:30:00Z",
+  "attempts": [
+    {
+      "status": "FAILED",
+      "status_code": 500,
+      "response": "{\"error\":\"internal error\"}",
+      "error_message": null,
+      "created_at": "2025-12-14T10:30:05Z"
+    },
+    {
+      "status": "SUCCESS",
+      "status_code": 200,
+      "response": "{\"received\":true}",
+      "error_message": null,
+      "created_at": "2025-12-14T10:31:05Z"
+    }
+  ]
+}
+```
+
+### Attempt Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `status` | string | `PENDING`, `SUCCESS`, or `FAILED` |
+| `status_code` | integer \| null | HTTP status from your endpoint |
+| `response` | string \| null | Response body from your endpoint |
+| `error_message` | string \| null | Error details if delivery failed |
+| `created_at` | string | When the attempt was made |
+
+## Error Responses
+
+| Status | Body | Description |
+|--------|------|-------------|
+| `400` | `{"error": "invalid execution_id"}` | Invalid execution ID format |
+| `404` | `{"error": "webhook not found"}` | No webhook found for this execution |
+| `500` | `{"error": "Internal server error"}` | Server error |

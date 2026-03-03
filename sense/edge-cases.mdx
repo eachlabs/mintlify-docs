@@ -1,0 +1,152 @@
+---
+title: "Edge Cases"
+description: "Error handling, timeouts, rate limits, and special scenarios."
+---
+
+## Authentication Errors
+
+```json
+// Missing API key (401)
+{"detail": "API key is required."}
+
+// Invalid API key (401)
+{"detail": "Invalid API key. Please check your API key and try again."}
+```
+
+## Validation Errors
+
+```json
+// Missing messages (422)
+{"detail": [{"loc": ["body","messages"], "msg": "field required"}]}
+
+// Invalid image URL
+{"type": "error", "message": "Invalid image URL: Unable to fetch image from provided URL"}
+
+// Too many images
+{"type": "error", "message": "Maximum 4 images allowed per request"}
+```
+
+## Model Errors
+
+```json
+// Model not found
+{"type": "error", "message": "Model not found: invalid-model-name", "suggestion": "Did you mean 'nano-banana-pro'?"}
+
+// Model unavailable
+{"type": "error", "message": "Model temporarily unavailable: kling-3-0", "alternatives": ["kling-2-1"]}
+
+// Generation failed
+{"type": "error", "message": "Failed to generate image: Model returned error", "details": {"error_code": "CONTENT_FILTER"}}
+```
+
+## Timeouts
+
+| Operation | Timeout |
+|-----------|---------|
+| HTTP connection | 30 seconds |
+| HTTP request | 300 seconds |
+| Streaming connection | 15 minutes idle |
+| Image generation | 10–60 seconds |
+| Video generation | 60–600 seconds |
+| Workflow execution | 15 minutes |
+
+```json
+{
+  "type": "error",
+  "message": "Model execution timed out after 300 seconds",
+  "error_code": "TIMEOUT",
+  "suggestion": "For long-running operations, check execution status with the execution_id"
+}
+```
+
+## Rate Limiting
+
+```json
+// Rate limit error (429)
+{
+  "detail": "Rate limit exceeded.",
+  "error_code": "RATE_LIMITED",
+  "retry_after": 30
+}
+```
+
+### Limits by Plan
+
+| Plan | Requests/min | Concurrent |
+|------|-------------|------------|
+| Free | 10 | 2 |
+| Pro | 60 | 10 |
+| Enterprise | 300 | 50 |
+
+### Rate Limit Headers
+
+```
+X-RateLimit-Limit: 60
+X-RateLimit-Remaining: 45
+X-RateLimit-Reset: 1708345678
+```
+
+## Insufficient Balance
+
+```json
+{
+  "type": "error",
+  "message": "Insufficient balance.",
+  "error_code": "INSUFFICIENT_BALANCE",
+  "details": {
+    "current_balance": 0.10,
+    "required_estimate": 0.50,
+    "top_up_url": "https://eachlabs.ai/billing"
+  }
+}
+```
+
+## NSFW Content Filtering
+
+By default, NSFW content is filtered. To disable:
+
+```json
+{
+  "messages": [{"role": "user", "content": "..."}],
+  "enable_safety_checker": false
+}
+```
+
+<Warning>
+  Only certain models support NSFW generation (e.g., Wan, Seedream). Other models ignore `enable_safety_checker: false`.
+</Warning>
+
+## Input Validation Limits
+
+| Input | Constraint |
+|-------|-----------|
+| Images | Max 4 per request |
+| Image formats | JPEG, PNG, WebP, GIF |
+| Image size | Max 20MB, 64–8192px |
+| Video formats | MP4, WebM, MOV |
+| Video size | Max 500MB, 10 min |
+| Audio formats | MP3, WAV, M4A, OGG |
+| Audio size | Max 50MB, 5 min |
+| Prompt length | Max 10,000 characters |
+
+## Session Edge Cases
+
+```json
+// Session busy (concurrent request)
+{"type": "error", "message": "Session is currently processing another request", "error_code": "SESSION_BUSY"}
+
+// Session memory limit
+{"type": "error", "message": "Session memory limit reached. Maximum 50 messages per session."}
+```
+
+## Streaming Error Handling
+
+Errors during streaming are emitted as events before `[DONE]`:
+
+```
+data: {"type":"status","message":"Generating image..."}
+data: {"type":"error","message":"Generation failed: Insufficient balance"}
+data: [DONE]
+```
+
+The stream always terminates after an error event.

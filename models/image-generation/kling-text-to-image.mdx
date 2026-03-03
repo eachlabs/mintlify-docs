@@ -1,0 +1,121 @@
+---
+title: "Kling Text-to-Image"
+description: "Generate versatile images with negative prompt support and strong aesthetic control."
+---
+
+## Model Overview
+
+| Property | Details |
+|----------|---------|
+| **Slug** | `kling-text-to-image` |
+| **Version** | `1.0.0` |
+| **Category** | Image Generation |
+| **Output Type** | Image (URL) |
+| **Speed** | Fast |
+| **Best For** | Versatile styles, Asian aesthetics |
+
+## Input Parameters
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `prompt` | string | Yes | - | Text description of the image to generate |
+| `negative_prompt` | string | No | - | What to avoid in the generated image |
+| `aspect_ratio` | string | No | `1:1` | Output aspect ratio |
+| `num_outputs` | integer | No | `1` | Number of images to generate |
+| `seed` | integer | No | random | Random seed for reproducibility |
+
+## Code Examples
+
+### each::api
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST https://api.eachlabs.ai/v1/prediction \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: $EACHLABS_API_KEY" \
+  -d '{
+    "model": "kling-text-to-image",
+    "version": "1.0.0",
+    "input": {
+      "prompt": "A cinematic landscape at golden hour",
+      "aspect_ratio": "16:9"
+    }
+  }'
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    "https://api.eachlabs.ai/v1/prediction",
+    headers={"X-API-Key": "YOUR_API_KEY"},
+    json={
+        "model": "kling-text-to-image",
+        "version": "1.0.0",
+        "input": {
+            "prompt": "A cinematic landscape at golden hour",
+            "aspect_ratio": "16:9"
+        }
+    }
+)
+prediction_id = response.json()["predictionID"]
+```
+
+```javascript JavaScript
+const response = await fetch("https://api.eachlabs.ai/v1/prediction", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "X-API-Key": "YOUR_API_KEY",
+  },
+  body: JSON.stringify({
+    model: "kling-text-to-image",
+    version: "1.0.0",
+    input: {
+      prompt: "A cinematic landscape at golden hour",
+      aspect_ratio: "16:9",
+    },
+  }),
+});
+const { predictionID } = await response.json();
+```
+
+</CodeGroup>
+
+### each::sense
+
+```python each::sense
+from openai import OpenAI
+
+client = OpenAI(
+    api_key="YOUR_API_KEY",
+    base_url="https://eachsense-agent.core.eachlabs.run/v1"
+)
+
+response = client.chat.completions.create(
+    model="eachsense/beta",
+    messages=[{"role": "user", "content": "Generate a cinematic landscape at golden hour using kling-text-to-image"}],
+)
+```
+
+## Tips
+
+- Supports negative prompts for fine control.
+- Strong at Asian art styles and aesthetics.
+- Good balance of speed and quality.
+
+## Related Models
+
+<CardGroup cols={2}>
+  <Card title="Flux 2 Pro" href="/models/image-generation/flux-2-pro">
+    General purpose image generation with balanced speed and quality.
+  </Card>
+  <Card title="Nano Banana Pro" href="/models/image-generation/nano-banana-pro">
+    Ultra-fast image generation for rapid prototyping.
+  </Card>
+</CardGroup>
+
+<Note>
+  Use `GET /v1/model?slug=kling-text-to-image` to retrieve the full model schema, including all available parameters and their constraints.
+</Note>

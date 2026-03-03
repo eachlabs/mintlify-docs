@@ -1,0 +1,334 @@
+---
+title: "JavaScript"
+description: "Use each::labs APIs with JavaScript/TypeScript via the OpenAI SDK or fetch."
+---
+
+## Installation
+
+```bash
+npm install openai
+```
+
+## Setup
+
+each::sense is OpenAI-compatible, so you can use the official OpenAI JS/TS SDK:
+
+```javascript
+import OpenAI from "openai";
+
+const client = new OpenAI({
+  apiKey: "YOUR_API_KEY",
+  baseURL: "https://eachsense-agent.core.eachlabs.run/v1",
+});
+```
+
+## Image Generation
+
+```javascript
+const response = await client.chat.completions.create({
+  model: "eachsense/beta",
+  messages: [
+    { role: "user", content: "Generate a professional headshot portrait" },
+  ],
+  stream: false,
+});
+
+console.log(response.choices[0].message.content);
+console.log("Generated:", response.generations);
+```
+
+## Streaming
+
+```javascript
+const stream = await client.chat.completions.create({
+  model: "eachsense/beta",
+  messages: [
+    { role: "user", content: "Generate a sunset landscape in oil painting style" },
+  ],
+  stream: true,
+});
+
+for await (const chunk of stream) {
+  const content = chunk.choices[0]?.delta?.content;
+  if (content) process.stdout.write(content);
+}
+```
+
+### Raw SSE Streaming
+
+For full control over event types, use `fetch` directly:
+
+```javascript
+async function streamGeneration(prompt, apiKey) {
+  const response = await fetch(
+    "https://eachsense-agent.core.eachlabs.run/v1/chat/completions",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-API-Key": apiKey,
+      },
+      body: JSON.stringify({
+        messages: [{ role: "user", content: prompt }],
+        stream: true,
+      }),
+    }
+  );
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split("\n");
+    buffer = lines.pop();
+
+    for (const line of lines) {
+      if (!line.startsWith("data: ")) continue;
+      const data = line.slice(6);
+      if (data === "[DONE]") return;
+
+      const event = JSON.parse(data);
+
+      switch (event.type) {
+        case "thinking_delta":
+          process.stdout.write(event.content);
+          break;
+        case "text_response":
+          console.log(event.content);
+          break;
+        case "generation_response":
+          console.log("Generated:", event.url);
+          break;
+        case "error":
+          console.error("Error:", event.message);
+          break;
+      }
+    }
+  }
+}
+
+await streamGeneration("Generate a cyberpunk cityscape", "YOUR_API_KEY");
+```
+
+## Multi-Turn Conversations
+
+```javascript
+const SESSION_ID = "my-project";
+const URL = "https://eachsense-agent.core.eachlabs.run/v1/chat/completions";
+const HEADERS = {
+  "Content-Type": "application/json",
+  "X-API-Key": "YOUR_API_KEY",
+};
+
+async function chat(message) {
+  const response = await fetch(URL, {
+    method: "POST",
+    headers: HEADERS,
+    body: JSON.stringify({
+      messages: [{ role: "user", content: message }],
+      session_id: SESSION_ID,
+      stream: false,
+    }),
+  });
+
+  const data = await response.json();
+  console.log(`Assistant: ${data.choices[0].message.content}`);
+  if (data.generations) {
+    console.log("Generated:", data.generations);
+  }
+  return data;
+}
+
+await chat("Generate a cyberpunk cityscape at night");
+await chat("Add more neon lights and flying cars");
+await chat("Now make it a 5-second video");
+```
+
+## Eco Mode
+
+Use eco mode for faster, cheaper generations during development:
+
+```javascript
+const response = await client.chat.completions.create({
+  model: "eachsense/beta",
+  messages: [{ role: "user", content: "Generate a quick test portrait" }],
+  stream: false,
+  mode: "eco",
+});
+```
+
+## each::api — Predictions
+
+For direct model access via each::api:
+
+```javascript
+const API_KEY = "YOUR_API_KEY";
+const BASE = "https://api.eachlabs.ai/v1";
+const headers = {
+  "Content-Type": "application/json",
+  "X-API-Key": API_KEY,
+};
+
+// Create a prediction
+const createRes = await fetch(`${BASE}/prediction`, {
+  method: "POST",
+  headers,
+  body: JSON.stringify({
+    model: "flux-pro/v1.1",
+    input: {
+      prompt: "A mountain landscape at sunset",
+      image_size: "landscape_16_9",
+    },
+    webhook_url: "https://your-server.com/webhook",
+  }),
+});
+let prediction = await createRes.json();
+console.log(`Prediction ID: ${prediction.id}`);
+
+// Poll for result
+while (!["completed", "failed"].includes(prediction.status)) {
+  await new Promise((r) => setTimeout(r, 2000));
+  const pollRes = await fetch(`${BASE}/prediction/${prediction.id}`, { headers });
+  prediction = await pollRes.json();
+}
+
+if (prediction.status === "completed") {
+  console.log("Output:", prediction.output);
+} else {
+  console.error("Failed:", prediction.error);
+}
+```
+
+## each::workflows — Trigger & Poll
+
+```javascript
+const API_KEY = "YOUR_API_KEY";
+const BASE = "https://workflows.eachlabs.run/api/v1";
+const headers = {
+  "Content-Type": "application/json",
+  "X-API-Key": API_KEY,
+};
+
+// Trigger a workflow
+const triggerRes = await fetch(`${BASE}/wf_abc123/trigger`, {
+  method: "POST",
+  headers,
+  body: JSON.stringify({
+    version_id: "v1",
+    input: {
+      prompt: "A professional headshot",
+      style: "photorealistic",
+    },
+  }),
+});
+const { execution_id } = await triggerRes.json();
+
+// Poll for completion
+while (true) {
+  const statusRes = await fetch(`${BASE}/executions/${execution_id}`, { headers });
+  const status = await statusRes.json();
+
+  if (status.status === "completed") {
+    console.log("Output:", status.output);
+    break;
+  } else if (status.status === "failed") {
+    console.error("Error:", status.error);
+    break;
+  }
+
+  await new Promise((r) => setTimeout(r, 3000));
+}
+```
+
+## Error Handling
+
+```javascript
+async function safeRequest(url, options) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 300_000);
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+
+    if (response.status === 401) {
+      throw new Error("Invalid API key");
+    }
+    if (response.status === 429) {
+      const { retry_after } = await response.json();
+      throw new Error(`Rate limited. Retry after ${retry_after ?? 30}s`);
+    }
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`API error ${response.status}: ${text}`);
+    }
+
+    return await response.json();
+  } catch (err) {
+    if (err.name === "AbortError") {
+      throw new Error("Request timed out after 300 seconds");
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+```
+
+## TypeScript Types
+
+```typescript
+interface ChatRequest {
+  messages: { role: "user" | "assistant"; content: string }[];
+  model?: string;
+  stream?: boolean;
+  session_id?: string;
+  image_urls?: string[];
+  mode?: "max" | "eco";
+  behavior?: "agent" | "plan" | "ask";
+  enable_safety_checker?: boolean;
+  workflow_id?: string;
+  version_id?: string;
+}
+
+interface ChatResponse {
+  success: boolean;
+  choices: {
+    index: number;
+    message: { role: string; content: string };
+    finish_reason: string;
+  }[];
+  generations?: string[];
+  model_used?: string;
+  session_id?: string;
+  clarification_needed?: boolean;
+  question?: string;
+  options?: string[];
+}
+
+interface StreamEvent {
+  type:
+    | "thinking_delta"
+    | "text_response"
+    | "generation_response"
+    | "status"
+    | "error"
+    | "clarification_needed"
+    | "workflow_created"
+    | "execution_started"
+    | "execution_progress"
+    | "execution_completed"
+    | "complete";
+  content?: string;
+  url?: string;
+  message?: string;
+  [key: string]: unknown;
+}
+```

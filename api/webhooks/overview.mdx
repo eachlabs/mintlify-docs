@@ -1,0 +1,60 @@
+---
+title: "Webhooks Overview"
+description: "Receive prediction results automatically via HTTP webhooks."
+---
+
+## What Are Webhooks?
+
+Instead of polling for prediction results, you can provide a `webhook_url` when creating a prediction. each::labs will POST the result to your URL when the prediction completes.
+
+<Note>
+  Currently, webhooks are only supported for Workflows V2. Support for other services is being expanded.
+</Note>
+
+## How It Works
+
+<Steps>
+  <Step title="Provide a webhook URL">
+    Include `webhook_url` (and optionally `webhook_secret`) when creating a prediction.
+  </Step>
+  <Step title="Prediction runs">
+    The model processes your input asynchronously.
+  </Step>
+  <Step title="Result delivered">
+    When complete, each::labs POSTs the result to your webhook URL.
+  </Step>
+</Steps>
+
+## Setting Up Webhooks
+
+```bash
+curl -X POST https://api.eachlabs.ai/v1/prediction \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: YOUR_API_KEY" \
+  -d '{
+    "model": "flux-1-1-pro",
+    "version": "1.0.0",
+    "input": {"prompt": "A mountain landscape"},
+    "webhook_url": "https://your-app.com/webhooks/prediction",
+    "webhook_secret": "whsec_your_secret_key"
+  }'
+```
+
+## Retry Behavior
+
+Failed webhook deliveries are automatically retried with exponential backoff. You can track delivery attempts using the [Get Webhook](/api/webhooks/get-webhook) endpoint.
+
+### Delivery Attempt Statuses
+
+| Status | Description |
+|--------|-------------|
+| `PENDING` | Delivery is queued |
+| `SUCCESS` | Delivered successfully (2xx response) |
+| `FAILED` | Delivery failed (timeout, non-2xx, or connection error) |
+
+## Webhook Endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/v1/webhooks` | [List all webhooks](/api/webhooks/list-webhooks) |
+| `GET` | `/v1/webhooks/{execution_id}` | [Get webhook details with delivery attempts](/api/webhooks/get-webhook) |

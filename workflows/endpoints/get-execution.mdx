@@ -1,0 +1,153 @@
+---
+title: "Get Execution"
+description: "Get the current status and output of a workflow execution."
+---
+
+## Endpoint
+
+```
+GET https://workflows.eachlabs.run/api/v1/executions/{executionID}
+```
+
+## Path Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `executionID` | string | Yes | Execution UUID |
+
+## Code Examples
+
+<CodeGroup>
+```bash cURL
+curl https://workflows.eachlabs.run/api/v1/executions/EXEC_ID \
+  -H "X-API-Key: YOUR_API_KEY"
+```
+
+```python Python
+import requests
+import time
+
+execution_id = "e2dba2bb-bc1d-4651-b6bf-fbbbebdee104"
+
+while True:
+    response = requests.get(
+        f"https://workflows.eachlabs.run/api/v1/executions/{execution_id}",
+        headers={"X-API-Key": "YOUR_API_KEY"}
+    )
+    data = response.json()
+
+    if data["status"] in ("completed", "failed", "cancelled"):
+        break
+
+    print(f"Status: {data['status']}...")
+    time.sleep(3)
+
+if data["status"] == "completed":
+    print(f"Output: {data['output']}")
+    for step_id, step in data["step_outputs"].items():
+        print(f"  {step_id}: {step['status']}")
+else:
+    print(f"Failed: {data.get('error_cause')}")
+```
+
+```javascript JavaScript
+async function waitForExecution(executionId) {
+  while (true) {
+    const response = await fetch(
+      `https://workflows.eachlabs.run/api/v1/executions/${executionId}`,
+      { headers: { "X-API-Key": "YOUR_API_KEY" } }
+    );
+    const data = await response.json();
+
+    if (["completed", "failed", "cancelled"].includes(data.status)) {
+      return data;
+    }
+
+    console.log(`Status: ${data.status}...`);
+    await new Promise((r) => setTimeout(r, 3000));
+  }
+}
+
+const result = await waitForExecution("EXEC_ID");
+console.log(`Output: ${result.output}`);
+```
+</CodeGroup>
+
+## Response
+
+```json
+{
+  "execution_id": "69ae8c7b-7500-4a45-b7c0-348b8cc2665b",
+  "workflow_id": "50741f40-8621-4d46-8a91-dff4d873be98",
+  "status": "completed",
+  "started_at": "2025-12-04T11:48:10Z",
+  "completed_at": "2025-12-04T11:50:53Z",
+  "inputs": {
+    "prompt": "A majestic mountain landscape"
+  },
+  "step_outputs": {
+    "step1": {
+      "step_id": "step1",
+      "status": "completed",
+      "started_at": "2025-12-04T11:48:10Z",
+      "completed_at": "2025-12-04T11:48:39Z",
+      "output": "A breathtaking panoramic view...",
+      "primary": "A breathtaking panoramic view...",
+      "metadata": {
+        "model": "openai-chatgpt-5",
+        "version": "0.0.1",
+        "params": {
+          "system_prompt": "You are a helpful assistant",
+          "user_prompt": "A majestic mountain landscape",
+          "max_output_tokens": 512
+        }
+      }
+    },
+    "step2": {
+      "step_id": "step2",
+      "status": "completed",
+      "started_at": "2025-12-04T11:48:39Z",
+      "completed_at": "2025-12-04T11:50:53Z",
+      "output": ["https://storage.googleapis.com/uploads/image1.png"],
+      "primary": "https://storage.googleapis.com/uploads/image1.png",
+      "metadata": {
+        "model": "flux-1-1-pro",
+        "version": "0.0.1"
+      }
+    }
+  },
+  "output": ["https://storage.googleapis.com/uploads/image1.png"]
+}
+```
+
+### Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `execution_id` | string | Execution UUID |
+| `workflow_id` | string | Workflow UUID |
+| `bulk_id` | string \| null | Bulk operation ID (if triggered via bulk-trigger) |
+| `status` | string | `running`, `completed`, `failed`, or `cancelled` |
+| `started_at` | string | Start timestamp |
+| `completed_at` | string \| null | Completion timestamp |
+| `inputs` | object | Input parameters used |
+| `step_outputs` | object | Map of step ID → StepOutput |
+| `output` | any \| null | Final workflow output (only when `completed`) |
+| `error` | string \| null | Error type (only when `failed`) |
+| `error_cause` | string \| null | Detailed error message (only when `failed`) |
+
+### Execution Statuses
+
+| Status | Description |
+|--------|-------------|
+| `running` | Workflow is executing |
+| `completed` | All steps finished successfully |
+| `failed` | A step encountered an error |
+| `cancelled` | Execution was cancelled |
+
+## Error Responses
+
+| Status | Body | Description |
+|--------|------|-------------|
+| `401` | `{"error": "Invalid or missing API key"}` | Authentication failure |
+| `404` | `{"error": "execution not found"}` | Invalid execution ID |

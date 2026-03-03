@@ -1,0 +1,87 @@
+---
+title: "Models Catalog"
+description: "Curated selection of production-ready AI models across image generation, video generation, image editing, and audio. Find the right model for your use case."
+---
+
+each::labs provides access to 500+ AI models. This catalog highlights our curated selection of top-performing models across key categories.
+
+<Note>
+This is a curated subset. For the full model list, call `GET /v1/models` or browse the [dashboard](https://eachlabs.ai).
+</Note>
+
+## Categories
+
+<CardGroup cols={2}>
+  <Card title="Image Generation" icon="image" href="/models/image-generation">
+    Text-to-image models. Photorealistic, artistic, and stylized image creation.
+  </Card>
+  <Card title="Video Generation" icon="video" href="/models/video-generation">
+    Text-to-video and image-to-video models. Cinematic, fast, and high-quality.
+  </Card>
+  <Card title="Image Editing" icon="wand-magic-sparkles" href="/models/image-editing">
+    Edit, fill, upscale, remove backgrounds, and swap faces in existing images.
+  </Card>
+  <Card title="Audio & Music" icon="music" href="/models/audio-music">
+    Text-to-speech, music generation, and audio synthesis.
+  </Card>
+</CardGroup>
+
+## Quick Recommendations
+
+| Use Case | Model Slug | Why |
+|----------|-----------|-----|
+| Best overall image generation | `flux-2-max` | Top quality, handles complex prompts |
+| Fast image generation | `flux-2-pro` | Great quality with faster speed |
+| Edit existing images with text | `flux-2-edit` | Instruction-based image editing |
+| Image with text/logo overlays | `flux-kontext-pro` | Excellent text rendering in images |
+| Google-quality images | `gemini-imagen-4` | Google's latest image model |
+| Best overall video | `veo-3` | Top quality text-to-video with audio |
+| Fast video generation | `veo3-1-fast` | Quick turnaround video generation |
+| Image to video | `kling-2-1-image-to-video` | Animate any image into video |
+| Background removal | `eachlabs-bg-remover-v1` | Fast, accurate background removal |
+| Image upscaling | `topaz-upscale-image` | AI-powered super resolution |
+| Text-to-speech | `elevenlabs-tts` | Natural, expressive voice synthesis |
+| Music generation | `mureka-generate-music` | Full song generation from text |
+
+## Model Aliases
+
+Some models are commonly referred to by shorter names. Use the exact slug when calling the API.
+
+| Common Name | API Slug |
+|------------|----------|
+| Flux Max | `flux-2-max` |
+| Flux Pro | `flux-2-pro` |
+| Flux Edit | `flux-2-edit` |
+| Flux Fill | `flux-fill-pro` |
+| Flux Kontext | `flux-kontext-pro` |
+| Imagen 4 | `gemini-imagen-4` |
+| Veo 3 | `veo-3` |
+| Kling 3 | `kling-3-0` |
+| Sora | `sora-2-pro` |
+| ElevenLabs | `elevenlabs-tts` |
+
+## How to Use a Model
+
+<Steps>
+  <Step title="Find the model slug">
+    Browse this catalog or call `GET /v1/models` to find the model slug you need.
+  </Step>
+  <Step title="Check input parameters">
+    Each model card lists required and optional parameters. You can also call `GET /v1/model?slug={slug}` for the full schema.
+  </Step>
+  <Step title="Run a prediction">
+    ```bash
+    curl -X POST https://api.eachlabs.ai/v1/prediction \
+      -H "X-API-Key: $EACHLABS_API_KEY" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "model": "MODEL_SLUG",
+        "version": "1.0.0",
+        "input": { ... }
+      }'
+    ```
+  </Step>
+  <Step title="Get results">
+    Poll `GET /v1/prediction/{id}` or configure a [webhook](/api/webhooks/overview) for async delivery.
+  </Step>
+</Steps>

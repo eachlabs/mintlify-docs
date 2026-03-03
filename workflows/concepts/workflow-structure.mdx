@@ -1,0 +1,572 @@
+---
+title: "Workflow Structure"
+description: "Understand how workflows are structured with steps, input schemas, and metadata."
+---
+
+## Anatomy of a Workflow
+
+A workflow consists of:
+- **Metadata** — Name, description, categories, tags, visibility
+- **Versions** — Each version contains a complete definition
+- **Definition** — Steps, input/output schema, retry config, and timeouts
+
+```json
+{
+  "name": "Text to Image Generator",
+  "description": "Generates images from text prompts",
+  "categories": ["image-generation"],
+  "tags": ["image", "ai"],
+  "visibility": "private",
+  "definition": {
+    "version": "v1",
+    "input_schema": { ... },
+    "output_schema": { ... },
+    "output_mapping": { ... },
+    "timeout_seconds": 900,
+    "retry": {
+      "max_attempts": 3,
+      "backoff_multiplier": 2,
+      "initial_delay_seconds": 1
+    },
+    "steps": [ ... ]
+  }
+}
+```
+
+### Definition Fields
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `version` | string | Yes | Definition version identifier |
+| `steps` | array | Yes | Array of steps to execute |
+| `input_schema` | object | No | JSON Schema defining workflow inputs |
+| `output_schema` | object | No | JSON Schema defining workflow outputs |
+| `output_mapping` | object | No | Map step outputs to workflow output |
+| `timeout_seconds` | integer | No | Maximum execution time for the entire workflow |
+| `retry` | object | No | Default retry configuration for all steps |
+
+---
+
+## Steps
+
+Each step defines an operation in the workflow. Steps can be model invocations, HTTP requests, Python functions, parallel branches, conditional logic, or pass-through operations.
+
+```json
+{
+  "id": "generate_image",
+  "type": "model",
+  "model": "flux-1-1-pro",
+  "params": {
+    "prompt": "{{inputs.prompt}}",
+    "aspect_ratio": "16:9"
+  }
+}
+```
+
+### Base Step Fields
+
+All step types share these fields:
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `id` | string | Yes | Unique identifier within the workflow |
+| `type` | string | Yes | Step type: `model`, `http`, `python`, `parallel`, `choice`, or `pass` |
+| `continue_on_error` | boolean | No | Continue workflow execution even if this step fails |
+| `timeout_seconds` | integer | No | Maximum execution time for this step |
+| `retry` | object | No | Step-level retry configuration |
+
+### Retry Configuration
+
+```json
+{
+  "retry": {
+    "max_attempts": 3,
+    "backoff_multiplier": 2,
+    "initial_delay_seconds": 1,
+    "retry_on": ["timeout", "server_error"]
+  }
+}
+```
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `max_attempts` | integer | — | Maximum number of retry attempts |
+| `backoff_multiplier` | number | — | Multiplier for exponential backoff between retries |
+| `initial_delay_seconds` | number | — | Initial delay before first retry |
+| `retry_on` | string[] | — | Error types that trigger retries |
+
+### Step Types
+
+| Type | Description |
+|------|-------------|
+| `model` | Invokes an AI model via each::api |
+| `http` | Makes an HTTP request to an external URL |
+| `python` | Executes a Python function |
+| `parallel` | Executes multiple branches concurrently |
+| `choice` | Evaluates a condition and routes to the matching branch |
+| `pass` | Passes input through without processing, optionally injecting a result |
+
+---
+
+## Model Steps
+
+Invoke an AI model from the each::api catalog.
+
+```json
+{
+  "id": "generate_image",
+  "type": "model",
+  "model": "flux-2-max",
+  "version": "1.0.0",
+  "params": {
+    "prompt": "{{inputs.prompt}}",
+    "aspect_ratio": "16:9"
+  },
+  "fallback": {
+    "enabled": true,
+    "model": "flux-2-pro",
+    "params": {
+      "prompt": "{{inputs.prompt}}"
+    }
+  }
+}
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `model` | string | Yes | AI model slug |
+| `version` | string | No | Model version |
+| `params` | object | Yes | Model-specific parameters (supports [template variables](/workflows/concepts/parameter-references)) |
+| `fallback` | object | No | [Fallback configuration](/workflows/concepts/fallback-configuration) |
+
+---
+
+## HTTP Steps
+
+Make HTTP requests to external APIs or services.
+
+```json
+{
+  "id": "call_api",
+  "type": "http",
+  "url": "https://api.example.com/process",
+  "method": "POST",
+  "headers": {
+    "Content-Type": "application/json"
+  },
+  "body": {
+    "data": "{{step1.primary}}"
+  },
+  "auth": {
+    "type": "bearer",
+    "token": "{{inputs.api_token}}"
+  },
+  "timeout": 30000
+}
+```
+
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `url` | string | Yes | — | Request URL (supports template variables) |
+| `method` | string | No | `GET` | HTTP method: `GET`, `POST`, `PUT`, `DELETE`, `PATCH` |
+| `headers` | object | No | — | Request headers |
+| `query_params` | object | No | — | URL query parameters |
+| `body` | any | No | — | Request body |
+| `auth` | object | No | — | Authentication configuration |
+| `timeout` | integer | No | — | Request timeout in milliseconds |
+| `follow_redirects` | boolean | No | — | Follow HTTP redirects |
+| `validate_ssl` | boolean | No | — | Validate SSL certificates |
+
+### Auth Configuration
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `type` | string | Auth type: `basic`, `bearer`, or `api_key` |
+| `username` | string | For `basic` auth |
+| `password` | string | For `basic` auth |
+| `token` | string | For `bearer` auth |
+
+---
+
+## Python Steps
+
+Execute Python code within the workflow.
+
+```json
+{
+  "id": "transform_data",
+  "type": "python",
+  "code": "result = inputs['text'].upper()",
+  "inputs": {
+    "text": "{{step1.primary}}"
+  }
+}
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `code` | string | Yes | Python code to execute |
+| `inputs` | object | No | Input variables available in the code (supports template variables) |
+
+---
+
+## Parallel Steps (Branching)
+
+Use `type: "parallel"` to run multiple branches concurrently. Each branch contains its own sequence of steps that execute independently.
+
+```json
+{
+  "id": "step1",
+  "type": "parallel",
+  "branches": [
+    {
+      "name": "Branch 1",
+      "steps": [
+        {
+          "id": "step1_branch_0",
+          "type": "model",
+          "model": "kling-v3-pro-image-to-video",
+          "params": {
+            "prompt": "A bee collecting nectar, wings vibrating",
+            "start_image_url": "https://example.com/bee.png",
+            "duration": "5",
+            "aspect_ratio": "16:9"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Branch 2",
+      "steps": [
+        {
+          "id": "step1_branch_1",
+          "type": "model",
+          "model": "nano-banana-2-edit",
+          "params": {
+            "prompt": "Transform into Cubism style",
+            "image_urls": ["https://example.com/scene.png"],
+            "aspect_ratio": "16:9"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Branch 3",
+      "steps": [
+        {
+          "id": "step1_branch_2",
+          "type": "model",
+          "model": "nano-banana-2-text-to-image",
+          "params": {
+            "prompt": "Ultra realistic photo of a modern summer store",
+            "aspect_ratio": "16:9"
+          }
+        }
+      ]
+    }
+  ]
+}
+```
+
+### Branch Fields
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `name` | string | No | Human-readable branch name |
+| `steps` | array | Yes | Sequence of steps to execute within this branch |
+
+All branches start simultaneously and execute independently. The parallel step completes when all branches finish.
+
+---
+
+## Choice Steps (Conditional Logic)
+
+Use `type: "choice"` to route execution based on a condition. The workflow evaluates the condition and executes either the `condition_met_branch` or the `default_branch`.
+
+```json
+{
+  "id": "step2",
+  "type": "choice",
+  "condition": {
+    "expression": "$.step1.primary",
+    "operator": "string_matches",
+    "value": ".mp4"
+  },
+  "condition_met_branch": {
+    "name": "condition_met",
+    "step_id": "step2_condition_met",
+    "steps": [
+      {
+        "id": "step2_branch_0",
+        "type": "model",
+        "model": "topaz-upscale-video",
+        "params": {
+          "video": "{{step1.primary}}",
+          "scale": 2
+        }
+      }
+    ]
+  },
+  "default_branch": {
+    "name": "default",
+    "step_id": "step2_default",
+    "steps": [
+      {
+        "id": "step2_default",
+        "type": "model",
+        "model": "topaz-upscale-image",
+        "params": {
+          "image_url": "{{step1.primary}}",
+          "scale": 2
+        }
+      }
+    ]
+  }
+}
+```
+
+### Condition Types
+
+Conditions can be **simple** (single comparison) or **logical** (combining multiple conditions).
+
+#### Simple Condition
+
+Compares a single expression against a value:
+
+```json
+{
+  "expression": "$.step1.primary",
+  "operator": "string_matches",
+  "value": ".mp4"
+}
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `expression` | string | Yes | Value to evaluate using `$` reference syntax (e.g., `$.step1.primary`, `$.inputs.email`) |
+| `operator` | string | Yes | Comparison operator (see table below) |
+| `value` | any | Yes | Value to compare against |
+
+#### Logical Conditions
+
+Combine multiple simple conditions using `and`, `or`, or `not`:
+
+<CodeGroup>
+
+```json And (all must be true)
+{
+  "and": [
+    {"expression": "$.step1.primary", "operator": "string_matches", "value": ".png"},
+    {"expression": "$.inputs.upscale", "operator": "equals", "value": true}
+  ]
+}
+```
+
+```json Or (any must be true)
+{
+  "or": [
+    {"expression": "$.step1.primary", "operator": "string_matches", "value": ".mp4"},
+    {"expression": "$.step1.primary", "operator": "string_matches", "value": ".webm"}
+  ]
+}
+```
+
+```json Not (negate)
+{
+  "not": {
+    "expression": "$.step1.primary",
+    "operator": "is_null"
+  }
+}
+```
+
+</CodeGroup>
+
+### Condition Operators
+
+#### Comparison Operators
+
+| Operator | Description | Example |
+|----------|-------------|---------|
+| `equals` | Equals comparison (auto-detects type: boolean, numeric, or string) | `$.inputs.count` equals `5` |
+| `not_equals` | Not equals comparison (auto-detects type) | `$.inputs.format` not equals `"raw"` |
+| `greater_than` | Numeric greater than | `$.step1.output.score` greater than `0.8` |
+| `less_than` | Numeric less than | `$.step1.output.score` less than `0.5` |
+| `greater_than_or_equal` | Numeric greater than or equal | `$.inputs.count` >= `1` |
+| `less_than_or_equal` | Numeric less than or equal | `$.inputs.count` <= `10` |
+
+#### String Operators
+
+| Operator | Description | Example |
+|----------|-------------|---------|
+| `string_equals` | Explicit string equality | `$.inputs.format` string equals `"png"` |
+| `string_matches` | String pattern matching (contains) | `$.step1.primary` matches `".mp4"` |
+
+#### Array Operators
+
+| Operator | Description | Example |
+|----------|-------------|---------|
+| `in` | Value is in array | `$.inputs.format` in `["png", "jpg", "webp"]` |
+| `not_in` | Value is not in array | `$.inputs.format` not in `["gif", "bmp"]` |
+
+#### Existence Operators
+
+| Operator | Description | Example |
+|----------|-------------|---------|
+| `exists` | Field exists and is present | `$.step1.output.url` exists |
+| `not_exists` | Field does not exist | `$.step1.output.error` not exists |
+| `is_null` | Field is null | `$.step1.primary` is null |
+| `is_not_null` | Field is not null | `$.step1.primary` is not null |
+
+<Note>
+Existence operators (`exists`, `not_exists`, `is_null`, `is_not_null`) do not require a `value` field in the condition.
+</Note>
+
+### Choice Branch Fields
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `name` | string | Yes | Branch identifier (`condition_met` or `default`) |
+| `step_id` | string | Yes | Unique ID for the branch |
+| `steps` | array | Yes | Steps to execute in this branch |
+
+---
+
+## Pass Steps
+
+A pass-through step that does no processing. Useful for injecting static values or as a placeholder.
+
+```json
+{
+  "id": "static_config",
+  "type": "pass",
+  "result": {
+    "style": "cinematic",
+    "quality": "high"
+  }
+}
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `result` | any | No | Static value to output |
+| `result_path` | string | No | Path to place the result in the output |
+
+---
+
+## Input Schema
+
+Define what inputs your workflow accepts using JSON Schema:
+
+```json
+{
+  "input_schema": {
+    "type": "object",
+    "required": ["prompt"],
+    "properties": {
+      "prompt": {
+        "type": "string",
+        "description": "Text prompt for generation"
+      },
+      "style": {
+        "type": "string",
+        "enum": ["realistic", "artistic", "anime"],
+        "default": "realistic"
+      },
+      "num_images": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 4,
+        "default": 1
+      }
+    }
+  }
+}
+```
+
+## Execution Flow
+
+Steps execute sequentially by default. Each step's output is available to subsequent steps via [parameter references](/workflows/concepts/parameter-references). Parallel and choice steps enable branching and conditional logic within the flow.
+
+```
+Sequential:    inputs → step1 → step2 → step3 → output
+
+Parallel:      inputs → ┬─ Branch 1 ─┐
+                        ├─ Branch 2 ─┤→ next step
+                        └─ Branch 3 ─┘
+
+Conditional:   inputs → step1 → choice ─┬─ condition met → step A
+                                         └─ default       → step B
+```
+
+## Step Outputs
+
+Each completed step produces a `StepOutput`:
+
+```json
+{
+  "step_id": "generate_image",
+  "kind": "model",
+  "status": "completed",
+  "started_at": "2025-01-15T10:00:00Z",
+  "completed_at": "2025-01-15T10:00:12Z",
+  "output": ["https://storage.example.com/image1.png"],
+  "primary": "https://storage.example.com/image1.png",
+  "metadata": {
+    "model": "flux-1-1-pro",
+    "version": "0.0.1",
+    "prediction_id": "pred-123",
+    "elapsed_seconds": 12.5,
+    "params": { ... }
+  }
+}
+```
+
+| Field | Description |
+|-------|-------------|
+| `kind` | Step type: `model`, `http`, `python`, `parallel`, `choice`, `pass` |
+| `status` | Execution status: `running`, `completed`, `failed`, `cancelled`, `queued`, `skipped` |
+| `output` | Full step output (string, array, or object) |
+| `primary` | First/main result for quick access |
+| `metadata` | Step configuration and runtime info |
+| `error` | Error message if the step failed |
+| `error_cause` | Detailed error cause |
+
+### Choice Step Output
+
+For choice steps, the output includes which branch was selected:
+
+```json
+{
+  "step_id": "step2",
+  "kind": "choice",
+  "status": "completed",
+  "selected": "condition_met",
+  "metadata": {
+    "choice_branch_selected": "condition_met",
+    "branch_name": "condition_met",
+    "choice_step_id": "step2_condition_met"
+  }
+}
+```
+
+### Fallback Output
+
+When a fallback is triggered, a separate step output appears with a `_fallback` suffix:
+
+```json
+{
+  "step_id": "step1_fallback",
+  "status": "completed",
+  "fallback": {
+    "fallback_from_step": "step1",
+    "reason": "primary_failed"
+  },
+  "metadata": {
+    "fallback_used": true,
+    "primary_error": "Model timeout"
+  }
+}
+```
+
+Fallback reasons: `primary_failed` (primary step failed, fallback executed) or `not_triggered` (primary succeeded, fallback skipped).

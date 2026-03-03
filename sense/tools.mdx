@@ -1,0 +1,174 @@
+---
+title: "Tools"
+description: "Reference for all tools available to the each::sense AI agent."
+---
+
+## Overview
+
+The agent uses tools to perform actions. Tools are either **non-terminal** (results feed back to the agent) or **terminal** (execution completes).
+
+## Tool Categories
+
+| Category | Tools | Type |
+|----------|-------|------|
+| Search | `search_models`, `get_model_details`, `web_search` | Non-terminal |
+| Analysis | `vision_preprocessor` | Non-terminal |
+| Execution | `execute_model`, `generate_text` | Terminal |
+| Workflow | `create_workflow`, `trigger_workflow`, `build_workflow`, `check_execution` | Mixed |
+| Interaction | `ask_clarification` | Terminal |
+
+## Search Tools
+
+### `search_models`
+
+Find AI models matching a use case.
+
+```json
+// Input
+{ "use_case": "generate portrait photo from text" }
+
+// Output
+{
+  "content": "Found 5 models for portrait generation...",
+  "metadata": {
+    "tool": "search_models",
+    "count": 5,
+    "models": [
+      { "name": "nano-banana-pro", "category": "text-to-image", "score": 0.95 },
+      { "name": "flux-2-max", "category": "text-to-image", "score": 0.92 }
+    ]
+  }
+}
+```
+
+### `get_model_details`
+
+Get input schema for a specific model.
+
+```json
+// Input
+{ "model_name": "nano-banana-pro" }
+
+// Output
+{
+  "content": "nano-banana-pro - Text to Image Generation",
+  "metadata": {
+    "tool": "get_model_details",
+    "input_schema": {
+      "prompt": { "type": "string", "required": true },
+      "aspect_ratio": { "type": "string", "enum": ["1:1", "16:9", "9:16"] },
+      "negative_prompt": { "type": "string" }
+    }
+  }
+}
+```
+
+### `web_search`
+
+Search the web for information.
+
+```json
+// Input
+{ "query": "latest AI image generation techniques", "recency": "month" }
+```
+
+## Execution Tools
+
+### `execute_model`
+
+Run an AI model with specified parameters. **Terminal** — returns result directly.
+
+```json
+// Input
+{
+  "model_name": "nano-banana-pro",
+  "inputs": {
+    "prompt": "Professional headshot portrait",
+    "aspect_ratio": "1:1"
+  }
+}
+
+// Output
+{
+  "content": "Image generated successfully",
+  "metadata": {
+    "tool": "execute_model",
+    "model": "nano-banana-pro",
+    "generations": ["https://storage.eachlabs.ai/portrait.png"],
+    "execution_time_ms": 12500
+  }
+}
+```
+
+### `vision_preprocessor`
+
+Analyze image content before processing.
+
+```json
+// Input
+{ "image_urls": ["https://example.com/photo.jpg"] }
+
+// Output
+{
+  "content": "Image analysis: Portrait photo, female, natural lighting...",
+  "metadata": { "tool": "vision_preprocessor", "detected_objects": [...] }
+}
+```
+
+## Workflow Tools
+
+### `create_workflow`
+
+Create a new multi-step workflow.
+
+### `trigger_workflow`
+
+Start execution of a workflow. **Non-terminal** — agent monitors execution.
+
+### `build_workflow`
+
+Build or update a workflow definition. **Terminal**.
+
+### `check_execution`
+
+Check status and results of a workflow execution. **Terminal**.
+
+## Interaction Tools
+
+### `ask_clarification`
+
+Ask the user for more information. **Terminal** — yields a `clarification_needed` event and waits.
+
+```json
+// Input
+{
+  "question": "What style would you like?",
+  "options": ["Photorealistic", "Artistic", "Anime", "Cinematic"],
+  "context": "Different styles produce very different results."
+}
+```
+
+## Tool Chaining Examples
+
+### Image Generation
+```
+1. search_models("portrait generation")     → finds nano-banana-pro
+2. get_model_details("nano-banana-pro")     → gets input schema
+3. execute_model("nano-banana-pro", {...})  → generates image [TERMINAL]
+```
+
+### Image Analysis + Edit
+```
+1. vision_preprocessor([image_url])         → analyzes image
+2. search_models("remove background")       → finds model
+3. execute_model("eachlabs-bg-remover-v1")  → removes bg [TERMINAL]
+```
+
+### Workflow Creation + Execution
+```
+1. search_models("portrait generation")     → finds models
+2. search_models("image to video")          → finds more models
+3. create_workflow({...})                   → creates workflow
+4. trigger_workflow(...)                    → starts execution
+5. check_execution(...)                    → monitors progress [TERMINAL]
+```

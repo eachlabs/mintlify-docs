@@ -1,0 +1,128 @@
+---
+title: "Quickstart"
+description: "Get started with each::sense in minutes using the OpenAI SDK."
+---
+
+## 1. Install the OpenAI SDK
+
+<CodeGroup>
+```bash Python
+pip install openai
+```
+
+```bash JavaScript
+npm install openai
+```
+</CodeGroup>
+
+## 2. Generate Your First Image
+
+<CodeGroup>
+```python Python
+from openai import OpenAI
+
+client = OpenAI(
+    api_key="YOUR_EACHLABS_API_KEY",
+    base_url="https://eachsense-agent.core.eachlabs.run/v1"
+)
+
+response = client.chat.completions.create(
+    model="eachsense/beta",
+    messages=[{
+        "role": "user",
+        "content": "Generate a cyberpunk cityscape at night with neon lights"
+    }],
+    stream=False
+)
+
+print(response.choices[0].message.content)
+# Access generated media URLs
+print(response.generations)
+```
+
+```javascript JavaScript
+import OpenAI from "openai";
+
+const client = new OpenAI({
+  apiKey: "YOUR_EACHLABS_API_KEY",
+  baseURL: "https://eachsense-agent.core.eachlabs.run/v1",
+});
+
+const response = await client.chat.completions.create({
+  model: "eachsense/beta",
+  messages: [
+    {
+      role: "user",
+      content: "Generate a cyberpunk cityscape at night with neon lights",
+    },
+  ],
+  stream: false,
+});
+
+console.log(response.choices[0].message.content);
+console.log(response.generations);
+```
+
+```bash cURL
+curl -X POST https://eachsense-agent.core.eachlabs.run/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: YOUR_EACHLABS_API_KEY" \
+  -d '{
+    "messages": [{"role": "user", "content": "Generate a cyberpunk cityscape at night"}],
+    "stream": false
+  }'
+```
+</CodeGroup>
+
+## 3. Stream Responses
+
+Enable streaming to get real-time updates:
+
+```python
+stream = client.chat.completions.create(
+    model="eachsense/beta",
+    messages=[{"role": "user", "content": "Create a 5-second video of ocean waves"}],
+    stream=True
+)
+
+for chunk in stream:
+    if chunk.choices[0].delta.content:
+        print(chunk.choices[0].delta.content, end="", flush=True)
+```
+
+## 4. Multi-Turn Conversation
+
+Use `session_id` to maintain context:
+
+```python
+import requests
+import json
+
+SESSION_ID = "my-first-session"
+HEADERS = {
+    "Content-Type": "application/json",
+    "X-API-Key": "YOUR_API_KEY"
+}
+URL = "https://eachsense-agent.core.eachlabs.run/v1/chat/completions"
+
+# Turn 1: Generate an image
+requests.post(URL, headers=HEADERS, json={
+    "messages": [{"role": "user", "content": "Generate a portrait photo"}],
+    "session_id": SESSION_ID,
+    "stream": False
+})
+
+# Turn 2: Modify it (agent remembers the previous generation)
+requests.post(URL, headers=HEADERS, json={
+    "messages": [{"role": "user", "content": "Now make it anime style"}],
+    "session_id": SESSION_ID,
+    "stream": False
+})
+```
+
+## Next Steps
+
+- Learn about [streaming event types](/sense/streaming/event-types)
+- Explore [behavior modes](/sense/behavior-modes) (`agent`, `plan`, `ask`)
+- Build [workflows](/sense/workflows) with natural language
+- Manage [sessions](/sense/sessions) for conversation continuity

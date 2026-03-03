@@ -1,0 +1,397 @@
+---
+title: "Examples"
+description: "Complete workflow examples for common use cases."
+---
+
+## Text-to-Image Pipeline
+
+A two-step workflow that enhances a prompt with an LLM, then generates an image.
+
+```json
+{
+  "name": "Enhanced Image Generator",
+  "description": "Uses AI to enhance the prompt before generating an image",
+  "definition": {
+    "version": "v1",
+    "input_schema": {
+      "type": "object",
+      "required": ["prompt"],
+      "properties": {
+        "prompt": {"type": "string"},
+        "aspect_ratio": {
+          "type": "string",
+          "enum": ["1:1", "16:9", "9:16"],
+          "default": "1:1"
+        }
+      }
+    },
+    "steps": [
+      {
+        "step_id": "enhance_prompt",
+        "type": "model",
+        "model": "openai-chatgpt-5",
+        "params": {
+          "system_prompt": "Enhance the following image prompt with vivid details. Return only the enhanced prompt.",
+          "user_prompt": "{{inputs.prompt}}"
+        }
+      },
+      {
+        "step_id": "generate_image",
+        "type": "model",
+        "model": "flux-1-1-pro",
+        "params": {
+          "prompt": "{{enhance_prompt.output}}",
+          "aspect_ratio": "{{inputs.aspect_ratio}}"
+        },
+        "fallback": {
+          "enabled": true,
+          "model": "flux-dev",
+          "params": {
+            "prompt": "{{enhance_prompt.output}}"
+          }
+        }
+      }
+    ]
+  }
+}
+```
+
+## Image-to-Video with Upscaling
+
+Generate a portrait image, animate it, and upscale the result.
+
+```json
+{
+  "name": "Portrait to Video",
+  "description": "Generate a portrait and animate it into a high-quality video",
+  "definition": {
+    "version": "v1",
+    "input_schema": {
+      "type": "object",
+      "required": ["description"],
+      "properties": {
+        "description": {"type": "string"},
+        "duration": {
+          "type": "integer",
+          "minimum": 3,
+          "maximum": 30,
+          "default": 5
+        }
+      }
+    },
+    "steps": [
+      {
+        "step_id": "generate_portrait",
+        "type": "model",
+        "model": "nano-banana-pro",
+        "params": {
+          "prompt": "{{inputs.description}}, portrait photo, natural lighting",
+          "aspect_ratio": "1:1"
+        }
+      },
+      {
+        "step_id": "animate",
+        "type": "model",
+        "model": "kling-2-1-image-to-video",
+        "params": {
+          "image": "{{generate_portrait.primary}}",
+          "duration": "{{inputs.duration}}"
+        }
+      },
+      {
+        "step_id": "upscale",
+        "type": "model",
+        "model": "topaz-upscale-video",
+        "params": {
+          "video": "{{animate.primary}}",
+          "scale": 2
+        }
+      }
+    ]
+  }
+}
+```
+
+## Parallel Branching — Multi-Format Generation
+
+Run image-to-video, image editing, and text-to-image concurrently, then conditionally upscale based on output format.
+
+```json
+{
+  "name": "Multi-Format Generator with Conditional Upscale",
+  "description": "Generates video, edited image, and new image in parallel, then upscales based on output type",
+  "definition": {
+    "version": "v1",
+    "input_schema": {
+      "type": "object",
+      "required": ["prompt"],
+      "properties": {
+        "prompt": {"type": "string"},
+        "source_image": {"type": "string"}
+      }
+    },
+    "steps": [
+      {
+        "id": "step1",
+        "type": "parallel",
+        "branches": [
+          {
+            "name": "Video Generation",
+            "steps": [
+              {
+                "id": "step1_branch_0",
+                "type": "model",
+                "model": "kling-v3-pro-image-to-video",
+                "params": {
+                  "prompt": "{{inputs.prompt}}, smooth cinematic motion",
+                  "start_image_url": "{{inputs.source_image}}",
+                  "duration": "5",
+                  "aspect_ratio": "16:9",
+                  "negative_prompt": "blur, distort, low quality"
+                }
+              }
+            ]
+          },
+          {
+            "name": "Image Edit",
+            "steps": [
+              {
+                "id": "step1_branch_1",
+                "type": "model",
+                "model": "flux-2-edit",
+                "params": {
+                  "prompt": "{{inputs.prompt}}",
+                  "image_url": "{{inputs.source_image}}"
+                }
+              }
+            ]
+          },
+          {
+            "name": "New Image",
+            "steps": [
+              {
+                "id": "step1_branch_2",
+                "type": "model",
+                "model": "flux-2-max",
+                "params": {
+                  "prompt": "{{inputs.prompt}}",
+                  "aspect_ratio": "16:9"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "step2",
+        "type": "choice",
+        "condition": {
+          "expression": "$.step1.primary",
+          "operator": "string_matches",
+          "value": ".mp4"
+        },
+        "condition_met_branch": {
+          "name": "condition_met",
+          "step_id": "step2_condition_met",
+          "steps": [
+            {
+              "id": "step2_branch_0",
+              "type": "model",
+              "model": "topaz-upscale-video",
+              "params": {
+                "video": "{{step1.primary}}",
+                "scale": 2
+              }
+            }
+          ]
+        },
+        "default_branch": {
+          "name": "default",
+          "step_id": "step2_default",
+          "steps": [
+            {
+              "id": "step2_default",
+              "type": "model",
+              "model": "topaz-upscale-image",
+              "params": {
+                "image_url": "{{step1.primary}}",
+                "scale": 2
+              }
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
+```
+
+This workflow demonstrates:
+1. **Parallel step** — Three branches run concurrently: video generation, image editing, and text-to-image
+2. **Choice step** — Checks if the primary output is a video (`.mp4`) and routes to the appropriate upscaler
+
+## Logical Conditions — AND/OR Operators
+
+Use logical operators to combine multiple conditions in a choice step.
+
+This example only upscales when the output is a PNG **and** the user requested upscaling:
+
+```json
+{
+  "id": "conditional_upscale",
+  "type": "choice",
+  "condition": {
+    "and": [
+      {
+        "expression": "$.step1.primary",
+        "operator": "string_matches",
+        "value": ".png"
+      },
+      {
+        "expression": "$.inputs.upscale",
+        "operator": "equals",
+        "value": true
+      }
+    ]
+  },
+  "condition_met_branch": {
+    "name": "condition_met",
+    "step_id": "upscale_branch",
+    "steps": [
+      {
+        "id": "upscale",
+        "type": "model",
+        "model": "topaz-upscale-image",
+        "params": {
+          "image_url": "{{step1.primary}}",
+          "scale": 4
+        }
+      }
+    ]
+  },
+  "default_branch": {
+    "name": "default",
+    "step_id": "skip_branch",
+    "steps": [
+      {
+        "id": "passthrough",
+        "type": "pass",
+        "result": "{{step1.primary}}"
+      }
+    ]
+  }
+}
+```
+
+You can also use `or` to match multiple formats:
+
+```json
+{
+  "condition": {
+    "or": [
+      {"expression": "$.step1.primary", "operator": "string_matches", "value": ".mp4"},
+      {"expression": "$.step1.primary", "operator": "string_matches", "value": ".webm"}
+    ]
+  }
+}
+```
+
+Or `not` to negate a condition:
+
+```json
+{
+  "condition": {
+    "not": {"expression": "$.step1.primary", "operator": "is_null"}
+  }
+}
+```
+
+## Batch Processing with Bulk Trigger
+
+Trigger the same workflow with multiple inputs:
+
+```bash
+curl -X POST https://workflows.eachlabs.run/api/v1/WF_ID/bulk-trigger \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: YOUR_API_KEY" \
+  -d '{
+    "inputs": [
+      {"description": "Professional woman, 30s, confident smile"},
+      {"description": "Young man, casual outfit, warm expression"},
+      {"description": "Elderly gentleman, distinguished, wise"}
+    ],
+    "webhook_url": "https://your-app.com/webhooks/batch-complete"
+  }'
+```
+
+Then track all executions together:
+
+```bash
+curl "https://workflows.eachlabs.run/api/v1/workflows/WF_ID/executions?bulk_id=BULK_ID" \
+  -H "X-API-Key: YOUR_API_KEY"
+```
+
+## End-to-End Python Example
+
+```python
+import requests
+import time
+
+API_KEY = "YOUR_API_KEY"
+BASE_URL = "https://workflows.eachlabs.run/api/v1"
+HEADERS = {
+    "Content-Type": "application/json",
+    "X-API-Key": API_KEY
+}
+
+# 1. Create workflow
+workflow = requests.post(f"{BASE_URL}/workflows", headers=HEADERS, json={
+    "name": "Quick Image Generator",
+    "description": "Simple text-to-image workflow",
+    "definition": {
+        "version": "v1",
+        "input_schema": {
+            "type": "object",
+            "required": ["prompt"],
+            "properties": {"prompt": {"type": "string"}}
+        },
+        "steps": [{
+            "step_id": "generate",
+            "type": "model",
+            "model": "flux-1-1-pro",
+            "params": {"prompt": "{{inputs.prompt}}"}
+        }]
+    }
+}).json()
+
+workflow_id = workflow["workflow_id"]
+print(f"Created workflow: {workflow_id}")
+
+# 2. Trigger execution
+execution = requests.post(
+    f"{BASE_URL}/{workflow_id}/trigger",
+    headers=HEADERS,
+    json={"inputs": {"prompt": "A serene zen garden at sunrise"}}
+).json()
+
+execution_id = execution["execution_id"]
+print(f"Execution started: {execution_id}")
+
+# 3. Poll for results
+while True:
+    result = requests.get(
+        f"{BASE_URL}/executions/{execution_id}",
+        headers=HEADERS
+    ).json()
+
+    if result["status"] in ("completed", "failed", "cancelled"):
+        break
+
+    print(f"Status: {result['status']}...")
+    time.sleep(3)
+
+if result["status"] == "completed":
+    print(f"Output: {result['output']}")
+else:
+    print(f"Error: {result.get('error_cause')}")
+```

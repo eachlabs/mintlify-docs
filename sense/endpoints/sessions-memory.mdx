@@ -1,0 +1,112 @@
+---
+title: "Sessions & Memory"
+description: "Retrieve conversation history, list sessions, and manage memory."
+---
+
+## Get Session Memory
+
+```
+GET https://eachsense-agent.core.eachlabs.run/memory
+```
+
+### Query Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `session_id` | string | Yes | Session ID to retrieve |
+
+### Example
+
+<CodeGroup>
+```bash cURL
+curl "https://eachsense-agent.core.eachlabs.run/memory?session_id=my-session" \
+  -H "X-API-Key: YOUR_API_KEY"
+```
+
+```python Python
+import requests
+
+response = requests.get(
+    "https://eachsense-agent.core.eachlabs.run/memory",
+    params={"session_id": "my-session"},
+    headers={"X-API-Key": "YOUR_API_KEY"}
+)
+memory = response.json()
+print(f"Total exchanges: {memory['total_exchanges']}")
+```
+</CodeGroup>
+
+### Response
+
+```json
+{
+  "session_id": "my-session",
+  "conversation_history": [
+    {
+      "timestamp": "2024-01-15T10:30:00Z",
+      "user_prompt": "Generate a portrait",
+      "chatbot_response": "Here's your portrait!",
+      "generated_media_urls": ["https://storage.eachlabs.ai/xxx.png"]
+    }
+  ],
+  "total_exchanges": 1,
+  "generated_media_urls": ["https://storage.eachlabs.ai/xxx.png"]
+}
+```
+
+---
+
+## Clear Session Memory
+
+```
+DELETE https://eachsense-agent.core.eachlabs.run/memory
+```
+
+### Query Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `session_id` | string | Yes | Session ID to clear |
+
+### Example
+
+```bash
+curl -X DELETE "https://eachsense-agent.core.eachlabs.run/memory?session_id=my-session" \
+  -H "X-API-Key: YOUR_API_KEY"
+```
+
+### Response
+
+```json
+{
+  "cleared": true,
+  "session_id": "my-session"
+}
+```
+
+---
+
+## List Sessions
+
+```
+GET https://eachsense-agent.core.eachlabs.run/sessions
+```
+
+### Example
+
+```bash
+curl https://eachsense-agent.core.eachlabs.run/sessions \
+  -H "X-API-Key: YOUR_API_KEY"
+```
+
+### Response
+
+```json
+{
+  "sessions": [
+    "default",
+    "my-session",
+    "project-alpha"
+  ]
+}
+```

@@ -1,0 +1,119 @@
+---
+title: "Kling Face Swap"
+description: "Realistic face replacement in images. Swap faces between photos with automatic lighting and angle adjustments."
+---
+
+## Model Info
+
+| Property | Value |
+|----------|-------|
+| **Slug** | `kling-face-swap` |
+| **Version** | `1.0.0` |
+| **Category** | Image Editing |
+| **Output Type** | Image (URL) |
+| **Speed** | Fast |
+| **Best For** | Realistic face replacement in images |
+
+## Input Parameters
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `image_url` | string | Yes | — | URL of the target image |
+| `face_url` | string | Yes | — | URL of the source face image |
+| `seed` | integer | No | random | Random seed for reproducibility |
+
+## Code Examples
+
+### each::api
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.eachlabs.ai/v1/prediction \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: $EACHLABS_API_KEY" \
+  -d '{
+    "model": "kling-face-swap",
+    "version": "1.0.0",
+    "input": {
+      "image_url": "https://example.com/target.jpg",
+      "face_url": "https://example.com/face.jpg"
+    }
+  }'
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    "https://api.eachlabs.ai/v1/prediction",
+    headers={"X-API-Key": "YOUR_API_KEY"},
+    json={
+        "model": "kling-face-swap",
+        "version": "1.0.0",
+        "input": {
+            "image_url": "https://example.com/target.jpg",
+            "face_url": "https://example.com/face.jpg"
+        }
+    }
+)
+prediction_id = response.json()["predictionID"]
+```
+
+```javascript JavaScript
+const response = await fetch("https://api.eachlabs.ai/v1/prediction", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "X-API-Key": "YOUR_API_KEY",
+  },
+  body: JSON.stringify({
+    model: "kling-face-swap",
+    version: "1.0.0",
+    input: {
+      image_url: "https://example.com/target.jpg",
+      face_url: "https://example.com/face.jpg",
+    },
+  }),
+});
+const { predictionID } = await response.json();
+```
+</CodeGroup>
+
+### each::sense
+
+```python each::sense
+from openai import OpenAI
+
+client = OpenAI(
+    api_key="YOUR_API_KEY",
+    base_url="https://eachsense-agent.core.eachlabs.run/v1"
+)
+
+response = client.chat.completions.create(
+    model="eachsense/beta",
+    messages=[{"role": "user", "content": "Swap the face in https://example.com/target.jpg with the face from https://example.com/face.jpg"}],
+)
+```
+
+## Tips
+
+- Works best with clear, front-facing photos for both target and source images
+- Both images should have visible, unobstructed faces
+- Handles lighting and angle adjustments automatically for natural-looking results
+- Use high-resolution images for the best output quality
+- The source face will adapt to the target image's pose and expression
+
+## Related Models
+
+<CardGroup cols={2}>
+  <Card title="Flux 2 Edit" href="/models/image-editing/flux-2-edit">
+    Instruction-based image editing.
+  </Card>
+  <Card title="Flux Kontext Pro" href="/models/image-generation/flux-kontext-pro">
+    Contextual image editing with text rendering.
+  </Card>
+</CardGroup>
+
+<Note>
+Call `GET /v1/model?slug=kling-face-swap` for the full parameter schema.
+</Note>

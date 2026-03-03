@@ -1,0 +1,255 @@
+---
+title: "Python"
+description: "Use each::labs APIs with Python via the OpenAI SDK or requests."
+---
+
+## Installation
+
+```bash
+pip install openai
+```
+
+## Setup
+
+each::sense is OpenAI-compatible, so you can use the official OpenAI Python SDK:
+
+```python
+from openai import OpenAI
+
+client = OpenAI(
+    api_key="YOUR_API_KEY",
+    base_url="https://eachsense-agent.core.eachlabs.run/v1"
+)
+```
+
+## Image Generation
+
+```python
+response = client.chat.completions.create(
+    model="eachsense/beta",
+    messages=[{
+        "role": "user",
+        "content": "Generate a professional headshot portrait, natural lighting"
+    }],
+    stream=False
+)
+
+print(response.choices[0].message.content)
+print(f"Generated: {response.generations}")
+```
+
+## Streaming
+
+```python
+stream = client.chat.completions.create(
+    model="eachsense/beta",
+    messages=[{
+        "role": "user",
+        "content": "Generate a sunset landscape in oil painting style"
+    }],
+    stream=True
+)
+
+for chunk in stream:
+    if chunk.choices[0].delta.content:
+        print(chunk.choices[0].delta.content, end="")
+```
+
+### Raw SSE Streaming
+
+For full control over event types, use `requests` directly:
+
+```python
+import requests
+import json
+
+def stream_generation(prompt, api_key):
+    response = requests.post(
+        "https://eachsense-agent.core.eachlabs.run/v1/chat/completions",
+        headers={
+            "Content-Type": "application/json",
+            "X-API-Key": api_key
+        },
+        json={
+            "messages": [{"role": "user", "content": prompt}],
+            "stream": True
+        },
+        stream=True
+    )
+
+    for line in response.iter_lines():
+        if not line:
+            continue
+        line = line.decode("utf-8")
+        if not line.startswith("data: "):
+            continue
+        data = line[6:]
+        if data == "[DONE]":
+            break
+
+        event = json.loads(data)
+
+        if event["type"] == "thinking_delta":
+            print(f"Thinking: {event['content']}", end="")
+        elif event["type"] == "text_response":
+            print(f"\n{event['content']}")
+        elif event["type"] == "generation_response":
+            print(f"Generated: {event['url']}")
+        elif event["type"] == "error":
+            print(f"Error: {event['message']}")
+
+stream_generation("Generate a cyberpunk cityscape", "YOUR_API_KEY")
+```
+
+## Multi-Turn Conversations
+
+```python
+import requests
+
+SESSION_ID = "my-project"
+URL = "https://eachsense-agent.core.eachlabs.run/v1/chat/completions"
+HEADERS = {
+    "Content-Type": "application/json",
+    "X-API-Key": "YOUR_API_KEY"
+}
+
+def chat(message):
+    response = requests.post(URL, headers=HEADERS, json={
+        "messages": [{"role": "user", "content": message}],
+        "session_id": SESSION_ID,
+        "stream": False
+    })
+    data = response.json()
+    print(f"Assistant: {data['choices'][0]['message']['content']}")
+    if data.get("generations"):
+        print(f"Generated: {data['generations']}")
+    return data
+
+chat("Generate a cyberpunk cityscape at night")
+chat("Add more neon lights and flying cars")
+chat("Now make it a 5-second video")
+```
+
+## Eco Mode
+
+Use eco mode for faster, cheaper generations during development:
+
+```python
+response = client.chat.completions.create(
+    model="eachsense/beta",
+    messages=[{"role": "user", "content": "Generate a quick test portrait"}],
+    stream=False,
+    extra_body={"mode": "eco"}
+)
+```
+
+## each::api — Predictions
+
+For direct model access via each::api:
+
+```python
+import requests
+
+API_KEY = "YOUR_API_KEY"
+BASE = "https://api.eachlabs.ai/v1"
+HEADERS = {
+    "Content-Type": "application/json",
+    "X-API-Key": API_KEY
+}
+
+# Create a prediction
+response = requests.post(f"{BASE}/prediction", headers=HEADERS, json={
+    "model": "flux-pro/v1.1",
+    "input": {
+        "prompt": "A mountain landscape at sunset",
+        "image_size": "landscape_16_9"
+    },
+    "webhook_url": "https://your-server.com/webhook"
+})
+prediction = response.json()
+print(f"Prediction ID: {prediction['id']}")
+print(f"Status: {prediction['status']}")
+
+# Poll for result
+import time
+
+while prediction["status"] not in ("completed", "failed"):
+    time.sleep(2)
+    r = requests.get(
+        f"{BASE}/prediction/{prediction['id']}",
+        headers=HEADERS
+    )
+    prediction = r.json()
+
+if prediction["status"] == "completed":
+    print(f"Output: {prediction['output']}")
+else:
+    print(f"Failed: {prediction.get('error')}")
+```
+
+## each::workflows — Trigger & Poll
+
+```python
+import requests
+import time
+
+API_KEY = "YOUR_API_KEY"
+BASE = "https://workflows.eachlabs.run/api/v1"
+HEADERS = {
+    "Content-Type": "application/json",
+    "X-API-Key": API_KEY
+}
+
+# Trigger a workflow
+response = requests.post(
+    f"{BASE}/wf_abc123/trigger",
+    headers=HEADERS,
+    json={
+        "version_id": "v1",
+        "input": {
+            "prompt": "A professional headshot",
+            "style": "photorealistic"
+        }
+    }
+)
+execution = response.json()
+execution_id = execution["execution_id"]
+
+# Poll for completion
+while True:
+    r = requests.get(f"{BASE}/executions/{execution_id}", headers=HEADERS)
+    status = r.json()
+
+    if status["status"] == "completed":
+        print(f"Output: {status['output']}")
+        break
+    elif status["status"] == "failed":
+        print(f"Error: {status['error']}")
+        break
+
+    time.sleep(3)
+```
+
+## Error Handling
+
+```python
+import requests
+
+def safe_request(url, headers, json_data):
+    try:
+        response = requests.post(url, headers=headers, json=json_data, timeout=300)
+
+        if response.status_code == 401:
+            raise Exception("Invalid API key")
+        elif response.status_code == 429:
+            retry_after = response.json().get("retry_after", 30)
+            raise Exception(f"Rate limited. Retry after {retry_after}s")
+        elif response.status_code >= 400:
+            raise Exception(f"API error {response.status_code}: {response.text}")
+
+        return response.json()
+    except requests.exceptions.Timeout:
+        raise Exception("Request timed out after 300 seconds")
+    except requests.exceptions.ConnectionError:
+        raise Exception("Failed to connect to API")
+```

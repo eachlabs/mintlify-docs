@@ -1,0 +1,190 @@
+---
+title: "Examples"
+description: "Complete code examples for common each::sense use cases."
+---
+
+## Image Generation
+
+<CodeGroup>
+```python Python
+from openai import OpenAI
+
+client = OpenAI(
+    api_key="YOUR_API_KEY",
+    base_url="https://eachsense-agent.core.eachlabs.run/v1"
+)
+
+# Simple generation
+response = client.chat.completions.create(
+    model="eachsense/beta",
+    messages=[{
+        "role": "user",
+        "content": "Generate a professional headshot portrait, natural lighting"
+    }],
+    stream=False
+)
+
+print(response.choices[0].message.content)
+print(f"Generated: {response.generations}")
+```
+
+```javascript JavaScript
+import OpenAI from "openai";
+
+const client = new OpenAI({
+  apiKey: "YOUR_API_KEY",
+  baseURL: "https://eachsense-agent.core.eachlabs.run/v1",
+});
+
+const response = await client.chat.completions.create({
+  model: "eachsense/beta",
+  messages: [
+    { role: "user", content: "Generate a professional headshot portrait" },
+  ],
+  stream: false,
+});
+
+console.log(response.choices[0].message.content);
+console.log("Generated:", response.generations);
+```
+</CodeGroup>
+
+## Image Editing with Upload
+
+```python
+import requests
+
+response = requests.post(
+    "https://eachsense-agent.core.eachlabs.run/v1/chat/completions",
+    headers={
+        "Content-Type": "application/json",
+        "X-API-Key": "YOUR_API_KEY"
+    },
+    json={
+        "messages": [{"role": "user", "content": "Remove the background from this image"}],
+        "image_urls": ["https://example.com/photo.jpg"],
+        "stream": False
+    }
+)
+
+data = response.json()
+print(f"Edited: {data['generations']}")
+```
+
+## Multi-Turn Conversation
+
+```python
+import requests
+
+SESSION_ID = "design-session"
+URL = "https://eachsense-agent.core.eachlabs.run/v1/chat/completions"
+HEADERS = {"Content-Type": "application/json", "X-API-Key": "YOUR_API_KEY"}
+
+def chat(message):
+    response = requests.post(URL, headers=HEADERS, json={
+        "messages": [{"role": "user", "content": message}],
+        "session_id": SESSION_ID,
+        "stream": False
+    })
+    data = response.json()
+    print(f"Assistant: {data['choices'][0]['message']['content']}")
+    if data.get("generations"):
+        print(f"Generated: {data['generations']}")
+    return data
+
+# Conversation flow
+chat("Generate a cyberpunk cityscape at night")
+chat("Add more neon lights and flying cars")
+chat("Now make it a 5-second video")
+```
+
+## Workflow via Natural Language
+
+```python
+import requests
+import json
+
+URL = "https://eachsense-agent.core.eachlabs.run/v1/chat/completions"
+HEADERS = {"Content-Type": "application/json", "X-API-Key": "YOUR_API_KEY"}
+
+# Create workflow
+response = requests.post(URL, headers=HEADERS, json={
+    "messages": [{
+        "role": "user",
+        "content": "Create a workflow: 1) Generate portrait from description, 2) Animate into 5s video"
+    }],
+    "stream": True
+}, stream=True)
+
+for line in response.iter_lines():
+    if not line:
+        continue
+    line = line.decode("utf-8")
+    if line.startswith("data: ") and line[6:] != "[DONE]":
+        event = json.loads(line[6:])
+        if event["type"] == "workflow_created":
+            print(f"Workflow created: {event['workflow_id']}")
+        elif event["type"] == "text_response":
+            print(event["content"])
+```
+
+## Streaming with Event Handling
+
+```python
+import requests
+import json
+
+def stream_generation(prompt):
+    response = requests.post(
+        "https://eachsense-agent.core.eachlabs.run/v1/chat/completions",
+        headers={"Content-Type": "application/json", "X-API-Key": "YOUR_API_KEY"},
+        json={
+            "messages": [{"role": "user", "content": prompt}],
+            "stream": True
+        },
+        stream=True
+    )
+
+    generations = []
+
+    for line in response.iter_lines():
+        if not line:
+            continue
+        line = line.decode("utf-8")
+        if not line.startswith("data: "):
+            continue
+        data = line[6:]
+        if data == "[DONE]":
+            break
+
+        event = json.loads(data)
+
+        if event["type"] == "thinking_delta":
+            print(f"Thinking: {event['content']}", end="")
+        elif event["type"] == "text_response":
+            print(f"\n{event['content']}")
+        elif event["type"] == "generation_response":
+            generations.append(event["url"])
+            print(f"Generated: {event['url']}")
+        elif event["type"] == "error":
+            print(f"Error: {event['message']}")
+        elif event["type"] == "complete":
+            print("Done!")
+
+    return generations
+
+# Usage
+urls = stream_generation("Generate a sunset landscape in oil painting style")
+```
+
+## Eco Mode for Fast Prototyping
+
+```python
+# Use eco mode for faster, cheaper generations during development
+response = client.chat.completions.create(
+    model="eachsense/beta",
+    messages=[{"role": "user", "content": "Generate a quick test portrait"}],
+    stream=False,
+    extra_body={"mode": "eco"}
+)
+```

@@ -1,0 +1,125 @@
+---
+title: "Kling 3.0"
+description: "Generate high-quality videos from text prompts with strong motion coherence using Kling 3.0."
+---
+
+## Model Overview
+
+| Property     | Value              |
+|--------------|--------------------|
+| **Slug**     | `kling-3-0`        |
+| **Version**  | `1.0.0`            |
+| **Category** | Video Generation   |
+| **Output**   | Video (URL)        |
+| **Speed**    | Medium             |
+| **Best For** | High-quality text-to-video |
+
+## Input Parameters
+
+| Parameter       | Type    | Required | Default  | Description                          |
+|-----------------|---------|----------|----------|--------------------------------------|
+| prompt          | string  | Yes      | -        | Text description of the video        |
+| negative_prompt | string  | No       | -        | What to avoid                        |
+| duration        | integer | No       | 5        | Video duration in seconds            |
+| aspect_ratio    | string  | No       | `16:9`   | Output aspect ratio                  |
+| seed            | integer | No       | random   | Random seed                          |
+
+## Code Examples
+
+### each::api
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST https://api.eachlabs.ai/v1/prediction \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: $EACHLABS_API_KEY" \
+  -d '{
+    "model": "kling-3-0",
+    "version": "1.0.0",
+    "input": {
+      "prompt": "A drone shot flying over a mountain lake at sunrise",
+      "duration": 5,
+      "aspect_ratio": "16:9"
+    }
+  }'
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    "https://api.eachlabs.ai/v1/prediction",
+    headers={"X-API-Key": "YOUR_API_KEY"},
+    json={
+        "model": "kling-3-0",
+        "version": "1.0.0",
+        "input": {
+            "prompt": "A drone shot flying over a mountain lake at sunrise",
+            "duration": 5,
+            "aspect_ratio": "16:9"
+        }
+    }
+)
+prediction_id = response.json()["predictionID"]
+```
+
+```javascript JavaScript
+const response = await fetch("https://api.eachlabs.ai/v1/prediction", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "X-API-Key": "YOUR_API_KEY",
+  },
+  body: JSON.stringify({
+    model: "kling-3-0",
+    version: "1.0.0",
+    input: {
+      prompt: "A drone shot flying over a mountain lake at sunrise",
+      duration: 5,
+      aspect_ratio: "16:9",
+    },
+  }),
+});
+const { predictionID } = await response.json();
+```
+
+</CodeGroup>
+
+### each::sense
+
+```python each::sense
+from openai import OpenAI
+
+client = OpenAI(api_key="YOUR_API_KEY", base_url="https://eachsense-agent.core.eachlabs.run/v1")
+
+response = client.chat.completions.create(
+    model="eachsense/beta",
+    messages=[{"role": "user", "content": "Generate a drone shot over a mountain lake at sunrise using kling-3-0"}],
+)
+```
+
+## Tips
+
+- Strong motion coherence and scene consistency across frames.
+- Supports **negative prompts** for fine-grained control over what to exclude from the output.
+- Good balance of speed and quality for text-to-video workflows.
+
+## Related Models
+
+<CardGroup cols={2}>
+  <Card title="Veo 3" href="/models/video-generation/veo-3">
+    Cinematic quality with synchronized audio.
+  </Card>
+  <Card title="Sora 2 Pro" href="/models/video-generation/sora-2-pro">
+    OpenAI's cinematic video generation model.
+  </Card>
+</CardGroup>
+
+<Note>
+Use `GET /v1/model?slug=kling-3-0` to retrieve the full model schema including all available parameters and their constraints.
+</Note>
+
+<Note>
+Video generation is an async process. Predictions may take longer to complete depending on duration and model load. Poll the prediction status endpoint to check for completion.
+</Note>

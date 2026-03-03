@@ -1,0 +1,124 @@
+---
+title: "Kling 2.1 Image-to-Video"
+description: "Animate existing images into video clips with motion guidance using Kling 2.1 Image-to-Video."
+---
+
+## Model Overview
+
+| Property     | Value              |
+|--------------|--------------------|
+| **Slug**     | `kling-2-1-image-to-video` |
+| **Version**  | `1.0.0`            |
+| **Category** | Video Generation   |
+| **Output**   | Video (URL)        |
+| **Speed**    | Medium             |
+| **Best For** | Animating existing images |
+
+## Input Parameters
+
+| Parameter  | Type    | Required | Default  | Description                              |
+|------------|---------|----------|----------|------------------------------------------|
+| image_url  | string  | Yes      | -        | URL of the source image to animate       |
+| prompt     | string  | No       | -        | Motion description or guidance           |
+| duration   | integer | No       | 5        | Video duration in seconds                |
+| seed       | integer | No       | random   | Random seed                              |
+
+## Code Examples
+
+### each::api
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST https://api.eachlabs.ai/v1/prediction \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: $EACHLABS_API_KEY" \
+  -d '{
+    "model": "kling-2-1-image-to-video",
+    "version": "1.0.0",
+    "input": {
+      "image_url": "https://example.com/your-image.jpg",
+      "prompt": "A drone shot flying over a mountain lake at sunrise",
+      "duration": 5
+    }
+  }'
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    "https://api.eachlabs.ai/v1/prediction",
+    headers={"X-API-Key": "YOUR_API_KEY"},
+    json={
+        "model": "kling-2-1-image-to-video",
+        "version": "1.0.0",
+        "input": {
+            "image_url": "https://example.com/your-image.jpg",
+            "prompt": "A drone shot flying over a mountain lake at sunrise",
+            "duration": 5
+        }
+    }
+)
+prediction_id = response.json()["predictionID"]
+```
+
+```javascript JavaScript
+const response = await fetch("https://api.eachlabs.ai/v1/prediction", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "X-API-Key": "YOUR_API_KEY",
+  },
+  body: JSON.stringify({
+    model: "kling-2-1-image-to-video",
+    version: "1.0.0",
+    input: {
+      image_url: "https://example.com/your-image.jpg",
+      prompt: "A drone shot flying over a mountain lake at sunrise",
+      duration: 5,
+    },
+  }),
+});
+const { predictionID } = await response.json();
+```
+
+</CodeGroup>
+
+### each::sense
+
+```python each::sense
+from openai import OpenAI
+
+client = OpenAI(api_key="YOUR_API_KEY", base_url="https://eachsense-agent.core.eachlabs.run/v1")
+
+response = client.chat.completions.create(
+    model="eachsense/beta",
+    messages=[{"role": "user", "content": "Generate a drone shot over a mountain lake at sunrise using kling-2-1-image-to-video"}],
+)
+```
+
+## Tips
+
+- **`image_url` is required** — this is an image-to-video model, not text-to-video.
+- The prompt guides the motion applied to the source image rather than generating from scratch.
+- Best results come from high-quality, well-composed source images.
+
+## Related Models
+
+<CardGroup cols={2}>
+  <Card title="Wan v2.6 Image-to-Video" href="/models/video-generation/wan-v2-6-image-to-video">
+    Open-source image animation with motion control.
+  </Card>
+  <Card title="Kling 3.0" href="/models/video-generation/kling-3-0">
+    High-quality text-to-video generation.
+  </Card>
+</CardGroup>
+
+<Note>
+Use `GET /v1/model?slug=kling-2-1-image-to-video` to retrieve the full model schema including all available parameters and their constraints.
+</Note>
+
+<Note>
+Video generation is an async process. Predictions may take longer to complete depending on duration and model load. Poll the prediction status endpoint to check for completion.
+</Note>

@@ -1,0 +1,90 @@
+---
+title: "Get Model"
+description: "Retrieve detailed information about a specific AI model."
+---
+
+## Endpoint
+
+```
+GET https://api.eachlabs.ai/v1/model
+```
+
+## Query Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `slug` | string | Yes | Model slug identifier (e.g., `flux-1-1-pro`) |
+
+## Code Examples
+
+<CodeGroup>
+```bash cURL
+curl "https://api.eachlabs.ai/v1/model?slug=flux-1-1-pro" \
+  -H "X-API-Key: YOUR_API_KEY"
+```
+
+```python Python
+import requests
+
+response = requests.get(
+    "https://api.eachlabs.ai/v1/model",
+    params={"slug": "flux-1-1-pro"},
+    headers={"X-API-Key": "YOUR_API_KEY"}
+)
+
+model = response.json()
+print(f"Model: {model['title']}")
+print(f"Input schema: {model['request_schema']}")
+```
+
+```javascript JavaScript
+const response = await fetch(
+  "https://api.eachlabs.ai/v1/model?slug=flux-1-1-pro",
+  {
+    headers: { "X-API-Key": "YOUR_API_KEY" },
+  }
+);
+const model = await response.json();
+console.log(`Model: ${model.title}`);
+```
+</CodeGroup>
+
+## Response
+
+```json
+{
+  "title": "Flux 1.1 Pro",
+  "slug": "flux-1-1-pro",
+  "version": "1.0",
+  "output_type": "string",
+  "request_schema": {
+    "type": "object",
+    "required": ["prompt"],
+    "properties": {
+      "prompt": {
+        "type": "string",
+        "minLength": 10,
+        "maxLength": 500
+      }
+    }
+  }
+}
+```
+
+### Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `title` | string | Human-readable model name |
+| `slug` | string | Unique model identifier |
+| `version` | string | Model version |
+| `output_type` | string | Output type (`string`, `array`, `object`) |
+| `request_schema` | object | JSON Schema defining valid input parameters |
+
+## Error Responses
+
+| Status | Body | Description |
+|--------|------|-------------|
+| `400` | `{"error": "slug parameter is required"}` | Missing `slug` parameter |
+| `404` | `{"error": "Failed to fetch model: model not found"}` | Model with this slug doesn't exist |
+| `500` | `{"error": "Failed to fetch models: internal error"}` | Server error |

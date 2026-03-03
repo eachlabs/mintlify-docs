@@ -1,0 +1,1301 @@
+# each::labs
+
+> each::labs is the generative media platform for developers and AI agents. Access 500+ production-ready AI models for image, video, audio, and 3D generation through a single API key. Three products: each::api (direct model access), each::workflows (multi-step pipelines), and each::sense (OpenAI-compatible AI agent).
+
+Platform: https://eachlabs.ai
+API Keys: https://www.eachlabs.ai/api-keys
+GitHub: https://github.com/eachlabs
+Discord: https://discord.gg/eachlabs
+
+---
+
+## Authentication
+
+All APIs use `X-API-Key` header. each::sense also accepts `Authorization: Bearer <key>` for OpenAI SDK compatibility.
+
+```
+X-API-Key: YOUR_API_KEY
+```
+
+Public endpoints that do NOT require authentication:
+- `GET https://api.eachlabs.ai/v1/models` (list models)
+- `GET https://eachsense-agent.core.eachlabs.run/v1/models` (sense models)
+
+Auth error response: `{"error": "Invalid or missing API key"}` (HTTP 401)
+
+---
+
+## Base URLs
+
+| Product | Base URL | Protocol |
+|---------|----------|----------|
+| each::api | `https://api.eachlabs.ai` | REST |
+| each::workflows | `https://workflows.eachlabs.run/api/v1` | REST |
+| each::sense | `https://eachsense-agent.core.eachlabs.run` | REST + SSE |
+
+---
+
+## Quick Start
+
+### Generate an image (each::api)
+
+```bash
+curl -X POST https://api.eachlabs.ai/v1/prediction \
+  -H "X-API-Key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "flux-2-max",
+    "version": "1.0.0",
+    "input": {
+      "prompt": "A cinematic landscape at golden hour",
+      "aspect_ratio": "16:9"
+    }
+  }'
+```
+
+Response: `{"status": "success", "predictionID": "abc123-def456"}`
+
+Poll for result:
+
+```bash
+curl https://api.eachlabs.ai/v1/prediction/abc123-def456 \
+  -H "X-API-Key: YOUR_API_KEY"
+```
+
+### Generate via AI agent (each::sense)
+
+```python
+from openai import OpenAI
+
+client = OpenAI(
+    api_key="YOUR_API_KEY",
+    base_url="https://eachsense-agent.core.eachlabs.run/v1"
+)
+
+response = client.chat.completions.create(
+    model="eachsense/beta",
+    messages=[{"role": "user", "content": "Generate a cinematic sunset landscape in 16:9"}],
+    stream=False
+)
+
+print(response.generations)  # List of media URLs
+```
+
+### Trigger a workflow
+
+```bash
+curl -X POST https://workflows.eachlabs.run/api/v1/WORKFLOW_ID/trigger \
+  -H "X-API-Key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"version_id": "v1", "inputs": {"prompt": "A sunset landscape"}}'
+```
+
+Response: `{"execution_id": "exec-123", "status": "queued", "started_at": "..."}`
+
+---
+
+## each::api
+
+Direct model execution. Async predictions with polling or webhook delivery.
+
+### Endpoints
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| `GET` | `/v1/models` | No | List available models |
+| `GET` | `/v1/model?slug={slug}` | Yes | Get model details and input schema |
+| `POST` | `/v1/prediction` | Yes | Create a prediction |
+| `GET` | `/v1/prediction/{id}` | Yes | Get prediction status and results |
+| `GET` | `/v1/webhooks` | Yes | List webhook deliveries |
+| `GET` | `/v1/webhooks/{execution_id}` | Yes | Get webhook delivery details |
+
+### List Models
+
+`GET https://api.eachlabs.ai/v1/models`
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `name` | string | — | Filter by model name (case-insensitive) |
+| `limit` | integer | 50 | Max results (1–500) |
+| `offset` | integer | 0 | Pagination offset |
+
+Response: Array of `{title, slug, version, output_type, request_schema}`.
+
+`output_type` values: `"string"`, `"array"`, `"object"`.
+
+### Get Model
+
+`GET https://api.eachlabs.ai/v1/model?slug={slug}`
+
+Response: `{title, slug, version, output_type, request_schema}` where `request_schema` is a JSON Schema describing the model's input parameters.
+
+### Create Prediction
+
+`POST https://api.eachlabs.ai/v1/prediction`
+
+```json
+{
+  "model": "flux-2-max",
+  "version": "1.0.0",
+  "input": {
+    "prompt": "A cinematic landscape",
+    "aspect_ratio": "16:9"
+  },
+  "webhook_url": "https://your-server.com/webhook",
+  "webhook_secret": "your-secret"
+}
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `model` | string | Yes | Model slug |
+| `version` | string | Yes | Model version (currently `"1.0.0"` for all models) |
+| `input` | object | Yes | Model-specific input parameters |
+| `webhook_url` | string | No | URL to receive results via HTTP POST |
+| `webhook_secret` | string | No | Secret for HMAC-SHA256 webhook signature verification |
+
+Response (201): `{"status": "success", "message": "Prediction created successfully", "predictionID": "..."}`
+
+### Get Prediction
+
+`GET https://api.eachlabs.ai/v1/prediction/{id}`
+
+Response:
+```json
+{
+  "id": "pred-123",
+  "status": "success",
+  "input": {"prompt": "..."},
+  "output": "https://cdn.example.com/result.png",
+  "logs": null,
+  "metrics": {
+    "predict_time": 12.5,
+    "cost": 0.03
+  },
+  "urls": {
+    "cancel": "https://api.eachlabs.ai/v1/prediction/pred-123/cancel",
+    "get": "https://api.eachlabs.ai/v1/prediction/pred-123"
+  }
+}
+```
+
+**Prediction statuses:** `starting` → `processing` → `success` | `failed` | `cancelled`
+
+Poll every 2 seconds until terminal status (`success`, `failed`, `cancelled`).
+
+### Content Safety
+
+Safety checker is enabled by default. Pass `enable_safety_checker: false` in the `input` object to disable.
+
+Models supporting NSFW disable:
+- `wan-v2-6-text-to-video`
+- `wan-v2-6-image-to-video`
+- `seedream-v4-5`
+
+For each::sense, pass `enable_safety_checker` as a top-level request field (not inside `input`).
+
+### Webhooks
+
+Webhooks deliver prediction results via HTTP POST. Include `webhook_url` when creating a prediction.
+
+**Success payload:**
+```json
+{
+  "id": "pred-123",
+  "status": "success",
+  "output": "https://cdn.example.com/result.png",
+  "input": {"prompt": "..."},
+  "metrics": {"predict_time": 12.5, "cost": 0.03}
+}
+```
+
+**Failed payload:**
+```json
+{
+  "id": "pred-123",
+  "status": "failed",
+  "output": null,
+  "input": {"prompt": "..."},
+  "logs": "Error: content filter triggered"
+}
+```
+
+Retry schedule: ~30s, ~2min, ~10min. Delivery statuses: `PENDING`, `SUCCESS`, `FAILED`.
+
+Security: Verify webhook authenticity with HMAC-SHA256 using `webhook_secret`. Return 200 OK quickly.
+
+---
+
+## each::workflows
+
+Multi-step AI pipelines with versioning, parameter passing, fallbacks, and bulk execution.
+
+### Endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/categories` | List workflow categories |
+| `POST` | `/workflows` | Create a workflow |
+| `GET` | `/workflows/{id}` | Get workflow (accepts UUID or slug) |
+| `PUT` | `/workflows/{id}` | Update workflow metadata |
+| `PUT` | `/workflows/{id}/versions/{versionID}` | Create or update a version |
+| `POST` | `/{id}/trigger` | Trigger execution |
+| `POST` | `/{id}/bulk-trigger` | Bulk trigger (1–10 parallel) |
+| `GET` | `/workflows/{id}/executions` | List executions |
+| `GET` | `/executions/{executionID}` | Get execution details |
+| `GET` | `/public/@{nickname}/workflows/{slug}/versions/{versionID}` | Get public workflow (no auth) |
+| `POST` | `/public/@{nickname}/workflows/{slug}/versions/{versionID}/trigger` | Trigger public workflow |
+
+### Create Workflow
+
+`POST https://workflows.eachlabs.run/api/v1/workflows`
+
+```json
+{
+  "name": "Image Enhancement Pipeline",
+  "description": "Generate and upscale images",
+  "categories": ["image-generation"],
+  "definition": {
+    "version": "v1",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "prompt": {"type": "string", "description": "Image description"}
+      },
+      "required": ["prompt"]
+    },
+    "steps": [
+      {
+        "step_id": "generate",
+        "type": "model",
+        "model": "flux-2-pro",
+        "params": {
+          "prompt": "{{inputs.prompt}}",
+          "aspect_ratio": "16:9"
+        }
+      },
+      {
+        "step_id": "upscale",
+        "type": "model",
+        "model": "topaz-upscale-image",
+        "params": {
+          "image_url": "{{generate.primary}}",
+          "scale": 2
+        }
+      }
+    ]
+  }
+}
+```
+
+Response (201): `{workflow_id, slug, name, latest_version_id, status: "active", versions: [...]}`
+
+### Step Types
+
+| Type | Description |
+|------|-------------|
+| `model` | Execute an AI model via each::api |
+| `http` | External HTTP request (GET, POST, PUT, DELETE, PATCH) with auth support |
+| `python` | Execute Python code |
+| `parallel` | Execute multiple branches concurrently |
+| `choice` | Evaluate a condition and route to matching branch |
+| `pass` | Pass-through, optionally inject static values |
+
+All steps support: `continue_on_error` (boolean), `timeout_seconds` (integer), `retry` config.
+
+### HTTP Steps
+
+```json
+{
+  "id": "call_api",
+  "type": "http",
+  "url": "https://api.example.com/process",
+  "method": "POST",
+  "headers": {"Content-Type": "application/json"},
+  "body": {"data": "{{step1.primary}}"},
+  "auth": {"type": "bearer", "token": "{{inputs.api_token}}"},
+  "timeout": 30000
+}
+```
+
+Auth types: `basic` (username/password), `bearer` (token), `api_key`.
+
+### Python Steps
+
+```json
+{
+  "id": "transform",
+  "type": "python",
+  "code": "result = inputs['text'].upper()",
+  "inputs": {"text": "{{step1.primary}}"}
+}
+```
+
+### Parallel Steps (Branching)
+
+Run multiple branches concurrently. Each branch has a `name` and `steps` array.
+
+```json
+{
+  "id": "step1",
+  "type": "parallel",
+  "branches": [
+    {
+      "name": "Video Generation",
+      "steps": [
+        {
+          "id": "step1_branch_0",
+          "type": "model",
+          "model": "kling-v3-pro-image-to-video",
+          "params": {"prompt": "{{inputs.prompt}}", "start_image_url": "{{inputs.image}}", "duration": "5"}
+        }
+      ]
+    },
+    {
+      "name": "Image Edit",
+      "steps": [
+        {
+          "id": "step1_branch_1",
+          "type": "model",
+          "model": "flux-2-edit",
+          "params": {"prompt": "{{inputs.prompt}}", "image_url": "{{inputs.image}}"}
+        }
+      ]
+    }
+  ]
+}
+```
+
+All branches start simultaneously and execute independently. The parallel step completes when all branches finish.
+
+### Choice Steps (Conditional Logic)
+
+Route execution based on a condition. Evaluates the condition, then runs `condition_met_branch` or `default_branch`.
+
+```json
+{
+  "id": "step2",
+  "type": "choice",
+  "condition": {
+    "expression": "$.step1.primary",
+    "operator": "string_matches",
+    "value": ".mp4"
+  },
+  "condition_met_branch": {
+    "name": "condition_met",
+    "step_id": "step2_condition_met",
+    "steps": [
+      {"id": "step2_branch_0", "type": "model", "model": "topaz-upscale-video", "params": {"video": "{{step1.primary}}", "scale": 2}}
+    ]
+  },
+  "default_branch": {
+    "name": "default",
+    "step_id": "step2_default",
+    "steps": [
+      {"id": "step2_default", "type": "model", "model": "topaz-upscale-image", "params": {"image_url": "{{step1.primary}}", "scale": 2}}
+    ]
+  }
+}
+```
+
+**Condition types:**
+
+Simple condition: `{expression, operator, value}`
+Logical AND: `{and: [condition, condition, ...]}`  (all must be true)
+Logical OR: `{or: [condition, condition, ...]}`  (any must be true)
+Logical NOT: `{not: condition}`  (negate)
+
+```json
+{"and": [
+  {"expression": "$.step1.primary", "operator": "string_matches", "value": ".png"},
+  {"expression": "$.inputs.upscale", "operator": "equals", "value": true}
+]}
+```
+
+**Condition operators:**
+
+| Category | Operators |
+|----------|-----------|
+| Comparison | `equals`, `not_equals`, `greater_than`, `less_than`, `greater_than_or_equal`, `less_than_or_equal` |
+| String | `string_equals`, `string_matches` (pattern/contains) |
+| Array | `in`, `not_in` |
+| Existence | `exists`, `not_exists`, `is_null`, `is_not_null` (no `value` needed) |
+
+**Important:** Condition expressions use `$.step_id.field` syntax (e.g., `$.step1.primary`, `$.inputs.email`), while step params use `{{step_id.field}}` template syntax.
+
+### Pass Steps
+
+```json
+{"id": "config", "type": "pass", "result": {"style": "cinematic"}}
+```
+
+### Parameter References (Template Syntax)
+
+Use `{{double braces}}` to reference inputs and step outputs:
+
+| Reference | Description | Example |
+|-----------|-------------|---------|
+| `{{inputs.field}}` | Workflow input | `{{inputs.prompt}}` |
+| `{{step_id.output}}` | Full output of a step | `{{generate.output}}` |
+| `{{step_id.primary}}` | Primary/first result | `{{generate.primary}}` |
+| `{{branch_step_id.primary}}` | Output from a parallel branch step | `{{step1_branch_0.primary}}` |
+
+Templates can be embedded in strings: `"A portrait of {{inputs.name}} in {{inputs.style}} style"`
+
+Condition expressions use `$` syntax: `$.step_id.primary`, `$.step_id.output`, `$.step_id.output.field`, `$.inputs.field`
+
+### Fallback Configuration
+
+Automatic model fallback when the primary model fails:
+
+```json
+{
+  "step_id": "generate",
+  "type": "model",
+  "model": "flux-2-max",
+  "params": {"prompt": "{{inputs.prompt}}"},
+  "fallback": {
+    "enabled": true,
+    "model": "flux-2-pro",
+    "params": {"prompt": "{{inputs.prompt}}"}
+  }
+}
+```
+
+When fallback is used, step metadata includes `fallback_used: true` and `primary_error`.
+
+### Versioning
+
+**Version states:** `active`, `archived`, `deleted`
+
+**Locking:** Locked versions cannot be modified. Set `locked: true` for production stability.
+
+**Visibility:**
+| Setting | Behavior |
+|---------|----------|
+| `allowed_to_share: false` (default) | Private — only your organization |
+| `allowed_to_share: true` | Unlisted — accessible via direct link |
+
+### Trigger Workflow
+
+`POST https://workflows.eachlabs.run/api/v1/{workflowID}/trigger`
+
+```json
+{
+  "version_id": "v1",
+  "inputs": {"prompt": "A sunset landscape"},
+  "webhook_url": "https://your-server.com/webhook"
+}
+```
+
+Response (202): `{"execution_id": "exec-123", "status": "queued", "started_at": "..."}`
+
+### Bulk Trigger
+
+`POST https://workflows.eachlabs.run/api/v1/{workflowID}/bulk-trigger`
+
+```json
+{
+  "version_id": "v1",
+  "inputs": [
+    {"prompt": "A sunset landscape"},
+    {"prompt": "A mountain scene"},
+    {"prompt": "An ocean view"}
+  ],
+  "webhook_url": "https://your-server.com/webhook"
+}
+```
+
+Max 10 inputs per request. Response includes `bulk_id` for tracking. Partial failures possible.
+
+### Get Execution
+
+`GET https://workflows.eachlabs.run/api/v1/executions/{executionID}`
+
+```json
+{
+  "execution_id": "exec-123",
+  "workflow_id": "wf-456",
+  "status": "completed",
+  "inputs": {"prompt": "A sunset landscape"},
+  "step_outputs": {
+    "generate": {
+      "step_id": "generate",
+      "status": "completed",
+      "output": "https://cdn.example.com/image.png",
+      "primary": "https://cdn.example.com/image.png",
+      "metadata": {"model": "flux-2-pro", "version": "1.0.0"}
+    }
+  },
+  "output": ["https://cdn.example.com/upscaled.png"]
+}
+```
+
+**Execution statuses:** `running`, `completed`, `failed`, `cancelled`
+
+### Workflow Webhooks
+
+Success payload: `{execution_id, workflow_id, status: "completed", inputs, step_outputs, output}`
+Failed payload: `{execution_id, workflow_id, status: "failed", error: "ExecutionFailed", error_cause}`
+
+Bulk trigger: each execution sends its own webhook, all include `bulk_id`.
+
+---
+
+## each::sense
+
+OpenAI-compatible AI agent. Natural language in, media out. Auto-selects models, generates media, builds workflows.
+
+### Endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/v1/chat/completions` | Chat completions (primary endpoint) |
+| `POST` | `/workflow` | Build or update workflows via natural language |
+| `GET` | `/v1/models` | List available models |
+| `GET` | `/memory?session_id={id}` | Get session memory |
+| `DELETE` | `/memory?session_id={id}` | Clear session memory |
+| `GET` | `/sessions` | List all sessions |
+
+### Chat Completions
+
+`POST https://eachsense-agent.core.eachlabs.run/v1/chat/completions`
+
+```json
+{
+  "messages": [{"role": "user", "content": "Generate a sunset landscape photo"}],
+  "model": "eachsense/beta",
+  "stream": true,
+  "session_id": "my-session",
+  "mode": "max",
+  "behavior": "agent",
+  "image_urls": ["https://example.com/reference.jpg"],
+  "web_search": true,
+  "enable_safety_checker": true
+}
+```
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `messages` | array | — (required) | Chat messages with `role` and `content` |
+| `model` | string | `"eachsense/beta"` | Model identifier |
+| `stream` | boolean | `true` | Enable SSE streaming |
+| `session_id` | string | — | Conversation continuity ID |
+| `mode` | string | `"max"` | Quality: `"max"` (premium models) or `"eco"` (fast/cheap) |
+| `behavior` | string | `"agent"` | `"agent"` (auto-execute), `"plan"` (show plan first), `"ask"` (always clarify) |
+| `image_urls` | string[] | — | Image inputs for editing/analysis (max 4) |
+| `workflow_id` | string | — | Execute a specific workflow |
+| `version_id` | string | — | Workflow version |
+| `web_search` | boolean | `true` | Enable web search |
+| `enable_safety_checker` | boolean | `true` | Content safety filter |
+
+**Non-streaming response:**
+```json
+{
+  "id": "chatcmpl-123",
+  "object": "chat.completion",
+  "choices": [{"message": {"role": "assistant", "content": "Here's your image..."}}],
+  "generations": ["https://cdn.example.com/image.png"],
+  "task_id": "task-456",
+  "session_id": "my-session"
+}
+```
+
+### Behavior Modes
+
+| Mode | Behavior | Best For |
+|------|----------|----------|
+| `agent` | Makes assumptions, executes immediately | Production, simple tasks |
+| `plan` | Shows plan with estimated time/cost, waits for approval | Complex tasks, cost-sensitive |
+| `ask` | Always asks for clarification before executing | Full user control |
+
+### Quality Modes
+
+| Mode | Models Used | Speed | Cost |
+|------|-------------|-------|------|
+| `max` | Premium (flux-2-max, veo-3, etc.) | 10–300s | Higher |
+| `eco` | Fast (flux-2-pro, veo3-1-fast, etc.) | 5–180s | Lower |
+
+### Streaming (SSE)
+
+Events are wrapped in OpenAI `chat.completion.chunk` format with an `eachlabs` extension field:
+
+```
+data: {"id":"chatcmpl-123","object":"chat.completion.chunk","choices":[{"delta":{"content":""}}],"eachlabs":{"type":"generation_response","url":"https://cdn.example.com/image.png","generations":["..."],"model":"flux-2-max","execution_time_ms":8500}}
+
+data: [DONE]
+```
+
+**18 Event Types:**
+
+| Category | Event | Description |
+|----------|-------|-------------|
+| AI Reasoning | `thinking_delta` | Real-time reasoning text |
+| AI Reasoning | `text_response` | Assistant message content |
+| Tool Operations | `status` | Current operation (includes `tool_name`, `parameters`) |
+| Tool Operations | `tool_call` | Tool invocation details |
+| Tool Operations | `message` | Informational message |
+| Tool Operations | `progress` | Progress update with `percent` |
+| Generation | `generation_response` | Media URLs (`url`, `generations[]`, `model`, `execution_time_ms`) |
+| Interaction | `clarification_needed` | Asks user for input (`question`, `options[]`, `context`) |
+| Web Search | `web_search_query` | Search being performed |
+| Web Search | `web_search_citations` | Search results with `title`, `url`, `snippet` |
+| Workflow | `workflow_created` | New workflow created (`workflow_id`, `version_id`, `steps_count`) |
+| Workflow | `workflow_fetched` | Existing workflow loaded |
+| Workflow | `workflow_built` | Workflow definition built |
+| Workflow | `workflow_updated` | Workflow updated |
+| Execution | `execution_started` | Workflow execution started |
+| Execution | `execution_progress` | Step progress (`step_id`, `completed_steps`, `total_steps`) |
+| Execution | `execution_completed` | Workflow done (`output`, `all_outputs`, `total_time_ms`) |
+| Terminal | `complete` | Task finished (`status`: ok/error/clarification_needed, `generations[]`) |
+| Terminal | `error` | Error occurred (`message`, `error_code`) |
+
+**Typical event flow (image generation):**
+```
+thinking_delta → status → status → text_response → generation_response → complete → [DONE]
+```
+
+### Agent Tools
+
+| Tool | Type | Description |
+|------|------|-------------|
+| `search_models` | Non-terminal | Search for models by use case |
+| `get_model_details` | Non-terminal | Get model input schema |
+| `web_search` | Non-terminal | Web search for information |
+| `vision_preprocessor` | Non-terminal | Analyze image content |
+| `execute_model` | Terminal | Run a model prediction |
+| `generate_text` | Terminal | Generate text response |
+| `create_workflow` | Non-terminal | Create a new workflow |
+| `trigger_workflow` | Non-terminal | Execute a workflow |
+| `build_workflow` | Non-terminal | Build workflow definition |
+| `check_execution` | Non-terminal | Check execution status |
+| `ask_clarification` | Terminal | Ask user for clarification |
+
+### Workflow Builder
+
+`POST https://eachsense-agent.core.eachlabs.run/workflow`
+
+```json
+{
+  "message": "Create a workflow that generates an image and then upscales it",
+  "stream": true,
+  "session_id": "my-session"
+}
+```
+
+Update existing: include `workflow_id` and `version_id`.
+
+### Sessions
+
+Sessions enable multi-turn conversations. Include `session_id` in requests.
+
+| Setting | Value |
+|---------|-------|
+| Idle timeout | 15 minutes |
+| Session TTL | 30 days |
+| Memory limit | 50 messages per session |
+
+Sessions are scoped by API key + session_id. Clear with `DELETE /memory?session_id={id}`.
+
+### Clarifications
+
+When the agent needs more info, it emits `clarification_needed` with `question`, `options[]`, and `context`. Respond in the same session with natural language or option number.
+
+---
+
+## Models Catalog
+
+All models use version `1.0.0`. Universal API pattern:
+
+```
+POST https://api.eachlabs.ai/v1/prediction
+{
+  "model": "<slug>",
+  "version": "1.0.0",
+  "input": { ...model-specific parameters... }
+}
+```
+
+### Quick Model Recommendations
+
+| Use Case | Model Slug | Speed |
+|----------|-----------|-------|
+| Best image quality | `flux-2-max` | Medium |
+| Fast image generation | `flux-2-pro` | Fast |
+| Text/logos in images | `flux-kontext-pro` | Fast |
+| Rapid prototyping images | `nano-banana-pro` | Very Fast |
+| Photorealistic images | `gemini-imagen-4` | Medium |
+| Artistic/creative images | `seedream-v4-5` | Medium |
+| Best video (with audio) | `veo-3` | Slow |
+| Fast video | `veo3-1-fast` | Fast |
+| High-quality video | `kling-3-0` | Medium |
+| Image to video | `kling-2-1-image-to-video` | Medium |
+| Instruction-based editing | `flux-2-edit` | Fast |
+| Inpainting/outpainting | `flux-fill-pro` | Fast |
+| Background removal | `eachlabs-bg-remover-v1` | Very Fast |
+| Image upscaling | `topaz-upscale-image` | Fast |
+| Face swap | `kling-face-swap` | Fast |
+| Text-to-speech | `elevenlabs-tts` | Very Fast |
+| Music generation | `mureka-generate-music` | Medium |
+| Sound effects | `stable-audio-2-5` | Fast |
+
+### Model Aliases
+
+Flux Max = `flux-2-max`, Flux Pro = `flux-2-pro`, Flux Edit = `flux-2-edit`, Flux Fill = `flux-fill-pro`, Flux Kontext = `flux-kontext-pro`, Imagen 4 = `gemini-imagen-4`, Veo 3 = `veo-3`, Kling 3 = `kling-3-0`, Sora = `sora-2-pro`, ElevenLabs = `elevenlabs-tts`
+
+---
+
+### Image Generation Models
+
+#### flux-2-max
+
+Best overall image quality. Complex prompts, multi-subject scenes.
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `prompt` | string | Yes | — | Image description |
+| `aspect_ratio` | string | No | `1:1` | `1:1`, `16:9`, `9:16`, `4:3`, `3:4`, `3:2`, `2:3` |
+| `num_outputs` | integer | No | 1 | Number of images (1–4) |
+| `seed` | integer | No | random | Reproducibility seed |
+
+#### flux-2-pro
+
+Fast, balanced quality. Great default choice.
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `prompt` | string | Yes | — | Image description |
+| `aspect_ratio` | string | No | `1:1` | `1:1`, `16:9`, `9:16`, `4:3`, `3:4`, `3:2`, `2:3` |
+| `num_outputs` | integer | No | 1 | Number of images (1–4) |
+| `seed` | integer | No | random | Reproducibility seed |
+
+#### flux-kontext-pro
+
+Best for text rendering, logos, contextual edits. Optionally accepts an image for editing.
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `prompt` | string | Yes | — | Description or editing instruction |
+| `image_url` | string | No | — | Input image for contextual editing |
+| `aspect_ratio` | string | No | `1:1` | Output aspect ratio |
+| `seed` | integer | No | random | Reproducibility seed |
+
+#### nano-banana-pro
+
+Fastest image model. Ideal for high volume and rapid prototyping.
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `prompt` | string | Yes | — | Image description |
+| `aspect_ratio` | string | No | `1:1` | Output aspect ratio |
+| `num_outputs` | integer | No | 1 | Number of images |
+| `seed` | integer | No | random | Reproducibility seed |
+
+#### gemini-imagen-4
+
+Google's latest. Exceptional photorealism, realistic people and scenes.
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `prompt` | string | Yes | — | Image description |
+| `aspect_ratio` | string | No | `1:1` | `1:1`, `16:9`, `9:16`, `4:3`, `3:4` |
+| `num_outputs` | integer | No | 1 | Number of images |
+| `seed` | integer | No | random | Reproducibility seed |
+
+Note: Does not support `3:2` or `2:3` aspect ratios.
+
+#### seedream-v4-5
+
+Creative and artistic compositions. Strong at abstract and stylized content.
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `prompt` | string | Yes | — | Image description |
+| `aspect_ratio` | string | No | `1:1` | Output aspect ratio |
+| `num_outputs` | integer | No | 1 | Number of images |
+| `seed` | integer | No | random | Reproducibility seed |
+
+Supports `enable_safety_checker: false` for NSFW content.
+
+#### kling-text-to-image
+
+Versatile styles, Asian aesthetics. Only image model with negative prompt support.
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `prompt` | string | Yes | — | Image description |
+| `negative_prompt` | string | No | — | What to avoid |
+| `aspect_ratio` | string | No | `1:1` | Output aspect ratio |
+| `num_outputs` | integer | No | 1 | Number of images |
+| `seed` | integer | No | random | Reproducibility seed |
+
+---
+
+### Video Generation Models
+
+Video generation is async. Processing takes 30 seconds to several minutes. Use webhooks for production.
+
+#### veo-3
+
+Best overall video. Generates synchronized audio with video. Cinematic quality.
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `prompt` | string | Yes | — | Video description |
+| `duration` | integer | No | 5 | Duration in seconds (5–15) |
+| `aspect_ratio` | string | No | `16:9` | Output aspect ratio |
+| `seed` | integer | No | random | Reproducibility seed |
+
+#### veo3-1-fast
+
+Speed-optimized Veo variant. Quick iterations and previews.
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `prompt` | string | Yes | — | Video description |
+| `duration` | integer | No | 5 | Duration in seconds |
+| `aspect_ratio` | string | No | `16:9` | Output aspect ratio |
+| `seed` | integer | No | random | Reproducibility seed |
+
+#### kling-3-0
+
+High-quality text-to-video. Strong motion coherence. Supports negative prompts.
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `prompt` | string | Yes | — | Video description |
+| `negative_prompt` | string | No | — | What to avoid |
+| `duration` | integer | No | 5 | Duration in seconds |
+| `aspect_ratio` | string | No | `16:9` | Output aspect ratio |
+| `seed` | integer | No | random | Reproducibility seed |
+
+#### kling-2-1-image-to-video
+
+Animate existing images. Output aspect ratio matches source image.
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `image_url` | string | Yes | — | Source image URL |
+| `prompt` | string | No | — | Motion description |
+| `duration` | integer | No | 5 | Duration in seconds |
+| `seed` | integer | No | random | Reproducibility seed |
+
+Note: No `aspect_ratio` parameter — determined by source image.
+
+#### wan-v2-6-image-to-video
+
+Open-source image-to-video with good motion quality.
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `image_url` | string | Yes | — | Source image URL |
+| `prompt` | string | No | — | Motion description |
+| `duration` | integer | No | 5 | Duration in seconds |
+| `seed` | integer | No | random | Reproducibility seed |
+
+Supports `enable_safety_checker: false`.
+
+#### wan-v2-6-text-to-video
+
+Open-source text-to-video. Good for experimentation.
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `prompt` | string | Yes | — | Video description |
+| `duration` | integer | No | 5 | Duration in seconds |
+| `aspect_ratio` | string | No | `16:9` | Output aspect ratio |
+| `seed` | integer | No | random | Reproducibility seed |
+
+Supports `enable_safety_checker: false`.
+
+#### pixverse-v4-1
+
+Fast, stylized creative videos. Good for social media content.
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `prompt` | string | Yes | — | Video description |
+| `duration` | integer | No | 5 | Duration in seconds |
+| `aspect_ratio` | string | No | `16:9` | Output aspect ratio |
+| `seed` | integer | No | random | Reproducibility seed |
+
+#### sora-2-pro
+
+OpenAI's flagship. Excellent cinematic quality and temporal coherence.
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `prompt` | string | Yes | — | Video description |
+| `duration` | integer | No | 5 | Duration in seconds |
+| `aspect_ratio` | string | No | `16:9` | Output aspect ratio |
+| `seed` | integer | No | random | Reproducibility seed |
+
+---
+
+### Image Editing Models
+
+#### flux-2-edit
+
+Instruction-based editing. Describe changes in natural language.
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `image_url` | string | Yes | — | Image to edit |
+| `prompt` | string | Yes | — | Editing instruction (e.g., "Change the sky to sunset") |
+| `seed` | integer | No | random | Reproducibility seed |
+
+#### flux-fill-pro
+
+Inpainting and outpainting with masks. White mask areas get filled.
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `image_url` | string | Yes | — | Source image |
+| `mask_url` | string | Yes | — | Mask image (white = fill, black = preserve) |
+| `prompt` | string | Yes | — | What to fill in masked area |
+| `seed` | integer | No | random | Reproducibility seed |
+
+#### eachlabs-bg-remover-v1
+
+Fast background removal. Returns transparent PNG.
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `image_url` | string | Yes | — | Image to remove background from |
+
+Simplest model — only one parameter.
+
+#### topaz-upscale-image
+
+AI super-resolution upscaling. Preserves detail, sharpens edges.
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `image_url` | string | Yes | — | Image to upscale |
+| `scale` | integer | No | 2 | Upscale factor: `2` or `4` only |
+
+#### kling-face-swap
+
+Realistic face replacement. Adapts to target pose and expression.
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `image_url` | string | Yes | — | Target image |
+| `face_url` | string | Yes | — | Source face image |
+| `seed` | integer | No | random | Reproducibility seed |
+
+---
+
+### Audio & Music Models
+
+#### elevenlabs-tts
+
+Natural text-to-speech. Multi-language support. Up to ~10 minutes.
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `text` | string | Yes | — | Text to convert to speech |
+| `voice` | string | No | `rachel` | Voice ID or name |
+| `model_id` | string | No | `eleven_multilingual_v2` | TTS model variant |
+| `stability` | float | No | 0.5 | Voice stability (0.0–1.0, lower = more expressive) |
+| `similarity_boost` | float | No | 0.75 | Voice similarity (0.0–1.0) |
+
+Note: Uses `text` instead of `prompt`. Use punctuation to control pacing.
+
+#### mureka-generate-music
+
+Full song generation with optional vocals. Up to ~3 minutes.
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `prompt` | string | Yes | — | Music description (genre, mood, instruments, tempo) |
+| `lyrics` | string | No | — | Lyrics for vocal tracks (omit for instrumental) |
+| `duration` | integer | No | 30 | Duration in seconds (up to ~180) |
+| `style` | string | No | — | Musical style hint |
+
+#### stable-audio-2-5
+
+Sound effects and short audio. Up to ~45 seconds.
+
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `prompt` | string | Yes | — | Audio description |
+| `duration` | float | No | 10 | Duration in seconds (up to ~45) |
+| `seed` | integer | No | random | Reproducibility seed |
+
+Note: `duration` is float (supports fractional seconds).
+
+---
+
+## SDKs
+
+### Python
+
+```bash
+pip install openai
+```
+
+**each::sense (OpenAI SDK):**
+```python
+from openai import OpenAI
+
+client = OpenAI(
+    api_key="YOUR_API_KEY",
+    base_url="https://eachsense-agent.core.eachlabs.run/v1"
+)
+
+# Non-streaming
+response = client.chat.completions.create(
+    model="eachsense/beta",
+    messages=[{"role": "user", "content": "Generate a sunset landscape"}],
+    stream=False
+)
+print(response.generations)
+
+# Streaming
+stream = client.chat.completions.create(
+    model="eachsense/beta",
+    messages=[{"role": "user", "content": "Generate a sunset landscape"}],
+    stream=True
+)
+for chunk in stream:
+    eachlabs_data = chunk.model_extra.get("eachlabs")
+    if eachlabs_data:
+        event_type = eachlabs_data.get("type")
+        if event_type == "generation_response":
+            print(eachlabs_data["generations"])
+
+# Eco mode
+response = client.chat.completions.create(
+    model="eachsense/beta",
+    messages=[{"role": "user", "content": "Generate a quick sketch"}],
+    extra_body={"mode": "eco"},
+    stream=False
+)
+
+# Multi-turn with session
+response = client.chat.completions.create(
+    model="eachsense/beta",
+    messages=[{"role": "user", "content": "Now make it wider"}],
+    extra_body={"session_id": "my-session"},
+    stream=False
+)
+```
+
+**each::api (requests):**
+```python
+import requests, time
+
+headers = {"X-API-Key": "YOUR_API_KEY", "Content-Type": "application/json"}
+
+# Create prediction
+r = requests.post("https://api.eachlabs.ai/v1/prediction", headers=headers, json={
+    "model": "flux-2-max",
+    "version": "1.0.0",
+    "input": {"prompt": "A sunset landscape", "aspect_ratio": "16:9"}
+})
+prediction_id = r.json()["predictionID"]
+
+# Poll for result
+while True:
+    r = requests.get(f"https://api.eachlabs.ai/v1/prediction/{prediction_id}", headers=headers)
+    data = r.json()
+    if data["status"] in ("success", "failed", "cancelled"):
+        break
+    time.sleep(2)
+
+print(data["output"])
+```
+
+### JavaScript
+
+```bash
+npm install openai
+```
+
+**each::sense (OpenAI SDK):**
+```javascript
+import OpenAI from "openai";
+
+const client = new OpenAI({
+  apiKey: "YOUR_API_KEY",
+  baseURL: "https://eachsense-agent.core.eachlabs.run/v1"
+});
+
+// Non-streaming
+const response = await client.chat.completions.create({
+  model: "eachsense/beta",
+  messages: [{ role: "user", content: "Generate a sunset landscape" }],
+  stream: false
+});
+console.log(response.generations);
+
+// Streaming
+const stream = await client.chat.completions.create({
+  model: "eachsense/beta",
+  messages: [{ role: "user", content: "Generate a sunset landscape" }],
+  stream: true
+});
+for await (const chunk of stream) {
+  const eachlabs = chunk.eachlabs;
+  if (eachlabs?.type === "generation_response") {
+    console.log(eachlabs.generations);
+  }
+}
+```
+
+**each::api (fetch):**
+```javascript
+const headers = { "X-API-Key": "YOUR_API_KEY", "Content-Type": "application/json" };
+
+// Create prediction
+const res = await fetch("https://api.eachlabs.ai/v1/prediction", {
+  method: "POST",
+  headers,
+  body: JSON.stringify({
+    model: "flux-2-max",
+    version: "1.0.0",
+    input: { prompt: "A sunset landscape", aspect_ratio: "16:9" }
+  })
+});
+const { predictionID } = await res.json();
+
+// Poll for result
+let result;
+while (true) {
+  const r = await fetch(`https://api.eachlabs.ai/v1/prediction/${predictionID}`, { headers });
+  result = await r.json();
+  if (["success", "failed", "cancelled"].includes(result.status)) break;
+  await new Promise(r => setTimeout(r, 2000));
+}
+console.log(result.output);
+```
+
+---
+
+## Error Handling
+
+**Error response format:** `{"error": "Human-readable error message"}`
+
+| Code | Meaning | Action |
+|------|---------|--------|
+| 400 | Bad Request — invalid parameters | Fix request body |
+| 401 | Unauthorized — missing/invalid API key | Check API key |
+| 403 | Forbidden — locked resource | Check resource permissions |
+| 404 | Not Found — invalid ID or slug | Verify resource exists |
+| 422 | Unprocessable — missing required fields | Check required fields |
+| 429 | Rate Limited | Implement exponential backoff |
+| 500 | Internal Server Error | Retry with backoff |
+
+**Retry strategy:** Exponential backoff for 429 and 500 errors. Wait `2^attempt` seconds.
+
+---
+
+## Rate Limits
+
+| Plan | Requests/min | Concurrent |
+|------|-------------|------------|
+| Free | 10 | 2 |
+| Pro | 60 | 10 |
+| Enterprise | 300 | 50 |
+
+Rate limit headers: `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`
+
+---
+
+## Timeouts
+
+| Operation | Timeout |
+|-----------|---------|
+| HTTP connection | 30 seconds |
+| HTTP request | 300 seconds |
+| Streaming idle | 15 minutes |
+| Image generation | 10–60 seconds |
+| Video generation | 60–600 seconds |
+| Workflow execution | 15 minutes |
+
+---
+
+## Input Validation Limits
+
+| Input | Constraint |
+|-------|-----------|
+| Images per request | Max 4 |
+| Image formats | JPEG, PNG, WebP, GIF |
+| Image size | Max 20MB, 64–8192px |
+| Video formats | MP4, WebM, MOV |
+| Video size | Max 500MB, 10 min |
+| Audio formats | MP3, WAV, M4A, OGG |
+| Audio size | Max 50MB, 5 min |
+| Prompt length | Max 10,000 characters |
+| Session memory | Max 50 messages |
+
+---
+
+## Documentation Pages
+
+### Getting Started
+- [Introduction](/introduction)
+- [Authentication](/authentication)
+- [Errors](/errors)
+
+### each::api
+- [Overview](/api/overview)
+- [List Models](/api/models/list-models): `GET /v1/models`
+- [Get Model](/api/models/get-model): `GET /v1/model?slug=`
+- [Create Prediction](/api/predictions/create-prediction): `POST /v1/prediction`
+- [Get Prediction](/api/predictions/get-prediction): `GET /v1/prediction/{id}`
+- [NSFW Content](/api/nsfw-content)
+- [Webhooks Overview](/api/webhooks/overview)
+- [List Webhooks](/api/webhooks/list-webhooks): `GET /v1/webhooks`
+- [Get Webhook](/api/webhooks/get-webhook): `GET /v1/webhooks/{execution_id}`
+- [Webhook Payloads](/api/webhooks/payload-reference)
+
+### each::workflows
+- [Overview](/workflows/overview)
+- [Quickstart](/workflows/quickstart)
+- [Workflow Structure](/workflows/concepts/workflow-structure)
+- [Versioning](/workflows/concepts/versioning)
+- [Parameter References](/workflows/concepts/parameter-references)
+- [Fallback Configuration](/workflows/concepts/fallback-configuration)
+- [Categories](/workflows/endpoints/categories): `GET /categories`
+- [Create Workflow](/workflows/endpoints/create-workflow): `POST /workflows`
+- [Get Workflow](/workflows/endpoints/get-workflow): `GET /workflows/{id}`
+- [Update Workflow](/workflows/endpoints/update-workflow): `PUT /workflows/{id}`
+- [Create Version](/workflows/endpoints/create-version): `PUT /workflows/{id}/versions/{versionID}`
+- [Trigger Workflow](/workflows/endpoints/trigger-workflow): `POST /{id}/trigger`
+- [Bulk Trigger](/workflows/endpoints/bulk-trigger): `POST /{id}/bulk-trigger`
+- [List Executions](/workflows/endpoints/list-executions): `GET /workflows/{id}/executions`
+- [Get Execution](/workflows/endpoints/get-execution): `GET /executions/{executionID}`
+- [Public Workflows](/workflows/endpoints/public-workflows)
+- [Webhooks](/workflows/webhooks)
+- [Examples](/workflows/examples)
+
+### each::sense
+- [Overview](/sense/overview)
+- [Quickstart](/sense/quickstart)
+- [Chat Completions](/sense/endpoints/chat-completions): `POST /v1/chat/completions`
+- [Workflow Builder](/sense/endpoints/workflow-builder): `POST /workflow`
+- [Models](/sense/endpoints/models): `GET /v1/models`
+- [Sessions & Memory](/sense/endpoints/sessions-memory)
+- [Streaming Overview](/sense/streaming/overview)
+- [Event Types](/sense/streaming/event-types)
+- [Streaming Implementation](/sense/streaming/implementation)
+- [Tools](/sense/tools)
+- [Behavior Modes](/sense/behavior-modes)
+- [Workflows via Sense](/sense/workflows)
+- [Clarifications](/sense/clarifications)
+- [Sessions](/sense/sessions)
+- [Edge Cases](/sense/edge-cases)
+- [Examples](/sense/examples)
+
+### Models
+- [Overview](/models/overview)
+- [Image Generation](/models/image-generation): flux-2-max, flux-2-pro, flux-kontext-pro, nano-banana-pro, gemini-imagen-4, seedream-v4-5, kling-text-to-image
+- [Video Generation](/models/video-generation): veo-3, veo3-1-fast, kling-3-0, kling-2-1-image-to-video, wan-v2-6-image-to-video, wan-v2-6-text-to-video, pixverse-v4-1, sora-2-pro
+- [Image Editing](/models/image-editing): flux-2-edit, flux-fill-pro, eachlabs-bg-remover-v1, topaz-upscale-image, kling-face-swap
+- [Audio & Music](/models/audio-music): elevenlabs-tts, mureka-generate-music, stable-audio-2-5
+
+### SDKs
+- [Python](/sdks/python)
+- [JavaScript](/sdks/javascript)

@@ -1,0 +1,160 @@
+---
+title: "Parameter References"
+description: "Wire outputs between steps using template variables."
+---
+
+## Template Syntax
+
+Use `{{double braces}}` to reference workflow inputs and previous step outputs in your step parameters.
+
+## Reference Types
+
+| Reference | Description | Example |
+|-----------|-------------|---------|
+| `{{inputs.field}}` | Workflow input field | `{{inputs.prompt}}` |
+| `{{step_id.output}}` | Full output of a step | `{{generate_text.output}}` |
+| `{{step_id.primary}}` | Primary output of a step | `{{step1.primary}}` |
+
+## Examples
+
+### Referencing Inputs
+
+```json
+{
+  "step_id": "generate_text",
+  "type": "model",
+  "model": "openai-chatgpt-5",
+  "params": {
+    "system_prompt": "You are a helpful assistant",
+    "user_prompt": "{{inputs.prompt}}"
+  }
+}
+```
+
+### Chaining Steps
+
+```json
+{
+  "steps": [
+    {
+      "step_id": "step1",
+      "type": "model",
+      "model": "openai-chatgpt-5",
+      "params": {
+        "user_prompt": "{{inputs.prompt}}"
+      }
+    },
+    {
+      "step_id": "step2",
+      "type": "model",
+      "model": "flux-1-1-pro",
+      "params": {
+        "prompt": "{{step1.output}}"
+      }
+    },
+    {
+      "step_id": "step3",
+      "type": "model",
+      "model": "topaz-upscale-image",
+      "params": {
+        "image": "{{step2.primary}}",
+        "scale": 2
+      }
+    }
+  ]
+}
+```
+
+### Embedding in Strings
+
+Template variables can be embedded within larger strings:
+
+```json
+{
+  "prompt": "A portrait of {{inputs.name}} in {{inputs.style}} style"
+}
+```
+
+## Referencing Parallel Branch Outputs
+
+When a parallel step completes, you can reference outputs from its branches using the branch step IDs:
+
+```json
+{
+  "steps": [
+    {
+      "id": "step1",
+      "type": "parallel",
+      "branches": [
+        {
+          "name": "Video",
+          "steps": [{"id": "step1_branch_0", "type": "model", "model": "veo-3", "params": {"prompt": "{{inputs.prompt}}"}}]
+        },
+        {
+          "name": "Image",
+          "steps": [{"id": "step1_branch_1", "type": "model", "model": "flux-2-max", "params": {"prompt": "{{inputs.prompt}}"}}]
+        }
+      ]
+    },
+    {
+      "id": "step2",
+      "type": "model",
+      "model": "topaz-upscale-image",
+      "params": {
+        "image_url": "{{step1_branch_1.primary}}"
+      }
+    }
+  ]
+}
+```
+
+## Condition Expressions
+
+Choice steps use `$` reference syntax (not `{{template}}` syntax) to evaluate conditions:
+
+| Reference | Description | Example |
+|-----------|-------------|---------|
+| `$.inputs.field` | Workflow input | `$.inputs.email` |
+| `$.step_id.primary` | Primary output of a step | `$.step1.primary` |
+| `$.step_id.output` | Full output of a step | `$.step1.output` |
+| `$.step_id.output.field` | Nested field from step output | `$.step1.output.filename` |
+
+```json
+{
+  "condition": {
+    "expression": "$.step1.primary",
+    "operator": "string_matches",
+    "value": ".mp4"
+  }
+}
+```
+
+You can also access nested output fields:
+
+```json
+{
+  "condition": {
+    "expression": "$.step1.output.filename",
+    "operator": "string_matches",
+    "value": ".pdf"
+  }
+}
+```
+
+<Note>
+Condition expressions use `$.step_id.field` syntax, while step parameters use `{{step_id.field}}` template syntax. These are different reference systems.
+</Note>
+
+For the full list of condition operators (comparison, string, array, existence, and logical), see [Workflow Structure — Condition Operators](/workflows/concepts/workflow-structure#condition-operators).
+
+## Resolution
+
+Template variables are resolved at execution time. The workflow engine:
+
+1. Evaluates steps in order
+2. Executes parallel branches concurrently
+3. Evaluates choice conditions and routes to the matching branch
+4. Resolves template variables using actual values from inputs and completed steps
+5. Passes the resolved parameters to the model
+
+If a referenced step hasn't completed or doesn't exist, the execution will fail.

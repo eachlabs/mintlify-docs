@@ -1,122 +1,250 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "theme": "mint",
-  "name": "Mint Starter Kit",
-  "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+  "theme": "palm",
+  "name": "each::labs",
+  "logo": {
+    "light": "/logo-light.svg",
+    "dark": "/logo-dark.svg"
   },
-  "favicon": "/favicon.svg",
+  "favicon": "/favicon.ico",
+  "colors": {
+    "primary": "#FF3C15",
+    "light": "#FF6B4A",
+    "dark": "#E0340F"
+  },
+  "appearance": {
+    "default": "dark"
+  },
+  "background": {
+    "decoration": "grid"
+  },
+  "styling": {
+    "eyebrows": "breadcrumbs",
+    "codeblocks": "dark"
+  },
+  "navbar": {
+    "links": [
+      { "label": "Dashboard", "href": "https://eachlabs.ai" }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "Get API Key",
+      "href": "https://www.eachlabs.ai/api-keys"
+    }
+  },
   "navigation": {
     "tabs": [
       {
-        "tab": "Guides",
+        "tab": "Documentation",
         "groups": [
           {
-            "group": "Getting started",
+            "group": "Getting Started",
+            "pages": ["introduction", "authentication"]
+          },
+          {
+            "group": "Reference",
+            "pages": ["errors"]
+          }
+        ]
+      },
+      {
+        "tab": "each::api",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": ["api/overview"]
+          },
+          {
+            "group": "Models",
+            "pages": ["api/models/list-models", "api/models/get-model"]
+          },
+          {
+            "group": "Predictions",
+            "pages": ["api/predictions/create-prediction", "api/predictions/get-prediction"]
+          },
+          {
+            "group": "Content Safety",
+            "pages": ["api/nsfw-content"]
+          },
+          {
+            "group": "Webhooks",
+            "pages": ["api/webhooks/overview", "api/webhooks/list-webhooks", "api/webhooks/get-webhook", "api/webhooks/payload-reference"]
+          }
+        ]
+      },
+      {
+        "tab": "each::workflows",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": ["workflows/overview", "workflows/quickstart"]
+          },
+          {
+            "group": "Concepts",
             "pages": [
-              "index",
-              "quickstart",
-              "development"
+              "workflows/concepts/workflow-structure",
+              "workflows/concepts/versioning",
+              "workflows/concepts/parameter-references",
+              "workflows/concepts/fallback-configuration"
             ]
           },
           {
-            "group": "Customization",
+            "group": "API Reference",
             "pages": [
-              "essentials/settings",
-              "essentials/navigation"
+              "workflows/endpoints/categories",
+              "workflows/endpoints/create-workflow",
+              "workflows/endpoints/get-workflow",
+              "workflows/endpoints/update-workflow",
+              "workflows/endpoints/create-version",
+              "workflows/endpoints/trigger-workflow",
+              "workflows/endpoints/bulk-trigger",
+              "workflows/endpoints/list-executions",
+              "workflows/endpoints/get-execution",
+              "workflows/endpoints/public-workflows"
             ]
           },
           {
-            "group": "Writing content",
+            "group": "Webhooks",
+            "pages": ["workflows/webhooks"]
+          },
+          {
+            "group": "Examples",
+            "pages": ["workflows/examples"]
+          }
+        ]
+      },
+      {
+        "tab": "each::sense",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": ["sense/overview", "sense/quickstart"]
+          },
+          {
+            "group": "API Reference",
             "pages": [
-              "essentials/markdown",
-              "essentials/code",
-              "essentials/images",
-              "essentials/reusable-snippets"
+              "sense/endpoints/chat-completions",
+              "sense/endpoints/workflow-builder",
+              "sense/endpoints/models",
+              "sense/endpoints/sessions-memory"
             ]
           },
           {
-            "group": "AI tools",
+            "group": "Streaming",
             "pages": [
-              "ai-tools/cursor",
-              "ai-tools/claude-code",
-              "ai-tools/windsurf"
+              "sense/streaming/overview",
+              "sense/streaming/event-types",
+              "sense/streaming/implementation"
+            ]
+          },
+          {
+            "group": "Features",
+            "pages": [
+              "sense/tools",
+              "sense/behavior-modes",
+              "sense/workflows",
+              "sense/clarifications",
+              "sense/sessions"
+            ]
+          },
+          {
+            "group": "Reference",
+            "pages": [
+              "sense/edge-cases",
+              "sense/examples"
             ]
           }
         ]
       },
       {
-        "tab": "API reference",
+        "tab": "Models",
         "groups": [
           {
-            "group": "API documentation",
+            "group": "Overview",
+            "pages": ["models/overview"]
+          },
+          {
+            "group": "Image Generation",
             "pages": [
-              "api-reference/introduction"
+              "models/image-generation",
+              "models/image-generation/flux-2-max",
+              "models/image-generation/flux-2-pro",
+              "models/image-generation/flux-kontext-pro",
+              "models/image-generation/nano-banana-pro",
+              "models/image-generation/gemini-imagen-4",
+              "models/image-generation/seedream-v4-5",
+              "models/image-generation/kling-text-to-image"
             ]
           },
           {
-            "group": "Endpoint examples",
+            "group": "Video Generation",
             "pages": [
-              "api-reference/endpoint/get",
-              "api-reference/endpoint/create",
-              "api-reference/endpoint/delete",
-              "api-reference/endpoint/webhook"
+              "models/video-generation",
+              "models/video-generation/veo-3",
+              "models/video-generation/veo3-1-fast",
+              "models/video-generation/kling-3-0",
+              "models/video-generation/kling-2-1-image-to-video",
+              "models/video-generation/wan-v2-6-image-to-video",
+              "models/video-generation/wan-v2-6-text-to-video",
+              "models/video-generation/pixverse-v4-1",
+              "models/video-generation/sora-2-pro"
+            ]
+          },
+          {
+            "group": "Image Editing",
+            "pages": [
+              "models/image-editing",
+              "models/image-editing/flux-2-edit",
+              "models/image-editing/flux-fill-pro",
+              "models/image-editing/eachlabs-bg-remover-v1",
+              "models/image-editing/topaz-upscale-image",
+              "models/image-editing/kling-face-swap"
+            ]
+          },
+          {
+            "group": "Audio & Music",
+            "pages": [
+              "models/audio-music",
+              "models/audio-music/elevenlabs-tts",
+              "models/audio-music/mureka-generate-music",
+              "models/audio-music/stable-audio-2-5"
             ]
           }
         ]
-      }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
-        },
-        {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
-        }
-      ]
-    }
-  },
-  "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
-  },
-  "navbar": {
-    "links": [
+      },
       {
-        "label": "Support",
-        "href": "mailto:hi@mintlify.com"
+        "tab": "SDKs",
+        "groups": [
+          {
+            "group": "Client Libraries",
+            "pages": ["sdks/python", "sdks/javascript"]
+          }
+        ]
       }
-    ],
-    "primary": {
-      "type": "button",
-      "label": "Dashboard",
-      "href": "https://dashboard.mintlify.com"
+    ]
+  },
+  "footer": {
+    "socials": {
+      "discord": "https://discord.gg/eachlabs",
+      "github": "https://github.com/eachlabs",
+      "x": "https://x.com/eachlabs",
+      "linkedin": "https://linkedin.com/company/eachlabs"
     }
   },
   "contextual": {
     "options": [
-     "copy",
-     "view",
-     "chatgpt",
-     "claude",
-     "perplexity",
-     "mcp",
-     "cursor",
-     "vscode"
-   ]
+      "copy",
+      "view",
+      "claude",
+      "mcp",
+      "cursor",
+      "vscode"
+    ]
   },
-  "footer": {
-    "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
-    }
+  "seo": {
+    "indexing": "navigable"
+  },
+  "metadata": {
+    "timestamp": true
   }
 }

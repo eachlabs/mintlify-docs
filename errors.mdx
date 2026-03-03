@@ -1,0 +1,166 @@
+---
+title: "Error Reference"
+description: "HTTP status codes and error responses across all each::labs APIs."
+---
+
+## Error Response Format
+
+All each::labs APIs return errors in a consistent JSON format:
+
+```json
+{
+  "error": "Human-readable error message"
+}
+```
+
+## HTTP Status Codes
+
+| Status | Meaning | Description |
+|--------|---------|-------------|
+| `400` | Bad Request | Invalid request parameters or body |
+| `401` | Unauthorized | Missing or invalid API key |
+| `403` | Forbidden | Operation not allowed (e.g., locked resource) |
+| `404` | Not Found | Resource does not exist |
+| `429` | Too Many Requests | Rate limit exceeded |
+| `500` | Internal Server Error | Unexpected server error |
+
+## Common Errors
+
+### 400 — Bad Request
+
+```json
+{
+  "error": "slug parameter is required"
+}
+```
+
+**Causes:**
+- Missing required parameters
+- Invalid parameter types or values
+- Malformed JSON body
+- Input validation failure
+
+### 401 — Unauthorized
+
+```json
+{
+  "error": "Invalid or missing API key"
+}
+```
+
+**Causes:**
+- `X-API-Key` header not included
+- API key is invalid or expired
+
+### 403 — Forbidden
+
+```json
+{
+  "error": "Workflow is locked and cannot be modified"
+}
+```
+
+**Causes:**
+- Attempting to modify a locked workflow or version
+- Insufficient permissions for the requested operation
+
+### 404 — Not Found
+
+```json
+{
+  "error": "Failed to fetch model: model not found"
+}
+```
+
+**Causes:**
+- Invalid model slug
+- Non-existent prediction ID, workflow ID, or execution ID
+- Resource was deleted
+
+### 429 — Rate Limited
+
+```json
+{
+  "error": "Rate limit exceeded. Please retry after 60 seconds."
+}
+```
+
+**Handling:**
+- Implement exponential backoff
+- Check the `Retry-After` header when available
+- Consider reducing request frequency
+
+### 500 — Internal Server Error
+
+```json
+{
+  "error": "Failed to fetch models: internal error"
+}
+```
+
+**Handling:**
+- Retry with exponential backoff
+- If persistent, contact support
+
+## Product-Specific Errors
+
+### each::api — Prediction Errors
+
+| Error | Description |
+|-------|-------------|
+| `"Prediction not found"` | Invalid prediction ID |
+| `"Model not found"` | Invalid model slug |
+| `"Invalid input"` | Input doesn't match model's request schema |
+
+### each::workflows — Execution Errors
+
+| Error | Description |
+|-------|-------------|
+| `"Workflow not found"` | Invalid workflow ID or slug |
+| `"Version not found"` | Invalid version ID |
+| `"Workflow is locked"` | Attempting to modify a locked workflow |
+| `"ExecutionFailed"` | A workflow step failed during execution |
+| `"invalid input: missing required field"` | Trigger input doesn't match workflow input schema |
+
+### each::sense — Agent Errors
+
+| Error | Description |
+|-------|-------------|
+| `"Session not found"` | Invalid session ID |
+| `"Model execution failed"` | Underlying model execution error |
+| `"Workflow execution timeout"` | Execution exceeded 15-minute limit |
+
+## Retry Strategy
+
+We recommend exponential backoff for transient errors (429, 500):
+
+<CodeGroup>
+```python Python
+import time
+import requests
+
+def request_with_retry(url, headers, json=None, max_retries=3):
+    for attempt in range(max_retries):
+        response = requests.post(url, headers=headers, json=json)
+        if response.status_code in (429, 500):
+            wait = 2 ** attempt
+            time.sleep(wait)
+            continue
+        return response
+    return response
+```
+
+```javascript JavaScript
+async function requestWithRetry(url, options, maxRetries = 3) {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    const response = await fetch(url, options);
+    if ([429, 500].includes(response.status)) {
+      await new Promise((r) => setTimeout(r, 2 ** attempt * 1000));
+      continue;
+    }
+    return response;
+  }
+  return response;
+}
+```
+</CodeGroup>

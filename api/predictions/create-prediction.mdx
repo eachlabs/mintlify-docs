@@ -1,0 +1,128 @@
+---
+title: "Create Prediction"
+description: "Create a new prediction for a specific AI model."
+---
+
+## Endpoint
+
+```
+POST https://api.eachlabs.ai/v1/prediction
+```
+
+## Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `model` | string | Yes | Model slug (e.g., `flux-1-1-pro`) |
+| `version` | string | Yes | Model version (e.g., `1.0.0`) |
+| `input` | object | Yes | Input parameters (varies by model) |
+| `webhook_url` | string | No | URL to receive prediction result via webhook |
+| `webhook_secret` | string | No | Secret used to sign webhook requests |
+
+The `input` object accepts model-specific parameters. Some models also support:
+
+| Input Field | Type | Default | Description |
+|-------------|------|---------|-------------|
+| `enable_safety_checker` | boolean | `true` | Set to `false` to disable NSFW filtering. Only works on [supported models](/api/nsfw-content#supported-models). |
+
+## Code Examples
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.eachlabs.ai/v1/prediction \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: YOUR_API_KEY" \
+  -d '{
+    "model": "flux-1-1-pro",
+    "version": "1.0.0",
+    "input": {
+      "prompt": "A beautiful sunset over the ocean with vibrant colors",
+      "aspect_ratio": "16:9"
+    },
+    "webhook_url": "https://your-app.com/webhook",
+    "webhook_secret": "your-secret-key"
+  }'
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    "https://api.eachlabs.ai/v1/prediction",
+    headers={
+        "Content-Type": "application/json",
+        "X-API-Key": "YOUR_API_KEY"
+    },
+    json={
+        "model": "flux-1-1-pro",
+        "version": "1.0.0",
+        "input": {
+            "prompt": "A beautiful sunset over the ocean with vibrant colors",
+            "aspect_ratio": "16:9"
+        }
+    }
+)
+
+data = response.json()
+print(f"Prediction ID: {data['predictionID']}")
+```
+
+```javascript JavaScript
+const response = await fetch("https://api.eachlabs.ai/v1/prediction", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "X-API-Key": "YOUR_API_KEY",
+  },
+  body: JSON.stringify({
+    model: "flux-1-1-pro",
+    version: "1.0.0",
+    input: {
+      prompt: "A beautiful sunset over the ocean with vibrant colors",
+      aspect_ratio: "16:9",
+    },
+  }),
+});
+
+const { predictionID } = await response.json();
+console.log(`Prediction ID: ${predictionID}`);
+```
+</CodeGroup>
+
+## Response
+
+```json
+{
+  "status": "success",
+  "message": "Prediction created successfully",
+  "predictionID": "abc123-def456-ghi789"
+}
+```
+
+### Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `status` | string | `"success"` if prediction was created |
+| `message` | string | Human-readable status message |
+| `predictionID` | string | Unique ID to track the prediction |
+
+## Error Responses
+
+| Status | Body | Description |
+|--------|------|-------------|
+| `400` | `{"error": "Invalid input for model"}` | Input doesn't match model schema |
+| `400` | `{"error": "model field is required"}` | Missing required field |
+| `401` | `{"error": "Invalid or missing API key"}` | Authentication failure |
+| `500` | `{"error": "Failed to create prediction"}` | Server error |
+
+## What Happens Next
+
+After creating a prediction, the model processes your input asynchronously. You have two options:
+
+1. **Poll** — Use [Get Prediction](/api/predictions/get-prediction) to check status
+2. **Webhook** — Provide a `webhook_url` and receive results automatically when ready
+
+<Note>
+  Model input parameters vary. Use [Get Model](/api/models/get-model) to retrieve the `request_schema` for any model.
+</Note>

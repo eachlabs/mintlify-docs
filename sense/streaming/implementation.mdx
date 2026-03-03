@@ -1,0 +1,181 @@
+---
+title: "Implementation"
+description: "Code examples for implementing SSE streaming in JavaScript and Python."
+---
+
+## JavaScript (Browser)
+
+```javascript
+async function streamChat(message, sessionId) {
+  const response = await fetch(
+    "https://eachsense-agent.core.eachlabs.run/v1/chat/completions",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-API-Key": "YOUR_API_KEY",
+      },
+      body: JSON.stringify({
+        messages: [{ role: "user", content: message }],
+        session_id: sessionId,
+        stream: true,
+      }),
+    }
+  );
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split("\n");
+    buffer = lines.pop() || "";
+
+    for (const line of lines) {
+      if (line.startsWith("data: ")) {
+        const data = line.slice(6);
+        if (data === "[DONE]") return;
+
+        try {
+          const event = JSON.parse(data);
+          handleEvent(event);
+        } catch (e) {
+          console.error("Parse error:", e);
+        }
+      }
+    }
+  }
+}
+
+function handleEvent(event) {
+  switch (event.type) {
+    case "thinking_delta":
+      appendToThinkingPanel(event.content);
+      break;
+    case "text_response":
+      appendToChatMessage(event.content);
+      break;
+    case "status":
+      updateStatusBar(event.message);
+      break;
+    case "generation_response":
+      displayMedia(event.url, event.model);
+      break;
+    case "clarification_needed":
+      showOptionsDialog(event.question, event.options);
+      break;
+    case "execution_progress":
+      updateProgress(event.completed_steps, event.total_steps);
+      break;
+    case "error":
+      showError(event.message);
+      break;
+    case "complete":
+      hideLoadingIndicator();
+      break;
+  }
+}
+```
+
+## Python (requests)
+
+```python
+import requests
+import json
+
+def stream_chat(message: str, session_id: str = None):
+    response = requests.post(
+        "https://eachsense-agent.core.eachlabs.run/v1/chat/completions",
+        headers={
+            "Content-Type": "application/json",
+            "X-API-Key": "YOUR_API_KEY"
+        },
+        json={
+            "messages": [{"role": "user", "content": message}],
+            "session_id": session_id,
+            "stream": True
+        },
+        stream=True
+    )
+
+    for line in response.iter_lines():
+        if not line:
+            continue
+
+        line = line.decode("utf-8")
+        if not line.startswith("data: "):
+            continue
+
+        data = line[6:]
+        if data == "[DONE]":
+            break
+
+        event = json.loads(data)
+
+        if event["type"] == "generation_response":
+            print(f"Generated: {event['url']}")
+        elif event["type"] == "text_response":
+            print(event["content"])
+        elif event["type"] == "error":
+            print(f"Error: {event['message']}")
+```
+
+## Python (OpenAI SDK)
+
+```python
+from openai import OpenAI
+
+client = OpenAI(
+    api_key="YOUR_API_KEY",
+    base_url="https://eachsense-agent.core.eachlabs.run/v1"
+)
+
+stream = client.chat.completions.create(
+    model="eachsense/beta",
+    messages=[{"role": "user", "content": "Generate a portrait"}],
+    stream=True
+)
+
+for chunk in stream:
+    if chunk.choices[0].delta.content:
+        print(chunk.choices[0].delta.content, end="", flush=True)
+
+    # Access each::labs extensions
+    if hasattr(chunk, "model_extra") and chunk.model_extra:
+        eachlabs = chunk.model_extra.get("eachlabs", {})
+        if eachlabs.get("type") == "generation_response":
+            print(f"\nGenerated: {eachlabs.get('url')}")
+```
+
+## Error Handling & Retry
+
+```javascript
+async function streamWithRetry(message, maxRetries = 3) {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      await streamChat(message);
+      return;
+    } catch (error) {
+      if (error.name === "AbortError") return;
+      if (attempt < maxRetries - 1) {
+        const delay = Math.pow(2, attempt) * 1000;
+        await new Promise((r) => setTimeout(r, delay));
+      } else {
+        throw error;
+      }
+    }
+  }
+}
+```
+
+## Best Practices
+
+1. **Always handle `[DONE]`** — Clean up resources when the stream terminates
+2. **Buffer partial lines** — SSE data may arrive in chunks across multiple reads
+3. **Handle all event types** — Even if you don't display them, acknowledge them
+4. **Preserve session ID** — Use the same `session_id` for multi-turn conversations
+5. **Implement timeouts** — Set a client-side timeout (5 minutes for generation, 15 for workflows)
