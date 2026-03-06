@@ -205,6 +205,8 @@
     "indexing": "navigable"
   },
   "metadata": {
-    "timestamp": true
+    "timestamp": true,
+    "og:site_name": "each::labs Documentation",
+    "twitter:site": "@eachlabs"
   }
 }
