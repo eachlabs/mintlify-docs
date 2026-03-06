@@ -196,6 +196,11 @@
       "vscode"
     ]
   },
+  "analytics": {
+    "ga4": {
+      "measurementId": "G-9M4EEYW5FL"
+    }
+  },
   "seo": {
     "indexing": "navigable"
   },
