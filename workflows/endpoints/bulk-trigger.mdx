@@ -9,7 +9,7 @@ description: "Start multiple workflow executions in parallel with different inpu
 POST https://workflows.eachlabs.run/api/v1/{workflowID}/bulk-trigger
 ```
 
-Run the same workflow with up to **10 different inputs** in parallel. All executions share a `bulk_id` for tracking.
+Run the same workflow with up to **10 different inputs** in parallel. All executions share a `bulk_id` so you can track them together.
 
 ## Path Parameters
 
@@ -63,7 +63,7 @@ response = requests.post(
 data = response.json()
 print(f"Bulk ID: {data['bulk_id']}")
 for exec in data["executions"]:
-    print(f"  {exec.get('execution_id', 'N/A')} — {exec['status']}")
+    print(f"  {exec.get('execution_id', 'N/A')} | {exec['status']}")
 ```
 
 ```javascript JavaScript
@@ -117,7 +117,7 @@ console.log(`Bulk ID: ${data.bulk_id}`);
 
 ### Partial Failures
 
-Some executions may succeed while others fail. Failed entries have `status: "failed"` with an error `message` and no `execution_id`.
+Some executions may succeed while others fail. That's totally fine! Failed entries will have `status: "failed"` with an error `message` and no `execution_id`.
 
 ## Tracking Bulk Executions
 

@@ -18,9 +18,9 @@ description: "Mask-based inpainting and outpainting. Fill, replace, or extend im
 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
-| `image_url` | string | Yes | — | Source image URL |
-| `mask_url` | string | Yes | — | Mask image URL — white areas will be filled |
-| `prompt` | string | Yes | — | Description of what to fill in the masked area |
+| `image_url` | string | Yes | `-` | Source image URL |
+| `mask_url` | string | Yes | `-` | Mask image URL (white areas will be filled) |
+| `prompt` | string | Yes | `-` | Description of what to fill in the masked area |
 | `seed` | integer | No | random | Random seed for reproducibility |
 
 ## Code Examples
@@ -101,11 +101,11 @@ response = client.chat.completions.create(
 
 ## Tips
 
-- White areas in the mask get filled; black areas are preserved
-- Use for removing objects by masking the object and prompting with the surrounding background description
-- Extend images by adding white space to the edges and masking the new area
-- Replace specific regions by masking them and describing the replacement content
-- For full-image edits without a mask, consider using `flux-2-edit` instead
+- White areas in the mask get filled, black areas stay untouched
+- Want to remove something? Mask the object and describe the background you want instead
+- Need a wider shot? Add white space to the edges, mask it, and let the model fill it in
+- Swap out specific regions by masking them and describing what should go there
+- For full-image edits without a mask, check out `flux-2-edit` instead
 
 ## Related Models
 

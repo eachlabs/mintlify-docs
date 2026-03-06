@@ -7,10 +7,10 @@ description: "Handling interactive choices and clarification requests from the a
 
 The agent asks for clarification when:
 
-1. **Ambiguous request** — Could be interpreted multiple ways
-2. **Missing information** — Required details not provided
-3. **Multiple options** — Several valid approaches exist
-4. **Safety confirmation** — High-impact operations need confirmation
+1. **Ambiguous request.** Could be interpreted multiple ways
+2. **Missing information.** Required details not provided
+3. **Multiple options.** Several valid approaches exist
+4. **Safety confirmation.** High-impact operations need a thumbs-up first
 
 ## Clarification Event
 
@@ -90,6 +90,6 @@ When `stream: false`, check for `clarification_needed: true`:
 
 ## Behavior Mode Impact
 
-- **`agent` mode** — Agent makes assumptions when possible, asks only when truly ambiguous
-- **`ask` mode** — Agent always asks before executing
-- **`plan` mode** — Agent shows plan and asks for approval
+- **`agent` mode:** The agent makes smart assumptions when possible, and only asks when things are truly ambiguous
+- **`ask` mode:** The agent always checks in with you before executing anything
+- **`plan` mode:** The agent shows the game plan and asks for your approval

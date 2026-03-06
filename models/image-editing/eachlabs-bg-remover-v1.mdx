@@ -18,7 +18,7 @@ description: "Fast, accurate background removal. Remove backgrounds from images 
 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
-| `image_url` | string | Yes | — | URL of the image to remove background from |
+| `image_url` | string | Yes | `-` | URL of the image to remove background from |
 
 ## Code Examples
 
@@ -92,11 +92,11 @@ response = client.chat.completions.create(
 
 ## Tips
 
-- Returns a transparent PNG with the background removed
-- Very fast processing, ideal for batch workflows
-- Works well with people, products, and objects
-- For best results, use images with clear foreground subjects
-- Combine with other models: remove background first, then upscale or composite
+- Gives you a clean transparent PNG with the background gone
+- Super fast processing, perfect for batch workflows
+- Works great with people, products, and objects
+- For the cleanest results, use images with clear foreground subjects
+- Pro tip: remove the background first, then upscale or composite with other models
 
 ## Related Models
 

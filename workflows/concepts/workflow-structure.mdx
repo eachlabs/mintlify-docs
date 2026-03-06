@@ -6,9 +6,9 @@ description: "Understand how workflows are structured with steps, input schemas,
 ## Anatomy of a Workflow
 
 A workflow consists of:
-- **Metadata** — Name, description, categories, tags, visibility
-- **Versions** — Each version contains a complete definition
-- **Definition** — Steps, input/output schema, retry config, and timeouts
+- **Metadata**: Name, description, categories, tags, visibility
+- **Versions**: Each version holds a complete definition
+- **Definition**: Steps, input/output schema, retry config, and timeouts
 
 ```json
 {
@@ -49,7 +49,7 @@ A workflow consists of:
 
 ## Steps
 
-Each step defines an operation in the workflow. Steps can be model invocations, HTTP requests, Python functions, parallel branches, conditional logic, or pass-through operations.
+Each step defines an operation in the workflow. Steps can be model invocations, HTTP requests, Python functions, parallel branches, conditional logic, or simple pass-through operations.
 
 ```json
 {
@@ -90,10 +90,10 @@ All step types share these fields:
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| `max_attempts` | integer | — | Maximum number of retry attempts |
-| `backoff_multiplier` | number | — | Multiplier for exponential backoff between retries |
-| `initial_delay_seconds` | number | — | Initial delay before first retry |
-| `retry_on` | string[] | — | Error types that trigger retries |
+| `max_attempts` | integer | `-` | Maximum number of retry attempts |
+| `backoff_multiplier` | number | `-` | Multiplier for exponential backoff between retries |
+| `initial_delay_seconds` | number | `-` | Initial delay before first retry |
+| `retry_on` | string[] | `-` | Error types that trigger retries |
 
 ### Step Types
 
@@ -167,15 +167,15 @@ Make HTTP requests to external APIs or services.
 
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
-| `url` | string | Yes | — | Request URL (supports template variables) |
+| `url` | string | Yes | `-` | Request URL (supports template variables) |
 | `method` | string | No | `GET` | HTTP method: `GET`, `POST`, `PUT`, `DELETE`, `PATCH` |
-| `headers` | object | No | — | Request headers |
-| `query_params` | object | No | — | URL query parameters |
-| `body` | any | No | — | Request body |
-| `auth` | object | No | — | Authentication configuration |
-| `timeout` | integer | No | — | Request timeout in milliseconds |
-| `follow_redirects` | boolean | No | — | Follow HTTP redirects |
-| `validate_ssl` | boolean | No | — | Validate SSL certificates |
+| `headers` | object | No | `-` | Request headers |
+| `query_params` | object | No | `-` | URL query parameters |
+| `body` | any | No | `-` | Request body |
+| `auth` | object | No | `-` | Authentication configuration |
+| `timeout` | integer | No | `-` | Request timeout in milliseconds |
+| `follow_redirects` | boolean | No | `-` | Follow HTTP redirects |
+| `validate_ssl` | boolean | No | `-` | Validate SSL certificates |
 
 ### Auth Configuration
 
@@ -275,13 +275,13 @@ Use `type: "parallel"` to run multiple branches concurrently. Each branch contai
 | `name` | string | No | Human-readable branch name |
 | `steps` | array | Yes | Sequence of steps to execute within this branch |
 
-All branches start simultaneously and execute independently. The parallel step completes when all branches finish.
+All branches kick off at the same time and run independently. The parallel step wraps up once every branch finishes.
 
 ---
 
 ## Choice Steps (Conditional Logic)
 
-Use `type: "choice"` to route execution based on a condition. The workflow evaluates the condition and executes either the `condition_met_branch` or the `default_branch`.
+Use `type: "choice"` to route execution based on a condition. The workflow evaluates the condition and picks either the `condition_met_branch` or the `default_branch`.
 
 ```json
 {
@@ -392,8 +392,8 @@ Combine multiple simple conditions using `and`, `or`, or `not`:
 | `not_equals` | Not equals comparison (auto-detects type) | `$.inputs.format` not equals `"raw"` |
 | `greater_than` | Numeric greater than | `$.step1.output.score` greater than `0.8` |
 | `less_than` | Numeric less than | `$.step1.output.score` less than `0.5` |
-| `greater_than_or_equal` | Numeric greater than or equal | `$.inputs.count` >= `1` |
-| `less_than_or_equal` | Numeric less than or equal | `$.inputs.count` <= `10` |
+| `greater_than_or_equal` | Numeric greater than or equal | `$.inputs.count` \>= `1` |
+| `less_than_or_equal` | Numeric less than or equal | `$.inputs.count` \<= `10` |
 
 #### String Operators
 
@@ -434,7 +434,7 @@ Existence operators (`exists`, `not_exists`, `is_null`, `is_not_null`) do not re
 
 ## Pass Steps
 
-A pass-through step that does no processing. Useful for injecting static values or as a placeholder.
+A pass-through step that does no processing. Super handy for injecting static values or as a placeholder.
 
 ```json
 {
@@ -486,7 +486,7 @@ Define what inputs your workflow accepts using JSON Schema:
 
 ## Execution Flow
 
-Steps execute sequentially by default. Each step's output is available to subsequent steps via [parameter references](/workflows/concepts/parameter-references). Parallel and choice steps enable branching and conditional logic within the flow.
+Steps run sequentially by default. Each step's output is available to subsequent steps via [parameter references](/workflows/concepts/parameter-references). Parallel and choice steps let you add branching and conditional logic into the mix.
 
 ```
 Sequential:    inputs → step1 → step2 → step3 → output
@@ -552,7 +552,7 @@ For choice steps, the output includes which branch was selected:
 
 ### Fallback Output
 
-When a fallback is triggered, a separate step output appears with a `_fallback` suffix:
+When a fallback kicks in, a separate step output appears with a `_fallback` suffix:
 
 ```json
 {
@@ -569,4 +569,4 @@ When a fallback is triggered, a separate step output appears with a `_fallback` 
 }
 ```
 
-Fallback reasons: `primary_failed` (primary step failed, fallback executed) or `not_triggered` (primary succeeded, fallback skipped).
+Fallback reasons: `primary_failed` (the primary step failed and fallback kicked in) or `not_triggered` (primary succeeded, so fallback was skipped).

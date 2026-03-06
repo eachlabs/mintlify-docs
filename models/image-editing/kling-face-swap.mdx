@@ -18,8 +18,8 @@ description: "Realistic face replacement in images. Swap faces between photos wi
 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
-| `image_url` | string | Yes | — | URL of the target image |
-| `face_url` | string | Yes | — | URL of the source face image |
+| `image_url` | string | Yes | `-` | URL of the target image |
+| `face_url` | string | Yes | `-` | URL of the source face image |
 | `seed` | integer | No | random | Random seed for reproducibility |
 
 ## Code Examples
@@ -97,11 +97,11 @@ response = client.chat.completions.create(
 
 ## Tips
 
-- Works best with clear, front-facing photos for both target and source images
-- Both images should have visible, unobstructed faces
-- Handles lighting and angle adjustments automatically for natural-looking results
-- Use high-resolution images for the best output quality
-- The source face will adapt to the target image's pose and expression
+- Works best with clear, front-facing photos for both target and source
+- Make sure faces are visible and not blocked by anything
+- Lighting and angle adjustments happen automatically for natural-looking results
+- Higher resolution images = better looking swaps
+- The source face adapts to the target image's pose and expression like a charm
 
 ## Related Models
 

@@ -18,7 +18,7 @@ description: "Industry-leading text-to-speech with natural, expressive voices. S
 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
-| `text` | string | Yes | — | Text to convert to speech |
+| `text` | string | Yes | `-` | Text to convert to speech |
 | `voice` | string | No | `rachel` | Voice ID or name to use |
 | `model_id` | string | No | `eleven_multilingual_v2` | TTS model variant |
 | `stability` | float | No | 0.5 | Voice stability (0.0-1.0). Lower = more expressive |
@@ -102,11 +102,11 @@ response = client.chat.completions.create(
 
 ## Tips
 
-- Lower `stability` values produce more expressive, dynamic speech
-- Higher `similarity_boost` keeps the voice closer to the reference
-- Supports multiple languages with the multilingual model
-- Max duration is approximately 10 minutes of audio per request
-- Use SSML-like punctuation (commas, periods, dashes) to control pacing
+- Turn down `stability` for more expressive, dynamic speech
+- Crank up `similarity_boost` to keep the voice closer to the reference
+- Speaks multiple languages with the multilingual model
+- You can generate up to about 10 minutes of audio per request
+- Use punctuation (commas, periods, dashes) to control pacing and flow
 
 ## Related Models
 

@@ -1,24 +1,27 @@
 ---
 title: "each::labs Documentation"
-description: "The generative media platform — 500+ AI models, multi-step workflows, and an intelligent agent interface. Build with each::api, each::workflows, and each::sense."
+description: "The generative media platform. 500+ AI models, multi-step workflows, and an intelligent agent interface. Build with each::api, each::workflows, and each::sense."
 ---
 
-each::labs is a generative media platform for developers and AI agents. Access 500+ production-ready AI models through a single API key.
+each::labs is a generative media platform for developers and AI agents. Get access to 500+ production-ready AI models with just one API key.
 
 ## Products
 
 <CardGroup cols={2}>
   <Card title="each::api" icon="bolt" href="/api/overview">
-    Direct model access. Run image, video, audio, and 3D generation models with a single endpoint. Async predictions with webhook delivery.
+    Direct model access. Run image, video, audio, and 3D generation models from a single endpoint. Async predictions with webhook delivery.
   </Card>
   <Card title="each::workflows" icon="diagram-project" href="/workflows/overview">
     Multi-step pipelines. Chain models together with parameter passing, versioning, fallback configs, and bulk execution.
   </Card>
   <Card title="each::sense" icon="brain" href="/sense/overview">
-    AI agent interface. OpenAI-compatible endpoint that understands natural language — auto-selects models, generates media, and builds workflows.
+    AI agent interface. OpenAI-compatible endpoint that understands natural language, auto-selects models, generates media, and builds workflows.
   </Card>
-  <Card title="Models" icon="cube" href="/models/overview">
-    Curated model catalog. Browse top AI models for image, video, audio generation with comparison tables and usage examples.
+  <Card title="LLM Router" icon="route" href="/llm-router/overview">
+    One endpoint, 300+ LLMs. OpenAI, Anthropic, Google, and more. OpenAI-compatible, just swap the base URL.
+  </Card>
+  <Card title="MCP Server" icon="plug" href="/mcp">
+    Connect to Cursor, Claude Desktop, Windsurf, and more. Generate media without ever leaving your IDE.
   </Card>
 </CardGroup>
 
@@ -36,8 +39,7 @@ each::labs is a generative media platform for developers and AI agents. Access 5
       -H "Content-Type: application/json" \
       -H "X-API-Key: $EACHLABS_API_KEY" \
       -d '{
-        "model": "flux-1-1-pro",
-        "version": "1.0.0",
+        "model": "google/nano-banana/nano-banana-pro",
         "input": {
           "prompt": "A cinematic landscape at golden hour",
           "aspect_ratio": "16:9"
@@ -52,8 +54,7 @@ each::labs is a generative media platform for developers and AI agents. Access 5
         "https://api.eachlabs.ai/v1/prediction",
         headers={"X-API-Key": "YOUR_API_KEY"},
         json={
-            "model": "flux-1-1-pro",
-            "version": "1.0.0",
+            "model": "google/nano-banana/nano-banana-pro",
             "input": {
                 "prompt": "A cinematic landscape at golden hour",
                 "aspect_ratio": "16:9"
@@ -72,8 +73,7 @@ each::labs is a generative media platform for developers and AI agents. Access 5
         "X-API-Key": "YOUR_API_KEY",
       },
       body: JSON.stringify({
-        model: "flux-1-1-pro",
-        version: "1.0.0",
+        model: "google/nano-banana/nano-banana-pro",
         input: {
           prompt: "A cinematic landscape at golden hour",
           aspect_ratio: "16:9",
@@ -86,7 +86,7 @@ each::labs is a generative media platform for developers and AI agents. Access 5
     </CodeGroup>
   </Step>
   <Step title="Or use the AI agent">
-    Skip model selection entirely — let each::sense handle it:
+    Skip model selection entirely and let each::sense handle it for you:
 
     ```python
     from openai import OpenAI
@@ -111,10 +111,11 @@ each::labs is a generative media platform for developers and AI agents. Access 5
 | each::api | `https://api.eachlabs.ai` | REST |
 | each::workflows | `https://workflows.eachlabs.run/api/v1` | REST |
 | each::sense | `https://eachsense-agent.core.eachlabs.run` | REST + SSE |
+| LLM Router | `https://api.eachlabs.ai/v1` | REST + SSE |
 
 ## For AI Agents
 
-each::sense is fully OpenAI-compatible. Point any agent framework at the base URL with your API key:
+each::sense is fully OpenAI-compatible. Just point any agent framework at the base URL with your API key and you're good to go:
 
 ```python
 # Works with LangChain, CrewAI, AutoGen, or any OpenAI-compatible client

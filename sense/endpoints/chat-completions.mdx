@@ -1,6 +1,6 @@
 ---
 title: "Chat Completions"
-description: "OpenAI-compatible chat completions endpoint — the primary interface for all each::sense interactions."
+description: "OpenAI-compatible chat completions endpoint. The primary interface for all each::sense interactions."
 ---
 
 ## Endpoint
@@ -39,15 +39,15 @@ interface ChatCompletionRequest {
 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
-| `messages` | array | Yes | — | OpenAI-compatible message array |
+| `messages` | array | Yes | `-` | OpenAI-compatible message array |
 | `model` | string | No | `"eachsense/beta"` | Model identifier |
 | `stream` | boolean | No | `true` | Enable SSE streaming |
-| `session_id` | string | No | — | Session ID for conversation continuity |
+| `session_id` | string | No | `-` | Session ID for conversation continuity |
 | `mode` | string | No | `"max"` | Quality mode: `"max"` or `"eco"` |
 | `behavior` | string | No | `"agent"` | `"agent"`, `"plan"`, or `"ask"` |
-| `image_urls` | string[] | No | — | Image URLs for analysis/editing (max 4) |
-| `workflow_id` | string | No | — | Target workflow for execution |
-| `version_id` | string | No | — | Workflow version |
+| `image_urls` | string[] | No | `-` | Image URLs for analysis/editing (max 4) |
+| `workflow_id` | string | No | `-` | Target workflow for execution |
+| `version_id` | string | No | `-` | Workflow version |
 | `web_search` | boolean | No | `true` | Enable web search capability |
 | `enable_safety_checker` | boolean | No | `true` | NSFW content filter |
 

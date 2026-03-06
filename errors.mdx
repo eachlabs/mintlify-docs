@@ -1,11 +1,11 @@
 ---
 title: "Error Reference"
-description: "HTTP status codes and error responses across all each::labs APIs."
+description: "A handy guide to HTTP status codes and error responses across all each::labs APIs."
 ---
 
 ## Error Response Format
 
-All each::labs APIs return errors in a consistent JSON format:
+All each::labs APIs return errors in a clean, consistent JSON format:
 
 ```json
 {
@@ -26,7 +26,7 @@ All each::labs APIs return errors in a consistent JSON format:
 
 ## Common Errors
 
-### 400 — Bad Request
+### 400: Bad Request
 
 ```json
 {
@@ -40,7 +40,7 @@ All each::labs APIs return errors in a consistent JSON format:
 - Malformed JSON body
 - Input validation failure
 
-### 401 — Unauthorized
+### 401: Unauthorized
 
 ```json
 {
@@ -52,7 +52,7 @@ All each::labs APIs return errors in a consistent JSON format:
 - `X-API-Key` header not included
 - API key is invalid or expired
 
-### 403 — Forbidden
+### 403: Forbidden
 
 ```json
 {
@@ -64,7 +64,7 @@ All each::labs APIs return errors in a consistent JSON format:
 - Attempting to modify a locked workflow or version
 - Insufficient permissions for the requested operation
 
-### 404 — Not Found
+### 404: Not Found
 
 ```json
 {
@@ -77,7 +77,7 @@ All each::labs APIs return errors in a consistent JSON format:
 - Non-existent prediction ID, workflow ID, or execution ID
 - Resource was deleted
 
-### 429 — Rate Limited
+### 429: Rate Limited
 
 ```json
 {
@@ -90,7 +90,7 @@ All each::labs APIs return errors in a consistent JSON format:
 - Check the `Retry-After` header when available
 - Consider reducing request frequency
 
-### 500 — Internal Server Error
+### 500: Internal Server Error
 
 ```json
 {
@@ -104,7 +104,7 @@ All each::labs APIs return errors in a consistent JSON format:
 
 ## Product-Specific Errors
 
-### each::api — Prediction Errors
+### each::api: Prediction Errors
 
 | Error | Description |
 |-------|-------------|
@@ -112,7 +112,7 @@ All each::labs APIs return errors in a consistent JSON format:
 | `"Model not found"` | Invalid model slug |
 | `"Invalid input"` | Input doesn't match model's request schema |
 
-### each::workflows — Execution Errors
+### each::workflows: Execution Errors
 
 | Error | Description |
 |-------|-------------|
@@ -122,7 +122,7 @@ All each::labs APIs return errors in a consistent JSON format:
 | `"ExecutionFailed"` | A workflow step failed during execution |
 | `"invalid input: missing required field"` | Trigger input doesn't match workflow input schema |
 
-### each::sense — Agent Errors
+### each::sense: Agent Errors
 
 | Error | Description |
 |-------|-------------|
@@ -132,7 +132,7 @@ All each::labs APIs return errors in a consistent JSON format:
 
 ## Retry Strategy
 
-We recommend exponential backoff for transient errors (429, 500):
+We recommend exponential backoff for transient errors (429, 500). Here's how to set that up:
 
 <CodeGroup>
 ```python Python

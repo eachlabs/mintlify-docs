@@ -1,6 +1,6 @@
 ---
 title: "List Models"
-description: "Retrieve a paginated list of AI models with optional filters."
+description: "Browse all available AI models with handy filters and pagination."
 ---
 
 ## Endpoint
@@ -15,7 +15,7 @@ GET https://api.eachlabs.ai/v1/models
 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
-| `name` | string | No | — | Filter by model name (case-insensitive search) |
+| `name` | string | No | `-` | Filter by model name (case-insensitive search) |
 | `limit` | integer | No | `50` | Max results to return (1–500) |
 | `offset` | integer | No | `0` | Number of results to skip for pagination |
 
@@ -36,7 +36,7 @@ response = requests.get(
 
 models = response.json()
 for model in models:
-    print(f"{model['slug']} — {model['title']}")
+    print(f"{model['slug']} | {model['title']}")
 ```
 
 ```javascript JavaScript
@@ -46,14 +46,14 @@ const response = await fetch(
 const models = await response.json();
 
 models.forEach((model) => {
-  console.log(`${model.slug} — ${model.title}`);
+  console.log(`${model.slug} | ${model.title}`);
 });
 ```
 </CodeGroup>
 
 ## Response
 
-Returns an array of model objects.
+You'll get back an array of model objects.
 
 ```json
 [

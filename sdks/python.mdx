@@ -11,7 +11,7 @@ pip install openai
 
 ## Setup
 
-each::sense is OpenAI-compatible, so you can use the official OpenAI Python SDK:
+each::sense is OpenAI-compatible, so you can plug in the official OpenAI Python SDK right away:
 
 ```python
 from openai import OpenAI
@@ -57,7 +57,7 @@ for chunk in stream:
 
 ### Raw SSE Streaming
 
-For full control over event types, use `requests` directly:
+For full control over event types, go raw with `requests`:
 
 ```python
 import requests
@@ -132,7 +132,7 @@ chat("Now make it a 5-second video")
 
 ## Eco Mode
 
-Use eco mode for faster, cheaper generations during development:
+Use eco mode for faster, cheaper generations while you're hacking away in development:
 
 ```python
 response = client.chat.completions.create(
@@ -143,9 +143,9 @@ response = client.chat.completions.create(
 )
 ```
 
-## each::api — Predictions
+## each::api Predictions
 
-For direct model access via each::api:
+For direct model access through each::api:
 
 ```python
 import requests
@@ -187,7 +187,7 @@ else:
     print(f"Failed: {prediction.get('error')}")
 ```
 
-## each::workflows — Trigger & Poll
+## each::workflows: Trigger & Poll
 
 ```python
 import requests

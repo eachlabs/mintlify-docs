@@ -5,7 +5,7 @@ description: "Complete workflow examples for common use cases."
 
 ## Text-to-Image Pipeline
 
-A two-step workflow that enhances a prompt with an LLM, then generates an image.
+A neat two-step workflow that enhances a prompt with an LLM, then generates an image from it.
 
 ```json
 {
@@ -58,7 +58,7 @@ A two-step workflow that enhances a prompt with an LLM, then generates an image.
 
 ## Image-to-Video with Upscaling
 
-Generate a portrait image, animate it, and upscale the result.
+Generate a portrait image, bring it to life with animation, and upscale the final result.
 
 ```json
 {
@@ -112,9 +112,9 @@ Generate a portrait image, animate it, and upscale the result.
 }
 ```
 
-## Parallel Branching — Multi-Format Generation
+## Parallel Branching: Multi-Format Generation
 
-Run image-to-video, image editing, and text-to-image concurrently, then conditionally upscale based on output format.
+Run image-to-video, image editing, and text-to-image all at once, then conditionally upscale based on the output format.
 
 ```json
 {
@@ -227,14 +227,14 @@ Run image-to-video, image editing, and text-to-image concurrently, then conditio
 ```
 
 This workflow demonstrates:
-1. **Parallel step** — Three branches run concurrently: video generation, image editing, and text-to-image
-2. **Choice step** — Checks if the primary output is a video (`.mp4`) and routes to the appropriate upscaler
+1. **Parallel step**: Three branches run concurrently for video generation, image editing, and text-to-image
+2. **Choice step**: Checks if the primary output is a video (`.mp4`) and routes to the right upscaler
 
-## Logical Conditions — AND/OR Operators
+## Logical Conditions: AND/OR Operators
 
-Use logical operators to combine multiple conditions in a choice step.
+You can use logical operators to combine multiple conditions in a choice step.
 
-This example only upscales when the output is a PNG **and** the user requested upscaling:
+This example only upscales when the output is a PNG **and** the user explicitly requested upscaling:
 
 ```json
 {
@@ -308,7 +308,7 @@ Or `not` to negate a condition:
 
 ## Batch Processing with Bulk Trigger
 
-Trigger the same workflow with multiple inputs:
+Fire off the same workflow with multiple inputs in one go:
 
 ```bash
 curl -X POST https://workflows.eachlabs.run/api/v1/WF_ID/bulk-trigger \

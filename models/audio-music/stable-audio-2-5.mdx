@@ -18,7 +18,7 @@ description: "Fast audio generation for sound effects, ambient sounds, and short
 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
-| `prompt` | string | Yes | — | Description of the audio to generate |
+| `prompt` | string | Yes | `-` | Description of the audio to generate |
 | `duration` | float | No | 10 | Duration in seconds (up to ~45) |
 | `seed` | integer | No | random | Random seed for reproducibility |
 
@@ -97,10 +97,10 @@ response = client.chat.completions.create(
 
 ## Tips
 
-- Best suited for sound effects, ambient audio, and short clips (max ~45 seconds)
-- For full songs or longer audio, use `mureka-generate-music` instead
-- Descriptive prompts with specific details produce better results
-- Works well for foley, UI sounds, game audio, and ambient backgrounds
+- Perfect for sound effects, ambient audio, and short clips (up to ~45 seconds)
+- Need a full song? Head over to `mureka-generate-music` instead
+- The more specific your prompt, the better your results will be
+- Great for foley, UI sounds, game audio, and ambient backgrounds
 
 ## Related Models
 

@@ -18,7 +18,7 @@ description: "AI-powered super resolution upscaling. Enhance image resolution wh
 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
-| `image_url` | string | Yes | — | URL of the image to upscale |
+| `image_url` | string | Yes | `-` | URL of the image to upscale |
 | `scale` | integer | No | 2 | Upscale factor (2 or 4) |
 
 ## Code Examples
@@ -96,11 +96,11 @@ response = client.chat.completions.create(
 
 ## Tips
 
-- Use 2x for most cases; it provides a good balance of quality and file size
-- Use 4x for very low-resolution images that need significant enhancement
-- Preserves detail and sharpens edges without introducing artifacts
-- Works well as a post-processing step after AI image generation
-- Combine with background removal or editing for a complete workflow
+- 2x is the sweet spot for most cases, giving you a nice balance of quality and file size
+- Go 4x when you've got a really low-res image that needs serious love
+- Preserves detail and sharpens edges without introducing ugly artifacts
+- Great as a finishing touch after AI image generation
+- Mix it with background removal or editing for a complete workflow
 
 ## Related Models
 

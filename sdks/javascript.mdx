@@ -11,7 +11,7 @@ npm install openai
 
 ## Setup
 
-each::sense is OpenAI-compatible, so you can use the official OpenAI JS/TS SDK:
+each::sense is OpenAI-compatible, so you can drop in the official OpenAI JS/TS SDK right away:
 
 ```javascript
 import OpenAI from "openai";
@@ -56,7 +56,7 @@ for await (const chunk of stream) {
 
 ### Raw SSE Streaming
 
-For full control over event types, use `fetch` directly:
+For full control over event types, go raw with `fetch`:
 
 ```javascript
 async function streamGeneration(prompt, apiKey) {
@@ -151,7 +151,7 @@ await chat("Now make it a 5-second video");
 
 ## Eco Mode
 
-Use eco mode for faster, cheaper generations during development:
+Use eco mode for faster, cheaper generations while you're hacking away in development:
 
 ```javascript
 const response = await client.chat.completions.create({
@@ -162,9 +162,9 @@ const response = await client.chat.completions.create({
 });
 ```
 
-## each::api — Predictions
+## each::api Predictions
 
-For direct model access via each::api:
+For direct model access through each::api:
 
 ```javascript
 const API_KEY = "YOUR_API_KEY";
@@ -204,7 +204,7 @@ if (prediction.status === "completed") {
 }
 ```
 
-## each::workflows — Trigger & Poll
+## each::workflows: Trigger & Poll
 
 ```javascript
 const API_KEY = "YOUR_API_KEY";

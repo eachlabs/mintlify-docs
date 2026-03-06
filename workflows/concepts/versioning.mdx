@@ -5,7 +5,7 @@ description: "Manage workflow versions for safe iteration and deployment."
 
 ## Version Lifecycle
 
-Each workflow can have multiple versions. When you trigger a workflow without specifying a version, the latest version runs.
+Each workflow can have multiple versions. When you trigger a workflow without specifying a version, the latest version runs automatically.
 
 ### Version States
 
@@ -17,7 +17,7 @@ Each workflow can have multiple versions. When you trigger a workflow without sp
 
 ### Locking
 
-Once a version is **locked**, it cannot be modified. This is useful for production versions that should remain stable.
+Once a version is **locked**, it cannot be modified. This is perfect for production versions that need to stay rock-solid.
 
 ```json
 {
@@ -35,7 +35,7 @@ Versions have three visibility levels:
 |-----------|-------------------|-------------|
 | **Private** | `false` (default) | Only your organization |
 | **Unlisted** | `true` | Accessible via direct link, hidden from listings |
-| **Public** | — | Visible in public listings |
+| **Public** | `-` | Visible in public listings |
 
 ### Making a Version Unlisted
 
@@ -51,7 +51,7 @@ curl -X PUT https://workflows.eachlabs.run/api/v1/workflows/WF_ID/versions/v1 \
 ```
 
 <Note>
-  Setting `allowed_to_share: false` on a public version has no effect — public versions are never downgraded.
+  Setting `allowed_to_share: false` on a public version has no effect. Public versions are never downgraded.
 </Note>
 
 ## Creating a New Version

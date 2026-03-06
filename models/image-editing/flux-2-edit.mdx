@@ -18,8 +18,8 @@ description: "Instruction-based image editing. Edit images using natural languag
 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
-| `image_url` | string | Yes | — | URL of the image to edit |
-| `prompt` | string | Yes | — | Natural language editing instruction |
+| `image_url` | string | Yes | `-` | URL of the image to edit |
+| `prompt` | string | Yes | `-` | Natural language editing instruction |
 | `seed` | integer | No | random | Random seed for reproducibility |
 
 ## Code Examples
@@ -97,10 +97,10 @@ response = client.chat.completions.create(
 
 ## Tips
 
-- Provide clear, specific editing instructions in the prompt
-- Works best with high-quality source images
-- Can handle color changes, object modifications, style transfers, and more
-- For region-specific edits, consider using `flux-fill-pro` with a mask instead
+- Be clear and specific with your editing instructions for the best results
+- Higher quality source images = better output (garbage in, garbage out!)
+- Handles color changes, object swaps, style transfers, and a whole lot more
+- Need to edit a specific region? Try `flux-fill-pro` with a mask instead
 
 ## Related Models
 

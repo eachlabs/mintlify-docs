@@ -1,6 +1,6 @@
 ---
 title: "Get Webhook"
-description: "Retrieve webhook details and delivery attempts by execution ID."
+description: "Look up webhook details and delivery attempts by execution ID."
 ---
 
 ## Endpoint
@@ -34,7 +34,7 @@ response = requests.get(
 webhook = response.json()
 print(f"URL: {webhook['url']}")
 for attempt in webhook.get("attempts", []):
-    print(f"  {attempt['status']} — {attempt['created_at']}")
+    print(f"  {attempt['status']} | {attempt['created_at']}")
 ```
 
 ```javascript JavaScript
@@ -46,7 +46,7 @@ const webhook = await response.json();
 
 console.log(`URL: ${webhook.url}`);
 webhook.attempts?.forEach((a) => {
-  console.log(`  ${a.status} — ${a.created_at}`);
+  console.log(`  ${a.status} | ${a.created_at}`);
 });
 ```
 </CodeGroup>

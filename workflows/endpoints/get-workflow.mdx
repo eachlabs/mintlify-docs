@@ -33,7 +33,7 @@ response = requests.get(
     headers={"X-API-Key": "YOUR_API_KEY"}
 )
 workflow = response.json()
-print(f"{workflow['name']} — v{workflow['latest_version_id']}")
+print(f"{workflow['name']} | v{workflow['latest_version_id']}")
 ```
 
 ```javascript JavaScript
@@ -42,7 +42,7 @@ const response = await fetch(
   { headers: { "X-API-Key": "YOUR_API_KEY" } }
 );
 const workflow = await response.json();
-console.log(`${workflow.name} — v${workflow.latest_version_id}`);
+console.log(`${workflow.name} | v${workflow.latest_version_id}`);
 ```
 </CodeGroup>
 

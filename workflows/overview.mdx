@@ -5,7 +5,7 @@ description: "Chain multiple AI models into automated pipelines with the Workflo
 
 ## What is each::workflows?
 
-each::workflows lets you chain multiple AI models together into automated, multi-step pipelines. Define steps, wire outputs to inputs, and execute complex AI tasks with a single API call.
+each::workflows lets you chain multiple AI models together into automated, multi-step pipelines. Define your steps, wire outputs to inputs, and kick off complex AI tasks with a single API call.
 
 ```
 Text Prompt → Image Generation → Video Animation → Upscaling
@@ -17,15 +17,15 @@ Input Image → ├─ Branch 2: Edit   ─┤→ Conditional → Upscale (video
 
 ## Key Features
 
-- **Multi-step pipelines** — Chain any combination of AI models
-- **Parallel branching** — Execute multiple branches concurrently for independent tasks
-- **Conditional logic** — Route execution based on step outputs using choice steps
-- **Parameter references** — Wire step outputs to subsequent step inputs using `{{template}}` syntax
-- **Fallback configuration** — Automatic retry with alternative models on failure
-- **Versioning** — Create and manage multiple workflow versions
-- **Bulk execution** — Trigger up to 10 executions in parallel
-- **Webhooks** — Receive notifications when executions complete
-- **Public & unlisted sharing** — Share workflows via direct link or public listing
+- **Multi-step pipelines**: Chain any combination of AI models together
+- **Parallel branching**: Run multiple branches at the same time for independent tasks
+- **Conditional logic**: Route execution based on step outputs using choice steps
+- **Parameter references**: Wire step outputs to subsequent step inputs with `{{template}}` syntax
+- **Fallback configuration**: Automatic retry with alternative models when things go sideways
+- **Versioning**: Create and manage multiple workflow versions with ease
+- **Bulk execution**: Fire off up to 10 executions in parallel
+- **Webhooks**: Get notified when executions wrap up
+- **Public & unlisted sharing**: Share workflows via direct link or public listing
 
 ## Base URL
 
@@ -62,3 +62,7 @@ https://workflows.eachlabs.run/api/v1
 | `GET` | `/executions/{executionID}` | Get execution details |
 | `GET` | `/public/@{nickname}/workflows/{slug}/versions/{versionID}` | Get public workflow |
 | `POST` | `/public/@{nickname}/workflows/{slug}/versions/{versionID}/trigger` | Trigger public workflow |
+
+## Pricing
+
+each::workflows is **completely free** to use. No charges for creating, managing, or executing workflows. You only pay for the underlying models that run inside your workflow steps (billed through each::api).

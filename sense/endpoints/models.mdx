@@ -27,7 +27,7 @@ client = OpenAI(
 
 models = client.models.list()
 for model in models.data:
-    print(f"{model.id} — owned by {model.owned_by}")
+    print(f"{model.id} | owned by {model.owned_by}")
 ```
 
 ```javascript JavaScript
@@ -39,7 +39,7 @@ const client = new OpenAI({
 });
 
 const models = await client.models.list();
-models.data.forEach((m) => console.log(`${m.id} — ${m.owned_by}`));
+models.data.forEach((m) => console.log(`${m.id} | ${m.owned_by}`));
 ```
 </CodeGroup>
 

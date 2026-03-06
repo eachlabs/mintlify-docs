@@ -1,6 +1,6 @@
 ---
 title: "each::sense Overview"
-description: "The intelligent layer for generative media — an AI agent that understands natural language and orchestrates model execution."
+description: "The intelligent layer for generative media. An AI agent that understands natural language and orchestrates model execution."
 ---
 
 ## What is each::sense?
@@ -13,13 +13,13 @@ each::sense is an AI agent that provides a unified, OpenAI-compatible interface 
 
 ## Key Features
 
-- **OpenAI-compatible** — Use the OpenAI SDK with your each::labs API key
-- **Intelligent model selection** — Automatically picks the best model from 500+ available
-- **Multi-modal** — Text, images, videos, audio, and 3D models
-- **Streaming** — Real-time SSE streaming with 18 event types
-- **Sessions** — Persistent conversation memory for multi-turn interactions
-- **Workflows** — Create and execute multi-step AI pipelines via natural language
-- **Behavior modes** — Control how the agent handles requests
+- **OpenAI-compatible:** Just plug in the OpenAI SDK with your each::labs API key
+- **Intelligent model selection:** Automatically picks the best model from 500+ available
+- **Multi-modal:** Text, images, videos, audio, and 3D models
+- **Streaming:** Real-time SSE streaming with 18 event types
+- **Sessions:** Persistent conversation memory for multi-turn interactions
+- **Workflows:** Create and execute multi-step AI pipelines via natural language
+- **Behavior modes:** Control how the agent handles requests
 
 ## Base URL
 
@@ -89,3 +89,7 @@ curl -X POST https://eachsense-agent.core.eachlabs.run/v1/chat/completions \
 | Video Generation | `veo-3`, `kling-3-0`, `wan-v2-6-image-to-video` |
 | Image Editing | `flux-2-edit`, `eachlabs-bg-remover-v1`, `topaz-upscale-image` |
 | Audio/Music | `elevenlabs-text-to-speech`, `mureka-generate-music` |
+
+## Pricing
+
+each::sense itself is **completely free**. You only get charged for the models it uses under the hood. When the agent picks a model to generate your image, video, or audio, you pay the same model cost as if you called each::api directly. The smart routing, natural language understanding, and orchestration? All on us.

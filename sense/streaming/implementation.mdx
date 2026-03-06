@@ -174,8 +174,8 @@ async function streamWithRetry(message, maxRetries = 3) {
 
 ## Best Practices
 
-1. **Always handle `[DONE]`** — Clean up resources when the stream terminates
-2. **Buffer partial lines** — SSE data may arrive in chunks across multiple reads
-3. **Handle all event types** — Even if you don't display them, acknowledge them
-4. **Preserve session ID** — Use the same `session_id` for multi-turn conversations
-5. **Implement timeouts** — Set a client-side timeout (5 minutes for generation, 15 for workflows)
+1. **Always handle `[DONE]`.** Clean up resources when the stream terminates
+2. **Buffer partial lines.** SSE data may arrive in chunks across multiple reads
+3. **Handle all event types.** Even if you don't display them, acknowledge them
+4. **Preserve session ID.** Use the same `session_id` for multi-turn conversations
+5. **Implement timeouts.** Set a client-side timeout (5 minutes for generation, 15 for workflows)

@@ -5,7 +5,7 @@ description: "Automatic retry with alternative models when the primary model fai
 
 ## Overview
 
-Model steps support an optional fallback that automatically retries with an alternative model if the primary model fails. This provides resilience against temporary outages or rate limits.
+Model steps support an optional fallback that automatically retries with an alternative model if the primary model fails. This keeps your workflow humming along even during temporary outages or rate limits.
 
 ## How It Works
 
@@ -42,9 +42,9 @@ Add a `fallback` object to any model step:
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
 | `enabled` | boolean | `true` | Enable/disable fallback |
-| `model` | string | — | Alternative model slug |
+| `model` | string | `-` | Alternative model slug |
 | `version` | string | Primary version | Fallback model version |
-| `params` | object | — | Parameters for the fallback model (supports template variables) |
+| `params` | object | `-` | Parameters for the fallback model (supports template variables) |
 
 ## Detecting Fallback Usage
 

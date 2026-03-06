@@ -1,11 +1,11 @@
 ---
 title: "Webhook Payload Reference"
-description: "Payload structure and handling for each::labs webhook deliveries."
+description: "Everything you need to know about webhook payloads and how to handle them."
 ---
 
 ## Webhook Delivery
 
-When an event completes, each::labs sends an HTTP POST to your configured `webhook_url`.
+When an event wraps up, each::labs fires off an HTTP POST to your configured `webhook_url`.
 
 - **Method:** `POST`
 - **Content-Type:** `application/json`
@@ -88,7 +88,7 @@ app.post("/webhooks/prediction", (req, res) => {
 
 ### Webhook Secret Verification
 
-When you provide a `webhook_secret` during prediction creation, use it to verify that incoming webhooks are authentic.
+If you set a `webhook_secret` when creating your prediction, you can use it to make sure incoming webhooks are legit.
 
 ```python
 import hmac
@@ -111,12 +111,12 @@ def verify_webhook(payload_body: bytes, signature: str, secret: str) -> bool:
 | 2nd retry | ~2 minutes |
 | 3rd retry | ~10 minutes |
 
-Retries stop after all attempts are exhausted. Use [Get Webhook](/api/webhooks/get-webhook) to inspect delivery history.
+Retries stop after all attempts are used up. Use [Get Webhook](/api/webhooks/get-webhook) to check out the full delivery history.
 
 ## Best Practices
 
-- Return `200 OK` as quickly as possible; process data asynchronously
-- Implement idempotency — you may receive the same webhook more than once
+- Return `200 OK` as fast as you can, then process data asynchronously
+- Implement idempotency, since you may receive the same webhook more than once
 - Log incoming payloads for debugging
 - Use `webhook_secret` to verify payload authenticity
 - Set up monitoring for your webhook endpoint's availability

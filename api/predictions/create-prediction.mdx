@@ -1,6 +1,6 @@
 ---
 title: "Create Prediction"
-description: "Create a new prediction for a specific AI model."
+description: "Kick off a new prediction for any AI model."
 ---
 
 ## Endpoint
@@ -118,11 +118,11 @@ console.log(`Prediction ID: ${predictionID}`);
 
 ## What Happens Next
 
-After creating a prediction, the model processes your input asynchronously. You have two options:
+After creating a prediction, the model processes your input asynchronously. Here's how you can get your results:
 
-1. **Poll** — Use [Get Prediction](/api/predictions/get-prediction) to check status
-2. **Webhook** — Provide a `webhook_url` and receive results automatically when ready
+1. **Poll**: Use [Get Prediction](/api/predictions/get-prediction) to check status
+2. **Webhook**: Provide a `webhook_url` and get results delivered automatically when they're ready
 
 <Note>
-  Model input parameters vary. Use [Get Model](/api/models/get-model) to retrieve the `request_schema` for any model.
+  Every model has different input parameters. Use [Get Model](/api/models/get-model) to grab the `request_schema` for any model and see exactly what it expects.
 </Note>

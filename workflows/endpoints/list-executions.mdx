@@ -19,7 +19,7 @@ GET https://workflows.eachlabs.run/api/v1/workflows/{workflowID}/executions
 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
-| `bulk_id` | string (UUID) | No | — | Filter by bulk operation ID |
+| `bulk_id` | string (UUID) | No | `-` | Filter by bulk operation ID |
 | `offset` | integer | No | `0` | Number of items to skip |
 | `limit` | integer | No | `50` | Max results per page (1–100) |
 
@@ -47,7 +47,7 @@ response = requests.get(
 
 data = response.json()
 for exec in data["executions"]:
-    print(f"{exec['execution_id']} — {exec['status']}")
+    print(f"{exec['execution_id']} | {exec['status']}")
 print(f"Total: {data['total_count']}")
 ```
 
@@ -59,7 +59,7 @@ const response = await fetch(
 const data = await response.json();
 
 data.executions.forEach((e) => {
-  console.log(`${e.execution_id} — ${e.status}`);
+  console.log(`${e.execution_id} | ${e.status}`);
 });
 console.log(`Total: ${data.total_count}`);
 ```

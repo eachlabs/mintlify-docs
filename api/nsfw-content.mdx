@@ -1,11 +1,11 @@
 ---
 title: "NSFW Content"
-description: "Control the safety checker for content generation. Disable NSFW filtering on supported models."
+description: "Control the safety checker and toggle NSFW filtering on supported models."
 ---
 
 ## Safety Checker
 
-All predictions run with the safety checker **enabled by default** (`enable_safety_checker: true`). When enabled, generated content is filtered for NSFW material — if the output is flagged, the prediction returns a filtered result or an error.
+All predictions run with the safety checker **enabled by default** (`enable_safety_checker: true`). When enabled, generated content is filtered for NSFW material. If the output gets flagged, the prediction returns a filtered result or an error.
 
 To disable the safety checker, pass `enable_safety_checker: false` in the `input` object of your prediction request.
 
@@ -64,7 +64,7 @@ const response = await fetch("https://api.eachlabs.ai/v1/prediction", {
 
 ## Supported Models
 
-The `enable_safety_checker` parameter is **not available on all models**. Only specific models support disabling the safety filter. Models that do not support it will silently ignore the parameter.
+The `enable_safety_checker` parameter is **not available on all models**. Only certain models let you toggle the safety filter. Models that don't support it will just quietly ignore the parameter.
 
 | Model | Slug | Type |
 |-------|------|------|
@@ -73,7 +73,7 @@ The `enable_safety_checker` parameter is **not available on all models**. Only s
 | Seedream v4.5 | `seedream-v4-5-text-to-image` | Image Generation |
 
 <Warning>
-  This list may not be exhaustive. Model support for this parameter can change as new models are added or updated. Check the model's input schema via `GET /v1/model?slug={slug}` to confirm whether `enable_safety_checker` is an accepted parameter.
+  This list might not cover everything! Model support for this parameter can change as we add or update models. Check the model's input schema via `GET /v1/model?slug={slug}` to confirm whether `enable_safety_checker` is accepted.
 </Warning>
 
 ## Behavior Summary
@@ -95,7 +95,7 @@ When using each::sense, pass `enable_safety_checker` as a top-level request fiel
 }
 ```
 
-The agent will only apply this to models that support it. If the selected model doesn't support disabling the safety checker, the parameter is ignored.
+The agent will only apply this to models that support it. If the selected model doesn't support toggling the safety checker, the parameter gets ignored.
 
 <Note>
   The safety checker is a model-level feature. each::labs does not add an additional content filter on top of the model's own safety system.

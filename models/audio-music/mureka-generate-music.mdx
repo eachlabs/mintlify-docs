@@ -18,10 +18,10 @@ description: "AI music generation from text descriptions. Create full songs with
 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
-| `prompt` | string | Yes | — | Description of the music to generate (genre, mood, instruments, tempo) |
-| `lyrics` | string | No | — | Lyrics for the song. Leave empty for instrumental |
+| `prompt` | string | Yes | `-` | Description of the music to generate (genre, mood, instruments, tempo) |
+| `lyrics` | string | No | `-` | Lyrics for the song. Leave empty for instrumental |
 | `duration` | integer | No | 30 | Duration in seconds (up to ~180) |
-| `style` | string | No | — | Musical style or genre hint |
+| `style` | string | No | `-` | Musical style or genre hint |
 
 ## Code Examples
 
@@ -98,11 +98,11 @@ response = client.chat.completions.create(
 
 ## Tips
 
-- Be descriptive about genre, mood, tempo, and instruments for best results
-- Provide `lyrics` for vocal tracks, omit for instrumentals
-- Max duration is approximately 3 minutes
-- Include style keywords like "lo-fi", "orchestral", "hip-hop beat" for targeted output
-- Processing may take longer for extended durations
+- The more descriptive you are about genre, mood, tempo, and instruments, the better the results
+- Drop in `lyrics` for vocal tracks, or leave it out for pure instrumentals
+- Max duration is about 3 minutes
+- Style keywords like "lo-fi", "orchestral", "hip-hop beat" help steer the output
+- Longer tracks take a bit more time to generate, so be patient!
 
 ## Related Models
 

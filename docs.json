@@ -4,7 +4,8 @@
   "name": "each::labs",
   "logo": {
     "light": "/logo-light.svg",
-    "dark": "/logo-dark.svg"
+    "dark": "/logo-dark.svg",
+    "size": 1
   },
   "favicon": "/favicon.ico",
   "colors": {
@@ -24,7 +25,8 @@
   },
   "navbar": {
     "links": [
-      { "label": "Dashboard", "href": "https://eachlabs.ai" }
+      { "label": "Dashboard", "href": "https://eachlabs.ai" },
+      { "label": "Playground", "href": "https://api.eachlabs.ai/v1/docs#models/description/introduction" }
     ],
     "primary": {
       "type": "button",
@@ -39,7 +41,7 @@
         "groups": [
           {
             "group": "Getting Started",
-            "pages": ["introduction", "authentication"]
+            "pages": ["introduction", "authentication", "mcp"]
           },
           {
             "group": "Reference",
@@ -114,6 +116,15 @@
         ]
       },
       {
+        "tab": "LLM Router",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": ["llm-router/overview", "llm-router/quickstart", "llm-router/models"]
+          }
+        ]
+      },
+      {
         "tab": "each::sense",
         "groups": [
           {
@@ -152,62 +163,6 @@
             "pages": [
               "sense/edge-cases",
               "sense/examples"
-            ]
-          }
-        ]
-      },
-      {
-        "tab": "Models",
-        "groups": [
-          {
-            "group": "Overview",
-            "pages": ["models/overview"]
-          },
-          {
-            "group": "Image Generation",
-            "pages": [
-              "models/image-generation",
-              "models/image-generation/flux-2-max",
-              "models/image-generation/flux-2-pro",
-              "models/image-generation/flux-kontext-pro",
-              "models/image-generation/nano-banana-pro",
-              "models/image-generation/gemini-imagen-4",
-              "models/image-generation/seedream-v4-5",
-              "models/image-generation/kling-text-to-image"
-            ]
-          },
-          {
-            "group": "Video Generation",
-            "pages": [
-              "models/video-generation",
-              "models/video-generation/veo-3",
-              "models/video-generation/veo3-1-fast",
-              "models/video-generation/kling-3-0",
-              "models/video-generation/kling-2-1-image-to-video",
-              "models/video-generation/wan-v2-6-image-to-video",
-              "models/video-generation/wan-v2-6-text-to-video",
-              "models/video-generation/pixverse-v4-1",
-              "models/video-generation/sora-2-pro"
-            ]
-          },
-          {
-            "group": "Image Editing",
-            "pages": [
-              "models/image-editing",
-              "models/image-editing/flux-2-edit",
-              "models/image-editing/flux-fill-pro",
-              "models/image-editing/eachlabs-bg-remover-v1",
-              "models/image-editing/topaz-upscale-image",
-              "models/image-editing/kling-face-swap"
-            ]
-          },
-          {
-            "group": "Audio & Music",
-            "pages": [
-              "models/audio-music",
-              "models/audio-music/elevenlabs-tts",
-              "models/audio-music/mureka-generate-music",
-              "models/audio-music/stable-audio-2-5"
             ]
           }
         ]

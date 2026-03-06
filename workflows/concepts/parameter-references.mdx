@@ -145,11 +145,11 @@ You can also access nested output fields:
 Condition expressions use `$.step_id.field` syntax, while step parameters use `{{step_id.field}}` template syntax. These are different reference systems.
 </Note>
 
-For the full list of condition operators (comparison, string, array, existence, and logical), see [Workflow Structure — Condition Operators](/workflows/concepts/workflow-structure#condition-operators).
+For the full list of condition operators (comparison, string, array, existence, and logical), check out [Workflow Structure: Condition Operators](/workflows/concepts/workflow-structure#condition-operators).
 
 ## Resolution
 
-Template variables are resolved at execution time. The workflow engine:
+Template variables get resolved at execution time. Here's what the workflow engine does under the hood:
 
 1. Evaluates steps in order
 2. Executes parallel branches concurrently
@@ -157,4 +157,4 @@ Template variables are resolved at execution time. The workflow engine:
 4. Resolves template variables using actual values from inputs and completed steps
 5. Passes the resolved parameters to the model
 
-If a referenced step hasn't completed or doesn't exist, the execution will fail.
+If a referenced step hasn't completed or doesn't exist, the execution will fail. So make sure your references point to steps that actually run before they're needed!

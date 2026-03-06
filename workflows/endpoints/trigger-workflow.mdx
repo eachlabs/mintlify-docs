@@ -9,7 +9,7 @@ description: "Start an execution of a workflow."
 POST https://workflows.eachlabs.run/api/v1/{workflowID}/trigger
 ```
 
-The workflow executes asynchronously — you'll receive an execution ID immediately, then poll or use webhooks to get results.
+The workflow executes asynchronously. You'll get an execution ID right away, then you can poll or use webhooks to grab the results.
 
 ## Path Parameters
 
@@ -96,7 +96,7 @@ console.log(`Execution ID: ${execution_id}`);
 | Field | Type | Description |
 |-------|------|-------------|
 | `execution_id` | string | Unique execution ID for tracking |
-| `status` | string | `"queued"` — execution has been queued |
+| `status` | string | `"queued"`, meaning the execution has been queued |
 | `started_at` | string | ISO 8601 timestamp |
 
 ## Error Responses
