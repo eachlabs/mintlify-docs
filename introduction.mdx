@@ -39,7 +39,7 @@ each::labs is a generative media platform for developers and AI agents. Get acce
       -H "Content-Type: application/json" \
       -H "X-API-Key: $EACHLABS_API_KEY" \
       -d '{
-        "model": "google/nano-banana/nano-banana-pro",
+        "model": "nano-banana-pro",
         "input": {
           "prompt": "A cinematic landscape at golden hour",
           "aspect_ratio": "16:9"
@@ -54,7 +54,7 @@ each::labs is a generative media platform for developers and AI agents. Get acce
         "https://api.eachlabs.ai/v1/prediction",
         headers={"X-API-Key": "YOUR_API_KEY"},
         json={
-            "model": "google/nano-banana/nano-banana-pro",
+            "model": "nano-banana-pro",
             "input": {
                 "prompt": "A cinematic landscape at golden hour",
                 "aspect_ratio": "16:9"
@@ -73,7 +73,7 @@ each::labs is a generative media platform for developers and AI agents. Get acce
         "X-API-Key": "YOUR_API_KEY",
       },
       body: JSON.stringify({
-        model: "google/nano-banana/nano-banana-pro",
+        model: "nano-banana-pro",
         input: {
           prompt: "A cinematic landscape at golden hour",
           aspect_ratio: "16:9",
