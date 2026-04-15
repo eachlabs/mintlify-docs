@@ -1,0 +1,136 @@
+---
+title: "Initiate Upload"
+description: "Request a presigned URL to upload a file directly to cloud storage."
+---
+
+## Endpoint
+
+```
+POST https://storage-service.core.eachlabs.run/api/v1/uploads
+```
+
+## Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `owner` | string | Yes | Your organization identifier (format: `org-<org-id>`) |
+| `uploader` | string | Yes | Must be `"customer"` |
+| `file_type` | string | No | `"image"`, `"video"`, `"audio"`, or `"other"` (defaults to `"other"`) |
+| `content_type` | string | No | MIME type of the file (e.g., `"video/mp4"`, `"image/png"`) |
+| `callback_url` | string | No | Webhook URL to receive a notification when processing completes |
+| `audio_duration_seconds` | number | No | Duration in seconds (audio files only) |
+| `video_duration_seconds` | number | No | Duration in seconds (video files only) |
+| `video_bitrate_kbps` | number | No | Bitrate in kbps (video files only) |
+
+## Code Examples
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://storage-service.core.eachlabs.run/api/v1/uploads \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: YOUR_API_KEY" \
+  -d '{
+    "owner": "org-your-org-id",
+    "uploader": "customer",
+    "file_type": "audio",
+    "content_type": "audio/mp4"
+  }'
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    "https://storage-service.core.eachlabs.run/api/v1/uploads",
+    headers={
+        "Content-Type": "application/json",
+        "X-API-Key": "YOUR_API_KEY"
+    },
+    json={
+        "owner": "org-your-org-id",
+        "uploader": "customer",
+        "file_type": "audio",
+        "content_type": "audio/mp4"
+    }
+)
+
+data = response.json()
+print(f"Upload ID: {data['id']}")
+print(f"Upload URL: {data['upload_url']}")
+```
+
+```javascript JavaScript
+const response = await fetch("https://storage-service.core.eachlabs.run/api/v1/uploads", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "X-API-Key": "YOUR_API_KEY",
+  },
+  body: JSON.stringify({
+    owner: "org-your-org-id",
+    uploader: "customer",
+    file_type: "audio",
+    content_type: "audio/mp4",
+  }),
+});
+
+const { id, upload_url, required_headers } = await response.json();
+console.log(`Upload ID: ${id}`);
+```
+</CodeGroup>
+
+## Response
+
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "upload_url": "https://s3.us-east-1.amazonaws.com/bucket/uploads/550e8400.m4a?X-Amz-Algorithm=...",
+  "public_url": "https://s3.us-east-1.amazonaws.com/bucket/uploads/550e8400.m4a",
+  "expires_at": "2026-09-01T10:00:00Z",
+  "status": "PENDING",
+  "required_headers": {
+    "Content-Type": "audio/mp4",
+    "x-amz-meta-file-id": "550e8400-e29b-41d4-a716-446655440000",
+    "x-amz-meta-expires-at": "2026-09-01T10:00:00Z",
+    "x-amz-meta-audio-duration-seconds": "1008.32",
+    "x-amz-tagging": "uploader=customer&ttl_days=30"
+  }
+}
+```
+
+### Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | Unique file identifier (UUID). Use this for all subsequent requests. |
+| `upload_url` | string | Presigned PUT URL. Valid for **15 minutes**. |
+| `public_url` | string | Final URL where the file will be accessible after processing. |
+| `expires_at` | string | ISO 8601 timestamp — when the file will be automatically deleted (default: 30 days). |
+| `status` | string | Initial status is always `"PENDING"`. |
+| `required_headers` | object | Headers you **must** include in the PUT request. See [Upload File](/api/uploads/upload-file). |
+
+## Error Responses
+
+| Status | Code | Description |
+|--------|------|-------------|
+| `400` | `BAD_REQUEST` | Invalid request body, missing required fields, or unsupported content type |
+| `401` | `UNAUTHORIZED` | Missing or invalid API key |
+| `500` | `INTERNAL_ERROR` | Unexpected server error |
+
+```json
+{
+  "status": 400,
+  "error": "Human-readable error message",
+  "code": "BAD_REQUEST",
+  "request_id": "4bf92f3577b34da6a3ce929d0e0e4736",
+  "details": {}
+}
+```
+
+## What Happens Next
+
+After receiving the presigned URL, [upload your file](/api/uploads/upload-file) using a PUT request with the `required_headers` provided in the response.
+
+<Note>
+  The presigned URL expires after 15 minutes. If it expires, initiate a new upload.
+</Note>
