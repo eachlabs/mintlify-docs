@@ -65,15 +65,6 @@
             "pages": ["api/predictions/create-prediction", "api/predictions/get-prediction"]
           },
           {
-            "group": "File Uploads",
-            "pages": [
-              "api/uploads/overview",
-              "api/uploads/initiate-upload",
-              "api/uploads/upload-file",
-              "api/uploads/get-upload-status"
-            ]
-          },
-          {
             "group": "Content Safety",
             "pages": ["api/nsfw-content"]
           },
@@ -121,6 +112,23 @@
           {
             "group": "Examples",
             "pages": ["workflows/examples"]
+          }
+        ]
+      },
+      {
+        "tab": "each::storage",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": ["api/uploads/overview"]
+          },
+          {
+            "group": "API Reference",
+            "pages": [
+              "api/uploads/initiate-upload",
+              "api/uploads/upload-file",
+              "api/uploads/get-upload-status"
+            ]
           }
         ]
       },
