@@ -1,0 +1,79 @@
+---
+title: "each::storage Overview"
+description: "Upload files directly to cloud storage using presigned URLs."
+---
+
+## What Are Presigned Uploads?
+
+Presigned uploads let you send files directly to cloud storage without routing bytes through our API. This keeps uploads fast regardless of file size — server-side operations consistently complete in under 4 seconds.
+
+## How It Works
+
+<Steps>
+  <Step title="Initiate upload">
+    Request a presigned URL from the storage API. You'll get back a time-limited upload URL and the headers you need to include.
+  </Step>
+  <Step title="Upload the file">
+    PUT your file directly to the presigned URL with the required headers. The file goes straight to storage — no proxy, no extra hops.
+  </Step>
+  <Step title="Confirm completion">
+    Poll the status endpoint (or receive a webhook) until processing finishes. Once `COMPLETED`, your file is ready to use.
+  </Step>
+</Steps>
+
+## Base URL
+
+```
+https://storage-service.core.eachlabs.run
+```
+
+## Authentication
+
+All endpoints require your API key via the `X-API-Key` header. See [Authentication](/authentication) for details.
+
+```bash
+curl https://storage-service.core.eachlabs.run/api/v1/uploads \
+  -H "X-API-Key: YOUR_API_KEY"
+```
+
+## Supported File Types
+
+| Category | MIME Types |
+|----------|-----------|
+| **Video** | `video/mp4`, `video/mkv`, `video/avi`, `video/webm`, `video/quicktime` |
+| **Audio** | `audio/mpeg`, `audio/aac`, `audio/wav`, `audio/mp4` |
+| **Image** | Any `image/*` MIME type |
+
+<Note>
+  If you don't specify a `content_type`, the upload defaults to file type `"other"`.
+</Note>
+
+## Endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/api/v1/uploads` | [Initiate a presigned upload](/api/uploads/initiate-upload) |
+| `GET` | `/api/v1/uploads/{id}` | [Check upload status](/api/uploads/get-upload-status) |
+
+## Upload Status Lifecycle
+
+```
+PENDING  →  UPLOADING  →  PROCESSING  →  COMPLETED
+                                       →  ERROR
+```
+
+| Status | Meaning |
+|--------|---------|
+| `PENDING` | Upload initiated, waiting for file |
+| `UPLOADING` | File received by storage |
+| `PROCESSING` | Extracting metadata (video/audio files) |
+| `COMPLETED` | File is ready to use |
+| `ERROR` | Something went wrong — check the `error` field |
+
+## Defaults
+
+| Setting | Value |
+|---------|-------|
+| Presigned URL validity | 15 minutes |
+| File retention | 30 days |
+| Recommended polling interval | 2–5 seconds |

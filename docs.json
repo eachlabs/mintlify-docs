@@ -116,6 +116,23 @@
         ]
       },
       {
+        "tab": "each::storage",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": ["api/uploads/overview"]
+          },
+          {
+            "group": "API Reference",
+            "pages": [
+              "api/uploads/initiate-upload",
+              "api/uploads/upload-file",
+              "api/uploads/get-upload-status"
+            ]
+          }
+        ]
+      },
+      {
         "tab": "LLM Router",
         "groups": [
           {
