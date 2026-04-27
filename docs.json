@@ -65,6 +65,10 @@
             "pages": ["api/predictions/create-prediction", "api/predictions/get-prediction"]
           },
           {
+            "group": "Uploads",
+            "pages": ["api/uploads/presign-upload"]
+          },
+          {
             "group": "Content Safety",
             "pages": ["api/nsfw-content"]
           },
