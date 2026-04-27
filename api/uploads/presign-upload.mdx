@@ -1,0 +1,174 @@
+---
+title: "Upload File"
+description: "Upload media files in two steps: request a presigned URL, then PUT the file directly to storage."
+---
+
+## Overview
+
+Many models accept media (images, video, audio) as input. To use your own files, upload them with this endpoint and pass the returned `public_url` to [Create Prediction](/api/predictions/create-prediction).
+
+Uploads happen in two steps:
+
+<Steps>
+  <Step title="Request a presigned URL">
+    `POST /v1/upload/presign` with file metadata. The response contains a short-lived URL to upload to and a permanent `public_url`.
+  </Step>
+  <Step title="Upload the file">
+    `PUT` the raw file bytes to `presigned_url`, applying any `required_headers` exactly as returned.
+  </Step>
+</Steps>
+
+## Step 1 — Request a presigned URL
+
+### Endpoint
+
+```
+POST https://api.eachlabs.ai/v1/upload/presign
+```
+
+### Request Body
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `content_type` | string | Yes | MIME type of the file (e.g., `image/png`, `video/mp4`, `audio/mpeg`). |
+| `file_type` | string | No | High-level category. One of `image`, `video`, `audio`, `other`. |
+| `ttl_days` | integer | No | Number of days the file should be retained. Omit to use the platform default. |
+
+### Code Examples
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.eachlabs.ai/v1/upload/presign \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: YOUR_API_KEY" \
+  -d '{
+    "content_type": "image/png",
+    "file_type": "image"
+  }'
+```
+
+```python Python
+import requests
+
+resp = requests.post(
+    "https://api.eachlabs.ai/v1/upload/presign",
+    headers={
+        "Content-Type": "application/json",
+        "X-API-Key": "YOUR_API_KEY",
+    },
+    json={
+        "content_type": "image/png",
+        "file_type": "image",
+    },
+)
+data = resp.json()
+print(data["public_url"])
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.eachlabs.ai/v1/upload/presign", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "X-API-Key": "YOUR_API_KEY",
+  },
+  body: JSON.stringify({
+    content_type: "image/png",
+    file_type: "image",
+  }),
+});
+const { presigned_url, public_url, required_headers } = await resp.json();
+```
+</CodeGroup>
+
+### Response
+
+```json
+{
+  "id": "0dce0f44-b8a5-4f30-91d4-5f6b0c221bf0",
+  "presigned_url": "https://eachlabs-storage.s3.amazonaws.com/uploads/...?X-Amz-Algorithm=...&X-Amz-Signature=...",
+  "public_url": "https://cdn-us.eachlabs.ai/uploads/0dce0f44-b8a5-4f30-91d4-5f6b0c221bf0.png",
+  "expires_at": "2026-04-27T18:15:00Z",
+  "required_headers": {
+    "x-amz-meta-file-id": "0dce0f44-b8a5-4f30-91d4-5f6b0c221bf0"
+  }
+}
+```
+
+### Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | Internal upload identifier. |
+| `presigned_url` | string | Short-lived URL to `PUT` the file to. |
+| `public_url` | string | Permanent URL to pass as a model input once the upload succeeds. |
+| `expires_at` | string | ISO-8601 timestamp when `presigned_url` stops accepting uploads. |
+| `required_headers` | object | Headers that **must** be sent verbatim on the `PUT` request. The presigned URL is signed for these exact values — missing or modified headers will fail with a signature mismatch. May be empty. |
+
+## Step 2 — Upload the file
+
+`PUT` the raw file bytes to `presigned_url`. Include every header from `required_headers` exactly as returned, plus a `Content-Type` matching the value sent in step 1.
+
+<CodeGroup>
+```bash cURL
+curl -X PUT "$PRESIGNED_URL" \
+  -H "Content-Type: image/png" \
+  -H "x-amz-meta-file-id: 0dce0f44-b8a5-4f30-91d4-5f6b0c221bf0" \
+  --data-binary @./photo.png
+```
+
+```python Python
+with open("photo.png", "rb") as f:
+    requests.put(
+        presigned_url,
+        data=f,
+        headers={
+            "Content-Type": "image/png",
+            **(required_headers or {}),
+        },
+    )
+```
+
+```javascript JavaScript
+await fetch(presigned_url, {
+  method: "PUT",
+  headers: {
+    "Content-Type": file.type,
+    ...(required_headers ?? {}),
+  },
+  body: file,
+});
+```
+</CodeGroup>
+
+A `200 OK` from the `PUT` means the file is live. Use `public_url` as the input value when you [create a prediction](/api/predictions/create-prediction).
+
+```json
+{
+  "model": "flux-1-1-pro",
+  "version": "1.0.0",
+  "input": {
+    "image": "https://cdn-us.eachlabs.ai/uploads/0dce0f44-b8a5-4f30-91d4-5f6b0c221bf0.png",
+    "prompt": "Make it look cinematic"
+  }
+}
+```
+
+## Limits
+
+| Limit | Value | Notes |
+|-------|-------|-------|
+| Max file size | **100 MB** per upload | |
+| Presigned URL lifetime | **15 minutes** | Use the URL before `expires_at`; request a new one if it lapses. |
+
+## Error Responses
+
+| Status | Body | Description |
+|--------|------|-------------|
+| `400` | `{"error": "content_type is required"}` | Missing required field. |
+| `401` | `{"error": "Invalid or missing API key"}` | Authentication failure. |
+| `500` | `{"error": "Failed to generate presigned URL"}` | Server error. |
+
+<Note>
+  The presigned URL expires 15 minutes after it's issued. Upload soon after requesting — if you wait past `expires_at`, just request a new one.
+</Note>
