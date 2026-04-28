@@ -1,0 +1,21 @@
+{
+  "serverInfo": {
+    "name": "eachlabs",
+    "version": "1.0.0",
+    "description": "MCP server giving AI editors and agents access to 500+ generative AI models for image, video, audio, and 3D content."
+  },
+  "transport": {
+    "type": "sse",
+    "url": "https://docs.eachlabs.ai/mcp"
+  },
+  "capabilities": {
+    "tools": {},
+    "resources": {}
+  },
+  "documentation": "https://docs.eachlabs.ai/mcp",
+  "homepage": "https://eachlabs.ai",
+  "vendor": {
+    "name": "eachlabs",
+    "url": "https://eachlabs.ai"
+  }
+}
