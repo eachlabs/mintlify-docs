@@ -211,6 +211,7 @@
   "metadata": {
     "timestamp": true,
     "og:site_name": "each::labs Documentation",
+    "twitter:card": "summary_large_image",
     "twitter:site": "@eachlabs"
   }
 }
