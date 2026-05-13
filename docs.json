@@ -179,6 +179,15 @@
             "pages": ["sdks/python", "sdks/javascript"]
           }
         ]
+      },
+      {
+        "tab": "Changelog",
+        "groups": [
+          {
+            "group": "Releases",
+            "pages": ["updates/overview"]
+          }
+        ]
       }
     ]
   },
