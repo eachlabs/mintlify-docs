@@ -185,7 +185,7 @@
         "groups": [
           {
             "group": "Releases",
-            "pages": ["updates/overview"]
+            "pages": ["changelog"]
           }
         ]
       }
