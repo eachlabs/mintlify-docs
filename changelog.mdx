@@ -1,0 +1,43 @@
+---
+title: "Changelog"
+description: "Product updates and releases from each::labs"
+rss: true
+---
+
+<Update label="May 12, 2026" description="LLM Router">
+  ## Latency-aware failover
+
+  - First-tier provider cold start cut by ~38%.
+  - Routes are scored on observed p95 latency, not just availability — when the primary slips past your latency budget, the next-best path takes over without dropping the request.
+  - Retry logic respects provider-specific 429 backoff hints.
+</Update>
+
+<Update label="April 30, 2026" description="Models">
+  ## 80+ new image and video models
+
+  Catalog adds entries from open-weight image and video providers across photoreal, anime, and motion families. Every new model ships with an estimated price on its [model card](/models/overview), a sample input, and a tested webhook contract.
+</Update>
+
+<Update label="April 18, 2026" description="each::workflows">
+  ## Nested workflows (beta)
+
+  A workflow step can now reference another workflow by ID. Outputs flow through as if the sub-workflow were a single step.
+
+  - Recursion depth capped at 4 levels.
+  - Failure in a sub-workflow surfaces with the full nested stack.
+  - Pricing is summed across the full call tree.
+</Update>
+
+<Update label="April 2, 2026" description="each::api">
+  ## Stricter webhook retries and signature rotation
+
+  - Failed deliveries retry on a 1 / 5 / 30 / 180 / 720 minute schedule with jitter.
+  - The retry sweep walks every undelivered webhook hourly, so transient outages on your receiver no longer leak silently.
+  - Signing keys can rotate with overlap windows up to 24 hours — no dropped in-flight deliveries.
+</Update>
+
+<Update label="March 15, 2026" description="Models">
+  ## Estimated price on every model card
+
+  Each model now exposes a typical cost figure derived from the last 24 hours of production runs. The estimate updates on every catalog refresh and lives next to the model name on its detail page; workflows surface the same figure summed across their steps.
+</Update>
