@@ -7,14 +7,14 @@ description: "The intelligent layer for generative media. An AI agent that under
 
 each::sense is an AI agent that provides a unified, OpenAI-compatible interface for generating images, videos, audio, and managing AI workflows. Instead of manually selecting models and parameters, describe what you want in natural language and the agent handles the rest.
 
-```
+```text
 "Generate a cyberpunk cityscape at night" → Agent selects best model → Image generated
 ```
 
 ## Key Features
 
 - **OpenAI-compatible:** Just plug in the OpenAI SDK with your each::labs API key
-- **Intelligent model selection:** Automatically picks the best model from 500+ available
+- **Intelligent model selection:** Automatically picks the best model from 500\+ available
 - **Multi-modal:** Text, images, videos, audio, and 3D models
 - **Streaming:** Real-time SSE streaming with 18 event types
 - **Sessions:** Persistent conversation memory for multi-turn interactions
@@ -23,7 +23,7 @@ each::sense is an AI agent that provides a unified, OpenAI-compatible interface 
 
 ## Base URL
 
-```
+```text
 https://eachsense-agent.core.eachlabs.run
 ```
 
@@ -40,7 +40,7 @@ curl -H "Authorization: Bearer YOUR_API_KEY" ...
 ## Endpoints
 
 | Method | Path | Description |
-|--------|------|-------------|
+| --- | --- | --- |
 | `POST` | `/v1/chat/completions` | Chat completions (primary endpoint) |
 | `POST` | `/workflow` | Workflow builder |
 | `GET` | `/v1/models` | List available models |
@@ -51,6 +51,7 @@ curl -H "Authorization: Bearer YOUR_API_KEY" ...
 ## Quick Example
 
 <CodeGroup>
+
 ```python Python (OpenAI SDK)
 from openai import OpenAI
 
@@ -79,12 +80,13 @@ curl -X POST https://eachsense-agent.core.eachlabs.run/v1/chat/completions \
     "stream": false
   }'
 ```
+
 </CodeGroup>
 
 ## Supported Model Categories
 
 | Category | Example Models |
-|----------|---------------|
+| --- | --- |
 | Image Generation | `flux-2-max`, `nano-banana-pro`, `seedream-v4-5` |
 | Video Generation | `veo-3`, `kling-3-0`, `wan-v2-6-image-to-video` |
 | Image Editing | `flux-2-edit`, `eachlabs-bg-remover-v1`, `topaz-upscale-image` |
@@ -92,4 +94,4 @@ curl -X POST https://eachsense-agent.core.eachlabs.run/v1/chat/completions \
 
 ## Pricing
 
-each::sense itself is **completely free**. You only get charged for the models it uses under the hood. When the agent picks a model to generate your image, video, or audio, you pay the same model cost as if you called each::api directly. The smart routing, natural language understanding, and orchestration? All on us.
+each::sense doesn't add a separate charge for the routing layer. Under the hood it uses the each::labs LLM router to choose the best model for your request, so your total cost is the LLM routing calls plus the generation model call (image, video, or audio). That model cost is exactly what you'd pay calling each::api directly, so there's no premium for letting each::sense handle the decision.
