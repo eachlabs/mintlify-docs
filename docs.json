@@ -26,7 +26,7 @@
   "navbar": {
     "links": [
       { "label": "Dashboard", "href": "https://eachlabs.ai" },
-      { "label": "Playground", "href": "https://api.eachlabs.ai/v1/docs#models/description/introduction" }
+      { "label": "API Docs", "href": "/api/overview" }
     ],
     "primary": {
       "type": "button",
