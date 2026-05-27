@@ -9,6 +9,10 @@ description: "Retrieve conversation history, list sessions, and manage memory."
 GET https://eachsense-agent.core.eachlabs.run/memory
 ```
 
+<Warning>
+  This public URL uses a deprecated compatibility host outside the api-service host. It remains supported for now, but will soon move under `https://api.eachlabs.ai`. Keep integrations configurable and switch to the api-service URL once it is published.
+</Warning>
+
 ### Query Parameters
 
 | Parameter | Type | Required | Description |
@@ -62,6 +66,10 @@ print(f"Total exchanges: {memory['total_exchanges']}")
 DELETE https://eachsense-agent.core.eachlabs.run/memory
 ```
 
+<Warning>
+  This public URL uses a deprecated compatibility host outside the api-service host. It remains supported for now, but will soon move under `https://api.eachlabs.ai`. Keep integrations configurable and switch to the api-service URL once it is published.
+</Warning>
+
 ### Query Parameters
 
 | Parameter | Type | Required | Description |
@@ -91,6 +99,10 @@ curl -X DELETE "https://eachsense-agent.core.eachlabs.run/memory?session_id=my-s
 ```
 GET https://eachsense-agent.core.eachlabs.run/sessions
 ```
+
+<Warning>
+  This public URL uses a deprecated compatibility host outside the api-service host. It remains supported for now, but will soon move under `https://api.eachlabs.ai`. Keep integrations configurable and switch to the api-service URL once it is published.
+</Warning>
 
 ### Example
 

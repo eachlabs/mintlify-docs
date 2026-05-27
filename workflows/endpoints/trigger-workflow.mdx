@@ -9,6 +9,10 @@ description: "Start an execution of a workflow."
 POST https://workflows.eachlabs.run/api/v1/{workflowID}/trigger
 ```
 
+<Warning>
+  This public URL uses a deprecated compatibility host outside the api-service host. It remains supported for now, but will soon move under `https://api.eachlabs.ai`. Keep integrations configurable and switch to the api-service URL once it is published.
+</Warning>
+
 The workflow executes asynchronously. You'll get an execution ID right away, then you can poll or use webhooks to grab the results.
 
 ## Path Parameters

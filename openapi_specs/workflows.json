@@ -12,7 +12,7 @@
   "servers": [
     {
       "url": "https://workflows.eachlabs.run/api/v1",
-      "description": "Production server"
+      "description": "Deprecated compatibility production host. This public URL remains supported for now, but will soon move under the api-service host at https://api.eachlabs.ai."
     }
   ],
   "security": [

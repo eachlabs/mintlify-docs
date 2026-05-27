@@ -1,5 +1,8 @@
 # Streaming Guide
 
+> Deprecated compatibility host: public URLs outside `https://api.eachlabs.ai` remain supported for now, but will soon move under the api-service host. Keep integrations configurable.
+
+
 Complete guide to implementing SSE streaming with the Eachlabs AI Agent API.
 
 ---

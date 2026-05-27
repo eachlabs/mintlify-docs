@@ -27,11 +27,13 @@ Auth error response: `{"error": "Invalid or missing API key"}` (HTTP 401)
 
 ## Base URLs
 
-| Product | Base URL | Protocol |
-|---------|----------|----------|
-| each::api | `https://api.eachlabs.ai` | REST |
-| each::workflows | `https://workflows.eachlabs.run/api/v1` | REST |
-| each::sense | `https://eachsense-agent.core.eachlabs.run` | REST + SSE |
+| Product | Base URL | Protocol | Status |
+|---------|----------|----------|--------|
+| each::api | `https://api.eachlabs.ai` | REST | Canonical api-service host |
+| each::workflows | `https://workflows.eachlabs.run/api/v1` | REST | Deprecated compatibility host; moving under `https://api.eachlabs.ai` |
+| each::sense | `https://eachsense-agent.core.eachlabs.run` | REST + SSE | Deprecated compatibility host; moving under `https://api.eachlabs.ai` |
+
+Migration notice: public API URLs outside `https://api.eachlabs.ai` are deprecated compatibility hosts. They remain supported for now, but will soon move under the api-service host at `https://api.eachlabs.ai`. Keep clients configurable.
 
 ---
 
