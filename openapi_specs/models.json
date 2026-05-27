@@ -1,8 +1,8 @@
 {
   "openapi": "3.0.3",
   "info": {
-    "title": "EachLabs.ai Official API v1",
-    "description": "Official EachLabs.ai API V1.\nThis API provides access to our comprehensive AI model catalog and other resources.\n",
+    "title": "each::labs Official API v1",
+    "description": "Official each::labs API V1.\nThis API provides access to our comprehensive AI model catalog and other resources.\n",
     "version": "1.0.0",
     "contact": {
       "name": "API Support",
@@ -10,7 +10,7 @@
     },
     "x-logo": {
       "url": "./logo-white.svg",
-      "altText": "EachLabs"
+      "altText": "each::labs"
     }
   },
   "servers": [
@@ -27,6 +27,18 @@
     {
       "name": "AI Models Prediction",
       "description": "Endpoints for managing model predictions"
+    },
+    {
+      "name": "Uploads",
+      "description": "Endpoints for uploading files that can be used as model inputs."
+    },
+    {
+      "name": "Executions",
+      "description": "Endpoints for listing execution history."
+    },
+    {
+      "name": "OpenAI Compatibility",
+      "description": "OpenAI-compatible endpoints for LLM Router requests."
     },
     {
       "name": "Webhooks",
@@ -147,6 +159,31 @@
         }
       }
     },
+    "/v1/llm-router/model-catalog": {
+      "get": {
+        "tags": [
+          "AI Models"
+        ],
+        "summary": "Get eachlabs-llm-router model catalog",
+        "description": "Retrieve the curated visible model list and generated model enum schema for eachlabs-llm-router.",
+        "operationId": "getLLMRouterModelCatalog",
+        "responses": {
+          "200": {
+            "description": "LLM router model catalog retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LLMRouterModelCatalog"
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
     "/v1/prediction": {
       "post": {
         "tags": [
@@ -169,7 +206,6 @@
               },
               "example": {
                 "model": "flux-1-1-pro",
-                "version": "1.0.0",
                 "input": {
                   "prompt": "A beautiful sunset over the ocean with vibrant colors",
                   "aspect_ratio": "16:9"
@@ -198,6 +234,76 @@
           },
           "400": {
             "$ref": "#/components/responses/BadRequest"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/v1/prediction/run": {
+      "post": {
+        "tags": [
+          "AI Models Prediction"
+        ],
+        "summary": "Run Model Prediction Synchronously",
+        "description": "Create a prediction and wait for the result. This compatibility endpoint is only supported\nfor models with synchronous execution enabled; unsupported models return a bad request error.\n",
+        "operationId": "runPrediction",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePredictionRequest"
+              },
+              "example": {
+                "model": "eachlabs-llm-router",
+                "input": {
+                  "model": "openai/gpt-4o-mini",
+                  "messages": [
+                    {
+                      "role": "user",
+                      "content": "Write a one sentence caption."
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Prediction completed or failed synchronously",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunPredictionResponse"
+                },
+                "example": {
+                  "status": "success",
+                  "message": "Prediction completed successfully",
+                  "predictionID": "abc123-def456-ghi789",
+                  "output": {
+                    "text": "A cinematic sunset over the ocean."
+                  },
+                  "error": ""
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "422": {
+            "$ref": "#/components/responses/UnprocessableEntity"
           },
           "500": {
             "$ref": "#/components/responses/InternalServerError"
@@ -274,6 +380,334 @@
           },
           "500": {
             "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/v1/prediction/{id}/cancel": {
+      "post": {
+        "tags": [
+          "AI Models Prediction"
+        ],
+        "summary": "Cancel Model Prediction",
+        "description": "Cancel a running prediction by ID. Cancellation is best-effort for upstream providers;\nthe Eachlabs execution record is updated to cancelled when cancellation succeeds.\n",
+        "operationId": "cancelPrediction",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Prediction ID",
+            "example": "abc123-def456-ghi789"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Prediction cancellation accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CancelPredictionResponse"
+                },
+                "example": {
+                  "status": "cancelled",
+                  "message": "Prediction canceled successfully",
+                  "predictionID": "abc123-def456-ghi789"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/v1/upload/presign": {
+      "post": {
+        "tags": [
+          "Uploads"
+        ],
+        "summary": "Create Presigned Upload URL",
+        "description": "Create a short-lived presigned URL for uploading media files. Upload the raw file bytes\nto `presigned_url` using every header returned in `required_headers`, then pass\n`public_url` as a model input.\n",
+        "operationId": "presignUpload",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PresignUploadRequest"
+              },
+              "example": {
+                "content_type": "image/png",
+                "file_type": "image"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Presigned upload URL created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PresignUploadResponse"
+                },
+                "example": {
+                  "id": "0dce0f44-b8a5-4f30-91d4-5f6b0c221bf0",
+                  "presigned_url": "https://eachlabs-storage.s3.amazonaws.com/uploads/...?X-Amz-Signature=...",
+                  "public_url": "https://cdn-us.eachlabs.ai/uploads/0dce0f44-b8a5-4f30-91d4-5f6b0c221bf0.png",
+                  "expires_at": "2026-04-27T18:15:00Z",
+                  "required_headers": {
+                    "x-amz-meta-file-id": "0dce0f44-b8a5-4f30-91d4-5f6b0c221bf0"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/v1/executions": {
+      "get": {
+        "tags": [
+          "Executions"
+        ],
+        "summary": "List executions",
+        "description": "Retrieve execution history for the authenticated API key with optional filters.",
+        "operationId": "listExecutions",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            },
+            "description": "Maximum number of executions to return",
+            "example": 20
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            },
+            "description": "Number of executions to skip for pagination",
+            "example": 0
+          },
+          {
+            "name": "model",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter executions by model slug",
+            "example": "flux-1-1-pro"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Comma-separated status filter",
+            "example": "success,failed"
+          },
+          {
+            "name": "workflow_id",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by workflow ID",
+            "example": "wf_abc123"
+          },
+          {
+            "name": "workflow_execution_id",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by workflow execution ID",
+            "example": "wf_exec_abc123"
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "description": "Start of creation time window, as RFC 3339",
+            "example": "2026-01-01T00:00:00Z"
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "description": "End of creation time window, as RFC 3339",
+            "example": "2026-01-31T23:59:59Z"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of executions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListExecutionsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/v1/chat/completions": {
+      "post": {
+        "tags": [
+          "OpenAI Compatibility"
+        ],
+        "summary": "Create Chat Completion",
+        "description": "OpenAI-compatible chat completions endpoint backed by Eachlabs LLM Router. Use\n`Authorization: Bearer <API_KEY>` and point an OpenAI-compatible client at\n`https://api.eachlabs.ai/v1`.\n",
+        "operationId": "createChatCompletion",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-Eachlabs-Webhook-Url",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            },
+            "description": "Optional webhook URL for asynchronous result delivery.",
+            "example": "https://your-app.com/webhook"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatCompletionRequest"
+              },
+              "example": {
+                "model": "openai/gpt-4o-mini",
+                "messages": [
+                  {
+                    "role": "user",
+                    "content": "Write a one sentence caption."
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OpenAI-compatible chat completion",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatCompletionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenAIErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenAIErrorResponse"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Insufficient balance",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenAIErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenAIErrorResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -392,6 +826,11 @@
         "in": "header",
         "name": "X-API-Key",
         "description": "API key for authentication"
+      },
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "API key passed as an Authorization Bearer token for OpenAI-compatible endpoints"
       }
     },
     "schemas": {
@@ -408,7 +847,9 @@
           },
           "version": {
             "type": "string",
-            "example": "1.0"
+            "deprecated": true,
+            "description": "Deprecated. Always returns \"0.0.1\". Will be removed in a future version.",
+            "example": "0.0.1"
           },
           "output_type": {
             "type": "string",
@@ -452,7 +893,9 @@
           },
           "version": {
             "type": "string",
-            "example": "1.0"
+            "deprecated": true,
+            "description": "Deprecated. Always returns \"0.0.1\". Will be removed in a future version.",
+            "example": "0.0.1"
           },
           "output_type": {
             "type": "string",
@@ -477,6 +920,109 @@
           }
         }
       },
+      "LLMRouterModelCatalog": {
+        "type": "object",
+        "properties": {
+          "slug": {
+            "type": "string",
+            "example": "eachlabs-llm-router"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "catalog",
+              "odoo_fallback"
+            ]
+          },
+          "version": {
+            "type": "integer",
+            "example": 1
+          },
+          "updated_at": {
+            "type": "string",
+            "example": "2026-05-24"
+          },
+          "model_enum": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "openai/gpt-5.2",
+              "anthropic/claude-sonnet-4-6"
+            ]
+          },
+          "request_schema": {
+            "type": "object",
+            "description": "JSON Schema fragment containing the generated model enum."
+          },
+          "models": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LLMRouterCatalogModel"
+            }
+          }
+        }
+      },
+      "LLMRouterCatalogModel": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "openai/gpt-5.2"
+          },
+          "status": {
+            "type": "string",
+            "example": "visible"
+          },
+          "family": {
+            "type": "string",
+            "example": "openai"
+          },
+          "canonical_provider": {
+            "type": "string",
+            "example": "openrouter"
+          },
+          "canonical_target_model": {
+            "type": "string",
+            "example": "openai/gpt-5.2"
+          },
+          "routing_policy": {
+            "type": "string",
+            "example": "explicit_route"
+          },
+          "legacy_requesty": {
+            "type": "boolean"
+          },
+          "title": {
+            "type": "string",
+            "example": "GPT-5.2"
+          },
+          "description": {
+            "type": "string"
+          },
+          "faqs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LLMRouterCatalogFAQ"
+            }
+          },
+          "readme_md": {
+            "type": "string"
+          }
+        }
+      },
+      "LLMRouterCatalogFAQ": {
+        "type": "object",
+        "properties": {
+          "question": {
+            "type": "string"
+          },
+          "answer": {
+            "type": "string"
+          }
+        }
+      },
       "Error": {
         "type": "object",
         "properties": {
@@ -490,7 +1036,6 @@
         "type": "object",
         "required": [
           "model",
-          "version",
           "input"
         ],
         "properties": {
@@ -501,8 +1046,9 @@
           },
           "version": {
             "type": "string",
-            "description": "Model version",
-            "example": "1.0.0"
+            "deprecated": true,
+            "description": "Deprecated. This field is ignored. Kept for backwards compatibility.",
+            "example": "0.0.1"
           },
           "input": {
             "type": "object",
@@ -538,6 +1084,66 @@
             "type": "string",
             "description": "Human-readable message about the prediction creation",
             "example": "Prediction created successfully"
+          },
+          "predictionID": {
+            "type": "string",
+            "description": "Unique prediction identifier",
+            "example": "abc123-def456-ghi789"
+          }
+        }
+      },
+      "RunPredictionResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "Final status of the synchronous prediction",
+            "example": "success"
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable message",
+            "example": "Prediction completed successfully"
+          },
+          "predictionID": {
+            "type": "string",
+            "description": "Unique prediction identifier",
+            "example": "abc123-def456-ghi789"
+          },
+          "output": {
+            "description": "Prediction output, when available",
+            "nullable": true,
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array"
+              },
+              {
+                "type": "object"
+              }
+            ]
+          },
+          "error": {
+            "type": "string",
+            "description": "User-facing error message when the prediction failed",
+            "example": ""
+          }
+        }
+      },
+      "CancelPredictionResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "Cancellation status",
+            "example": "cancelled"
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable cancellation message",
+            "example": "Prediction canceled successfully"
           },
           "predictionID": {
             "type": "string",
@@ -627,6 +1233,305 @@
                 "format": "uri",
                 "description": "URL to get the prediction",
                 "example": "https://api.eachlabs.ai/v1/prediction/abc123-def456-ghi789"
+              }
+            }
+          }
+        }
+      },
+      "PresignUploadRequest": {
+        "type": "object",
+        "required": [
+          "content_type"
+        ],
+        "properties": {
+          "content_type": {
+            "type": "string",
+            "description": "MIME type of the file to upload",
+            "example": "image/png"
+          },
+          "file_type": {
+            "type": "string",
+            "description": "High-level file category",
+            "enum": [
+              "image",
+              "video",
+              "audio",
+              "other"
+            ],
+            "example": "image"
+          },
+          "ttl_days": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Optional file TTL tier in days, when enabled for the caller",
+            "example": 30
+          }
+        }
+      },
+      "PresignUploadResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Upload identifier",
+            "example": "0dce0f44-b8a5-4f30-91d4-5f6b0c221bf0"
+          },
+          "presigned_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Short-lived URL for uploading raw file bytes",
+            "example": "https://eachlabs-storage.s3.amazonaws.com/uploads/...?X-Amz-Signature=..."
+          },
+          "public_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Public URL to pass as a model input after upload succeeds",
+            "example": "https://cdn-us.eachlabs.ai/uploads/0dce0f44-b8a5-4f30-91d4-5f6b0c221bf0.png"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Presigned URL expiration time",
+            "example": "2026-04-27T18:15:00Z"
+          },
+          "required_headers": {
+            "type": "object",
+            "description": "Headers that must be sent verbatim with the upload PUT request",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "example": {
+              "x-amz-meta-file-id": "0dce0f44-b8a5-4f30-91d4-5f6b0c221bf0"
+            }
+          }
+        }
+      },
+      "ExecutionSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Execution identifier",
+            "example": "exec_abc123"
+          },
+          "model": {
+            "type": "string",
+            "description": "Model slug",
+            "example": "flux-1-1-pro"
+          },
+          "status": {
+            "type": "string",
+            "description": "Execution status",
+            "example": "success"
+          },
+          "workflow_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "Workflow ID, when execution was triggered by a workflow",
+            "example": "wf_abc123"
+          },
+          "workflow_execution_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "Workflow execution ID, when execution was triggered by a workflow",
+            "example": "wf_exec_abc123"
+          },
+          "execution_cost": {
+            "type": "number",
+            "description": "Execution cost in USD",
+            "example": 0.05
+          },
+          "run_time": {
+            "type": "number",
+            "description": "Runtime in seconds",
+            "example": 12.5
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp",
+            "example": "2026-01-01T00:00:00Z"
+          },
+          "started_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Start timestamp",
+            "example": "2026-01-01T00:00:02Z"
+          },
+          "completed_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Completion timestamp",
+            "example": "2026-01-01T00:00:15Z"
+          },
+          "output": {
+            "type": "string",
+            "nullable": true,
+            "description": "Primary execution output, when available",
+            "example": "https://storage.example.com/predictions/abc123/image.jpg"
+          }
+        }
+      },
+      "ListExecutionsResponse": {
+        "type": "object",
+        "properties": {
+          "executions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExecutionSummary"
+            }
+          },
+          "total_count": {
+            "type": "integer",
+            "description": "Total number of matching executions",
+            "example": 123
+          },
+          "offset": {
+            "type": "integer",
+            "description": "Applied offset",
+            "example": 0
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Applied limit",
+            "example": 20
+          }
+        },
+        "required": [
+          "executions",
+          "total_count",
+          "offset",
+          "limit"
+        ]
+      },
+      "ChatCompletionRequest": {
+        "type": "object",
+        "description": "OpenAI-compatible chat completions request body",
+        "required": [
+          "model",
+          "messages"
+        ],
+        "additionalProperties": true,
+        "properties": {
+          "model": {
+            "type": "string",
+            "description": "LLM model identifier",
+            "example": "openai/gpt-4o-mini"
+          },
+          "messages": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "description": "OpenAI-compatible chat messages",
+            "example": [
+              {
+                "role": "user",
+                "content": "Write a one sentence caption."
+              }
+            ]
+          },
+          "stream": {
+            "type": "boolean",
+            "description": "OpenAI-compatible request flag. This endpoint returns a JSON response.",
+            "example": false
+          }
+        }
+      },
+      "ChatCompletionResponse": {
+        "type": "object",
+        "description": "OpenAI-compatible chat completions response",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "chatcmpl-abc123"
+          },
+          "object": {
+            "type": "string",
+            "example": "chat.completion"
+          },
+          "created": {
+            "type": "integer",
+            "format": "int64",
+            "example": 1773651600
+          },
+          "model": {
+            "type": "string",
+            "example": "eachlabs-llm-router"
+          },
+          "choices": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "index": {
+                  "type": "integer",
+                  "example": 0
+                },
+                "message": {
+                  "type": "object",
+                  "properties": {
+                    "role": {
+                      "type": "string",
+                      "example": "assistant"
+                    },
+                    "content": {
+                      "type": "string",
+                      "example": "A cinematic sunset over the ocean."
+                    }
+                  }
+                },
+                "finish_reason": {
+                  "type": "string",
+                  "example": "stop"
+                }
+              }
+            }
+          },
+          "usage": {
+            "type": "object",
+            "nullable": true,
+            "properties": {
+              "prompt_tokens": {
+                "type": "integer",
+                "example": 12
+              },
+              "completion_tokens": {
+                "type": "integer",
+                "example": 8
+              },
+              "total_tokens": {
+                "type": "integer",
+                "example": 20
+              }
+            }
+          }
+        }
+      },
+      "OpenAIErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "message": {
+                "type": "string",
+                "example": "Invalid API key"
+              },
+              "type": {
+                "type": "string",
+                "example": "authentication_error"
+              },
+              "param": {
+                "type": "string",
+                "example": "model"
+              },
+              "code": {
+                "type": "string",
+                "example": "invalid_api_key"
               }
             }
           }
@@ -763,12 +1668,18 @@
             "type": "integer",
             "description": "Applied offset",
             "example": 0
+          },
+          "total_count": {
+            "type": "integer",
+            "description": "Total number of matching webhooks",
+            "example": 123
           }
         },
         "required": [
           "webhooks",
           "limit",
-          "offset"
+          "offset",
+          "total_count"
         ]
       }
     },
@@ -808,6 +1719,19 @@
             },
             "example": {
               "error": "Invalid or missing API key"
+            }
+          }
+        }
+      },
+      "UnprocessableEntity": {
+        "description": "Request body could not be processed",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": "invalid request body"
             }
           }
         }
