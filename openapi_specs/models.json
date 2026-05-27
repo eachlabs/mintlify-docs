@@ -1118,7 +1118,8 @@
                 "type": "string"
               },
               {
-                "type": "array"
+                "type": "array",
+                "items": {}
               },
               {
                 "type": "object"
@@ -1188,7 +1189,8 @@
                 "type": "string"
               },
               {
-                "type": "array"
+                "type": "array",
+                "items": {}
               },
               {
                 "type": "object"
