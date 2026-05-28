@@ -26,10 +26,6 @@ This documentation covers the OpenAI-compatible API for the Eachlabs AI Agent, w
 https://eachsense-agent.core.eachlabs.run
 ```
 
-<Warning>
-  This public URL uses a deprecated compatibility host outside the api-service host. It remains supported for now, but will soon move under `https://api.eachlabs.ai`. Keep integrations configurable and switch to the api-service URL once it is published.
-</Warning>
-
 ## Authentication
 
 The API supports two authentication methods:

@@ -1,6 +1,6 @@
 # Eachlabs Sense API - Frontend Integration Guide
 
-**Base URL:** `https://sense.eachlabs.run` _(deprecated compatibility host; moving under `https://api.eachlabs.ai`)_
+**Base URL:** `https://sense.eachlabs.run`
 
 ---
 

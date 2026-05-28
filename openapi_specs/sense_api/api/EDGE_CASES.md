@@ -1,7 +1,5 @@
 # Edge Cases & Error Handling
 
-> Deprecated compatibility host: public URLs outside `https://api.eachlabs.ai` remain supported for now, but will soon move under the api-service host. Keep integrations configurable.
-
 
 Comprehensive guide for handling errors, edge cases, and special scenarios.
 

@@ -1,7 +1,5 @@
 # Workflow Creation & Execution — Frontend Integration Guide
 
-> Deprecated compatibility host: public URLs outside `https://api.eachlabs.ai` remain supported for now, but will soon move under the api-service host. Keep integrations configurable.
-
 
 **New in /chat endpoint:** The AI agent can now automatically **create**, **trigger**, and **monitor** workflows for complex multi-step generation tasks (multi-scene videos, character-consistent content). This happens through `/chat` — no new endpoints required.
 
