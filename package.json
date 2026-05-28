@@ -1,0 +1,11 @@
+{
+  "name": "mintlify-docs",
+  "private": true,
+  "scripts": {
+    "validate": "mintlify validate",
+    "broken-links": "mintlify broken-links"
+  },
+  "devDependencies": {
+    "mintlify": "4.2.583"
+  }
+}
