@@ -75,6 +75,27 @@
           {
             "group": "Webhooks",
             "pages": ["api/webhooks/overview", "api/webhooks/list-webhooks", "api/webhooks/get-webhook", "api/webhooks/payload-reference"]
+          },
+          {
+            "group": "OpenAPI Reference",
+            "openapi": {
+              "source": "/openapi_specs/models.json",
+              "directory": "api-reference"
+            },
+            "pages": [
+              "GET /v1/models",
+              "GET /v1/model",
+              "POST /v1/prediction",
+              "POST /v1/prediction/run",
+              "GET /v1/prediction/{id}",
+              "POST /v1/prediction/{id}/cancel",
+              "POST /v1/upload/presign",
+              "GET /v1/executions",
+              "GET /v1/webhooks",
+              "GET /v1/webhooks/{execution_id}",
+              "GET /v1/llm-router/model-catalog",
+              "POST /v1/chat/completions"
+            ]
           }
         ]
       },
@@ -107,6 +128,26 @@
               "workflows/endpoints/list-executions",
               "workflows/endpoints/get-execution",
               "workflows/endpoints/public-workflows"
+            ]
+          },
+          {
+            "group": "OpenAPI Reference",
+            "openapi": {
+              "source": "/openapi_specs/workflows.json",
+              "directory": "workflows-api-reference"
+            },
+            "pages": [
+              "GET /categories",
+              "POST /workflows",
+              "GET /workflows/{workflowID}",
+              "PUT /workflows/{workflowID}",
+              "PUT /workflows/{workflowID}/versions/{versionID}",
+              "POST /{workflowID}/trigger",
+              "POST /{workflowID}/bulk-trigger",
+              "GET /workflows/{workflowID}/executions",
+              "GET /executions/{executionID}",
+              "GET /public/@{nickname}/workflows/{slug}/versions/{versionID}",
+              "POST /public/@{nickname}/workflows/{slug}/versions/{versionID}/trigger"
             ]
           },
           {

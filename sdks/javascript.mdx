@@ -206,6 +206,10 @@ if (prediction.status === "completed") {
 
 ## each::workflows: Trigger & Poll
 
+<Warning>
+  This public URL uses a deprecated compatibility host outside the api-service host. It remains supported for now, but will soon move under `https://api.eachlabs.ai`. Keep integrations configurable and switch to the api-service URL once it is published.
+</Warning>
+
 ```javascript
 const API_KEY = "YOUR_API_KEY";
 const BASE = "https://workflows.eachlabs.run/api/v1";

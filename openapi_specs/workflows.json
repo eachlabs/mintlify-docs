@@ -12,7 +12,7 @@
   "servers": [
     {
       "url": "https://workflows.eachlabs.run/api/v1",
-      "description": "Production server"
+      "description": "Deprecated compatibility production host. This public URL remains supported for now, but will soon move under the api-service host at https://api.eachlabs.ai."
     }
   ],
   "security": [
@@ -1551,6 +1551,7 @@
           },
           "output": {
             "description": "Output from the last completed step in the workflow.\nThis provides quick access to the final result without navigating step_outputs.\n\n**Important**: This field is only populated when the workflow status is `completed`.\n- For `running` workflows: null (even if some steps have completed)\n- For `failed` workflows: null\n- For `cancelled` workflows: null\n- For `completed` workflows: contains output from the chronologically last step\n\nThe last step is determined by the latest `completed_at` timestamp.\nThe value is extracted from the step's `output` field, or `primary` field as fallback.\n\nThe type varies based on the workflow's final step:\n- Text generation steps return a string\n- Image generation steps return an array of URLs\n- Structured data steps return an object\n",
+            "nullable": true,
             "oneOf": [
               {
                 "type": "string"
@@ -1561,9 +1562,6 @@
               },
               {
                 "type": "object"
-              },
-              {
-                "type": "null"
               }
             ],
             "example": [
