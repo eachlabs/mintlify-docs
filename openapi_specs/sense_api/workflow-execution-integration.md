@@ -1,6 +1,5 @@
 # Workflow Creation & Execution — Frontend Integration Guide
 
-
 **New in /chat endpoint:** The AI agent can now automatically **create**, **trigger**, and **monitor** workflows for complex multi-step generation tasks (multi-scene videos, character-consistent content). This happens through `/chat` — no new endpoints required.
 
 ---

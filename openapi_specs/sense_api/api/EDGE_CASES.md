@@ -1,6 +1,5 @@
 # Edge Cases & Error Handling
 
-
 Comprehensive guide for handling errors, edge cases, and special scenarios.
 
 ---

@@ -1,6 +1,5 @@
 # Streaming Guide
 
-
 Complete guide to implementing SSE streaming with the Eachlabs AI Agent API.
 
 ---

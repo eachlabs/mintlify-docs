@@ -1,6 +1,5 @@
 # API Endpoints
 
-
 Complete reference for all available API endpoints.
 
 ---
