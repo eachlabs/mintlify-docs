@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "each::labs Official API v1",
-    "description": "Official each::labs API V1.\nThis API provides access to our comprehensive AI model catalog and other resources.\n",
+    "description": "Official each::labs API V1.\nThis API provides access to our comprehensive AI model catalog and other resources.\n\n## Public contract notes\n\n- Public API routes handled by request logging include `X-Request-Id` for\n  support and log correlation. Clients may send `X-Request-Id`; otherwise\n  api-service generates one. Root, health, and metrics endpoints are excluded.\n- REST error bodies keep the backward-compatible JSON shape used by existing\n  clients. Most errors include at least `error`; some shared error paths also\n  include `status` and `details`. Use the HTTP status code as the primary\n  programmatic signal unless an endpoint documents a richer envelope.\n- Rate-limit and retry headers are endpoint-dependent. If a response includes\n  `Retry-After`, honor it before retrying; otherwise use bounded exponential\n  backoff for retryable 429/5xx responses.\n- api-service exposes single workflow trigger through\n  `/v1/workflows/trigger/{workflowID}/{versionID}`. Bulk workflow trigger is\n  not routed through api-service; use the workflows-engine public API directly\n  where bulk trigger is required.\n",
     "version": "1.0.0",
     "contact": {
       "name": "API Support",
@@ -189,7 +189,7 @@
           "AI Models Prediction"
         ],
         "summary": "Create Model Prediction",
-        "description": "Create a new prediction for a specific model",
+        "description": "Create a new prediction for a specific model.\n",
         "operationId": "createPrediction",
         "security": [
           {
@@ -316,7 +316,7 @@
           "AI Models Prediction"
         ],
         "summary": "Get Model Prediction",
-        "description": "Retrieve the status and results of a model prediction by its ID",
+        "description": "Retrieve the status and results of a model prediction by its ID.\n\nPrediction statuses are `starting` or `processing` while work is in flight.\nTerminal statuses are `success`, `failed`, and `cancelled`.\n",
         "operationId": "getPrediction",
         "parameters": [
           {
@@ -389,7 +389,7 @@
           "AI Models Prediction"
         ],
         "summary": "Cancel Model Prediction",
-        "description": "Cancel a running prediction by ID. Cancellation is best-effort for upstream providers;\nthe Eachlabs execution record is updated to cancelled when cancellation succeeds.\n",
+        "description": "Cancel a running prediction by ID. Cancellation is best-effort for upstream providers;\nnot every provider can interrupt work that is already running. When provider\ncancellation is supported and succeeds, the Eachlabs execution record is updated\nto `cancelled`; otherwise the original prediction may still complete or fail.\n",
         "operationId": "cancelPrediction",
         "security": [
           {
@@ -501,7 +501,7 @@
           "Executions"
         ],
         "summary": "List executions",
-        "description": "Retrieve execution history for the authenticated API key with optional filters.",
+        "description": "Retrieve execution history for the authenticated API key with optional filters.\nModel prediction terminal statuses include `success`, `failed`, and `cancelled`;\nworkflow executions can surface `running`, `completed`, `failed`, or `cancelled`\ndepending on the originating backend.\n",
         "operationId": "listExecutions",
         "security": [
           {
@@ -618,7 +618,7 @@
           "OpenAI Compatibility"
         ],
         "summary": "Create Chat Completion",
-        "description": "OpenAI-compatible chat completions endpoint backed by Eachlabs LLM Router. Use\n`Authorization: Bearer <API_KEY>` and point an OpenAI-compatible client at\n`https://api.eachlabs.ai/v1`.\n",
+        "description": "OpenAI-compatible chat completions endpoint backed by Eachlabs LLM Router. Use\n`Authorization: Bearer <API_KEY>` and point an OpenAI-compatible client at\n`https://api.eachlabs.ai/v1`.\n\nThis endpoint uses the OpenAI-compatible error envelope rather than the REST\nerror body described in the global contract notes.\n",
         "operationId": "createChatCompletion",
         "security": [
           {
@@ -717,7 +717,7 @@
           "Workflows"
         ],
         "summary": "Trigger workflow execution",
-        "description": "Start an asynchronous workflow execution through api-service. This route forwards to\nworkflows-engine and requires callers to pin the workflow version in the path.\n",
+        "description": "Start an asynchronous workflow execution through api-service. This route forwards to\nworkflows-engine and requires callers to pin the workflow version in the path.\n\nThe immediate response only confirms the workflow was queued. Downstream workflow\nlifecycle statuses are `running`, `completed`, `failed`, and `cancelled`.\napi-service does not expose workflows-engine's bulk trigger route.\n",
         "operationId": "triggerWorkflowExecution",
         "security": [
           {
@@ -927,6 +927,30 @@
     }
   },
   "components": {
+    "headers": {
+      "RequestId": {
+        "description": "Request correlation ID. Echoes the incoming `X-Request-Id` header or a generated ID.",
+        "schema": {
+          "type": "string"
+        },
+        "example": "123e4567-e89b-12d3-a456-426614174000"
+      },
+      "RetryAfter": {
+        "description": "Optional retry delay returned by rate-limit or upstream retry responses when available.",
+        "schema": {
+          "oneOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "example": 30
+      }
+    },
     "securitySchemes": {
       "ApiKeyAuth": {
         "type": "apiKey",
@@ -1164,6 +1188,9 @@
           },
           "status": {
             "type": "string",
+            "enum": [
+              "queued"
+            ],
             "description": "Execution queue status returned immediately after triggering.",
             "example": "queued"
           }
@@ -1171,12 +1198,26 @@
       },
       "Error": {
         "type": "object",
+        "description": "Backward-compatible REST error body. Endpoint-specific handlers may return only\n`error`; shared error paths may also include `status` and `details`.\n",
         "properties": {
+          "status": {
+            "type": "integer",
+            "description": "HTTP status code, when returned by the shared error handler.",
+            "example": 400
+          },
           "error": {
             "type": "string",
+            "description": "Safe user-facing error message.",
             "example": "error message"
+          },
+          "details": {
+            "nullable": true,
+            "description": "Optional validation or request details for client errors."
           }
-        }
+        },
+        "required": [
+          "error"
+        ]
       },
       "CreatePredictionRequest": {
         "type": "object",
@@ -1243,7 +1284,12 @@
         "properties": {
           "status": {
             "type": "string",
-            "description": "Final status of the synchronous prediction",
+            "enum": [
+              "success",
+              "failed",
+              "cancelled"
+            ],
+            "description": "Final terminal status of the synchronous prediction",
             "example": "success"
           },
           "message": {
@@ -1283,7 +1329,10 @@
         "properties": {
           "status": {
             "type": "string",
-            "description": "Cancellation status",
+            "enum": [
+              "cancelled"
+            ],
+            "description": "Cancellation status returned when the cancellation request succeeds",
             "example": "cancelled"
           },
           "message": {
@@ -1317,7 +1366,7 @@
           },
           "status": {
             "type": "string",
-            "description": "Current status of the prediction",
+            "description": "Current status of the prediction. `starting` and `processing` are\nnon-terminal. `success`, `failed`, and `cancelled` are terminal.\n",
             "enum": [
               "starting",
               "processing",
@@ -1467,7 +1516,7 @@
           },
           "status": {
             "type": "string",
-            "description": "Execution status",
+            "description": "Execution status. Model prediction terminal statuses include `success`,\n`failed`, and `cancelled`; workflow executions can surface `running`,\n`completed`, `failed`, or `cancelled` depending on the originating backend.\n",
             "example": "success"
           },
           "workflow_id": {
@@ -1659,6 +1708,7 @@
       },
       "OpenAIErrorResponse": {
         "type": "object",
+        "description": "OpenAI-compatible error envelope used only by `/v1/chat/completions`.",
         "properties": {
           "error": {
             "type": "object",
@@ -1832,6 +1882,11 @@
     "responses": {
       "BadRequest": {
         "description": "Bad request",
+        "headers": {
+          "X-Request-Id": {
+            "$ref": "#/components/headers/RequestId"
+          }
+        },
         "content": {
           "application/json": {
             "schema": {
@@ -1845,6 +1900,11 @@
       },
       "NotFound": {
         "description": "Resource not found",
+        "headers": {
+          "X-Request-Id": {
+            "$ref": "#/components/headers/RequestId"
+          }
+        },
         "content": {
           "application/json": {
             "schema": {
@@ -1858,6 +1918,11 @@
       },
       "Unauthorized": {
         "description": "Authentication required or invalid credentials",
+        "headers": {
+          "X-Request-Id": {
+            "$ref": "#/components/headers/RequestId"
+          }
+        },
         "content": {
           "application/json": {
             "schema": {
@@ -1871,6 +1936,11 @@
       },
       "PaymentRequired": {
         "description": "Insufficient balance",
+        "headers": {
+          "X-Request-Id": {
+            "$ref": "#/components/headers/RequestId"
+          }
+        },
         "content": {
           "application/json": {
             "schema": {
@@ -1884,6 +1954,11 @@
       },
       "Forbidden": {
         "description": "Forbidden",
+        "headers": {
+          "X-Request-Id": {
+            "$ref": "#/components/headers/RequestId"
+          }
+        },
         "content": {
           "application/json": {
             "schema": {
@@ -1897,6 +1972,11 @@
       },
       "Conflict": {
         "description": "Conflict with current resource state",
+        "headers": {
+          "X-Request-Id": {
+            "$ref": "#/components/headers/RequestId"
+          }
+        },
         "content": {
           "application/json": {
             "schema": {
@@ -1910,6 +1990,11 @@
       },
       "RequestTimeout": {
         "description": "Upstream request timed out",
+        "headers": {
+          "X-Request-Id": {
+            "$ref": "#/components/headers/RequestId"
+          }
+        },
         "content": {
           "application/json": {
             "schema": {
@@ -1923,6 +2008,11 @@
       },
       "UnprocessableEntity": {
         "description": "Request body could not be processed",
+        "headers": {
+          "X-Request-Id": {
+            "$ref": "#/components/headers/RequestId"
+          }
+        },
         "content": {
           "application/json": {
             "schema": {
@@ -1936,6 +2026,11 @@
       },
       "BadGateway": {
         "description": "Upstream service unavailable",
+        "headers": {
+          "X-Request-Id": {
+            "$ref": "#/components/headers/RequestId"
+          }
+        },
         "content": {
           "application/json": {
             "schema": {
@@ -1949,6 +2044,11 @@
       },
       "InternalServerError": {
         "description": "Internal server error",
+        "headers": {
+          "X-Request-Id": {
+            "$ref": "#/components/headers/RequestId"
+          }
+        },
         "content": {
           "application/json": {
             "schema": {
