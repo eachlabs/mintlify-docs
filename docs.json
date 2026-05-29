@@ -94,7 +94,8 @@
               "GET /v1/webhooks",
               "GET /v1/webhooks/{execution_id}",
               "GET /v1/llm-router/model-catalog",
-              "POST /v1/chat/completions"
+              "POST /v1/chat/completions",
+              "POST /v1/workflows/trigger/{workflowID}/{versionID}"
             ]
           }
         ]

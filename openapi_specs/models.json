@@ -37,6 +37,10 @@
       "description": "Endpoints for listing execution history."
     },
     {
+      "name": "Workflows",
+      "description": "Endpoints for triggering workflow executions through api-service."
+    },
+    {
       "name": "OpenAI Compatibility",
       "description": "OpenAI-compatible endpoints for LLM Router requests."
     },
@@ -119,11 +123,6 @@
         "summary": "Get model details",
         "description": "Retrieve detailed information about a specific model by slug",
         "operationId": "getModel",
-        "security": [
-          {
-            "ApiKeyAuth": []
-          }
-        ],
         "parameters": [
           {
             "name": "slug",
@@ -712,6 +711,114 @@
         }
       }
     },
+    "/v1/workflows/trigger/{workflowID}/{versionID}": {
+      "post": {
+        "tags": [
+          "Workflows"
+        ],
+        "summary": "Trigger workflow execution",
+        "description": "Start an asynchronous workflow execution through api-service. This route forwards to\nworkflows-engine and requires callers to pin the workflow version in the path.\n",
+        "operationId": "triggerWorkflowExecution",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workflowID",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Workflow ID or slug to execute.",
+            "example": "wf_abc123"
+          },
+          {
+            "name": "versionID",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Workflow version ID to execute.",
+            "example": "v1"
+          },
+          {
+            "name": "webhook_url",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            },
+            "description": "Optional compatibility query parameter for execution completion webhooks. The request body field takes precedence when both are present.",
+            "example": "https://your-app.com/webhook"
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkflowTriggerRequest"
+              },
+              "example": {
+                "inputs": {
+                  "prompt": "A cinematic establishing shot of a mountain lake"
+                },
+                "webhook_url": "https://your-app.com/webhook",
+                "webhook_secret": "your-secret-key"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Workflow execution queued",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowTriggerResponse"
+                },
+                "example": {
+                  "execution_id": "exec_xyz789",
+                  "status": "queued"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "402": {
+            "$ref": "#/components/responses/PaymentRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "408": {
+            "$ref": "#/components/responses/RequestTimeout"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
     "/v1/webhooks": {
       "get": {
         "tags": [
@@ -1023,6 +1130,45 @@
           }
         }
       },
+      "WorkflowTriggerRequest": {
+        "type": "object",
+        "properties": {
+          "inputs": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Input values defined by the workflow version. May be omitted for workflows with no inputs.",
+            "example": {
+              "prompt": "A cinematic establishing shot of a mountain lake"
+            }
+          },
+          "webhook_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Optional webhook URL for workflow execution completion.",
+            "example": "https://your-app.com/webhook"
+          },
+          "webhook_secret": {
+            "type": "string",
+            "description": "Optional secret used to sign workflow webhook requests.",
+            "example": "your-secret-key"
+          }
+        }
+      },
+      "WorkflowTriggerResponse": {
+        "type": "object",
+        "properties": {
+          "execution_id": {
+            "type": "string",
+            "description": "Queued workflow execution identifier.",
+            "example": "exec_xyz789"
+          },
+          "status": {
+            "type": "string",
+            "description": "Execution queue status returned immediately after triggering.",
+            "example": "queued"
+          }
+        }
+      },
       "Error": {
         "type": "object",
         "properties": {
@@ -1118,8 +1264,7 @@
                 "type": "string"
               },
               {
-                "type": "array",
-                "items": {}
+                "type": "array"
               },
               {
                 "type": "object"
@@ -1189,8 +1334,7 @@
                 "type": "string"
               },
               {
-                "type": "array",
-                "items": {}
+                "type": "array"
               },
               {
                 "type": "object"
@@ -1725,6 +1869,58 @@
           }
         }
       },
+      "PaymentRequired": {
+        "description": "Insufficient balance",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": "insufficient balance"
+            }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "Forbidden",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": "forbidden"
+            }
+          }
+        }
+      },
+      "Conflict": {
+        "description": "Conflict with current resource state",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": "conflict"
+            }
+          }
+        }
+      },
+      "RequestTimeout": {
+        "description": "Upstream request timed out",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": "Request timeout"
+            }
+          }
+        }
+      },
       "UnprocessableEntity": {
         "description": "Request body could not be processed",
         "content": {
@@ -1734,6 +1930,19 @@
             },
             "example": {
               "error": "invalid request body"
+            }
+          }
+        }
+      },
+      "BadGateway": {
+        "description": "Upstream service unavailable",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": "workflows-engine unavailable"
             }
           }
         }
