@@ -10,7 +10,6 @@ on:
 
 permissions:
   pull-requests: write
-  issues: write
 
 concurrency:
   group: stale-prs
