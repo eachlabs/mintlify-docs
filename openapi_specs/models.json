@@ -659,12 +659,19 @@
         },
         "responses": {
           "200": {
-            "description": "OpenAI-compatible chat completion",
+            "description": "OpenAI-compatible chat completion. Requests with `stream: true` return Server-Sent Events.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ChatCompletionResponse"
                 }
+              },
+              "text/event-stream": {
+                "schema": {
+                  "type": "string",
+                  "description": "Server-Sent Events stream for requests with `stream: true`.\nEvents use OpenAI-compatible `chat.completion.chunk` payloads\nand the stream terminates with `data: [DONE]`.\n"
+                },
+                "example": "data: {\"id\":\"chatcmpl-abc123\",\"object\":\"chat.completion.chunk\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"A cinematic\"},\"finish_reason\":null}]}\n\ndata: [DONE]\n"
               }
             }
           },
@@ -1631,8 +1638,21 @@
           },
           "stream": {
             "type": "boolean",
-            "description": "OpenAI-compatible request flag. This endpoint returns a JSON response.",
+            "description": "Set to `true` to receive OpenAI-compatible SSE chunks (`text/event-stream`) instead of a buffered JSON response.",
             "example": false
+          },
+          "stream_options": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": true,
+            "description": "Optional OpenAI-compatible streaming options. When `include_usage` is true, the stream may include a final usage chunk before `[DONE]`.",
+            "properties": {
+              "include_usage": {
+                "type": "boolean",
+                "description": "Include token usage in the streamed response when provider usage data is available.",
+                "example": true
+              }
+            }
           }
         }
       },
