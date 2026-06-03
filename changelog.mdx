@@ -4,19 +4,81 @@ description: "Product updates and releases from each::labs"
 rss: true
 ---
 
-<Update label="June 2026" description="Usage Analytics" rss={{ title: "See where your spend actually comes from", description: "Usage Analytics" }}>
-  ## See where your spend actually comes from
+<Update label="June 2, 2026" description="Security" rss={{ title: "Your API key can no longer leak from the browser", description: "Security" }}>
+  ## Your API key can no longer leak from the browser
 
-  - Usage now splits by source: filter between **All sources**,
-    **Dashboard runs**, and **API runs** to separate what your team did in
-    the dashboard from what your integrations ran programmatically.
-  - The selected view is deep-linkable — share a URL that lands on exactly
-    the breakdown you're looking at.
+  The dashboard used to keep a copy of your key in your browser. Now it never
+  does — your key stays on the server and signing in uses a secure session.
+  Even a fully compromised browser has no key to steal. Nothing changes for
+  you day to day; the biggest place a key could leak is simply gone.
+</Update>
+
+<Update label="June 2, 2026" description="API Keys" rss={{ title: "API keys are owned by the organization", description: "API Keys" }}>
+  ## Keys are owned by the organization — they survive people coming and going
+
+  - Keys belong to the organization, not the person who created them. So when
+    a teammate leaves, their keys keep working and your integrations don't
+    break.
+  - Any API Key Manager or the organization's primary Owner can delete any of
+    the org's keys — one place of control, no orphaned keys.
+  - Every key records who created it, for audit and accountability.
+  - A new **"Can manage API keys"** permission (shown as **"API key access"**
+    in the UI) controls who can create and delete keys — and only that. It
+    doesn't touch billing, model access, or whether existing keys work.
+  - Removing that permission from someone never breaks their existing keys.
+    They keep working — the person just can no longer create or delete keys.
+  - A Manager manages all of the org's keys; there's no per-key granularity
+    today.
+</Update>
+
+<Update label="June 2, 2026" description="Security" rss={{ title: "Copy your key once, then keep it safe", description: "Security" }}>
+  ## You hold your key, we don't — copy it when you create it
+
+  For security, the full key value is shown only once, at the moment you
+  create it, and is never stored anywhere it can be shown again. Copy it then
+  and keep it safe. If it's ever lost, just create a new key and delete the
+  old one.
+</Update>
+
+<Update label="June 2, 2026" description="Usage Analytics" rss={{ title: "Tell dashboard runs apart from API runs", description: "Usage Analytics" }}>
+  ## You can finally tell dashboard runs apart from API runs
+
+  - Executions, usage, and per-model request history now filter by source
+    (**Dashboard** vs **API**), by specific **key**, and by **teammate** —
+    attribute every run and every dollar of spend to the right key or person.
+    You can even recover history from keys that were later deleted. This came
+    straight from customer feedback.
+  - The selected view is deep-linkable — share a URL that lands on exactly the
+    breakdown you're looking at.
   - Reported usage is more accurate: internal dashboard traffic no longer
     inflates your API usage totals.
 </Update>
 
-<Update label="May 2026" description="each::storage" rss={{ title: "A home for all your files", description: "each::storage" }}>
+<Update label="June 2, 2026" description="API" rss={{ title: "API keys are recognizable at a glance", description: "API" }}>
+  ## Keys are recognizable at a glance — they start with `smk_`
+
+  The keys you create for the API now begin with `smk_`, so they're easy to
+  spot in your code, your logs, and support tickets. The keys the dashboard
+  uses internally for in-app runs are separate and hidden from you, prefixed
+  `srk_`.
+</Update>
+
+<Update label="June 2, 2026" description="API Keys" rss={{ title: "New accounts start clean — no unused key", description: "API Keys" }}>
+  ## New accounts start clean — no confusing unused key
+
+  Signing up no longer auto-creates a key you could neither see nor use.
+  Running and uploading inside the dashboard work immediately with zero
+  setup; you create a key only when you actually need external API access.
+</Update>
+
+<Update label="May 23, 2026" description="Catalog" rss={{ title: "Faster model browsing", description: "Catalog" }}>
+  ## Faster model browsing
+
+  Model, provider, and family pages are rebuilt on a new data layer —
+  noticeably faster loads, with the newest models shown first.
+</Update>
+
+<Update label="May 22, 2026" description="each::storage" rss={{ title: "A home for all your files", description: "each::storage" }}>
   ## A home for all your files
 
   The storage page brings every file you've uploaded or generated into one
@@ -24,32 +86,7 @@ rss: true
   execution, or file type to find exactly what you need.
 </Update>
 
-<Update label="May 2026" description="API Keys" rss={{ title: "Roles and accountability for API keys", description: "API Keys" }}>
-  ## Roles and accountability for API keys
-
-  - The API Keys page is now role-gated: org owners and the new
-    "API Key Manager" role can create and delete keys; other members get a
-    read-only view.
-  - Every key now shows who created it.
-  - New keys are revealed in full once, at creation, with a copy button —
-    and never shown again.
-</Update>
-
-<Update label="May 2026" description="Security" rss={{ title: "API keys stay out of the browser", description: "Security" }}>
-  ## API keys stay out of the browser
-
-  Dashboard requests now authenticate with a short-lived session token —
-  your raw API keys never leave the server or appear in browser traffic.
-</Update>
-
-<Update label="May 2026" description="Catalog" rss={{ title: "Faster model browsing", description: "Catalog" }}>
-  ## Faster model browsing
-
-  Model, provider, and family pages are rebuilt on a new data layer —
-  noticeably faster loads, with the newest models shown first.
-</Update>
-
-<Update label="May 2026" description="each::workflows" rss={{ title: "Clearer failure messages", description: "each::workflows" }}>
+<Update label="May 12, 2026" description="each::workflows" rss={{ title: "Clearer failure messages", description: "each::workflows" }}>
   ## Clearer failure messages
 
   When an execution fails, you now get more specific error detail —
