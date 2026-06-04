@@ -5,7 +5,7 @@ description: "Permanently delete a file you previously uploaded."
 
 ## Overview
 
-Permanently deletes a file you uploaded with [Upload File](/api/uploads/presign-upload). Pass the `id` returned by the presign step. A successful delete removes the stored object, so the file's `public_url` stops resolving.
+Permanently deletes a file you uploaded with [Upload File](/storage/upload-file). Pass the `id` returned by the presign step. A successful delete removes the stored object, so the file's `public_url` stops resolving.
 
 Deletes are **idempotent** — deleting a file that's already gone returns the same `204 No Content`.
 
@@ -19,7 +19,7 @@ DELETE https://api.eachlabs.ai/v1/files/{id}
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `id` | string (UUID) | Yes | The file id returned by [Upload File](/api/uploads/presign-upload) — the `id` field of the presign response. |
+| `id` | string (UUID) | Yes | The file id returned by [Upload File](/storage/upload-file) — the `id` field of the presign response. |
 
 ### Code Examples
 
