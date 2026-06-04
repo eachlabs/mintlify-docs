@@ -65,10 +65,6 @@
             "pages": ["api/predictions/create-prediction", "api/predictions/get-prediction"]
           },
           {
-            "group": "Uploads",
-            "pages": ["api/uploads/presign-upload", "api/uploads/delete-file"]
-          },
-          {
             "group": "Content Safety",
             "pages": ["api/nsfw-content"]
           },
@@ -89,7 +85,6 @@
               "POST /v1/prediction/run",
               "GET /v1/prediction/{id}",
               "POST /v1/prediction/{id}/cancel",
-              "POST /v1/upload/presign",
               "GET /v1/executions",
               "GET /v1/webhooks",
               "GET /v1/webhooks/{execution_id}",
@@ -97,6 +92,23 @@
               "POST /v1/chat/completions",
               "POST /v1/workflows/trigger/{workflowID}/{versionID}"
             ]
+          }
+        ]
+      },
+      {
+        "tab": "each::storage",
+        "groups": [
+          {
+            "group": "Files",
+            "pages": ["storage/upload-file", "storage/delete-file"]
+          },
+          {
+            "group": "OpenAPI Reference",
+            "openapi": {
+              "source": "/openapi_specs/models.json",
+              "directory": "storage-api-reference"
+            },
+            "pages": ["POST /v1/upload/presign"]
           }
         ]
       },
