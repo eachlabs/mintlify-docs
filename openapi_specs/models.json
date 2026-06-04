@@ -1506,12 +1506,6 @@
               "other"
             ],
             "example": "image"
-          },
-          "ttl_days": {
-            "type": "integer",
-            "nullable": true,
-            "description": "Optional file TTL tier in days, when enabled for the caller",
-            "example": 30
           }
         }
       },
