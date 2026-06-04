@@ -11,7 +11,7 @@ Uploads happen in two steps:
 
 <Steps>
   <Step title="Request a presigned URL">
-    `POST /v1/upload/presign` with file metadata. The response contains a short-lived URL to upload to and a permanent `public_url`.
+    `POST /v1/upload/presign` with file metadata. The response contains a short-lived URL to upload to and a stable `public_url`.
   </Step>
   <Step title="Upload the file">
     `PUT` the raw file bytes to `presigned_url`, applying any `required_headers` exactly as returned.
@@ -100,7 +100,7 @@ const { presigned_url, public_url, required_headers } = await resp.json();
 |-------|------|-------------|
 | `id` | string | Internal upload identifier. |
 | `presigned_url` | string | Short-lived URL to `PUT` the file to. |
-| `public_url` | string | Permanent URL to pass as a model input once the upload succeeds. |
+| `public_url` | string | Stable URL to pass as a model input once the upload succeeds. |
 | `expires_at` | string | ISO-8601 timestamp when `presigned_url` stops accepting uploads. |
 | `required_headers` | object | Headers that **must** be sent verbatim on the `PUT` request. The presigned URL is signed for these exact values — missing or modified headers will fail with a signature mismatch. May be empty. |
 

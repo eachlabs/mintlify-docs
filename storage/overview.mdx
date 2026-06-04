@@ -1,0 +1,53 @@
+---
+title: "each::storage Overview"
+description: "Host the media you send to and receive from each::labs — upload files, get stable URLs, and use them anywhere on the platform."
+---
+
+## What is each::storage?
+
+each::storage is managed file hosting for the media that flows through each::labs. Upload an image, video, or audio file once and get back a stable public URL you can pass straight into [each::api](/api/overview) predictions and [each::workflows](/workflows/overview) — no need to stand up your own bucket or CDN.
+
+It's also the layer each::labs uses to deliver results: model and workflow outputs are typically (though not always) served as `cdn-us.eachlabs.ai` URLs, so the files you upload and the results you get back share one fast, consistent host.
+
+## Why use it
+
+- **No infrastructure to run** — skip hosting and signing your own uploads; we hand you a presigned URL and a stable public link.
+- **Built for model inputs** — returned URLs are reliably fetchable by our executors, so predictions don't fail on inaccessible media.
+- **One platform, one key** — uploads use the same `X-API-Key` as the rest of each::api.
+- **Fast delivery** — files are served from a CDN over HTTPS.
+
+## How it works
+
+<Steps>
+  <Step title="Request a presigned URL">
+    Call [Upload File](/storage/upload-file) (`POST /v1/upload/presign`) with the file's content type. You get a short-lived upload URL plus a public `public_url`.
+  </Step>
+  <Step title="Upload the bytes">
+    `PUT` the raw file to the presigned URL. A `200 OK` means it's live.
+  </Step>
+  <Step title="Use the URL">
+    Pass `public_url` as an input to any model or workflow. Call [Delete File](/storage/delete-file) when you no longer need it.
+  </Step>
+</Steps>
+
+## Limits
+
+| Limit | Value |
+|-------|-------|
+| Max file size | 100 MB per upload |
+| Presigned URL lifetime | 15 minutes |
+| Supported file types | `image`, `video`, `audio`, `other` |
+
+## Where your data resides
+
+Files are stored on AWS infrastructure in the **United States** and delivered through the `cdn-us.eachlabs.ai` CDN over HTTPS.
+
+## Data retention
+
+Uploaded files are retained for **180 days**, after which they're automatically removed.
+
+To remove a file sooner, call [Delete File](/storage/delete-file). Deletes are permanent and idempotent — once a file is gone, its `public_url` stops resolving.
+
+## Access & privacy
+
+Each `public_url` contains an unguessable identifier but is readable by anyone who has the link — treat it as public. File management is scoped to your organization through your API key: you can only delete files uploaded under your own account.
