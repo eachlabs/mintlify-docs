@@ -99,6 +99,10 @@
         "tab": "each::storage",
         "groups": [
           {
+            "group": "Overview",
+            "pages": ["storage/overview"]
+          },
+          {
             "group": "Files",
             "pages": ["storage/upload-file", "storage/delete-file"]
           },
