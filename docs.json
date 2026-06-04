@@ -108,7 +108,7 @@
               "source": "/openapi_specs/models.json",
               "directory": "storage-api-reference"
             },
-            "pages": ["POST /v1/upload/presign"]
+            "pages": ["POST /v1/upload/presign", "DELETE /v1/files/{id}"]
           }
         ]
       },
