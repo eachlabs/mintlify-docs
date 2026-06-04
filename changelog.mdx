@@ -4,6 +4,34 @@ description: "Product updates and releases from each::labs"
 rss: true
 ---
 
+<Update label="June 4, 2026" description="API" rss={{ title: "Every model now ships an OpenAPI schema", description: "API" }}>
+  ## Every model now ships an OpenAPI schema
+
+  - Every model exposes an OpenAPI 3.0 schema at
+    `GET /v1/models/{slug}/schemas/openapi`, and its inputs and outputs render
+    as a typed reference in the model page's API tab.
+  - The machine-readable schema plugs straight into code generators,
+    validators, and API explorers, while the same schema drives the
+    human-readable reference (types, required flags, defaults, enum values,
+    ranges).
+  - Coverage is automatic and always in sync: both the endpoint and the API
+    tab are derived from each model's request schema, so there's nothing to
+    author or maintain per model.
+</Update>
+
+<Update label="June 4, 2026" description="each::storage" rss={{ title: "Delete an uploaded file over the API", description: "each::storage" }}>
+  ## Delete an uploaded file over the API
+
+  - API customers can now delete an uploaded file with `DELETE /v1/files/:id`
+    (API-key auth, returns `204`). Files uploaded through the presign flow had
+    no delete path before, so once stored there was no way to remove the
+    object or its record. This closes that gap for storage cleanup and
+    data-deletion or privacy requests.
+  - A delete removes the S3 object and soft-deletes the record, so the file
+    drops out of list, download, and storage totals immediately.
+  - Deletes are org-scoped: callers can only delete files their own org owns.
+</Update>
+
 <Update label="June 2, 2026" description="Security" rss={{ title: "Your API key can no longer leak from the browser", description: "Security" }}>
   ## Your API key can no longer leak from the browser
 
@@ -58,9 +86,7 @@ rss: true
   ## Keys are recognizable at a glance: they start with `smk_`
 
   The keys you create for the API now begin with `smk_`, so they're easy to
-  spot in your code, your logs, and support tickets. The keys the dashboard
-  uses internally for in-app runs are separate and hidden from you, prefixed
-  `srk_`.
+  spot in your code, your logs, and support tickets.
 </Update>
 
 <Update label="June 2, 2026" description="API Keys" rss={{ title: "New accounts start clean, no unused key", description: "API Keys" }}>
