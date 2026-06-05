@@ -91,15 +91,10 @@ response = client.chat.completions.create(
 
 ## Streaming
 
-<Warning>
-  Streaming is **not supported yet**. Yeah, we know. It's painful. We're on it and it'll be here soon. For now all requests return the complete response at once.
-</Warning>
-
-Once streaming lands, you'll use it like this:
+Set `stream: true` to receive OpenAI-compatible server-sent events as tokens arrive:
 
 <CodeGroup>
 ```python Python
-# Coming soon
 stream = client.chat.completions.create(
     model="openai/gpt-4o",
     messages=[{"role": "user", "content": "Write a haiku about coding"}],
@@ -107,12 +102,12 @@ stream = client.chat.completions.create(
 )
 
 for chunk in stream:
-    if chunk.choices[0].delta.content:
-        print(chunk.choices[0].delta.content, end="")
+    content = chunk.choices[0].delta.content if chunk.choices else None
+    if content:
+        print(content, end="")
 ```
 
 ```typescript TypeScript
-// Coming soon
 const stream = await client.chat.completions.create({
   model: "openai/gpt-4o",
   messages: [{ role: "user", content: "Write a haiku about coding" }],
@@ -124,6 +119,9 @@ for await (const chunk of stream) {
 }
 ```
 </CodeGroup>
+
+To include streamed token usage when it is available, pass `stream_options={"include_usage": True}`
+in Python or `stream_options: { include_usage: true }` in TypeScript.
 
 ## Advanced Features
 
