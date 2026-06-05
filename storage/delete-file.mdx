@@ -1,0 +1,69 @@
+---
+title: "Delete File"
+description: "Permanently delete a file you previously uploaded."
+---
+
+## Overview
+
+Permanently deletes a file you uploaded with [Upload File](/storage/upload-file). Pass the `id` returned by the presign step. A successful delete removes the stored object, so the file's `public_url` stops resolving.
+
+Deletes are **idempotent** — deleting a file that's already gone returns the same `204 No Content`.
+
+## Endpoint
+
+```
+DELETE https://api.eachlabs.ai/v1/files/{id}
+```
+
+### Path Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `id` | string (UUID) | Yes | The file id returned by [Upload File](/storage/upload-file) — the `id` field of the presign response. |
+
+### Code Examples
+
+<CodeGroup>
+```bash cURL
+curl -X DELETE https://api.eachlabs.ai/v1/files/0dce0f44-b8a5-4f30-91d4-5f6b0c221bf0 \
+  -H "X-API-Key: YOUR_API_KEY"
+```
+
+```python Python
+import requests
+
+resp = requests.delete(
+    "https://api.eachlabs.ai/v1/files/0dce0f44-b8a5-4f30-91d4-5f6b0c221bf0",
+    headers={"X-API-Key": "YOUR_API_KEY"},
+)
+print(resp.status_code)  # 204 on success
+```
+
+```javascript JavaScript
+const resp = await fetch(
+  "https://api.eachlabs.ai/v1/files/0dce0f44-b8a5-4f30-91d4-5f6b0c221bf0",
+  {
+    method: "DELETE",
+    headers: { "X-API-Key": "YOUR_API_KEY" },
+  },
+);
+// resp.status === 204
+```
+</CodeGroup>
+
+### Response
+
+A successful delete returns `204 No Content` with an empty body.
+
+## Error Responses
+
+| Status | Body | Description |
+|--------|------|-------------|
+| `400` | `{"error": "invalid argument"}` | `id` is not a valid UUID. |
+| `401` | `{}` | Missing or invalid API key. |
+| `404` | `{"error": "file not found"}` | No such file in your organization. |
+| `409` | `{"error": "conflict"}` | The file is still being processed and isn't in a deletable state yet. Retry once the upload has finished. |
+
+<Note>
+  Deletes are permanent and idempotent. A successful delete removes the stored object, so any `public_url` for the file stops resolving. Deleting a file that was already deleted — or never existed in your account — also returns `204`.
+</Note>

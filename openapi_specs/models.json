@@ -495,6 +495,58 @@
         }
       }
     },
+    "/v1/files/{id}": {
+      "delete": {
+        "tags": [
+          "Uploads"
+        ],
+        "summary": "Delete File",
+        "description": "Permanently delete a file you previously uploaded via the presign flow. Pass the `id`\nreturned by `POST /v1/upload/presign`. A successful delete removes the stored object, so the\nfile's `public_url` stops resolving. Deletes are idempotent — deleting a file that is already\ngone also returns `204`.\n",
+        "operationId": "deleteFile",
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The file id returned by the presign step (the `id` field of the presign response).",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "File deleted, or already absent. Empty body.",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/RequestId"
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
     "/v1/executions": {
       "get": {
         "tags": [
@@ -1461,12 +1513,6 @@
               "other"
             ],
             "example": "image"
-          },
-          "ttl_days": {
-            "type": "integer",
-            "nullable": true,
-            "description": "Optional file TTL tier in days, when enabled for the caller",
-            "example": 30
           }
         }
       },
