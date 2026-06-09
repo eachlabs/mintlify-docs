@@ -4,6 +4,57 @@ description: "Product updates and releases from each::labs"
 rss: true
 ---
 
+<Update label="June 9, 2026" description="Usage Analytics" rss={{ title: "Compare a model's error rate against the each::labs average", description: "Usage Analytics" }}>
+  ## See whether a model's error rate is normal, or just yours
+
+  - Error Analytics now lets you filter to a single model and see your
+    workspace's error rate for it next to the **each::labs platform-wide
+    average** for the same model, so you can tell at a glance whether a failure
+    spike is something on your side or the model itself.
+  - The comparison is color-coded — green when you're beating the platform
+    average, red when you're worse — and the benchmark window is labeled so you
+    know what it's averaged over.
+  - The page also gained quality-of-life upgrades alongside it: sortable
+    columns, CSV export, error-type tooltips, and a "Yesterday" quick range.
+</Update>
+
+<Update label="June 9, 2026" description="each::storage" rss={{ title: "Set how long an uploaded file is kept", description: "each::storage" }}>
+  ## Set how long an uploaded file is kept
+
+  - When you upload a file you can now pass `expires_in_seconds` to control how
+    long it's retained. Once that window passes the file is removed
+    automatically, so there's no manual cleanup to schedule.
+  - Leave it out and files keep the default retention, so nothing changes for
+    existing integrations.
+  - An expired file drops out of list, download, and storage totals exactly
+    like a manual delete, and is purged from the CDN.
+</Update>
+
+<Update label="June 8, 2026" description="each::workflows" rss={{ title: "Create workflows straight from the API", description: "each::workflows" }}>
+  ## Create workflows straight from the API
+
+  - You can now create a workflow programmatically with
+    `POST /v1/workflows/create` (API-key auth), so a whole pipeline can be
+    provisioned from code instead of only being assembled by hand in the
+    dashboard.
+  - It's the same workflow object either way: anything you create over the API
+    shows up in the dashboard and runs through the existing trigger flow.
+  - This is the first half of full workflow management over the API — create
+    now, with more lifecycle operations to follow.
+</Update>
+
+<Update label="June 8, 2026" description="Usage Analytics" rss={{ title: "A new Error Analytics view shows why your executions fail", description: "Usage Analytics" }}>
+  ## A new Error Analytics view shows why your executions fail
+
+  - The dashboard now has an Error Analytics page that surfaces your
+    workspace's error rate and breaks failures down by type, so you can see at
+    a glance what's going wrong instead of opening runs one at a time.
+  - Failures are also broken down per model, so you can tell which model is
+    driving your errors.
+  - It builds on the clearer, provider-side failure messages shipped earlier,
+    now aggregated into rates you can actually act on.
+</Update>
+
 <Update label="June 4, 2026" description="API" rss={{ title: "Every model now ships an OpenAPI schema", description: "API" }}>
   ## Every model now ships an OpenAPI schema
 
@@ -30,6 +81,15 @@ rss: true
   - A delete removes the S3 object and soft-deletes the record, so the file
     drops out of list, download, and storage totals immediately.
   - Deletes are org-scoped: callers can only delete files their own org owns.
+</Update>
+
+<Update label="June 4, 2026" description="Models" rss={{ title: "New image models: MAI-Image-2.5 Edit and Ideogram v4", description: "Models" }}>
+  ## New image models in the catalog
+
+  - **MAI-Image-2.5 Edit** is now available for image editing, through both the
+    API and the dashboard.
+  - **Ideogram v4** is available too, with a rendering-speed selector so you
+    can trade quality against latency on each run.
 </Update>
 
 <Update label="June 2, 2026" description="Security" rss={{ title: "Your API key can no longer leak from the browser", description: "Security" }}>
