@@ -32,6 +32,7 @@ POST https://api.eachlabs.ai/v1/upload/presign
 |-------|------|----------|-------------|
 | `content_type` | string | Yes | MIME type of the file (e.g., `image/png`, `video/mp4`, `audio/mpeg`). |
 | `file_type` | string | No | High-level category. One of `image`, `video`, `audio`, `other`. |
+| `expires_in_seconds` | integer | No | How long the stored file is retained before it's automatically deleted, in **seconds**. Sets the `expires_at` in the response. Defaults to **180 days** when omitted; clamped to a minimum of **60 seconds** and a maximum of **365 days** (`31536000`). Does **not** affect the 15-minute upload-URL lifetime. |
 
 ### Code Examples
 
@@ -87,7 +88,7 @@ const { presigned_url, public_url, required_headers } = await resp.json();
   "id": "0dce0f44-b8a5-4f30-91d4-5f6b0c221bf0",
   "presigned_url": "https://eachlabs-storage.s3.amazonaws.com/uploads/...?X-Amz-Algorithm=...&X-Amz-Signature=...",
   "public_url": "https://cdn-us.eachlabs.ai/uploads/0dce0f44-b8a5-4f30-91d4-5f6b0c221bf0.png",
-  "expires_at": "2026-04-27T18:15:00Z",
+  "expires_at": "2026-12-08T18:15:00Z",
   "required_headers": {
     "x-amz-meta-file-id": "0dce0f44-b8a5-4f30-91d4-5f6b0c221bf0"
   }
@@ -101,7 +102,7 @@ const { presigned_url, public_url, required_headers } = await resp.json();
 | `id` | string | Internal upload identifier. |
 | `presigned_url` | string | Short-lived URL to `PUT` the file to. |
 | `public_url` | string | Stable URL to pass as a model input once the upload succeeds. |
-| `expires_at` | string | ISO-8601 timestamp when `presigned_url` stops accepting uploads. |
+| `expires_at` | string | ISO-8601 timestamp when the **stored file** is automatically deleted (its retention deadline). Defaults to 180 days out; set a custom window with `expires_in_seconds`. This is **not** the upload-URL deadline — `presigned_url` itself only accepts uploads for 15 minutes after issuance (see [Limits](#limits)). |
 | `required_headers` | object | Headers that **must** be sent verbatim on the `PUT` request. The presigned URL is signed for these exact values — missing or modified headers will fail with a signature mismatch. May be empty. |
 
 ## Step 2 — Upload the file
@@ -158,7 +159,8 @@ A `200 OK` from the `PUT` means the file is live. Use `public_url` as the input 
 | Limit | Value | Notes |
 |-------|-------|-------|
 | Max file size | **100 MB** per upload | |
-| Presigned URL lifetime | **15 minutes** | Use the URL before `expires_at`; request a new one if it lapses. |
+| Presigned URL lifetime | **15 minutes** | How long `presigned_url` accepts the `PUT`, measured from issuance. This is **not** returned in the response; request a new presign if it lapses. |
+| Stored file retention | **180 days** (default) | How long the uploaded file is kept before automatic deletion — the value reported by `expires_at`. Override per upload with `expires_in_seconds` (min 60 seconds, max 365 days). |
 
 ## Error Responses
 
@@ -169,5 +171,5 @@ A `200 OK` from the `PUT` means the file is live. Use `public_url` as the input 
 | `500` | `{"error": "Failed to generate presigned URL"}` | Server error. |
 
 <Note>
-  The presigned URL expires 15 minutes after it's issued. Upload soon after requesting — if you wait past `expires_at`, just request a new one.
+  The presigned URL expires **15 minutes** after it's issued — this is separate from `expires_at`, which reports when the **stored file** is deleted (default 180 days), not the upload deadline. Upload soon after requesting; if the URL lapses, just request a new one.
 </Note>
