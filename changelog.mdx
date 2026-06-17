@@ -4,6 +4,21 @@ description: "Product updates and releases from each::labs"
 rss: true
 ---
 
+<Update label="June 17, 2026" description="API" rss={{ title: "Filter executions by error type", description: "API" }}>
+  ## Filter your executions by error type
+
+  - `GET /v1/executions` now accepts an `error_classification` query parameter,
+    so you can narrow a listing to just the executions that failed for a
+    specific reason — for example `provider_rate_limit` or `content_moderation`.
+  - Pass a comma-separated list to match any of several types (e.g.
+    `error_classification=provider_rate_limit,provider_unavailable`); an
+    unrecognized value returns a `400` so typos surface immediately.
+  - The canonical values are `content_moderation`, `execution_timeout`,
+    `invalid_user_input`, `invalid_model_config`, `provider_auth`,
+    `provider_error`, `provider_rate_limit`, `provider_unavailable`,
+    `internal_error`, and `unknown`.
+</Update>
+
 <Update label="June 11, 2026" description="each::storage" rss={{ title: "Filter your files by model", description: "each::storage" }}>
   ## Filter your files by model
 
