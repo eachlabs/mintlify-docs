@@ -621,6 +621,27 @@
             "example": "wf_exec_abc123"
           },
           {
+            "name": "error_classification",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "content_moderation",
+                "execution_timeout",
+                "invalid_user_input",
+                "invalid_model_config",
+                "provider_auth",
+                "provider_error",
+                "provider_rate_limit",
+                "provider_unavailable",
+                "internal_error",
+                "unknown"
+              ]
+            },
+            "description": "Comma-separated canonical error classification filter. Restricts results to terminal error executions whose classification is in the set; an unrecognized value returns 400. Each value must be one of the listed enum members.",
+            "example": "provider_rate_limit,provider_unavailable"
+          },
+          {
             "name": "from",
             "in": "query",
             "schema": {
