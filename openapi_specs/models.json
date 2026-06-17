@@ -475,7 +475,7 @@
                   "id": "0dce0f44-b8a5-4f30-91d4-5f6b0c221bf0",
                   "presigned_url": "https://eachlabs-storage.s3.amazonaws.com/uploads/...?X-Amz-Signature=...",
                   "public_url": "https://cdn-us.eachlabs.ai/uploads/0dce0f44-b8a5-4f30-91d4-5f6b0c221bf0.png",
-                  "expires_at": "2026-04-27T18:15:00Z",
+                  "expires_at": "2026-12-08T18:15:00Z",
                   "required_headers": {
                     "x-amz-meta-file-id": "0dce0f44-b8a5-4f30-91d4-5f6b0c221bf0"
                   }
@@ -1534,6 +1534,13 @@
               "other"
             ],
             "example": "image"
+          },
+          "expires_in_seconds": {
+            "type": "integer",
+            "description": "How long the stored file is retained before automatic deletion, in seconds. Sets `expires_at` in the response. Defaults to 180 days when omitted; clamped to a minimum of 60 seconds and a maximum of 365 days (31536000). Does not affect the 15-minute upload-URL lifetime.",
+            "minimum": 60,
+            "maximum": 31536000,
+            "example": 604800
           }
         }
       },
@@ -1560,8 +1567,8 @@
           "expires_at": {
             "type": "string",
             "format": "date-time",
-            "description": "Presigned URL expiration time",
-            "example": "2026-04-27T18:15:00Z"
+            "description": "When the stored file is automatically deleted (its retention deadline). Defaults to 180 days out; controlled by `expires_in_seconds`. Not the upload-URL deadline — the presigned URL only accepts uploads for 15 minutes after issuance.",
+            "example": "2026-12-08T18:15:00Z"
           },
           "required_headers": {
             "type": "object",
