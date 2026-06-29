@@ -1059,8 +1059,8 @@
           "version": {
             "type": "string",
             "deprecated": true,
-            "description": "Deprecated. Always returns \"0.0.1\". Will be removed in a future version.",
-            "example": "0.0.1"
+            "description": "Deprecated. Always returns an empty string. Will be removed in a future version.",
+            "example": ""
           },
           "output_type": {
             "type": "string",
@@ -1105,8 +1105,8 @@
           "version": {
             "type": "string",
             "deprecated": true,
-            "description": "Deprecated. Always returns \"0.0.1\". Will be removed in a future version.",
-            "example": "0.0.1"
+            "description": "Deprecated. Always returns an empty string. Will be removed in a future version.",
+            "example": ""
           },
           "output_type": {
             "type": "string",
@@ -1315,7 +1315,7 @@
             "type": "string",
             "deprecated": true,
             "description": "Deprecated. This field is ignored. Kept for backwards compatibility.",
-            "example": "0.0.1"
+            "example": ""
           },
           "input": {
             "type": "object",
