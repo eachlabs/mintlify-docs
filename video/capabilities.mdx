@@ -1,0 +1,1140 @@
+---
+title: "Capabilities Reference (Beta)"
+description: "Every operation the eachlabs Video API accepts — parameters, bounds, tiers, and copy-pasteable request bodies."
+---
+
+<Note>
+**Private beta.** This page is shared by direct link only. The surface below is validated server-side with `additionalProperties: false` — a request is either exactly this shape or it is rejected before any compute runs, at $0. Contracts here are stable for the beta; additions may land, removals will not without notice.
+</Note>
+
+Every job is submitted the same way: `POST https://api.eachlabs.ai/v1/prediction` with header `X-API-Key`, body `{"model": "eachlabs-video-api", "input": {"capability": "<name>", "tier": "cpu", "input_url": "...", "params": {...}}}`, then poll `GET /v1/prediction/{id}` until a terminal status. `tier` is **required** (`cpu` or `gpu`). Analysis capabilities (`probe`, `scene_detect`, `silence_detect`) return structured JSON in `output`; everything else returns hosted artifact URL(s). See [Quickstart](/video/quickstart) for the input URL requirements and [Billing & Limits](/video/billing-limits) for pricing mechanics.
+
+<Warning>
+`tier: "gpu"` is **experimental during the beta and subject to removal** — capacity is limited and several codecs reject on gpu (noted per capability). Build against `cpu` unless we have told you otherwise.
+</Warning>
+
+## audio_replace
+
+Swap or mix a video's audio track using a second input as the audio source; video always stream-copied.
+
+**Inputs:** `input_urls` (2) · **Tiers:** `cpu` · `gpu` · **Output:** media — single file
+
+<Note>**GPU behavior:** tier-agnostic (video copied, aac everywhere)</Note>
+
+| Parameter | Type | Constraints | Default | Required | Notes |
+|-|-|-|-|-|-|
+| `mode` | string | `replace` \| `mix` | `"replace"` | no | replace: -shortest (output runs to the shorter stream); mix: amix ending with the shorter audio over the full video |
+| `container` | string | `mp4` \| `mkv` | `"mp4"` | no |  |
+| `normalize` | boolean |  | `true` | no | mix only: true halves each track (no-clip-safe); false preserves source levels |
+
+```json
+{
+  "model": "eachlabs-video-api",
+  "input": {
+    "capability": "audio_replace",
+    "tier": "cpu",
+    "input_urls": [
+      "<YOUR_INPUT_URL_1>",
+      "<YOUR_INPUT_URL_2>"
+    ],
+    "params": {
+      "mode": "replace",
+      "container": "mp4",
+      "normalize": true
+    }
+  }
+}
+```
+
+## captions
+
+Burn a subtitle track (SRT/VTT/ASS) into the video via libass, with optional style overrides.
+
+**Inputs:** `input_urls` (2) · **Tiers:** `cpu` only · **Output:** media — single file
+
+| Parameter | Type | Constraints | Default | Required | Notes |
+|-|-|-|-|-|-|
+| `font_size` | integer | min 8, max 200 | — | no | omit for libass/source default |
+| `text_color` | string |  | — | no | named (white,black,gray/grey,red,green,blue,yellow) or #RRGGBB; omit for source default |
+| `position` | string | `bottom` \| `top` | — | no | omit to keep the subtitle file's own alignment |
+| `container` | string | `mp4` \| `webm` \| `mkv` | `"mp4"` | no |  |
+
+```json
+{
+  "model": "eachlabs-video-api",
+  "input": {
+    "capability": "captions",
+    "tier": "cpu",
+    "input_urls": [
+      "<YOUR_INPUT_URL_1>",
+      "<YOUR_INPUT_URL_2>"
+    ],
+    "params": {
+      "container": "mp4"
+    }
+  }
+}
+```
+
+## color
+
+Color-grade via ffmpeg eq: brightness/contrast/saturation/gamma. All-defaults is the identity grade (still re-encodes).
+
+**Inputs:** `input_url` (1) · **Tiers:** `cpu` only · **Output:** media — single file
+
+| Parameter | Type | Constraints | Default | Required | Notes |
+|-|-|-|-|-|-|
+| `brightness` | number | min -1, max 1 | `0` | no |  |
+| `contrast` | number | min 0, max 2 | `1` | no |  |
+| `saturation` | number | min 0, max 3 | `1` | no |  |
+| `gamma` | number | min 0.1, max 10 | `1` | no |  |
+| `container` | string | `mp4` \| `webm` \| `mkv` | `"mp4"` | no |  |
+
+```json
+{
+  "model": "eachlabs-video-api",
+  "input": {
+    "capability": "color",
+    "tier": "cpu",
+    "input_url": "<YOUR_INPUT_URL>",
+    "params": {
+      "brightness": 0,
+      "contrast": 1,
+      "saturation": 1
+    }
+  }
+}
+```
+
+## concat
+
+Join 2-10 inputs end-to-end, normalizing each to a common WxH canvas and 44.1kHz stereo (accepts mixed resolutions/formats).
+
+**Inputs:** `input_urls` (2-10 (must equal the `inputs` param)) · **Tiers:** `cpu` · `gpu` · **Output:** media — single file
+
+<Note>**GPU behavior:** gpu pins h264_nvenc; webm rejects on gpu; WxH > 4096 rejects on gpu</Note>
+
+| Parameter | Type | Constraints | Default | Required | Notes |
+|-|-|-|-|-|-|
+| `inputs` | integer | min 2, max 10 | `2` | no | supply exactly this many input_urls |
+| `width` | integer | min 16 | `1280` | no |  |
+| `height` | integer | min 16 | `720` | no |  |
+| `container` | string | `mp4` \| `webm` \| `mkv` | `"mp4"` | no |  |
+
+```json
+{
+  "model": "eachlabs-video-api",
+  "input": {
+    "capability": "concat",
+    "tier": "cpu",
+    "input_urls": [
+      "<YOUR_INPUT_URL_1>",
+      "<YOUR_INPUT_URL_2>"
+    ],
+    "params": {
+      "inputs": 2,
+      "width": 1280,
+      "height": 720
+    }
+  }
+}
+```
+
+## concat_copy
+
+Losslessly rejoin 2-50 already-encoded, SAME-codec chunks via the concat demuxer with -c copy (no re-encode).
+
+**Inputs:** `input_urls` (2-50 (must equal the `inputs` param)) · **Tiers:** `cpu` · `gpu` · **Output:** media — single file
+
+<Note>**GPU behavior:** tier-agnostic (stream copy)</Note>
+
+| Parameter | Type | Constraints | Default | Required | Notes |
+|-|-|-|-|-|-|
+| `inputs` | integer | min 2, max 50 | `2` | no |  |
+| `container` | string | `mp4` \| `mkv` \| `ts` | `"mp4"` | no | must be able to carry the chunks' codecs (no re-encode) |
+
+```json
+{
+  "model": "eachlabs-video-api",
+  "input": {
+    "capability": "concat_copy",
+    "tier": "cpu",
+    "input_urls": [
+      "<YOUR_INPUT_URL_1>",
+      "<YOUR_INPUT_URL_2>"
+    ],
+    "params": {
+      "inputs": 2,
+      "container": "mp4"
+    }
+  }
+}
+```
+
+## crop
+
+Cut a width x height rectangle out of the frame (centered unless x/y given).
+
+**Inputs:** `input_url` (1) · **Tiers:** `cpu` · `gpu` · **Output:** media — single file
+
+<Note>**GPU behavior:** gpu pins h264_nvenc; webm rejects on gpu; rectangle > 4096px rejects on gpu</Note>
+
+| Parameter | Type | Constraints | Default | Required | Notes |
+|-|-|-|-|-|-|
+| `width` | integer | min 1, max 8192 | `640` | no |  |
+| `height` | integer | min 1, max 8192 | `480` | no |  |
+| `x` | integer | min 0, max 8192 | — | no | omit to center |
+| `y` | integer | min 0, max 8192 | — | no | omit to center |
+| `container` | string | `mp4` \| `webm` \| `mkv` | `"mp4"` | no |  |
+
+```json
+{
+  "model": "eachlabs-video-api",
+  "input": {
+    "capability": "crop",
+    "tier": "cpu",
+    "input_url": "<YOUR_INPUT_URL>",
+    "params": {
+      "width": 640,
+      "height": 480,
+      "container": "mp4"
+    }
+  }
+}
+```
+
+## extract_audio
+
+Drop the video stream and write the audio track in the requested format (STT-ready via sample_rate/mono).
+
+**Inputs:** `input_url` (1) · **Tiers:** `cpu` · `gpu` · **Output:** media — single audio file (mp3/wav/m4a)
+
+<Note>**GPU behavior:** tier-agnostic (audio codecs on every image)</Note>
+
+| Parameter | Type | Constraints | Default | Required | Notes |
+|-|-|-|-|-|-|
+| `format` | string | `mp3` \| `wav` \| `m4a` | `"mp3"` | no |  |
+| `sample_rate` | integer | min 8000, max 48000 | — | no | resample in Hz (e.g. 16000 for STT); omit keeps source rate |
+| `mono` | boolean |  | `false` | no | downmix to one channel |
+
+```json
+{
+  "model": "eachlabs-video-api",
+  "input": {
+    "capability": "extract_audio",
+    "tier": "cpu",
+    "input_url": "<YOUR_INPUT_URL>",
+    "params": {
+      "format": "mp3",
+      "mono": false
+    }
+  }
+}
+```
+
+## fade
+
+Video fade-in and/or fade-out with matching audio afade.
+
+**Inputs:** `input_url` (1) · **Tiers:** `cpu` only · **Output:** media — single file
+
+| Parameter | Type | Constraints | Default | Required | Notes |
+|-|-|-|-|-|-|
+| `type` | string | `in` \| `out` \| `both` | `"in"` | no |  |
+| `fade_in_duration` | number | max 3600, > 0 | `1.0` | no | must be &gt; 0 |
+| `fade_out_duration` | number | max 3600, > 0 | `1.0` | no | must be &gt; 0 |
+| `fade_out_start` | number | min 0, max 86400 | — | when `type` is `out`/`both` | zero-bill reject when &gt;= probed source duration (fade never fires) |
+| `container` | string | `mp4` \| `webm` \| `mkv` | `"mp4"` | no |  |
+
+```json
+{
+  "model": "eachlabs-video-api",
+  "input": {
+    "capability": "fade",
+    "tier": "cpu",
+    "input_url": "<YOUR_INPUT_URL>",
+    "params": {
+      "type": "both",
+      "fade_in_duration": 1.0,
+      "fade_out_duration": 1.0,
+      "fade_out_start": 10
+    }
+  }
+}
+```
+
+## gif
+
+Convert a clip to an animated GIF at a given fps and width (lanczos, single pass).
+
+**Inputs:** `input_url` (1) · **Tiers:** `cpu` · `gpu` · **Output:** media — single output.gif
+
+<Note>**GPU behavior:** tier-agnostic (gif encoder)</Note>
+
+| Parameter | Type | Constraints | Default | Required | Notes |
+|-|-|-|-|-|-|
+| `fps` | integer | min 1, max 50 | `10` | no |  |
+| `width` | integer | min 1 | `480` | no | height keeps aspect (-1) |
+
+```json
+{
+  "model": "eachlabs-video-api",
+  "input": {
+    "capability": "gif",
+    "tier": "cpu",
+    "input_url": "<YOUR_INPUT_URL>",
+    "params": {
+      "fps": 10,
+      "width": 480
+    }
+  }
+}
+```
+
+## hls_ladder
+
+Encode a multi-rendition adaptive-bitrate HLS ladder (master.m3u8 + N variant playlists/segments) in one pass. Re-encodes each rung; upscaling NOT rejected.
+
+**Inputs:** `input_url` (1) · **Tiers:** `cpu` · `gpu` · **Output:** bundle — master.m3u8 + stream_N.m3u8 variants + shared TS segments
+
+<Note>**GPU behavior:** gpu uses h264_nvenc; over-4096 derived rung width rejects pre-billing</Note>
+
+| Parameter | Type | Constraints | Default | Required | Notes |
+|-|-|-|-|-|-|
+| `renditions` | array | 1–6 items; each item requires `height` (`144` \| `240` \| `360` \| `480` \| `720` \| `1080` \| `1440` \| `2160`) and `bitrate_kbps` (100–50000) | — | no | mutually exclusive with ladder; duplicate heights rejected |
+| `ladder` | string | `240p` \| `360p` \| `480p` \| `720p` \| `1080p` | — | no |  |
+| `segment_duration` | integer | min 1, max 30 | `4` | no |  |
+
+```json
+{
+  "model": "eachlabs-video-api",
+  "input": {
+    "capability": "hls_ladder",
+    "tier": "cpu",
+    "input_url": "<YOUR_INPUT_URL>",
+    "params": {
+      "renditions": [
+        { "height": 720, "bitrate_kbps": 2800 },
+        { "height": 360, "bitrate_kbps": 800 }
+      ],
+      "segment_duration": 4
+    }
+  }
+}
+```
+
+## loudnorm
+
+Normalize audio loudness to an EBU R128 target (single-pass); video stream-copied.
+
+**Inputs:** `input_url` (1) · **Tiers:** `cpu` · `gpu` · **Output:** media — single file
+
+<Note>**GPU behavior:** tier-agnostic (video copied)</Note>
+
+| Parameter | Type | Constraints | Default | Required | Notes |
+|-|-|-|-|-|-|
+| `target_i` | number | min -70, max -5 | `-14` | no | LUFS; -14 streaming, -23 broadcast |
+| `true_peak` | number | min -9, max 0 | `-1` | no | dBTP |
+| `lra` | number | min 1, max 50 | `11` | no | loudness range in LU |
+| `container` | string | `mp4` \| `mkv` | `"mp4"` | no |  |
+
+```json
+{
+  "model": "eachlabs-video-api",
+  "input": {
+    "capability": "loudnorm",
+    "tier": "cpu",
+    "input_url": "<YOUR_INPUT_URL>",
+    "params": {
+      "target_i": -14,
+      "true_peak": -1,
+      "lra": 11
+    }
+  }
+}
+```
+
+## lut3d
+
+Color-grade through a caller-supplied .cube 3D LUT (lut3d filter).
+
+**Inputs:** `input_urls` (2) · **Tiers:** `cpu` only · **Output:** media — single file
+
+| Parameter | Type | Constraints | Default | Required | Notes |
+|-|-|-|-|-|-|
+| `interp` | string | `nearest` \| `trilinear` \| `tetrahedral` | — | no | omit for ffmpeg default (tetrahedral) |
+| `container` | string | `mp4` \| `webm` \| `mkv` | `"mp4"` | no |  |
+
+```json
+{
+  "model": "eachlabs-video-api",
+  "input": {
+    "capability": "lut3d",
+    "tier": "cpu",
+    "input_urls": [
+      "<YOUR_INPUT_URL_1>",
+      "<YOUR_INPUT_URL_2>"
+    ],
+    "params": {
+      "container": "mp4"
+    }
+  }
+}
+```
+
+## overlay
+
+Composite a second video/image over a base at a named corner/center anchor, with optional margin and pre-scale.
+
+**Inputs:** `input_urls` (2) · **Tiers:** `cpu` · `gpu` · **Output:** media — single file
+
+<Note>**GPU behavior:** GPU SUPPORTED: full-GPU overlay_cuda for top_left/center with no scale; software composite + NVENC otherwise; webm rejects on gpu. (The MCP repo's description saying 'cpu tier only' is stale.)</Note>
+
+| Parameter | Type | Constraints | Default | Required | Notes |
+|-|-|-|-|-|-|
+| `position` | string | `top_left` \| `top_right` \| `bottom_left` \| `bottom_right` \| `center` | `"bottom_right"` | no |  |
+| `margin` | number | min 0, max 1024 | `0` | no | ignored for center |
+| `scale` | number | min 0.01, max 10 | — | no | resize overlay before compositing; omit keeps native size |
+| `container` | string | `mp4` \| `webm` \| `mkv` | `"mp4"` | no |  |
+
+```json
+{
+  "model": "eachlabs-video-api",
+  "input": {
+    "capability": "overlay",
+    "tier": "cpu",
+    "input_urls": [
+      "<YOUR_INPUT_URL_1>",
+      "<YOUR_INPUT_URL_2>"
+    ],
+    "params": {
+      "position": "bottom_right",
+      "margin": 0,
+      "container": "mp4"
+    }
+  }
+}
+```
+
+## package_abr
+
+Package an input into a single-rendition CMAF HLS + DASH adaptive-bitrate bundle (clear, no DRM). Stream-copies — never re-encodes.
+
+**Inputs:** `input_url` (1) · **Tiers:** `cpu` · `gpu` · **Output:** bundle — &#123;primary: master.m3u8, artifacts: [...]&#125; — manifest.mpd + master.m3u8 + fmp4 segments
+
+<Note>**GPU behavior:** tier-agnostic (stream copy)</Note>
+
+| Parameter | Type | Constraints | Default | Required | Notes |
+|-|-|-|-|-|-|
+| `segment_duration` | integer | min 1, max 30 | `4` | no |  |
+
+```json
+{
+  "model": "eachlabs-video-api",
+  "input": {
+    "capability": "package_abr",
+    "tier": "cpu",
+    "input_url": "<YOUR_INPUT_URL>",
+    "params": {
+      "segment_duration": 4
+    }
+  }
+}
+```
+
+## package_abr_ladder
+
+Encode a TRUE multi-rendition CMAF HLS + DASH ladder (re-encodes every rung, any source codec). Rejects upscaling; default ladder clipped to source height.
+
+**Inputs:** `input_url` (1) · **Tiers:** `cpu` · `gpu` · **Output:** bundle — master.m3u8 + manifest.mpd over shared fmp4 segments
+
+<Note>**GPU behavior:** gpu uses h264_nvenc; a rung whose derived width exceeds 4096 rejects pre-billing</Note>
+
+| Parameter | Type | Constraints | Default | Required | Notes |
+|-|-|-|-|-|-|
+| `renditions` | array | 1–6 items; each item requires `height` (`360` \| `480` \| `720` \| `1080` \| `1440` \| `2160`) and `bitrate_kbps` (100–50000) | — | no | mutually exclusive with ladder; duplicate heights rejected; height above source rejected (no upscaling) |
+| `ladder` | string | `360p` \| `480p` \| `720p` \| `1080p` \| `1440p` \| `2160p` | — | no | preset rung set, clipped to source height |
+| `segment_duration` | integer | min 1, max 30 | `4` | no |  |
+
+```json
+{
+  "model": "eachlabs-video-api",
+  "input": {
+    "capability": "package_abr_ladder",
+    "tier": "cpu",
+    "input_url": "<YOUR_INPUT_URL>",
+    "params": {
+      "renditions": [
+        { "height": 1080, "bitrate_kbps": 5000 },
+        { "height": 480, "bitrate_kbps": 1200 }
+      ],
+      "segment_duration": 4
+    }
+  }
+}
+```
+
+## pad
+
+Frame the picture inside a width x height canvas filled with a background color.
+
+**Inputs:** `input_url` (1) · **Tiers:** `cpu` · `gpu` · **Output:** media — single file
+
+<Note>**GPU behavior:** gpu pins h264_nvenc; webm rejects on gpu; canvas > 4096px rejects on gpu</Note>
+
+| Parameter | Type | Constraints | Default | Required | Notes |
+|-|-|-|-|-|-|
+| `width` | integer | min 1, max 8192 | `1280` | no |  |
+| `height` | integer | min 1, max 8192 | `720` | no |  |
+| `x` | integer | min 0, max 8192 | — | no | omit to center |
+| `y` | integer | min 0, max 8192 | — | no | omit to center |
+| `color` | string |  | `"black"` | no | named color (black,white,gray,grey,red,green,blue,yellow) or #RRGGBB; invalid value rejected |
+| `container` | string | `mp4` \| `webm` \| `mkv` | `"mp4"` | no |  |
+
+```json
+{
+  "model": "eachlabs-video-api",
+  "input": {
+    "capability": "pad",
+    "tier": "cpu",
+    "input_url": "<YOUR_INPUT_URL>",
+    "params": {
+      "width": 1280,
+      "height": 720,
+      "color": "black"
+    }
+  }
+}
+```
+
+## poster
+
+One input -> two named outputs in one pass: a transcoded H.264 MP4 ('video') and a still-frame JPEG ('thumbnail').
+
+**Inputs:** `input_url` (1) · **Tiers:** `cpu` · `gpu` · **Output:** media — named outputs object &#123;video, thumbnail&#125; (also mirrored in output_urls)
+
+<Note>**GPU behavior:** gpu uses h264_nvenc; source > 4096px rejects on gpu</Note>
+
+| Parameter | Type | Constraints | Default | Required | Notes |
+|-|-|-|-|-|-|
+| `crf` | integer | min 0, max 51 | `23` | no |  |
+| `thumbnail_second` | integer | min 0, max 36000 | `0` | no | zero-bill reject when &gt;= probed source duration |
+
+```json
+{
+  "model": "eachlabs-video-api",
+  "input": {
+    "capability": "poster",
+    "tier": "cpu",
+    "input_url": "<YOUR_INPUT_URL>",
+    "params": {
+      "crf": 23,
+      "thumbnail_second": 0
+    }
+  }
+}
+```
+
+## probe
+
+Inspect an input with ffprobe and return the JSON metadata (format + streams) as the structured result — no media artifact, no egress.
+
+**Inputs:** `input_url` (1) · **Tiers:** `cpu` · `gpu` · **Output:** analysis_json — ffprobe JSON document in the result (EgressStdout)
+
+<Note>**GPU behavior:** tier-agnostic</Note>
+
+No parameters — an empty `params` object is valid.
+
+```json
+{
+  "model": "eachlabs-video-api",
+  "input": {
+    "capability": "probe",
+    "tier": "cpu",
+    "input_url": "<YOUR_INPUT_URL>",
+    "params": {}
+  }
+}
+```
+
+## reframe
+
+Convert a clip to a social aspect ratio via scale+crop (fill) or scale+pad (fit).
+
+**Inputs:** `input_url` (1) · **Tiers:** `cpu` only · **Output:** media — single file at the preset resolution
+
+| Parameter | Type | Constraints | Default | Required | Notes |
+|-|-|-|-|-|-|
+| `aspect` | string | `9:16` \| `1:1` \| `4:5` \| `16:9` | `"9:16"` | no | 9:16=1080x1920, 1:1=1080x1080, 4:5=1080x1350, 16:9=1920x1080 |
+| `mode` | string | `crop` \| `pad` | `"crop"` | no |  |
+| `pad_color` | string | `black` \| `white` | `"black"` | no | pad mode only |
+| `container` | string | `mp4` \| `webm` \| `mkv` | `"mp4"` | no |  |
+
+```json
+{
+  "model": "eachlabs-video-api",
+  "input": {
+    "capability": "reframe",
+    "tier": "cpu",
+    "input_url": "<YOUR_INPUT_URL>",
+    "params": {
+      "aspect": "9:16",
+      "mode": "crop",
+      "pad_color": "black"
+    }
+  }
+}
+```
+
+## reframe_track
+
+Pan a fixed-size crop window across the frame following a subject, driven by a crop-track sidecar (sendcmd script).
+
+**Inputs:** `input_urls` (2) · **Tiers:** `cpu` only · **Output:** media — single file
+
+| Parameter | Type | Constraints | Default | Required | Notes |
+|-|-|-|-|-|-|
+| `width` | integer | min 1, max 8192 | `640` | no |  |
+| `height` | integer | min 1, max 8192 | `360` | no |  |
+| `container` | string | `mp4` \| `webm` \| `mkv` | `"mp4"` | no |  |
+
+```json
+{
+  "model": "eachlabs-video-api",
+  "input": {
+    "capability": "reframe_track",
+    "tier": "cpu",
+    "input_urls": [
+      "<YOUR_INPUT_URL_1>",
+      "<YOUR_INPUT_URL_2>"
+    ],
+    "params": {
+      "width": 640,
+      "height": 360,
+      "container": "mp4"
+    }
+  }
+}
+```
+
+## reverse
+
+Play the clip backwards (video reverse + audio areverse). Buffers the whole clip — suits short inputs.
+
+**Inputs:** `input_url` (1) · **Tiers:** `cpu` · `gpu` · **Output:** media — single file
+
+<Note>**GPU behavior:** gpu pins h264_nvenc; webm rejects on gpu</Note>
+
+| Parameter | Type | Constraints | Default | Required | Notes |
+|-|-|-|-|-|-|
+| `container` | string | `mp4` \| `webm` \| `mkv` | `"mp4"` | no |  |
+
+```json
+{
+  "model": "eachlabs-video-api",
+  "input": {
+    "capability": "reverse",
+    "tier": "cpu",
+    "input_url": "<YOUR_INPUT_URL>",
+    "params": {
+      "container": "mp4"
+    }
+  }
+}
+```
+
+## rotate
+
+Rotate the picture in fixed 90-degree clockwise steps (transpose, no interpolation).
+
+**Inputs:** `input_url` (1) · **Tiers:** `cpu` · `gpu` · **Output:** media — single file
+
+<Note>**GPU behavior:** gpu pins h264_nvenc; webm rejects on gpu</Note>
+
+| Parameter | Type | Constraints | Default | Required | Notes |
+|-|-|-|-|-|-|
+| `degrees` | integer | `90` \| `180` \| `270` | `90` | no |  |
+| `container` | string | `mp4` \| `webm` \| `mkv` | `"mp4"` | no |  |
+
+```json
+{
+  "model": "eachlabs-video-api",
+  "input": {
+    "capability": "rotate",
+    "tier": "cpu",
+    "input_url": "<YOUR_INPUT_URL>",
+    "params": {
+      "degrees": 90,
+      "container": "mp4"
+    }
+  }
+}
+```
+
+## scale
+
+Resize video to a target width/height, keeping audio.
+
+**Inputs:** `input_url` (1) · **Tiers:** `cpu` · `gpu` · **Output:** media — single file
+
+<Note>**GPU behavior:** full-GPU scale_npp when the probed input is NVDEC-decodable; else CPU-decode + NVENC; target width > 4096 rejects pre-billing on gpu</Note>
+
+| Parameter | Type | Constraints | Default | Required | Notes |
+|-|-|-|-|-|-|
+| `width` | integer | min 1, max 8192 | `1280` | no |  |
+| `height` | integer |  | `-2` | no | valid set &#123;-2,-1&#125; ∪ [1,8192]: -2 keeps aspect rounded even (h264-safe), -1 keeps aspect, positive = explicit; anything else rejected |
+| `container` | string | `mp4` \| `webm` \| `mkv` | `"mp4"` | no |  |
+
+```json
+{
+  "model": "eachlabs-video-api",
+  "input": {
+    "capability": "scale",
+    "tier": "cpu",
+    "input_url": "<YOUR_INPUT_URL>",
+    "params": {
+      "width": 1280,
+      "height": -2,
+      "container": "mp4"
+    }
+  }
+}
+```
+
+## scene_detect
+
+Detect hard cuts and return the structured scene list as the result — a metadata analysis, not a media artifact.
+
+**Inputs:** `input_url` (1) · **Tiers:** `cpu` only · **Output:** analysis_json — &#123;"scenes": [&#123;time, score&#125;]&#125; in the result; no uploaded artifact, zero egress
+
+| Parameter | Type | Constraints | Default | Required | Notes |
+|-|-|-|-|-|-|
+| `threshold` | number | min 0, max 1 | `0.3` | no | lower finds more cuts |
+
+```json
+{
+  "model": "eachlabs-video-api",
+  "input": {
+    "capability": "scene_detect",
+    "tier": "cpu",
+    "input_url": "<YOUR_INPUT_URL>",
+    "params": {
+      "threshold": 0.3
+    }
+  }
+}
+```
+
+## segment
+
+Split input into fixed-duration chunks (seg_000, seg_001, ...) — multi-output.
+
+**Inputs:** `input_url` (1) · **Tiers:** `cpu` · `gpu` · **Output:** media — multiple files as output_urls (seg_%03d.&lt;ext>)
+
+<Note>**GPU behavior:** reencode=true uses h264_nvenc on gpu; reencode+webm rejected on every tier (H.264 cannot mux into webm)</Note>
+
+| Parameter | Type | Constraints | Default | Required | Notes |
+|-|-|-|-|-|-|
+| `segment_seconds` | integer | min 1 | `10` | no |  |
+| `container` | string | `mp4` \| `webm` \| `mkv` | `"mp4"` | no |  |
+| `reencode` | boolean |  | `false` | no | false: stream-copy (cuts only on keyframes, may yield fewer/longer segments); true: exact cuts via forced keyframes, re-encodes H.264 |
+| `crf` | integer | min 0, max 51 | `23` | no | reencode=true only |
+
+```json
+{
+  "model": "eachlabs-video-api",
+  "input": {
+    "capability": "segment",
+    "tier": "cpu",
+    "input_url": "<YOUR_INPUT_URL>",
+    "params": {
+      "segment_seconds": 10,
+      "container": "mp4",
+      "reencode": false
+    }
+  }
+}
+```
+
+## silence_detect
+
+Detect silent spans in the audio and return the structured list as the result. No silence found = valid empty result.
+
+**Inputs:** `input_url` (1) · **Tiers:** `cpu` only · **Output:** analysis_json — &#123;"silences": [&#123;start, end, duration&#125;]&#125; in the result; no artifact, zero egress
+
+| Parameter | Type | Constraints | Default | Required | Notes |
+|-|-|-|-|-|-|
+| `noise_db` | integer | min -80, max 0 | `-30` | no | dBFS silence threshold |
+| `min_silence_seconds` | number | max 600, > 0 | `0.5` | no |  |
+
+```json
+{
+  "model": "eachlabs-video-api",
+  "input": {
+    "capability": "silence_detect",
+    "tier": "cpu",
+    "input_url": "<YOUR_INPUT_URL>",
+    "params": {
+      "noise_db": -30,
+      "min_silence_seconds": 0.5
+    }
+  }
+}
+```
+
+## silence_remove
+
+Keep only the supplied time ranges and close the gaps into one continuous output (the 'act' half of the silence_detect -> silence_remove chain).
+
+**Inputs:** `input_url` (1) · **Tiers:** `cpu` · `gpu` · **Output:** media — single file
+
+<Note>**GPU behavior:** gpu pins h264_nvenc; webm rejects on gpu</Note>
+
+| Parameter | Type | Constraints | Default | Required | Notes |
+|-|-|-|-|-|-|
+| `ranges` | array | 1–100 items; each item requires `start` and `end` (seconds) | — | yes | ranges to KEEP, sorted ascending, non-overlapping; unsorted/overlapping/empty rejected; zero-bill reject when all ranges start past EOF or total kept window &lt; 1 frame |
+| `container` | string | `mp4` \| `webm` \| `mkv` | `"mp4"` | no |  |
+
+```json
+{
+  "model": "eachlabs-video-api",
+  "input": {
+    "capability": "silence_remove",
+    "tier": "cpu",
+    "input_url": "<YOUR_INPUT_URL>",
+    "params": {
+      "ranges": [
+        { "start": 0.0, "end": 4.2 },
+        { "start": 9.7, "end": 15.0 }
+      ],
+      "container": "mp4"
+    }
+  }
+}
+```
+
+## slideshow
+
+Turn 2-50 still images into one silent video (each looped image_duration, normalized to a common canvas, optional Ken Burns zoom, concatenated).
+
+**Inputs:** `input_urls` (2-50 (must equal the `images` param)) · **Tiers:** `cpu` · `gpu` · **Output:** media — single silent video
+
+<Note>**GPU behavior:** mp4/mkv use h264 (NVENC on gpu); webm targets vp9 which has no NVENC encoder — webm rejects on gpu; canvas > 4096 rejects on gpu</Note>
+
+| Parameter | Type | Constraints | Default | Required | Notes |
+|-|-|-|-|-|-|
+| `images` | integer | min 2, max 50 | `3` | no | supply exactly this many input_urls |
+| `image_duration` | number | min 0.5, max 30 | `3` | no |  |
+| `fps` | integer | min 1, max 60 | `30` | no |  |
+| `effect` | string | `none` \| `kenburns` | `"none"` | no |  |
+| `container` | string | `mp4` \| `webm` \| `mkv` | `"mp4"` | no |  |
+| `width` | integer | min 16, max 8192 | `1280` | no |  |
+| `height` | integer | min 16, max 8192 | `720` | no |  |
+
+```json
+{
+  "model": "eachlabs-video-api",
+  "input": {
+    "capability": "slideshow",
+    "tier": "cpu",
+    "input_urls": [
+      "<YOUR_INPUT_URL_1>",
+      "<YOUR_INPUT_URL_2>"
+    ],
+    "params": {
+      "images": 2,
+      "image_duration": 3,
+      "fps": 30
+    }
+  }
+}
+```
+
+## speed
+
+Change playback speed by a factor (video setpts + pitch-preserving atempo chain).
+
+**Inputs:** `input_url` (1) · **Tiers:** `cpu` · `gpu` · **Output:** media — single file
+
+<Note>**GPU behavior:** gpu pins h264_nvenc; webm rejects on gpu</Note>
+
+| Parameter | Type | Constraints | Default | Required | Notes |
+|-|-|-|-|-|-|
+| `factor` | number | min 0.25, max 4.0 | `2.0` | no | &gt;1 faster, &lt;1 slower |
+| `container` | string | `mp4` \| `webm` \| `mkv` | `"mp4"` | no |  |
+
+```json
+{
+  "model": "eachlabs-video-api",
+  "input": {
+    "capability": "speed",
+    "tier": "cpu",
+    "input_url": "<YOUR_INPUT_URL>",
+    "params": {
+      "factor": 2.0,
+      "container": "mp4"
+    }
+  }
+}
+```
+
+## stills
+
+Extract a single frame as JPEG or PNG (first, last, or at an exact timestamp).
+
+**Inputs:** `input_url` (1) · **Tiers:** `cpu` · `gpu` · **Output:** media — single image
+
+<Note>**GPU behavior:** tier-agnostic (image encoder only)</Note>
+
+| Parameter | Type | Constraints | Default | Required | Notes |
+|-|-|-|-|-|-|
+| `position` | string | `first` \| `last` \| `at` | `"first"` | no |  |
+| `timestamp` | number | min 0, max 86400 | — | when `position` is `at` | zero-bill reject when &gt;= probed source duration |
+| `format` | string | `jpg` \| `png` | `"jpg"` | no |  |
+| `quality` | integer | min 2, max 31 | — | no | JPEG only (2 best, 31 worst); ignored for png |
+
+```json
+{
+  "model": "eachlabs-video-api",
+  "input": {
+    "capability": "stills",
+    "tier": "cpu",
+    "input_url": "<YOUR_INPUT_URL>",
+    "params": {
+      "position": "at",
+      "timestamp": 12.5,
+      "format": "jpg"
+    }
+  }
+}
+```
+
+## storyboard_sprites
+
+Sample one frame per interval, pack into ONE tiled sprite sheet plus a server-computed WebVTT thumbnail index.
+
+**Inputs:** `input_url` (1) · **Tiers:** `cpu` · `gpu` · **Output:** media — named outputs &#123;sheet: sprites.&lt;ext>, vtt: sprites.vtt&#125;
+
+<Note>**GPU behavior:** tier-agnostic</Note>
+
+| Parameter | Type | Constraints | Default | Required | Notes |
+|-|-|-|-|-|-|
+| `interval_seconds` | number | min 0.1 | `2` | no |  |
+| `tile_width` | integer | min 16, max 8192 | `160` | no |  |
+| `tile_height` | integer | min 16, max 8192 | `90` | no |  |
+| `columns` | integer | min 1, max 20 | `5` | no |  |
+| `rows` | integer | min 1, max 20 | `5` | no |  |
+| `format` | string | `jpg` \| `png` | `"jpg"` | no |  |
+
+```json
+{
+  "model": "eachlabs-video-api",
+  "input": {
+    "capability": "storyboard_sprites",
+    "tier": "cpu",
+    "input_url": "<YOUR_INPUT_URL>",
+    "params": {
+      "interval_seconds": 2,
+      "tile_width": 160,
+      "tile_height": 90
+    }
+  }
+}
+```
+
+## subtitle_compose
+
+Author a styled, animated ASS caption document from words+hook+style and burn it in (karaoke-style captions). The .ass is server-generated — no subtitle file input.
+
+**Inputs:** `input_url` (1) · **Tiers:** `cpu` only · **Output:** media — single file
+
+| Parameter | Type | Constraints | Default | Required | Notes |
+|-|-|-|-|-|-|
+| `words` | array | 1+ items; each item requires `text` (string), `start_ms` and `end_ms` (integers 0–86400000) | — | yes | the word-level timing track the captions animate over |
+| `hook` | object | requires `text`, `start_ms`, `end_ms` (same bounds as words items) | — | no | optional headline shown above the captions |
+| `style.font` | string | `Liberation Sans` \| `Liberation Serif` \| `Liberation Mono` \| `DejaVu Sans` \| `DejaVu Serif` \| `DejaVu Sans Mono` | `"Liberation Sans"` | no |  |
+| `style.font_size_pct` | integer | min 3, max 15 | `5` | no |  |
+| `style.hook_font` | string | `Liberation Sans` \| `Liberation Serif` \| `Liberation Mono` \| `DejaVu Sans` \| `DejaVu Serif` \| `DejaVu Sans Mono` | `"Liberation Sans"` | no |  |
+| `style.hook_size_pct` | integer | min 4, max 16 | `6` | no |  |
+| `style.text_color` | string |  | `"white"` | no | named palette (white,black,yellow,gold,lime,green,cyan,blue,magenta,pink,red,orange,purple) or #RRGGBB |
+| `style.active_color` | string |  | `"gold"` | no |  |
+| `style.hook_color` | string |  | `"yellow"` | no |  |
+| `style.outline_color` | string |  | `"black"` | no |  |
+| `style.outline_width` | integer | min 0, max 20 | `7` | no |  |
+| `style.shadow_depth` | integer | min 0, max 10 | `3` | no |  |
+| `style.margin_v_pct` | integer | min 5, max 40 | `20` | no |  |
+| `style.animation` | string | `highlight` \| `fill` | `"highlight"` | no |  |
+| `style.max_words` | integer | min 1, max 6 | `4` | no |  |
+| `style.combine_ms` | integer | min 0, max 2000 | `450` | no |  |
+| `style.uppercase` | boolean |  | `true` | no |  |
+| `container` | string | `mp4` \| `webm` \| `mkv` | `"mp4"` | no |  |
+
+```json
+{
+  "model": "eachlabs-video-api",
+  "input": {
+    "capability": "subtitle_compose",
+    "tier": "cpu",
+    "input_url": "<YOUR_INPUT_URL>",
+    "params": {
+      "words": [
+        { "text": "never", "start_ms": 0, "end_ms": 420 },
+        { "text": "skip", "start_ms": 420, "end_ms": 800 },
+        { "text": "leg", "start_ms": 800, "end_ms": 1100 },
+        { "text": "day", "start_ms": 1100, "end_ms": 1600 }
+      ],
+      "hook": { "text": "GYM RULES", "start_ms": 0, "end_ms": 1600 },
+      "style": { "font": "Liberation Sans", "font_size_pct": 5 }
+    }
+  }
+}
+```
+
+## thumbnails
+
+Extract one image frame every interval_seconds — multi-output.
+
+**Inputs:** `input_url` (1) · **Tiers:** `cpu` · `gpu` · **Output:** media — multiple images as output_urls (thumb_%03d.&lt;ext>)
+
+<Note>**GPU behavior:** tier-agnostic (image encoder only)</Note>
+
+| Parameter | Type | Constraints | Default | Required | Notes |
+|-|-|-|-|-|-|
+| `interval_seconds` | number | min 0.1 | `2` | no |  |
+| `format` | string | `jpg` \| `png` | `"jpg"` | no |  |
+
+```json
+{
+  "model": "eachlabs-video-api",
+  "input": {
+    "capability": "thumbnails",
+    "tier": "cpu",
+    "input_url": "<YOUR_INPUT_URL>",
+    "params": {
+      "interval_seconds": 2,
+      "format": "jpg"
+    }
+  }
+}
+```
+
+## transcode
+
+Container/codec transcode with server-side normalization and defaults.
+
+**Inputs:** `input_url` (1) · **Tiers:** `cpu` · `gpu` · **Output:** media — single file, container-chosen extension
+
+<Note>**GPU behavior:** NVENC only: h264->h264_nvenc, hevc->hevc_nvenc; vp9/av1 vcodec, opus acodec, and pix_fmt yuv444p all reject pre-billing on gpu (transcode.go:encoderFor, audioCodecFor, nvencPixFmts)</Note>
+
+| Parameter | Type | Constraints | Default | Required | Notes |
+|-|-|-|-|-|-|
+| `container` | string | `mp4` \| `webm` \| `mkv` | `"mp4"` | no |  |
+| `vcodec` | string | `h264` \| `vp9` \| `hevc` \| `av1` | `"h264"` | no | h264/hevc invalid in webm (rejected); vp9/av1 cpu-only |
+| `acodec` | string | `aac` \| `opus` | — | no | omit keeps ffmpeg's container default; aac invalid in webm; opus cpu-only |
+| `crf` | integer | min 0, max 51 | `23` | no |  |
+| `pix_fmt` | string | `yuv420p` \| `yuv444p` | `"yuv420p"` | no | yuv444p rejected on gpu |
+
+```json
+{
+  "model": "eachlabs-video-api",
+  "input": {
+    "capability": "transcode",
+    "tier": "cpu",
+    "input_url": "<YOUR_INPUT_URL>",
+    "params": {
+      "container": "mp4",
+      "vcodec": "h264",
+      "crf": 23
+    }
+  }
+}
+```
+
+## trim
+
+Cut a clip [start, start+duration) via stream copy — no re-encode.
+
+**Inputs:** `input_url` (1) · **Tiers:** `cpu` · `gpu` · **Output:** media — single file
+
+<Note>**GPU behavior:** tier-agnostic (-c copy, no encoder)</Note>
+
+| Parameter | Type | Constraints | Default | Required | Notes |
+|-|-|-|-|-|-|
+| `start` | number | min 0 | `0` | no | zero-bill reject when &gt;= probed source duration (empty output) |
+| `duration` | number | min 0 | `5` | no | zero-bill reject when kept window &lt; 1 video frame at source fps |
+
+```json
+{
+  "model": "eachlabs-video-api",
+  "input": {
+    "capability": "trim",
+    "tier": "cpu",
+    "input_url": "<YOUR_INPUT_URL>",
+    "params": {
+      "start": 0,
+      "duration": 5
+    }
+  }
+}
+```
+
+## volume
+
+Scale audio loudness by a linear factor; video is stream-copied untouched.
+
+**Inputs:** `input_url` (1) · **Tiers:** `cpu` · `gpu` · **Output:** media — single file
+
+<Note>**GPU behavior:** tier-agnostic (video copied, audio aac)</Note>
+
+| Parameter | Type | Constraints | Default | Required | Notes |
+|-|-|-|-|-|-|
+| `factor` | number | min 0, max 10 | `2.0` | no | 0 mutes, 1 unchanged, 2 doubles |
+| `container` | string | `mp4` \| `mkv` | `"mp4"` | no | webm excluded — cannot hold copied H.264 |
+
+```json
+{
+  "model": "eachlabs-video-api",
+  "input": {
+    "capability": "volume",
+    "tier": "cpu",
+    "input_url": "<YOUR_INPUT_URL>",
+    "params": {
+      "factor": 2.0,
+      "container": "mp4"
+    }
+  }
+}
+```
+
+## watermark
+
+Overlay a second input (image or video) onto the primary video at a pixel offset.
+
+**Inputs:** `input_urls` (2) · **Tiers:** `cpu` · `gpu` · **Output:** media — single file
+
+<Note>**GPU behavior:** gpu pins h264_nvenc; webm container rejects on gpu; base > 4096px rejects on gpu</Note>
+
+| Parameter | Type | Constraints | Default | Required | Notes |
+|-|-|-|-|-|-|
+| `x` | integer | min 0 | `10` | no |  |
+| `y` | integer | min 0 | `10` | no |  |
+| `container` | string | `mp4` \| `webm` \| `mkv` | `"mp4"` | no |  |
+
+```json
+{
+  "model": "eachlabs-video-api",
+  "input": {
+    "capability": "watermark",
+    "tier": "cpu",
+    "input_urls": [
+      "<YOUR_INPUT_URL_1>",
+      "<YOUR_INPUT_URL_2>"
+    ],
+    "params": {
+      "x": 10,
+      "y": 10,
+      "container": "mp4"
+    }
+  }
+}
+```

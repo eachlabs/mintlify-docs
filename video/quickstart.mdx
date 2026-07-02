@@ -1,0 +1,125 @@
+---
+title: "Quickstart (Beta)"
+description: "Submit a Video API job and poll it to completion in five minutes."
+---
+
+<Note>
+**Private beta.** Shared by direct link only. Everything below runs against production.
+</Note>
+
+## 1. Get your API key
+
+Grab a key from the [dashboard](https://www.eachlabs.ai/api-keys). Every request authenticates with the `X-API-Key` header.
+
+## 2. Provide your input video
+
+During the private beta, input videos are **staged with eachlabs at onboarding** — we place your media in accessible storage and hand you the input URIs to use as `input_url`. Self-serve input upload is landing shortly; the request shape below will not change when it does.
+
+<Warning>
+Arbitrary public `https` URLs are not accepted as `input_url` yet — a job submitted with one is rejected at $0 (`input_rejected`). Use the input URIs from your onboarding.
+</Warning>
+
+## 3. Submit a job
+
+Any capability from the [reference](/video/capabilities) works the same way. `tier` is **required** — use `"cpu"`.
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST "https://api.eachlabs.ai/v1/prediction" \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: YOUR_API_KEY" \
+  -d '{
+    "model": "eachlabs-video-api",
+    "input": {
+      "capability": "transcode",
+      "tier": "cpu",
+      "input_url": "<YOUR_INPUT_URL>",
+      "params": { "vcodec": "h264", "crf": 28 }
+    }
+  }'
+```
+
+```python Python
+import requests
+
+resp = requests.post(
+    "https://api.eachlabs.ai/v1/prediction",
+    headers={"X-API-Key": "YOUR_API_KEY"},
+    json={
+        "model": "eachlabs-video-api",
+        "input": {
+            "capability": "transcode",
+            "tier": "cpu",
+            "input_url": "<YOUR_INPUT_URL>",
+            "params": {"vcodec": "h264", "crf": 28},
+        },
+    },
+)
+prediction_id = resp.json()["predictionID"]
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.eachlabs.ai/v1/prediction", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "X-API-Key": "YOUR_API_KEY",
+  },
+  body: JSON.stringify({
+    model: "eachlabs-video-api",
+    input: {
+      capability: "transcode",
+      tier: "cpu",
+      input_url: "<YOUR_INPUT_URL>",
+      params: { vcodec: "h264", crf: 28 },
+    },
+  }),
+});
+const { predictionID } = await resp.json();
+```
+
+</CodeGroup>
+
+A successful submit returns:
+
+```json
+{ "status": "success", "message": "Prediction created successfully", "predictionID": "d63b9b70-..." }
+```
+
+## 4. Poll until terminal
+
+```bash
+curl "https://api.eachlabs.ai/v1/prediction/PREDICTION_ID" \
+  -H "X-API-Key: YOUR_API_KEY"
+```
+
+Status moves `starting` → `processing` → **`success`** or **`error`**. Poll every few seconds; most short jobs finish in well under a minute (a 100-job burst of short transcodes drains in ~15–30 seconds).
+
+```json
+{
+  "id": "1f0fdf4d-...",
+  "status": "success",
+  "output": ["https://cdn-us.eachlabs.ai/uploads/9b967c93-....mp4"],
+  "metrics": { "predict_time": 194.86, "cost": 0.2865 }
+}
+```
+
+- `output` — hosted artifact URL(s) for media capabilities, or a structured JSON object for the analysis capabilities (`probe`, `scene_detect`, `silence_detect`).
+- `metrics.cost` — what the job actually billed, in USD. Rejected and failed jobs bill `0`.
+- Download or persist artifacts promptly; treat artifact URLs as valid for at least 24 hours.
+
+## 5. Optional: completion webhooks
+
+Instead of polling, pass the platform's standard `webhook_url` when creating the prediction and receive a callback on completion — see the [webhooks documentation](/api/webhooks/overview).
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Capabilities Reference" icon="list" href="/video/capabilities">
+    All 37 operations with parameters and request bodies.
+  </Card>
+  <Card title="Billing & Limits" icon="credit-card" href="/video/billing-limits">
+    The billing formula and every limit stated plainly.
+  </Card>
+</CardGroup>

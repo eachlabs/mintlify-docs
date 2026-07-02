@@ -1,0 +1,63 @@
+---
+title: "MCP for AI Agents (Beta)"
+description: "Drive the Video API from Claude, Cursor, or any MCP-capable agent — every capability as a native tool."
+---
+
+<Note>
+**Private beta.** Shared by direct link only. The MCP server package (`@canbo/video-api-mcp`) is access-restricted during the beta — you receive package access at onboarding.
+</Note>
+
+## What you get
+
+An MCP server that exposes every Video API capability as a native agent tool — the same 37 operations in the [capabilities reference](/video/capabilities), with client-side schema validation, automatic submit-and-poll, and results returned as artifact URLs or structured analysis JSON. Your agent edits video by calling tools; billing and auth ride your existing eachlabs API key.
+
+## 1. Add it to your MCP client
+
+<Tabs>
+  <Tab title="Claude Code">
+    ```bash
+    claude mcp add video-api \
+      -e EACHLABS_API_KEY=YOUR_API_KEY \
+      -e EACHLABS_VIDEO_MODEL=eachlabs-video-api \
+      -- npx -y @canbo/video-api-mcp
+    ```
+  </Tab>
+  <Tab title="Claude Desktop / Cursor">
+    ```json
+    {
+      "mcpServers": {
+        "video-api": {
+          "command": "npx",
+          "args": ["-y", "@canbo/video-api-mcp"],
+          "env": {
+            "EACHLABS_API_KEY": "YOUR_API_KEY",
+            "EACHLABS_VIDEO_MODEL": "eachlabs-video-api"
+          }
+        }
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+<Warning>
+`EACHLABS_VIDEO_MODEL=eachlabs-video-api` is required during the beta — without it the server targets a model slug that is not yet provisioned and every call fails.
+</Warning>
+
+## 2. Use it
+
+Ask your agent to do video work with a staged input URL (see [Quickstart — inputs](/video/quickstart)):
+
+> "Trim the first 12 seconds of `<YOUR_INPUT_URL>`, burn the captions from this SRT, and give me the result URL."
+
+The agent chains the `trim` and `captions` tools; each tool call returns the hosted artifact URL (or JSON for `probe`, `scene_detect`, `silence_detect`) plus the billed cost.
+
+## Tool inventory
+
+One tool per capability — identical names and parameters to the [capabilities reference](/video/capabilities) — plus `run_ffmpeg` (scope-gated, off by default; enabled per key on request) and `get_job` for checking a long-running job later. Parameters are validated client-side before submit, and server-side again (`additionalProperties: false`), so a malformed tool call never bills.
+
+## Notes for agent builders
+
+- `tier` defaults to `cpu` in the MCP tool layer (the raw REST API requires it explicitly).
+- Long operations: the server polls with backoff; if a job outlives the polling budget the tool returns the prediction ID and your agent resumes with `get_job`.
+- Billing semantics are identical to the REST surface: [Billing & Limits](/video/billing-limits).
