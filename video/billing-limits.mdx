@@ -1,0 +1,56 @@
+---
+title: "Billing & Limits (Beta)"
+description: "The exact billing formula, the $0-reject guarantees, and every operational limit of the Video API."
+---
+
+<Note>
+**Private beta.** Shared by direct link only. Rates below are the current beta rate card and may be adjusted during the beta with notice; the *mechanics* (integer seconds, no multipliers, $0 rejects) are the contract.
+</Note>
+
+## The formula
+
+```
+billed_seconds = min( max( ceil(execution_wall_seconds), tier_floor ), 3600 )
+cost           = billed_seconds × tier_rate
+```
+
+| Tier | Floor | Rate (USD/s) | Status |
+|-|-|-|-|
+| `cpu` | 5s | 0.0015 | Generally available |
+| `gpu` | 5s | 0.0024 | **Experimental — subject to removal during beta** |
+
+- **No multipliers.** Resolution, codec, container, and input duration never multiply the price — you pay for execution seconds only.
+- **Integer seconds, capped.** Wall time is rounded up to whole seconds, floored at the tier floor, and hard-capped at 3600. A job killed at the cap bills exactly 3600 seconds, never more.
+- `metrics.cost` on the prediction is the authoritative charge for that job.
+
+## When you pay nothing — guaranteed $0
+
+| Case | Example |
+|-|-|
+| Invalid request | Unknown capability, wrong enum, out-of-range value, unknown parameter key, missing/invalid `tier`, wrong input count |
+| Input rejected pre-compute | Input over the size budget, input duration over 3600s, unsupported input URL, structurally incompatible input (e.g. audio operation on a video with no audio track) |
+| Parameters that would produce an empty output | `trim` starting at/past the end of the clip, `fade` scheduled beyond the video's duration, sub-frame output windows |
+| Platform faults | Any failure on our side — including output-upload failure. **Deliver-or-don't-bill:** if you did not get the artifact, you were not billed |
+| Execution timeout | A job killed by the platform execution ceiling bills $0 |
+
+## Limits
+
+| Limit | Value | Behavior at the limit |
+|-|-|-|
+| Total input size per job | 2 GiB (all inputs combined) | Rejected at $0 before download completes |
+| Max input duration | 3600 seconds | Rejected at $0 at the probe gate (`duration_over_cap`) |
+| Execution wall ceiling | 30 minutes per job | Job errors at $0. Long, full re-encodes of high-resolution sources can exceed this — for 1080p full re-encodes keep sources under ~6 minutes, or reduce resolution; analysis/trim/copy operations are unaffected. This ceiling is expected to increase during the beta |
+| `tier` | Required on every request | Missing/empty tier is rejected at $0 |
+| Output artifacts | Hosted URLs (CDN) | Treat URLs as valid for at least 24 hours; download or persist promptly |
+
+## Retries — read before automating
+
+A retried submit creates a **second, separately billed job** — the prediction API does not deduplicate submits today. Submit once, persist the returned `predictionID`, and drive all retry logic through polling that ID. Gateway-level idempotency keys are on the beta roadmap.
+
+## Errors, honestly
+
+Terminal failures surface with `status: "error"` and an `output.error_code`. During the beta, engine-side rejections currently surface with the generic code `PROVIDER_FAILED` and the reject class in `error_message` (for example `input_rejected`) — richer, self-diagnosable reject reasons are actively being rolled out. One thing you can always rely on today: rejected work bills `metrics.cost: 0`. When the error object includes `retryable`, it tells you whether a retry can help.
+
+## Raw ffmpeg (`run_ffmpeg`)
+
+Beyond the 37 named capabilities there is an escalated mode that accepts a raw ffmpeg command for long-tail cases, with strict server-side command validation. It is **scope-gated and off by default** — ask us to enable it for your key if you have a use case the named capabilities don't cover.

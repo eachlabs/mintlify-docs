@@ -1,0 +1,54 @@
+---
+title: "Video API (Beta)"
+description: "Run production video operations — transcode, trim, captions, packaging, analysis — through the eachlabs prediction API with per-second billing."
+---
+
+<Note>
+**Private beta.** These pages are shared by direct link only and are not listed in the public navigation. The API itself is production infrastructure: request shapes documented here are stable for the beta — additions may land, removals will not without notice.
+</Note>
+
+## What is the Video API?
+
+One API for programmatic video work: **37 ready-made capabilities** — transcoding, trimming, captions and subtitle composition, watermarks, overlays, audio operations, HLS/DASH packaging, thumbnails and sprites — including three structured **analysis operations** (`probe`, `scene_detect`, `silence_detect`) that return JSON instead of media.
+
+It runs behind the same [eachlabs prediction API](/api/overview) you may already use for AI models: the same API key, the same submit-and-poll flow, the same billing. Model slug: **`eachlabs-video-api`**.
+
+```json
+{
+  "model": "eachlabs-video-api",
+  "input": {
+    "capability": "trim",
+    "tier": "cpu",
+    "input_url": "<YOUR_INPUT_URL>",
+    "params": { "start": 3.0, "duration": 12.5 }
+  }
+}
+```
+
+## Why it's safe to build on
+
+- **Strict validation, $0 rejects.** Every capability validates its parameters server-side with `additionalProperties: false`. A malformed request — wrong enum, out-of-range value, unknown key, structurally incompatible input — is rejected *before any compute runs* and costs nothing.
+- **Per-second integer billing, no multipliers.** You pay `billed_seconds × tier rate`. No resolution, codec, or duration multipliers. Details in [Billing & Limits](/video/billing-limits).
+- **Deliver-or-don't-bill.** If we fail to deliver your output — platform fault, upload failure — you are not billed. A job killed at the runtime cap bills exactly the cap, never more.
+- **You never pay for an empty output.** Requests whose parameters would produce nothing (a trim starting past the end of the clip, a fade beyond the video's duration) are rejected at $0 by a probe gate before execution.
+
+## How results come back
+
+Submit returns a prediction ID; poll `GET /v1/prediction/{id}` until a terminal status. Successful media jobs return hosted artifact URL(s) in `output`; analysis jobs return structured JSON. Completion webhooks are available through the platform's standard `webhook_url` on executions.
+
+## Get started
+
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/video/quickstart">
+    Submit your first job and poll it to completion.
+  </Card>
+  <Card title="Capabilities Reference" icon="list" href="/video/capabilities">
+    All 37 operations with parameters, bounds, and copy-pasteable request bodies.
+  </Card>
+  <Card title="Billing & Limits" icon="credit-card" href="/video/billing-limits">
+    The billing formula, the $0-reject guarantees, and every limit stated plainly.
+  </Card>
+  <Card title="MCP for AI Agents" icon="robot" href="/video/mcp/quickstart">
+    Drive the Video API from Claude, Cursor, or any MCP-capable agent.
+  </Card>
+</CardGroup>
