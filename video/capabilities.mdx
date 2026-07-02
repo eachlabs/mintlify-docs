@@ -10,7 +10,7 @@ description: "Every operation the eachlabs Video API accepts — parameters, bou
 Every job is submitted the same way: `POST https://api.eachlabs.ai/v1/prediction` with header `X-API-Key`, body `{"model": "eachlabs-video-api", "input": {"capability": "<name>", "tier": "cpu", "input_url": "...", "params": {...}}}`, then poll `GET /v1/prediction/{id}` until a terminal status. `tier` is **required** (`cpu` or `gpu`). Analysis capabilities (`probe`, `scene_detect`, `silence_detect`) return structured JSON in `output`; everything else returns hosted artifact URL(s). See [Quickstart](/video/quickstart) for the input URL requirements and [Billing & Limits](/video/billing-limits) for pricing mechanics.
 
 <Warning>
-`tier: "gpu"` is **experimental during the beta and subject to removal** — capacity is limited and several codecs reject on gpu (noted per capability). Build against `cpu` unless we have told you otherwise.
+`tier: "gpu"` is a **beta tier** — capacity is limited and several codecs are cpu-only (rejected on gpu, noted per capability). Use it where a capability supports it; fall back to `cpu` for anything gpu rejects.
 </Warning>
 
 ## audio_replace

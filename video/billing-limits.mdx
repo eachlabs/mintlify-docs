@@ -17,7 +17,7 @@ cost           = billed_seconds × tier_rate
 | Tier | Floor | Rate (USD/s) | Status |
 |-|-|-|-|
 | `cpu` | 5s | 0.0015 | Generally available |
-| `gpu` | 5s | 0.0024 | **Experimental — subject to removal during beta** |
+| `gpu` | 5s | 0.0024 | **Beta** — limited capacity, some codecs cpu-only (noted per capability) |
 
 - **No multipliers.** Resolution, codec, container, and input duration never multiply the price — you pay for execution seconds only.
 - **Integer seconds, capped.** Wall time is rounded up to whole seconds, floored at the tier floor, and hard-capped at 3600. A job killed at the cap bills exactly 3600 seconds, never more.
@@ -39,7 +39,7 @@ cost           = billed_seconds × tier_rate
 |-|-|-|
 | Total input size per job | 2 GiB (all inputs combined) | Rejected at $0 before download completes |
 | Max input duration | 3600 seconds | Rejected at $0 at the probe gate (`duration_over_cap`) |
-| Execution wall ceiling | 30 minutes per job | Job errors at $0. Long, full re-encodes of high-resolution sources can exceed this — for 1080p full re-encodes keep sources under ~6 minutes, or reduce resolution; analysis/trim/copy operations are unaffected. This ceiling is expected to increase during the beta |
+| Execution wall ceiling | 70 minutes per job | Job errors at $0. Covers a full re-encode up to the 3600s billed cap plus overhead; very long 1080p full re-encodes are the only workload that can approach it (analysis/trim/copy operations are unaffected). This ceiling may increase further during the beta |
 | `tier` | Required on every request | Missing/empty tier is rejected at $0 |
 | Output artifacts | Hosted URLs (CDN) | Treat URLs as valid for at least 24 hours; download or persist promptly |
 
