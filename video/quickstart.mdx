@@ -13,11 +13,11 @@ Grab a key from the [dashboard](https://www.eachlabs.ai/api-keys). Every request
 
 ## 2. Provide your input video
 
-During the private beta, input videos are **staged with eachlabs at onboarding** — we place your media in accessible storage and hand you the input URIs to use as `input_url`. Self-serve input upload is landing shortly; the request shape below will not change when it does.
+`input_url` (and `input_urls`) accept a **publicly downloadable `https` URL** to a media file — we stage your media into eachlabs storage automatically before processing. `s3://` input URIs from your onboarding keep working unchanged, and you can chain jobs by passing a previous job's `output` URL as the next job's input.
 
-<Warning>
-Arbitrary public `https` URLs are not accepted as `input_url` yet — a job submitted with one is rejected at $0 (`input_rejected`). Use the input URIs from your onboarding.
-</Warning>
+<Note>
+The URL must point directly at a media file — a media file extension (`.mp4`, `.mov`, `.mp3`, …) or a `mime_type=` query parameter. A URL we cannot stage (unreachable, not public, or not identifiable as media) is rejected at $0 with a clear reason (`PROVIDER_REJECTED`).
+</Note>
 
 ## 3. Submit a job
 
