@@ -1175,9 +1175,9 @@ The example above is a working audio-mastering command (compress → normalize t
 - `alimiter` needs `level=false` — the default (`level=true`) re-normalizes after limiting and **silently defeats the true-peak ceiling**.
 - The explicit `-ar 44100` is required — `loudnorm` internally upsamples to 192kHz, and without an explicit rate the output stays at 192kHz.
 
-**Placeholders.** Never write media paths or URLs into `argv` — the only allowed literal path is the `/dev/null` sink shown below. The server substitutes `{input}` (the staged input), `{input0}`, `{input1}`, … (indexed inputs), and `{output}` (the artifact path, whose extension comes from `output_format`).
+**Placeholders.** Never write media paths or URLs into `argv` — staged placeholder paths are the only way to reach your media, and the only literal path a job needs is the `/dev/null` sink shown below. The server substitutes `{input}` (the staged input), `{input0}`, `{input1}`, … (indexed inputs), and `{output}` (the artifact path, whose extension comes from `output_format`).
 
-**The enforced safety boundary.** Commands are validated server-side, and ffmpeg runs with an injected `-protocol_whitelist file` — commands can read only their staged local inputs, never the network. Every `run_ffmpeg` job is billed like any capability job. The argv restrictions:
+**The enforced safety boundary.** Commands are validated server-side, and ffmpeg runs with an injected `-protocol_whitelist file` — commands can read local files only, never the network. Every `run_ffmpeg` job is billed like any capability job. The argv restrictions:
 
 - `argv[0]` must be `ffmpeg` or `ffprobe`.
 - Denied tokens include: URL schemes (`http://`, `https://`, …), `movie=` / `amovie=` filter sources, `-protocol_whitelist` overrides, and bare `-` (stdin/stdout). Placeholder-bound paths reject `..` traversal.
