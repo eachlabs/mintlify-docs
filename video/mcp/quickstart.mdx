@@ -9,9 +9,9 @@ description: "Drive the Video API from Claude, Cursor, or any MCP-capable agent 
 
 ## What you get
 
-An MCP server that exposes every Video API capability as a native agent tool — the same 37 operations in the [capabilities reference](/video/capabilities), with client-side schema validation, automatic submit-and-poll, and results returned as artifact URLs or structured analysis JSON. Your agent edits video by calling tools; billing and auth ride your existing eachlabs API key.
+An MCP server that exposes every Video API capability as a native agent tool — one tool per capability in the [capabilities reference](/video/capabilities), with client-side schema validation, automatic submit-and-poll, and results returned as artifact URLs or structured analysis JSON. Your agent edits video by calling tools; billing and auth ride your existing eachlabs API key.
 
-## 1. Add it to your MCP client
+## Add it to your MCP client
 
 <Tabs>
   <Tab title="Claude Code">
@@ -44,20 +44,20 @@ An MCP server that exposes every Video API capability as a native agent tool —
 `EACHLABS_VIDEO_MODEL=eachlabs-video-api` is required during the beta — without it the server targets a model slug that is not yet provisioned and every call fails.
 </Warning>
 
-## 2. Use it
+## Use it
 
-Ask your agent to do video work with any publicly downloadable media URL — inputs are staged automatically (see [Quickstart — inputs](/video/quickstart)); `s3://` URIs from onboarding also work:
+Ask your agent to do video work with any publicly downloadable media URL — inputs are staged automatically (see [Quickstart — inputs](/video/quickstart#2-provide-your-input-video)); `s3://` URIs from onboarding also work:
 
-> "Trim the first 12 seconds of `<YOUR_INPUT_URL>`, burn the captions from this SRT, and give me the result URL."
+> "Trim the first 12 seconds of `YOUR_INPUT_URL`, burn the captions from this SRT, and give me the result URL."
 
 The agent chains the `trim` and `captions` tools; each tool call returns the hosted artifact URL (or JSON for `probe`, `scene_detect`, `silence_detect`) plus the billed cost.
 
 ## Tool inventory
 
-One tool per capability — identical names and parameters to the [capabilities reference](/video/capabilities) — plus `run_ffmpeg` (raw ffmpeg, available to beta organizations today; caller argv is restricted server-side and commands can read local files only, never the network — see [run_ffmpeg](/video/capabilities#run_ffmpeg); access may move to per-key grants later) and `get_job` for checking a long-running job later. Parameters are validated client-side before submit, and server-side again (`additionalProperties: false`), so a malformed tool call never bills.
+One tool per capability — identical names and parameters to the [capabilities reference](/video/capabilities) — plus `run_ffmpeg` (raw ffmpeg for beta organizations; contract and safety boundary in [run_ffmpeg](/video/capabilities#run_ffmpeg)) and `get_job` for checking a long-running job later. Parameters are validated client-side before submit, and server-side again (`additionalProperties: false`), so a malformed tool call never bills.
 
 ## Notes for agent builders
 
 - `tier` defaults to `cpu` in the MCP tool layer (the raw REST API requires it explicitly).
-- Long operations: the server polls with backoff; if a job outlives the polling budget the tool returns the prediction ID and your agent resumes with `get_job`.
+- Long jobs: the server polls with backoff; if a job outlives the polling budget the tool returns the prediction ID and your agent resumes with `get_job`.
 - Billing semantics are identical to the REST surface: [Billing & Limits](/video/billing-limits).
