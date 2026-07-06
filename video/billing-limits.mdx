@@ -30,34 +30,124 @@ cost           = billed_seconds × tier_rate
 | Case | Example |
 |-|-|
 | Invalid request | Unknown capability, wrong enum, out-of-range value, unknown parameter key, missing/invalid `tier`, wrong input count |
-| Input rejected pre-compute | Input over the size budget, input duration over 3600s, unsupported input URL, structurally incompatible input (e.g. audio operation on a video with no audio track) |
+| Input rejected pre-compute | Input over the size budget, input duration over 3600s, unsupported input URL, an input missing a stream the capability declares it needs — the closed per-capability list is in [What the probe gate checks](/video/capabilities#what-the-probe-gate-checks) |
 | Parameters that would produce an empty output | `trim` starting at/past the end of the clip, `fade` scheduled beyond the video's duration, sub-frame output windows |
-| Platform faults | Any failure on our side — including output-upload failure. **Deliver-or-don't-bill:** if the failure is ours, you were not billed, and the error is marked retryable |
+| Platform faults | Any failure on our side — including output-upload failure. **Deliver-or-don't-bill:** if the failure is ours, you were not billed. `platform_fault` is retryable; `platform_drift` is deterministic (see [the drift class](#platform_drift-defined)) |
 
-## When compute is billed without an artifact
+## Failed compute
 
-A failure caused by your input **after compute starts** bills the compute it consumed. Two failure cases work this way (a job you cancel likewise bills the wall time it ran — see the table):
+A failure caused by your input **after compute starts** is metered by the engine. Two failure cases work this way:
 
-| Event | Delivered | Billed | `failure_class` | Retryable |
+| Event | Delivered | Engine meters | `failure_class` | Retryable |
 |-|-|-|-|-|
-| The job reaches 3600 s of metered ffmpeg wall | Nothing — the job is killed at the cap | Exactly 3600 s × tier rate | `billed_seconds_cap` | No |
-| ffmpeg fails mid-run after N seconds, on input content that passed the pre-compute probe gate (corrupt media, an impossible mux) | Nothing | `ceil(N)` seconds, tier floor applies | `exec_error` | No |
+| The job reaches 3600 s of metered ffmpeg wall | Nothing — the job is killed at the cap | Exactly 3600 s | `billed_seconds_cap` | No |
+| ffmpeg fails mid-run after N seconds, on input content that passed the pre-compute probe gate (corrupt media, an impossible mux, an out-of-bounds crop/pad window) | Nothing | `ceil(N)` seconds, tier floor applies | `exec_error` | No |
 
-There is no other execution kill: the 3600 s billed-seconds cap is the only ceiling that terminates a running job. Total job wall clock (staging + queueing + upload) is unmetered and can exceed 3600 s without a kill. A platform fault at any point — before, during, or after compute — always bills $0 and is retryable.
+<Note>
+**Beta settlement.** Today, every prediction that ends in any status other than `success` settles with `metrics.cost: 0` — including `exec_error`, `billed_seconds_cap`, and `cancelled` (verified against production; see the captured `exec_error` example below). The **Engine meters** column is what the engine records for these outcomes and the reserved charge basis for them; if charging failed compute activates during the beta it will be announced with notice, per the note at the top of this page. Do not design flows that rely on failed compute staying free — the cap kill in particular is designed to bill exactly 3600 s.
+</Note>
+
+There is no other execution kill: the 3600 s billed-seconds cap is the only ceiling that terminates a running job. Total job wall clock (staging + queueing + upload) is unmetered and can exceed 3600 s without a kill. A platform fault at any point — before, during, or after compute — always bills $0.
 
 ## Error catalog
 
-Every failure surfaces on the polled prediction as `status: "error"` — never `"failed"` — with an error code and a message; `metrics.cost` carries what it billed. Submitting a prediction essentially always succeeds with a prediction ID: errors arrive when you poll.
+Every failure surfaces on the polled prediction as `status: "error"` — never `"failed"` — and `output` carries the error envelope; `metrics.cost` carries what it billed. Submitting a prediction essentially always succeeds with a prediction ID: errors arrive when you poll.
+
+### The error envelope
+
+On `status: "error"`, `output` is an object with these fields (captured from production below):
+
+| Field | Carries |
+|-|-|
+| `error_code` | The public error code — one of the table below |
+| `error_message` | The specific reason: the engine's failure reason when it provides one (validation rejects carry the full gate reason), otherwise the `failure_class` |
+| `classification.category` | `VALIDATION` (your request/input — fix before resubmitting) or `PROVIDER` |
+| `retryable` | `false` for every deterministic failure; `true` only where retrying the same request can succeed |
+| `error` | The constant string `Execution failed` |
+| `error_step` | The pipeline step that surfaced it — validation rejects show a reject step, post-accept failures show `poll` |
+| `success` | `false` |
+| `execution_id`, `model_id`, `model_slug`, `provider` | Identifiers; `provider_error_code` additionally appears on post-accept failures |
+
+A real $0 validation reject, captured from production, exactly as polled:
+
+```json
+{
+  "id": "eb474c68-0fc6-40a3-8c4a-63f1b064b8b0",
+  "input": {
+    "capability": "silence_remove",
+    "input_url": "https://raw.githubusercontent.com/canberksinangil/video-api-e2e-fixtures/main/long120s_sections.mp4",
+    "params": { "ranges": [{ "end": 210, "start": 200 }] },
+    "tier": "cpu"
+  },
+  "logs": null,
+  "status": "error",
+  "output": {
+    "classification": { "category": "VALIDATION" },
+    "error": "Execution failed",
+    "error_code": "INPUT_VALIDATION_ERROR",
+    "error_message": "ranges: range start 200s is at or beyond source duration 120s (empty output)",
+    "error_step": "Surface Customer Reject.0",
+    "execution_id": "eb474c68-0fc6-40a3-8c4a-63f1b064b8b0",
+    "model_id": "e3b3d84f-a2dc-46a3-b6e7-e9d80face367",
+    "model_slug": "eachlabs-video-api",
+    "provider": "videoapi",
+    "retryable": false,
+    "status": "ERROR",
+    "success": false
+  },
+  "metrics": { "predict_time": 3.493916429, "cost": 0 },
+  "urls": {
+    "cancel": "https://api.eachlabs.ai/v1/prediction/eb474c68-0fc6-40a3-8c4a-63f1b064b8b0/cancel",
+    "get": "https://api.eachlabs.ai/v1/prediction/eb474c68-0fc6-40a3-8c4a-63f1b064b8b0"
+  }
+}
+```
+
+A real execution failure (`exec_error` — a crop window larger than the source frame, which passes the probe gate and fails in ffmpeg), captured from production; note the failure class arrives in `error_message`, the code is `PROVIDER_FAILED`, and the beta settlement is `cost: 0`:
+
+```json
+{
+  "id": "22f90f2d-794e-4060-a24f-3cb117801126",
+  "input": {
+    "capability": "crop",
+    "input_url": "https://raw.githubusercontent.com/canberksinangil/video-api-e2e-fixtures/main/long120s_sections.mp4",
+    "params": { "container": "mp4", "height": 7000, "width": 7000 },
+    "tier": "cpu"
+  },
+  "logs": null,
+  "status": "error",
+  "output": {
+    "classification": { "category": "PROVIDER" },
+    "error": "Execution failed",
+    "error_code": "PROVIDER_FAILED",
+    "error_message": "exec_error",
+    "error_step": "poll",
+    "execution_id": "22f90f2d-794e-4060-a24f-3cb117801126",
+    "model_id": "e3b3d84f-a2dc-46a3-b6e7-e9d80face367",
+    "model_slug": "eachlabs-video-api",
+    "provider": "videoapi",
+    "provider_error_code": "failed",
+    "retryable": false,
+    "status": "ERROR",
+    "success": false
+  },
+  "metrics": { "predict_time": 3.610622826, "cost": 0 },
+  "urls": {
+    "cancel": "https://api.eachlabs.ai/v1/prediction/22f90f2d-794e-4060-a24f-3cb117801126/cancel",
+    "get": "https://api.eachlabs.ai/v1/prediction/22f90f2d-794e-4060-a24f-3cb117801126"
+  }
+}
+```
 
 ### The public error codes
 
 | Code | When | Where the specific reason lives | Billing |
 |-|-|-|-|
 | `PROVIDER_REJECTED` | An input URL could not be staged (unreachable, not public, not identifiable as media) | The message names the offending URL | $0 |
-| `INPUT_VALIDATION_ERROR` | The engine rejected the job before compute — invalid command/params (`invalid_command`) or input rejected at the probe gate (`input_rejected`) | Message reads `Input rejected: <specific reason>` (e.g. `duration_over_cap`) | $0 |
-| `PROVIDER_FAILED` | The engine refused the submit itself | The engine's reject code (table below) and message | $0 |
+| `INPUT_VALIDATION_ERROR` | The engine rejected the job before compute — invalid command/params (`invalid_command`) or input rejected at the probe gate (`input_rejected`) | `error_message` carries the specific gate reason (first example above) | $0 |
+| `PROVIDER_FAILED` — at submit | The engine refused the submit itself | The engine's reject code (table below) and message | $0 |
+| `PROVIDER_FAILED` — post-accept (`error_step: "poll"`) | The job failed after the engine accepted it | `error_message` carries the `failure_class` — `exec_error`, `billed_seconds_cap`, `platform_fault`, or `platform_drift` (second example above) | Per the failure-class table below |
 | `PROVIDER_RATE_LIMIT` | The platform gave up re-enqueuing a job held back by an in-flight concurrency cap | — | $0 |
-| `exec_error`, `billed_seconds_cap`, `platform_fault`, `platform_drift` | A job that failed after the engine accepted it surfaces its failure class directly as the error code | The message carries the specific failure reason | Per the failure-class table below |
 
 ### Engine submit rejects — synchronous, all $0
 
@@ -87,14 +177,32 @@ The engine validates every submit synchronously. The platform submits on your be
 | `failure_class` | Surfaces as | Billing | Fault | Retryable |
 |-|-|-|-|-|
 | `invalid_command` | `INPUT_VALIDATION_ERROR` | $0 | Customer | No |
-| `input_rejected` | `INPUT_VALIDATION_ERROR`, message carries the gate reason (e.g. `duration_over_cap`) | $0 | Customer | No |
-| `exec_error` | Error code `exec_error` | Elapsed ffmpeg wall (`ceil`, 5 s floor) | Customer | No |
-| `billed_seconds_cap` | Error code `billed_seconds_cap` | Exactly 3600 s | Customer | No |
-| `platform_fault` | Error code `platform_fault` | $0 | Platform | Yes |
-| `platform_drift` | Error code `platform_drift` | $0 | Platform | No — resubmit |
-| — (job cancelled) | Prediction status `cancelled` | Wall time consumed before the cancel | Customer | No |
+| `input_rejected` | `INPUT_VALIDATION_ERROR`, `error_message` carries the gate reason (e.g. `duration_over_cap`) | $0 | Customer | No |
+| `exec_error` | `PROVIDER_FAILED`, `error_message: "exec_error"` | Engine meters elapsed ffmpeg wall (`ceil`, 5 s floor) — settles $0 today | Customer | No |
+| `billed_seconds_cap` | `PROVIDER_FAILED`, `error_message: "billed_seconds_cap"` | Engine meters exactly 3600 s — settles $0 today | Customer | No |
+| `platform_fault` | `PROVIDER_FAILED`, `error_message: "platform_fault"` | $0 | Platform | **Yes** — retry the same request. Identify it by `error_message`, not the envelope `retryable` field, which reads `false` even here. |
+| `platform_drift` | `PROVIDER_FAILED`, `error_message: "platform_drift"` | $0 | Platform | No — deterministic (below) |
+| — (job cancelled) | Prediction status `cancelled` | $0 — a cancelled prediction never bills | — | — |
 
-The engine emits `retryable` on every terminal failure. It is `true` only for `platform_fault` — the one class where retrying the same request can succeed. Every other failure is deterministic: fix the request or the input instead of retrying.
+The engine emits `retryable` on every terminal failure. It is `true` only for `platform_fault` — the one class where retrying the same request can succeed. Every other failure class is deterministic for the same request; the load-dependent throttling codes (`PROVIDER_RATE_LIMIT`, `rate_limited`) are the carve-out — see [Retries](#retries--read-before-automating).
+
+### `platform_drift`, defined
+
+`platform_drift` is an engine-side **delivery defect detected after a run**: the job's compute finished, but what the engine needed to assemble your result is missing or malformed. The causes are internal and deterministic — the same request will drift again, so the class is $0 **and** non-retryable:
+
+- the metadata sidecar an analysis run must produce is absent, or parses to zero events (ffmpeg print-format drift);
+- a `silence_split` plan whose split stage lost its computed cut times;
+- a `segment` `first_frame` split that produced more than 999 clips (the numbered names stop pairing with their stills — raise `segment_seconds`).
+
+Where the cause is parameter-reachable (the 999-clip case) change the request; otherwise report it — automated retry of the identical request only reproduces the drift. This is the difference from `platform_fault`, which is transient and safe to retry as-is.
+
+## Cancelling a prediction
+
+Cancel with `POST https://api.eachlabs.ai/v1/prediction/{id}/cancel` (`X-API-Key` header) — the exact URL is returned on every poll as `urls.cancel`. A cancel is accepted while the prediction has not reached a terminal status and answers `{"status": "success", "message": "Prediction canceled successfully", ...}`; the prediction then polls as `cancelled` with `metrics.cost: 0` — **a cancelled prediction never bills** (verified against production).
+
+<Warning>
+Cancellation is **record-only**: it finalizes your prediction immediately, but it does not reach into the engine — a job already executing runs to completion and its output is discarded. Cancel to detach from a job, not to stop its compute; the 3600 s execution cap is the only thing that terminates a running job.
+</Warning>
 
 ## Rate limits & concurrency
 
@@ -109,13 +217,19 @@ The engine emits `retryable` on every terminal failure. It is `true` only for `p
 |-|-|-|
 | Total input size per job | 2 GiB (all inputs combined) | Rejected at $0. An over-budget input is refused from its declared `Content-Length` before download; a source that declares no length is downloaded against the remaining budget and rejected mid-stream the moment it exceeds it — still $0 |
 | Max input duration | 3600 seconds | Rejected at $0 at the probe gate (`input_rejected`, reason `duration_over_cap`) |
-| Execution kill cap | 3600 s of metered ffmpeg wall | The job is killed, delivers nothing, and bills exactly 3600 s (`billed_seconds_cap`, customer fault, non-retryable). This is the only execution kill — see [When compute is billed without an artifact](#when-compute-is-billed-without-an-artifact) |
+| Execution kill cap | 3600 s of metered ffmpeg wall | The job is killed, delivers nothing, and the engine meters exactly 3600 s (`billed_seconds_cap`, customer fault, non-retryable; settles $0 in the beta). This is the only execution kill — see [Failed compute](#failed-compute) |
 | `tier` | Required on every request | Missing/empty tier is rejected at $0 |
 | Output artifacts | Hosted URLs (CDN) | Treat URLs as valid for at least 24 hours; download or persist promptly |
 
 ## Retries — read before automating
 
-A retried submit creates a **second, separately billed job** — the prediction API does not deduplicate submits today. Submit once, persist the returned `predictionID`, and drive all retry logic through polling that ID. Gateway-level idempotency keys are on the beta roadmap. Retry a *failed* prediction only when its error is retryable (`platform_fault`); every other failure class is deterministic and will fail again.
+A retried submit creates a **second, separately billed job** — the prediction API does not deduplicate submits today. Submit once, persist the returned `predictionID`, and drive all retry logic through polling that ID. Gateway-level idempotency keys are on the beta roadmap.
+
+For a *failed* prediction, three rules cover every class:
+
+- **Retry the same request** only when the error is retryable — that is `platform_fault`, the one transient class.
+- **Resubmit after backoff** is safe for the throttling codes even though they are not marked retryable: `PROVIDER_RATE_LIMIT`, and `PROVIDER_FAILED` whose message reads `rate_limited`. These are load-dependent, not request defects — a later resubmit can succeed.
+- **Everything else is deterministic** — including `platform_drift` — and will fail again: fix the request or the input instead of retrying.
 
 ## Raw ffmpeg (`run_ffmpeg`)
 

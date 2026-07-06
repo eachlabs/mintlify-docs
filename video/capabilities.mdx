@@ -7,20 +7,20 @@ description: "Every capability the eachlabs Video API accepts — parameters, bo
 **Private beta.** This page is shared by direct link only. The surface below is validated server-side with `additionalProperties: false` — a request is either exactly this shape or it is rejected before any compute runs, at $0. Contracts here are stable for the beta; additions may land, removals will not without notice.
 </Note>
 
-Every capability job is submitted the same way: `POST https://api.eachlabs.ai/v1/prediction` with header `X-API-Key`, body `{"model": "eachlabs-video-api", "input": {"capability": "<name>", "tier": "cpu", "input_url": "...", "params": {...}}}`, then poll `GET /v1/prediction/{id}` until a terminal status. `tier` is **required** (`cpu` or `gpu`). Analysis capabilities (`probe`, `scene_detect`, `silence_detect`) return structured JSON in `output`; everything else returns hosted artifact URL(s) — the exact JSON per output class is in [Response shapes](#response-shapes). See [Quickstart](/video/quickstart) for the input URL requirements and [Billing & Limits](/video/billing-limits) for pricing mechanics and the error catalog. For long-tail cases the named capabilities don't cover, a raw-ffmpeg mode with a different top-level contract is documented at [run_ffmpeg](#run_ffmpeg), and multi-step patterns are collected under [Recipes](#recipes).
+Every capability job is submitted the same way: `POST https://api.eachlabs.ai/v1/prediction` with header `X-API-Key`, body `{"model": "eachlabs-video-api", "input": {"capability": "<name>", "tier": "cpu", "input_url": "...", "params": {...}}}`, then poll `GET /v1/prediction/{id}` until a terminal status. `tier` is **required** (`cpu` or `gpu`). Analysis capabilities (`probe`, `scene_detect`, `silence_detect`, `audio_analysis`) return structured JSON in `output`; everything else returns hosted artifact URL(s) — the exact JSON per output class is in [Response shapes](#response-shapes). See [Quickstart](/video/quickstart) for the input URL requirements and [Billing & Limits](/video/billing-limits) for pricing mechanics and the error catalog. For long-tail cases the named capabilities don't cover, a raw-ffmpeg mode with a different top-level contract is documented at [run_ffmpeg](#run_ffmpeg), and multi-step patterns are collected under [Recipes](#recipes).
 
-The 37 capabilities by category (sections below are alphabetical):
+The 40 capabilities by category (sections below are alphabetical; `keep_ranges` and `silence_remove` are one capability under two accepted names, so the API accepts 41 capability names):
 
 | Category | Capabilities |
 |-|-|
 | Transform & geometry | `crop`, `pad`, `reframe`, `reframe_track`, `rotate`, `scale` |
 | Encode & convert | `gif`, `transcode` |
-| Time & speed | `fade`, `reverse`, `segment`, `silence_remove`, `speed`, `trim` |
-| Audio | `audio_replace`, `extract_audio`, `loudnorm`, `volume` |
+| Time & speed | `fade`, `keep_ranges` (alias `silence_remove`), `reverse`, `segment`, `silence_split`, `speed`, `trim` |
+| Audio | `audio_master`, `audio_replace`, `extract_audio`, `loudnorm`, `volume` |
 | Composition & branding | `captions`, `color`, `concat`, `concat_copy`, `lut3d`, `overlay`, `slideshow`, `subtitle_compose`, `watermark` |
 | Packaging | `hls_ladder`, `package_abr`, `package_abr_ladder` |
 | Stills & sprites | `poster`, `stills`, `storyboard_sprites`, `thumbnails` |
-| Analysis | `probe`, `scene_detect`, `silence_detect` |
+| Analysis | `audio_analysis`, `probe`, `scene_detect`, `silence_detect` |
 
 <Warning>
 `tier: "gpu"` is a **beta tier** — capacity is limited and several codecs are cpu-only (rejected on gpu, noted per capability). Use it where a capability supports it; fall back to `cpu` for anything gpu rejects.
@@ -28,7 +28,7 @@ The 37 capabilities by category (sections below are alphabetical):
 
 ## Encode defaults
 
-Re-encoding capabilities that expose no codec knobs (`crop`, `scale`, `pad`, `rotate`, `overlay`, `watermark`, `speed`, `reverse`, `fade`, `color`, `reframe`, `reframe_track`, `concat`, `captions`, `lut3d`, `silence_remove`, `slideshow`) share one fixed encode contract, keyed on the `container` parameter:
+Re-encoding capabilities that expose no codec knobs (`crop`, `scale`, `pad`, `rotate`, `overlay`, `watermark`, `speed`, `reverse`, `fade`, `color`, `reframe`, `reframe_track`, `concat`, `captions`, `lut3d`, `keep_ranges`/`silence_remove`, `slideshow`) share one fixed encode contract, keyed on the `container` parameter:
 
 | Container | Video codec | Audio codec | Other |
 |-|-|-|-|
@@ -36,9 +36,124 @@ Re-encoding capabilities that expose no codec knobs (`crop`, `scale`, `pad`, `ro
 | `mkv` | libx264 (h264_nvenc on gpu) | aac |  |
 | `webm` | libvpx-vp9 — cpu only, rejected on gpu | libopus |  |
 
-- CRF, audio bitrate, and sample rate are left at ffmpeg's defaults (effectively CRF 23 for x264 and 128k AAC) unless the capability exposes a `crf` knob (`transcode`, `poster`, `segment` with `reencode: true`).
+- CRF, audio bitrate, and sample rate are left at ffmpeg's defaults (effectively CRF 23 for x264 and 128k AAC) unless the capability exposes a `crf` knob (`transcode`, `poster`, `segment` and `silence_split` with `reencode: true`).
 - The gpu tier pins `-c:v h264_nvenc -pix_fmt yuv420p`.
-- Deviations: `volume` and `loudnorm` stream-copy the video (mp4/mkv only) and touch only audio; `slideshow` encodes at fixed quality 23; `concat` resamples audio to 44.1 kHz stereo.
+- Deviations: `volume` and `loudnorm` stream-copy the video (mp4/mkv only) and touch only audio; `slideshow` encodes at fixed quality 23; `concat` resamples audio to 44.1 kHz stereo; `audio_master` always resamples to 44.1 kHz with a 320k default bitrate.
+
+## What the probe gate checks
+
+Before compute starts, staged inputs pass through an ffprobe gate. The gate's checks are a **closed list** — nothing else is probed:
+
+1. **Source duration** — over 3600 s rejects (`input_rejected`, reason `duration_over_cap`).
+2. **Stream prerequisites** — the capabilities below declare which streams each input must carry; a missing stream rejects at $0. Capabilities not listed declare none:
+
+| Capability | Requires a video stream | Requires an audio stream |
+|-|-|-|
+| `audio_analysis` | — | input |
+| `audio_master` | — | input |
+| `loudnorm` | — | input |
+| `silence_split` | — | input |
+| `segment` (only when `first_frame: true`) | input | — |
+| `audio_replace` (`mode: replace`) | base (`input_urls[0]`) | audio source (`input_urls[1]`) |
+| `audio_replace` (`mode: mix`) | base | base **and** audio source |
+| `watermark` | both inputs | — |
+| `overlay` | both inputs | — |
+| `hls_ladder` | input | input |
+| `package_abr_ladder` | input | input |
+| `concat` | every input | every input |
+| `slideshow` | every input | — |
+
+   (An image counts as a video stream — still-image watermarks and overlays pass.)
+3. **Empty-output parameters** — the per-capability zero-bill rejects noted in the tables below (`trim` start at/past EOF, `fade_out_start` at/past EOF, `stills`/`poster` timestamps at/past EOF, `keep_ranges` windows entirely past EOF or under one frame).
+4. **Tier and encoder constraints** — webm-on-gpu, cpu-only codecs, and gpu output ceilings computed from your params are checked at submit; ceiling checks that need the source's own dimensions (e.g. `keep_ranges`, `segment` with `reencode`) run at execute after the probe and are skipped when the source cannot be probed. Each is noted per capability.
+
+**Geometry is not probed.** A `crop` window larger than the source frame, or a `pad` `x`/`y` offset that pushes the picture outside the canvas, passes the gate and fails at execution as `exec_error` (verified against production) — probe the source first when its dimensions are uncertain. If the probe itself cannot read the source, the gates that need probe data fail open and the job proceeds.
+
+## audio_analysis
+
+Measure the audio track — integrated loudness, loudness range, true peak, sample peak, and clipping indicators — returned as structured JSON via astats+ebur128. A metadata analysis, not a media artifact.
+
+**Inputs:** `input_url` (1) · **Tiers:** `cpu` only (a `gpu` request is rejected at $0) · **Output:** analysis JSON — `{"audio_analysis": {...}}` in `output`; no uploaded artifact, zero egress
+
+No parameters — an empty `params` object is valid.
+
+| Result field | Unit | Meaning |
+|-|-|-|
+| `integrated_lufs` | LUFS | integrated loudness (EBU R128) |
+| `lra` | LU | loudness range |
+| `true_peak_dbtp` | dBTP | true peak |
+| `sample_peak_dbfs` | dBFS | sample peak |
+| `flat_factor` | dB | flatness of consecutive equal samples (clipping indicator) |
+| `peak_count` | count | occurrences of the maximum sample (clipping indicator) |
+
+<Note>
+- The input must carry an audio stream — a video-only input is rejected at $0 before billing.
+- Any field that cannot be measured is **omitted from the result rather than reported as zero**: a digitally silent input returns no `true_peak_dbtp` and no `sample_peak_dbfs` (silence has no finite dB peak), and any statistic ffmpeg reports as `-inf`/`nan` is likewise omitted. Treat a missing field as not-measurable, never as `0`.
+</Note>
+
+```json
+{
+  "model": "eachlabs-video-api",
+  "input": {
+    "capability": "audio_analysis",
+    "tier": "cpu",
+    "input_url": "YOUR_INPUT_URL",
+    "params": {}
+  }
+}
+```
+
+A real production result:
+
+```json
+{
+  "audio_analysis": {
+    "integrated_lufs": -11.697,
+    "lra": 1.76,
+    "true_peak_dbtp": -4.307654147342493,
+    "sample_peak_dbfs": -4.307654147342493,
+    "flat_factor": 0,
+    "peak_count": 2
+  }
+}
+```
+
+## audio_master
+
+Master the audio track to a distribution loudness target — compressor → EBU R128 loudness normalization (single-pass) → true-peak limiter — written audio-only as MP3, WAV, or M4A. The first-class path for audio-in/audio-out mastering (e.g. MP3 → −14 LUFS MP3).
+
+**Inputs:** `input_url` (1) · **Tiers:** `cpu` only (a `gpu` request is rejected at $0) · **Output:** media — single audio file (mp3/wav/m4a)
+
+| Parameter | Type | Constraints | Default | Required | Notes |
+|-|-|-|-|-|-|
+| `target_lufs` | number | min -30, max -8 | `-14` | no | integrated loudness target in LUFS: -14 is the common streaming target, -16 podcast, -23 EBU R128 broadcast |
+| `ceiling_dbtp` | number | min -9, max 0 | `-1` | no | true-peak ceiling in dBTP; the final limiter enforces it |
+| `bitrate` | string | `128k` \| `192k` \| `256k` \| `320k` | `"320k"` | no | lossy containers (mp3/m4a) only — rejected for wav (lossless) |
+| `preset` | string | `broadcast` \| `podcast` \| `streaming` | — | no | named target pair: streaming = -14 LUFS / -1 dBTP, podcast = -16 / -1.5, broadcast = -23 / -2. Mutually exclusive with `target_lufs`/`ceiling_dbtp` |
+| `container` | string | `mp3` \| `wav` \| `m4a` | `"mp3"` | no |  |
+
+<Note>
+- The input must carry an audio stream — a video-only input is rejected at $0 before billing.
+- A fixed gentle compressor (2:1 ratio, -18 dB threshold, 30 ms attack) is **always applied before normalization and cannot be disabled** — for loudness normalization without compression use [loudnorm](#loudnorm) (video containers) or [run_ffmpeg](#run_ffmpeg).
+- Normalization is single-pass, so the output's measured integrated loudness can deviate from `target_lufs` on short or highly dynamic inputs; `ceiling_dbtp` is still enforced by the final limiter. For mastering-grade accuracy use the two-pass pattern under [run_ffmpeg](#run_ffmpeg).
+- The output is always resampled to 44100 Hz regardless of the source sample rate; there is no way to keep the source rate.
+</Note>
+
+```json
+{
+  "model": "eachlabs-video-api",
+  "input": {
+    "capability": "audio_master",
+    "tier": "cpu",
+    "input_url": "YOUR_INPUT_URL",
+    "params": {
+      "target_lufs": -14,
+      "ceiling_dbtp": -1,
+      "container": "mp3"
+    }
+  }
+}
+```
 
 ## audio_replace
 
@@ -50,9 +165,10 @@ Swap or mix a video's audio track using a second input as the audio source; vide
 
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
-| `mode` | string | `replace` \| `mix` | `"replace"` | no | replace: -shortest (output runs to the shorter stream); mix: amix ending with the shorter audio over the full video. A base video with **no audio stream** is accepted for `replace` — the new track is simply added |
+| `mode` | string | `replace` \| `mix` | `"replace"` | no | replace: -shortest (output runs to the shorter stream); mix: amix ending with the shorter audio over the full video. A base video with **no audio stream** is accepted for `replace` — the new track is simply added; `mix` requires the base to carry audio (rejected at $0 otherwise) |
 | `container` | string | `mp4` \| `mkv` | `"mp4"` | no |  |
 | `normalize` | boolean |  | `true` | no | mix only: true halves each track (no-clip-safe); false preserves source levels |
+| `offset_ms` | integer | min 0, max 3600000 | `0` | no | milliseconds of silence prepended to `input_urls[1]`'s audio (adelay, all channels equally) before the replace/mix — start narration at t&gt;0 without client-side pre-padding. In replace mode `-shortest` still ends the output at min(video, offset+audio): an offset pushing the narration past the video end truncates it, and an offset at/past the video duration yields a full-length video whose audio is entirely silent. In mix mode the delayed audio mixes over the full copied video |
 
 ```json
 {
@@ -74,7 +190,7 @@ Swap or mix a video's audio track using a second input as the audio source; vide
 ```
 
 <Note>
-There is no start-offset parameter. To delay the incoming audio, pre-pad it locally before upload: `ffmpeg -i narration.mp3 -af "adelay=3000|3000" padded.mp3` adds 3s of leading silence. MP3 padding carries ~46ms of encoder-delay skew — pad as WAV or AAC when you need frame-accurate sync.
+`offset_ms` replaces the old client-side pre-padding recipe (`adelay` before upload): the server pads the decoded stream, so the ~46ms MP3 encoder-delay skew that made local pre-padding frame-inaccurate does not apply.
 </Note>
 
 ## captions
@@ -148,8 +264,8 @@ Join 2-10 inputs end-to-end, normalizing each to a common WxH canvas and 44.1kHz
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
 | `inputs` | integer | min 2, max 10 | `2` | no | supply exactly this many input_urls |
-| `width` | integer | min 16 | `1280` | no |  |
-| `height` | integer | min 16 | `720` | no |  |
+| `width` | integer | min 16, no schema max | `1280` | no | gpu rejects &gt; 4096 pre-billing; cpu has no upper bound in the schema |
+| `height` | integer | min 16, no schema max | `720` | no | same bounds as `width` |
 | `container` | string | `mp4` \| `webm` \| `mkv` | `"mp4"` | no |  |
 
 ```json
@@ -180,7 +296,7 @@ Losslessly rejoin 2-50 already-encoded, **same-codec** chunks via the concat dem
 <Note>**GPU behavior:** tier-agnostic (stream copy)</Note>
 
 <Warning>
-Chunks produced by stream-copy `trim` carry discard-flagged pre-roll back to the previous keyframe, which becomes **visible** after `concat_copy` (measured +1.35s on a 30s target) — use `silence_remove` (its `ranges` parameter) for frame-accurate multi-range editing.
+Chunks produced by stream-copy `trim` carry discard-flagged pre-roll back to the previous keyframe, which becomes **visible** after `concat_copy` (measured +1.35s on a 30s target) — use [keep_ranges](#keep_ranges) for frame-accurate multi-range editing.
 </Warning>
 
 | Parameter | Type | Constraints | Default | Required | Notes |
@@ -221,6 +337,10 @@ Cut a width x height rectangle out of the frame (centered unless x/y given).
 | `x` | integer | min 0, max 8192 | — | no | omit to center |
 | `y` | integer | min 0, max 8192 | — | no | omit to center |
 | `container` | string | `mp4` \| `webm` \| `mkv` | `"mp4"` | no |  |
+
+<Note>
+The window is **not checked against the source frame**: a `width`/`height` (or `x`/`y` offset) that exceeds the source dimensions passes the [$0 probe gate](#what-the-probe-gate-checks) and fails at execution as `exec_error` (verified against production). [Probe](#probe) the source first when its dimensions are uncertain.
+</Note>
 
 ```json
 {
@@ -309,7 +429,7 @@ Convert a clip to an animated GIF at a given fps and width (lanczos, single pass
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
 | `fps` | integer | min 1, max 50 | `10` | no |  |
-| `width` | integer | min 1 | `480` | no | height keeps aspect (-1) |
+| `width` | integer | min 1, no schema max | `480` | no | height keeps aspect (-1) |
 
 ```json
 {
@@ -362,6 +482,39 @@ Omitting both `renditions` and `ladder` applies the default `720p` preset (720@3
 }
 ```
 
+## keep_ranges
+
+Keep only the supplied time ranges and close the gaps into one continuous, frame-accurate output (re-encodes).
+
+**Two accepted names, one capability.** `keep_ranges` and `silence_remove` are the same capability under two wire names with byte-identical contracts — submit either. `silence_remove` is the original name (the 'act' half of the silence_detect → act chain); `keep_ranges` says what it does. Everything below applies to both.
+
+**Inputs:** `input_url` (1) · **Tiers:** `cpu` · `gpu` · **Output:** media — single file
+
+<Note>**GPU behavior:** gpu pins h264_nvenc; webm rejects on gpu</Note>
+
+| Parameter | Type | Constraints | Default | Required | Notes |
+|-|-|-|-|-|-|
+| `ranges` | array | 1-100 items; each item requires `start` and `end` (seconds, min 0, no schema max; `end` &gt; `start`) | — | yes | ranges to **keep**, sorted ascending, non-overlapping; unsorted/overlapping/empty rejected; zero-bill reject when all ranges start past EOF or total kept window &lt; 1 frame |
+| `container` | string | `mp4` \| `webm` \| `mkv` | `"mp4"` | no |  |
+
+```json
+{
+  "model": "eachlabs-video-api",
+  "input": {
+    "capability": "keep_ranges",
+    "tier": "cpu",
+    "input_url": "YOUR_INPUT_URL",
+    "params": {
+      "ranges": [
+        { "start": 0.0, "end": 4.2 },
+        { "start": 9.7, "end": 15.0 }
+      ],
+      "container": "mp4"
+    }
+  }
+}
+```
+
 ## loudnorm
 
 Normalize audio loudness to an EBU R128 target (single-pass); video stream-copied.
@@ -378,10 +531,10 @@ Normalize audio loudness to an EBU R128 target (single-pass); video stream-copie
 | `container` | string | `mp4` \| `mkv` | `"mp4"` | no |  |
 
 <Note>
-- The input must carry an audio stream — a video-only input is rejected at $0 before billing.
+- The input must carry an audio stream — a video-only input is rejected at $0 before billing. An **audio-only input** (e.g. an `.mp3`) **is accepted**: the `-c:v copy` is a no-op with no video stream present, and the output is an audio-only mp4/mkv.
 - The audio track is re-encoded to AAC regardless of its source codec, and the output sample rate is **not preserved**: loudnorm internally resamples to 192 kHz and no rate reset is applied, so the AAC output lands at 96 kHz (the highest rate AAC accepts), not the source rate.
 - Normalization is single-pass, so the output's measured integrated loudness can deviate from `target_i` — especially on short or highly dynamic inputs. For mastering-grade accuracy use the two-pass pattern under [run_ffmpeg](#run_ffmpeg).
-- loudnorm outputs mp4/mkv video containers only. For audio-in/audio-out mastering (e.g. MP3 to a -14 LUFS MP3) use the [run_ffmpeg](#run_ffmpeg) mastering example.
+- loudnorm outputs mp4/mkv video containers only — it never emits `.mp3`. For audio-in/audio-out mastering (e.g. MP3 to a -14 LUFS MP3) use [audio_master](#audio_master), the first-class MP3/WAV/M4A path (note it always applies a fixed compressor); [run_ffmpeg](#run_ffmpeg) remains the escape hatch for custom chains and two-pass accuracy.
 </Note>
 
 ```json
@@ -540,6 +693,10 @@ Frame the picture inside a width x height canvas filled with a background color.
 | `y` | integer | min 0, max 8192 | — | no | omit to center |
 | `color` | string |  | `"black"` | no | named color (black,white,gray,grey,red,green,blue,yellow) or #RRGGBB; invalid value rejected |
 | `container` | string | `mp4` \| `webm` \| `mkv` | `"mp4"` | no |  |
+
+<Note>
+`x`/`y` are **not checked against the canvas**: an offset that pushes the picture outside `width`×`height` passes the [$0 probe gate](#what-the-probe-gate-checks) and fails at execution as `exec_error`.
+</Note>
 
 ```json
 {
@@ -789,18 +946,24 @@ Detect hard cuts and return the structured scene list as the result — a metada
 
 ## segment
 
-Split input into fixed-duration chunks (seg_000, seg_001, ...) — multi-output.
+Split input into fixed-duration chunks (seg_000, seg_001, ...) — multi-output. With `first_frame: true` it also delivers each clip's first frame as a companion still in the same call.
 
-**Inputs:** `input_url` (1) · **Tiers:** `cpu` · `gpu` · **Output:** media — URL array in `output`, one entry per chunk, index-ordered (`seg_000`, `seg_001`, …) — see [Response shapes](#response-shapes)
+**Inputs:** `input_url` (1) · **Tiers:** `cpu` · `gpu` · **Output:** media — URL array in `output`, one entry per chunk, index-ordered (`seg_000`, `seg_001`, …); with `first_frame: true` the stills are interleaved with their clips (clip, still, clip, still, … in index order) — see [Response shapes](#response-shapes)
 
 <Note>**GPU behavior:** reencode=true uses h264_nvenc on gpu; reencode+webm rejected on every tier (H.264 cannot mux into webm)</Note>
 
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
-| `segment_seconds` | integer | min 1 | `10` | no |  |
+| `segment_seconds` | integer | min 1, no schema max | `10` | no |  |
 | `container` | string | `mp4` \| `webm` \| `mkv` | `"mp4"` | no |  |
 | `reencode` | boolean |  | `false` | no | false: stream-copy (cuts only on keyframes, may yield fewer/longer segments); true: cuts accurate to within one frame via forced keyframes, re-encodes H.264 |
 | `crf` | integer | min 0, max 51 | `23` | no | reencode=true only |
+| `first_frame` | boolean |  | `false` | no | true also delivers each clip's first frame as a companion still (`seg_N_first.jpg`\|`png`), interleaved with the clips in `output`. Requires a video stream on the input (audio-only rejected at $0 when set). With stream copy the clip boundaries drift to keyframes, so each first frame is boundary-accurate only with `reencode: true` |
+| `frame_format` | string | `jpg` \| `png` | `"jpg"` | no | companion-still format; validated whenever supplied, applied only when `first_frame` is true |
+
+<Note>
+A `first_frame` split that produces **more than 999 clips** fails the whole job after the split has run (the numbered names stop pairing with their stills) — surfaced as `platform_drift` at $0. Raise `segment_seconds` so the clip count stays at or under 999.
+</Note>
 
 ```json
 {
@@ -810,9 +973,10 @@ Split input into fixed-duration chunks (seg_000, seg_001, ...) — multi-output.
     "tier": "cpu",
     "input_url": "YOUR_INPUT_URL",
     "params": {
-      "segment_seconds": 10,
-      "container": "mp4",
-      "reencode": false
+      "segment_seconds": 30,
+      "reencode": true,
+      "first_frame": true,
+      "frame_format": "jpg"
     }
   }
 }
@@ -844,32 +1008,39 @@ Detect silent spans in the audio and return the structured list as the result. N
 }
 ```
 
-## silence_remove
+## silence_split
 
-Keep only the supplied time ranges and close the gaps into one continuous output (the 'act' half of the silence_detect -> silence_remove chain).
+Detect silences and split the file at them in **one job** — `silence_detect` plus the split, with hard caps, replacing the detect → compute-cuts-client-side → one-trim-per-segment chain (see [Recipes](#recipes)).
 
-**Inputs:** `input_url` (1) · **Tiers:** `cpu` · `gpu` · **Output:** media — single file
-
-<Note>**GPU behavior:** gpu pins h264_nvenc; webm rejects on gpu</Note>
+**Inputs:** `input_url` (1) · **Tiers:** `cpu` only (a `gpu` request is rejected at $0) · **Output:** media — URL array in `output`, one entry per segment, index-ordered (`seg_000`, `seg_001`, …) — see [Response shapes](#response-shapes)
 
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
-| `ranges` | array | 1-100 items; each item requires `start` and `end` (seconds) | — | yes | ranges to **keep**, sorted ascending, non-overlapping; unsorted/overlapping/empty rejected; zero-bill reject when all ranges start past EOF or total kept window &lt; 1 frame |
+| `noise_db` | integer | min -80, max 0 | `-30` | no | dBFS silence threshold: samples quieter than this count as silence |
+| `min_silence_seconds` | number | max 600, &gt; 0 | `0.5` | no | shortest span treated as a silence |
+| `max_segment_seconds` | number | min 1, max 86400 | — | **yes** | hard cap on segment length: when the next usable silence is further away, cuts are forced at exactly this spacing |
+| `min_segment_seconds` | number | min 0, must not exceed `max_segment_seconds` | `0` | no | a silence cut that would close a segment shorter than this is skipped — the segment keeps growing until the next usable silence or the forced cap cut. The default 0 allows arbitrarily short segments when silences cluster |
 | `container` | string | `mp4` \| `webm` \| `mkv` | `"mp4"` | no |  |
+| `reencode` | boolean |  | `false` | no | false: stream-copies the split (near-instant, lossless) but cuts snap to the keyframe **at or after** each computed time — a segment can exceed the cap by up to one keyframe interval; true: forces a keyframe at every cut for exact boundaries, re-encodes H.264 (webm cannot hold H.264 — rejected) |
+| `crf` | integer | min 0, max 51 | `23` | no | reencode=true only; ignored for stream copy |
+
+<Note>
+- Each cut lands at the **end** of a detected silence: the silence stays attached to the preceding segment and each new segment starts where sound resumes. A source with no qualifying silence and no forced cap cut comes back as a single file.
+- The input must carry an audio stream — rejected at $0 otherwise.
+- When the source duration cannot be probed, the span after the last detected silence is never force-cut (fail-open): the final segment — or the whole file, when no silence qualifies — can come back longer than the cap.
+- Verified in production: a 90 s source with silences ending at 13 / 22.5 / 58 / 62 / 70.5 s and `max_segment_seconds: 30` returns exactly 7 segments — the same cuts as the manual recipe below, in one billed job instead of eight.
+</Note>
 
 ```json
 {
   "model": "eachlabs-video-api",
   "input": {
-    "capability": "silence_remove",
+    "capability": "silence_split",
     "tier": "cpu",
     "input_url": "YOUR_INPUT_URL",
     "params": {
-      "ranges": [
-        { "start": 0.0, "end": 4.2 },
-        { "start": 9.7, "end": 15.0 }
-      ],
-      "container": "mp4"
+      "max_segment_seconds": 30,
+      "min_segment_seconds": 2
     }
   }
 }
@@ -981,12 +1152,16 @@ Sample one frame per interval, pack into **one** tiled sprite sheet plus a serve
 
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
-| `interval_seconds` | number | min 0.1 | `2` | no |  |
+| `interval_seconds` | number | min 0.1, no schema max | `2` | no |  |
 | `tile_width` | integer | min 16, max 8192 | `160` | no |  |
 | `tile_height` | integer | min 16, max 8192 | `90` | no |  |
 | `columns` | integer | min 1, max 20 | `5` | no |  |
 | `rows` | integer | min 1, max 20 | `5` | no |  |
 | `format` | string | `jpg` \| `png` | `"jpg"` | no |  |
+
+<Note>
+**Overflow truncates silently.** The sheet holds at most `columns` × `rows` frames: any part of the video past `columns × rows × interval_seconds` is omitted from both the sheet and the VTT index — no error, no second sheet, no interval stretch. The defaults (5 × 5 at 2 s) cover the first 50 s. Grid cells beyond the sampled frames are left blank. Size the grid or interval to the source duration ([probe](#probe) it first when unknown).
+</Note>
 
 ```json
 {
@@ -1012,7 +1187,7 @@ Author a styled, animated ASS caption document from words+hook+style and burn it
 
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
-| `words` | array | 1+ items; each item requires `text` (string), `start_ms` and `end_ms` (integers 0-86400000) | — | yes | the word-level timing track the captions animate over |
+| `words` | array | 1+ items, no schema max item count; each item requires `text` (string), `start_ms` and `end_ms` (integers 0-86400000) | — | yes | the word-level timing track the captions animate over |
 | `hook` | object | requires `text`, `start_ms`, `end_ms` (same bounds as words items) | — | no | optional headline shown above the captions |
 | `style.font` | string | `Liberation Sans` \| `Liberation Serif` \| `Liberation Mono` \| `DejaVu Sans` \| `DejaVu Serif` \| `DejaVu Sans Mono` | `"Liberation Sans"` | no |  |
 | `style.font_size_pct` | integer | min 3, max 15 | `5` | no |  |
@@ -1062,7 +1237,7 @@ Extract one image frame every interval_seconds — multi-output.
 
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
-| `interval_seconds` | number | min 0.1 | `2` | no |  |
+| `interval_seconds` | number | min 0.1, no schema max | `2` | no |  |
 | `format` | string | `jpg` \| `png` | `"jpg"` | no |  |
 
 ```json
@@ -1114,14 +1289,14 @@ Container/codec transcode with server-side normalization and defaults.
 
 ## trim
 
-Cut a clip of roughly `duration` seconds via stream copy — no re-encode. The cut snaps to the keyframe at or before `start` (playback start is trimmed via an edit list); the end can drift by up to packet granularity. For frame-accurate cuts use `silence_remove` with a single `ranges` entry.
+Cut a clip of roughly `duration` seconds via stream copy — no re-encode. The cut snaps to the keyframe at or before `start` (playback start is trimmed via an edit list); the end can drift by up to packet granularity. For frame-accurate cuts use [keep_ranges](#keep_ranges) with a single `ranges` entry.
 
 **Inputs:** `input_url` (1) · **Tiers:** `cpu` · `gpu` · **Output:** media — single file
 
 <Note>**GPU behavior:** tier-agnostic (-c copy, no encoder)</Note>
 
 <Warning>
-Stream-copy trim outputs carry discard-flagged pre-roll back to the previous keyframe — players skip it, but it becomes **visible** after `concat_copy` (measured +1.35s on a 30s target). Use `silence_remove` (its `ranges` parameter) for frame-accurate multi-range editing.
+Stream-copy trim outputs carry discard-flagged pre-roll back to the previous keyframe — players skip it, but it becomes **visible** after `concat_copy` (measured +1.35s on a 30s target). Use [keep_ranges](#keep_ranges) for frame-accurate multi-range editing.
 </Warning>
 
 | Parameter | Type | Constraints | Default | Required | Notes |
@@ -1182,8 +1357,8 @@ Overlay a second input (image or video) onto the primary video at a pixel offset
 
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
-| `x` | integer | min 0 | `10` | no |  |
-| `y` | integer | min 0 | `10` | no |  |
+| `x` | integer | min 0, no schema max | `10` | no |  |
+| `y` | integer | min 0, no schema max | `10` | no |  |
 | `container` | string | `mp4` \| `webm` \| `mkv` | `"mp4"` | no |  |
 
 ```json
@@ -1207,7 +1382,7 @@ Overlay a second input (image or video) onto the primary video at a pixel offset
 
 ## Response shapes
 
-Every result arrives in the polled prediction's `output` field. There are exactly five shapes, determined by the capability's output class; the sibling fields (`status`, `metrics`) are identical across all of them.
+Every result arrives in the polled prediction's `output` field. There are exactly six shapes — five for success, determined by the capability's output class, and one for error; the sibling fields (`status`, `metrics`, `urls`, `input`, `logs`) are identical across all of them (the examples below show the result-bearing fields).
 
 **1. URL array** — every single-file media capability. Single-output jobs return a one-element array:
 
@@ -1220,7 +1395,25 @@ Every result arrives in the polled prediction's `output` field. There are exactl
 }
 ```
 
-**2. Multi-output URL array** — `segment`, `thumbnails`. Same array, one URL per produced file, index-ordered (`seg_000`, `seg_001`, …):
+**2. Multi-output URL array** — `segment`, `silence_split`, `thumbnails`. Same array, one URL per produced file, index-ordered (`seg_000`, `seg_001`, …). `segment` with `first_frame: true` interleaves each clip with its companion still, in index order (verified in production):
+
+```json
+{
+  "id": "dd6bc3ec-...",
+  "status": "success",
+  "output": [
+    "https://cdn-us.eachlabs.ai/uploads/9b06c633-....mp4",
+    "https://cdn-us.eachlabs.ai/uploads/37d85e14-....jpg",
+    "https://cdn-us.eachlabs.ai/uploads/733a985a-....mp4",
+    "https://cdn-us.eachlabs.ai/uploads/cc2a0a1c-....jpg",
+    "https://cdn-us.eachlabs.ai/uploads/1d899cd7-....mp4",
+    "https://cdn-us.eachlabs.ai/uploads/ee35a903-....jpg"
+  ],
+  "metrics": { "predict_time": 19.67, "cost": 0.0225 }
+}
+```
+
+A plain multi-output job (no stills) is the same array without the interleave:
 
 ```json
 {
@@ -1267,7 +1460,7 @@ Every result arrives in the polled prediction's `output` field. There are exactl
 }
 ```
 
-**5. Analysis JSON** — `probe`, `scene_detect`, `silence_detect` (and `run_ffmpeg` with `ffprobe`). `output` is the JSON document itself; no artifact is uploaded:
+**5. Analysis JSON** — `probe`, `scene_detect`, `silence_detect`, `audio_analysis` (and `run_ffmpeg` with `ffprobe`). `output` is the JSON document itself; no artifact is uploaded. `scene_detect` and `silence_detect` arrays are ordered ascending by time:
 
 ```json
 {
@@ -1275,6 +1468,35 @@ Every result arrives in the polled prediction's `output` field. There are exactl
   "status": "success",
   "output": { "silences": [ { "start": 12.46, "end": 14.02, "duration": 1.56 } ] },
   "metrics": { "predict_time": 4.1, "cost": 0.0075 }
+}
+```
+
+`audio_analysis` wraps its measurements under an `audio_analysis` key (fields in [audio_analysis](#audio_analysis)):
+
+```json
+{
+  "id": "899cb7f0-...",
+  "status": "success",
+  "output": { "audio_analysis": { "integrated_lufs": -11.697, "lra": 1.76, "true_peak_dbtp": -4.31, "sample_peak_dbfs": -4.31, "flat_factor": 0, "peak_count": 2 } },
+  "metrics": { "predict_time": 3.71, "cost": 0.0075 }
+}
+```
+
+**6. Error** — any prediction that ends in `status: "error"`. `output` is the error envelope: `error_code` carries the public code, `error_message` the specific reason, `retryable` and `classification.category` the handling hints, and `metrics.cost` what it billed. The field-by-field contract and two real captured examples (a $0 reject and an execution failure) are in the [error catalog](/video/billing-limits#error-catalog):
+
+```json
+{
+  "id": "22f90f2d-...",
+  "status": "error",
+  "output": {
+    "classification": { "category": "PROVIDER" },
+    "error": "Execution failed",
+    "error_code": "PROVIDER_FAILED",
+    "error_message": "exec_error",
+    "retryable": false,
+    "success": false
+  },
+  "metrics": { "predict_time": 3.61, "cost": 0 }
 }
 ```
 
@@ -1306,7 +1528,7 @@ Raw ffmpeg/ffprobe for long-tail cases the named capabilities don't cover. **Ava
 }
 ```
 
-The example above is a working audio-mastering command (compress → normalize to -14 LUFS → true-peak limit → 320k MP3). Two gotchas it encodes:
+The example above is a working audio-mastering command (compress → normalize to -14 LUFS → true-peak limit → 320k MP3) — [audio_master](#audio_master) now does exactly this as a named capability; keep this argv for custom filter chains or two-pass accuracy. Two gotchas it encodes:
 
 - `alimiter` needs `level=false` — the default (`level=true`) re-normalizes after limiting and **silently defeats the true-peak ceiling**.
 - The explicit `-ar 44100` is required — `loudnorm` internally upsamples to 192kHz, and without an explicit rate the output stays at 192kHz.
@@ -1328,10 +1550,14 @@ The example above is a working audio-mastering command (compress → normalize t
 }
 ```
 
-**The enforced safety boundary.** Commands are validated server-side, and ffmpeg runs with an injected `-protocol_whitelist file` — commands can read local files only, never the network. Every `run_ffmpeg` job is billed like any capability job. The argv restrictions:
+**The enforced safety boundary.** Commands are validated server-side, and ffmpeg runs with an injected `-protocol_whitelist file` — commands can read local files only, never the network. Every `run_ffmpeg` job is billed like any capability job. The argv restrictions — this is the **complete** list; anything not listed passes validation (and, if ffmpeg itself rejects it, fails at execution as `exec_error`):
 
 - `argv[0]` must be `ffmpeg` or `ffprobe`.
-- Denied tokens include: URL schemes (`http://`, `https://`, …), `movie=` / `amovie=` filter sources, `-protocol_whitelist` overrides, and bare `-` (stdin/stdout). Placeholder-bound paths reject `..` traversal.
+- **URL schemes are an allow-list of one** (`protocol_denied`): any token carrying a `scheme:` prefix is denied unless the scheme is `expr:` (ffmpeg's expression prefix). Nested prefixes are unwrapped recursively — `async:file:...`-style chains are caught.
+- **Denied tokens** (`flag_denied`): `-protocol_whitelist` (the sandbox injects its own), a bare `-` (stdin/stdout), `movie=` / `amovie=` filter sources (an arbitrary-file-read vector), and `-safe` with any value other than the literal `1`.
+- **Placeholder-assembled paths** reject `..` traversal; raw literal path tokens are permitted in `run_ffmpeg` (it compiles in escalated mode — `/dev/null` and plain local paths pass validation, though only staged placeholder paths resolve to your media).
+- **`-var_stream_map`** values are checked against a strict grammar; a nonconforming value rejects as `invalid_command`.
+- **Placeholder bindings**: a bound value may not begin with `-` (`flag_denied`), may not contain `..` traversal, and, when spliced inside a filtergraph argument, may not contain the filtergraph metacharacters `` , : ; ' [ ] \ ``.
 
 **ffprobe.** With `argv[0]: "ffprobe"` the JSON is returned inline in the prediction `output` — no media artifact.
 
@@ -1356,18 +1582,30 @@ The example above is a working audio-mastering command (compress → normalize t
 
 ## Recipes
 
-Multi-step patterns verified end-to-end against production.
+Patterns verified end-to-end against production. Two of these are now single-call capabilities — the manual chains remain documented as alternatives.
 
-### Clip list + first frames: `segment` → `stills`
+### Clip list + first frames: `segment` with `first_frame: true` (one call)
 
-Split with `segment`, then run `stills` with `position: "first"` on each chunk — segment output URLs are directly usable as the next job's `input_url`. For boundary-accurate frames (to within one frame) set `reencode: true` on the segment job: stream-copy segmentation cuts only on keyframes, and measured chunk durations drifted to 33.36s / 33.33s / 23.33s against a requested 30/30/30 split.
+One prediction returns the clips **and** each clip's first frame, interleaved in index order — see [segment](#segment). Set `reencode: true` for boundary-accurate frames. Verified in production: a 90 s source with `{"segment_seconds": 30, "reencode": true, "first_frame": true}` returned 3 clips + 3 JPGs in one job billed $0.0225 — the same output the manual chain produced across four billed predictions.
 
-### Split on silence with a max-duration cap: `silence_detect` → `trim` per segment
+**Manual alternative** (`segment` → `stills`) — when you need frames at positions other than the first (`position: "at"` / `"last"`): split with `segment`, then run `stills` on each chunk — segment output URLs are directly usable as the next job's `input_url`. For boundary-accurate frames set `reencode: true` on the segment job: stream-copy segmentation cuts only on keyframes, and measured chunk durations drifted to 33.36s / 33.33s / 23.33s against a requested 30/30/30 split.
+
+### Split on silence with a max-duration cap: `silence_split` (one call)
+
+One prediction detects the silences, applies your hard cap and minimum, and delivers the segments — see [silence_split](#silence_split). Verified in production: the worked example below returns the same 7 segments as the manual chain, in one billed job instead of eight.
+
+**Manual alternative** (`silence_detect` → `trim` per segment) — when you need custom cut logic the caps don't express:
 
 1. Run `silence_detect` on the source.
 2. Compute capped cut points client-side: cut at each silence's `end`; hard-cut when a segment would exceed your max duration; skip segments shorter than your min; cap the tail.
 3. Submit one `trim` per computed segment.
 
+Worked example (verified in production): silences ending at **13 / 22.5 / 58 / 62 / 70.5 s** on a **90 s** source with a **30 s cap** —
+
+- cut at 13 (silence end), cut at 22.5 (silence end); the next silence end (58) is more than 30 s away, so hard-cut at 22.5 + 30 = **52.5**;
+- cut at 58, 62, 70.5 (silence ends, each within the cap); the tail 70.5 → 90 fits the cap;
+- segments: 0–13, 13–22.5, 22.5–52.5, 52.5–58, 58–62, 62–70.5, 70.5–90 → **7 `trim` jobs**.
+
 <Note>
-Stream-copy `trim` carries +0.00-0.17s of end drift per segment. When exact boundaries matter, use `silence_remove` (its `ranges` parameter; re-encodes) instead of per-segment trims.
+Stream-copy `trim` carries +0.00-0.17s of end drift per segment. When exact boundaries matter, use [keep_ranges](#keep_ranges) (re-encodes) instead of per-segment trims — or `silence_split` with `reencode: true`.
 </Note>

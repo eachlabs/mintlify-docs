@@ -16,7 +16,9 @@ Grab a key from the [dashboard](https://www.eachlabs.ai/api-keys). Every request
 `input_url` (and `input_urls`) accept a **publicly downloadable `https` URL** to a media file — we stage your media into eachlabs storage automatically before processing. `s3://` input URIs from your onboarding keep working unchanged, and you can chain jobs by passing a previous job's `output` URL as the next job's input.
 
 <Note>
-The URL must point directly at a media file, identified by its file extension. The staged extensions are: video `.mp4` `.webm` `.mov` `.avi` `.mkv` `.flv`; audio `.mp3` `.wav` `.ogg` `.flac` `.m4a` `.aac` `.opus` `.wma`; image `.png` `.jpg` `.jpeg` `.gif` `.webp` `.bmp` `.tiff`; subtitle `.vtt`. A URL with **no** path extension can declare its type with a `mime_type=` query parameter (e.g. `mime_type=video_mp4`). A URL we cannot stage (unreachable, not public, or not identifiable as media) is rejected at $0 with `PROVIDER_REJECTED` and the offending URL in the message.
+The URL must point directly at a media file, identified by its file extension. The staged extensions are: video `.mp4` `.webm` `.mov` `.avi` `.mkv` `.flv`; audio `.mp3` `.wav` `.ogg` `.flac` `.m4a` `.aac` `.opus` `.wma`; image `.png` `.jpg` `.jpeg` `.gif` `.webp` `.bmp` `.tiff`; subtitle `.vtt`. A URL we cannot stage (unreachable, not public, or not identifiable as media) is rejected at $0 with `PROVIDER_REJECTED` and the offending URL in the message.
+
+A URL with **no path extension at all** can declare its type with a `mime_type=` query parameter (the parameter is only consulted when the URL path carries no extension — it cannot override an unrecognized extension). The value is the MIME type with the separators encoded as underscores — the first `_` becomes `/`, any later `_` becomes `-`: `mime_type=video_mp4` → `video/mp4`, `video_quicktime` → `video/quicktime`, `audio_x_wav` → `audio/x-wav`. Any `video/*`, `audio/*`, or `image/*` type is accepted (the subtype is not checked against a list); non-media types are rejected. Note `.ts` artifacts (`hls_ladder` segments, `concat_copy` `container: "ts"`) are terminal today: `.ts` is not a staged extension and the extension blocks the `mime_type=` fallback, so they cannot be chained as inputs.
 </Note>
 
 <Warning>
@@ -98,21 +100,34 @@ curl "https://api.eachlabs.ai/v1/prediction/PREDICTION_ID" \
   -H "X-API-Key: YOUR_API_KEY"
 ```
 
-The typical flow is `starting` → `processing` → **`success`**. The complete status set is `starting`, `created`, `processing`, `success`, `error`, `cancelled` — a failed prediction reports `error`, never `"failed"`. Poll every 3-5 seconds: the platform's own status checks are quantized to ~5 s, so tighter loops buy nothing. Most short jobs finish in well under a minute (a 100-job burst of short transcodes drains in ~15-30 seconds). A prediction sitting in `starting` unusually long is queued behind a concurrency cap — keep polling; see [Rate limits & concurrency](/video/billing-limits#rate-limits--concurrency).
+The typical flow is `starting` → `processing` → **`success`**. The complete status set is `starting`, `created`, `processing`, `success`, `error`, `cancelled` — a failed prediction reports `error`, never `"failed"`. `created` is the record's initial state before the platform picks the job up: pickup is normally immediate, so a poll loop usually first observes `starting` or `processing` and may never see it. Poll every 3-5 seconds: the platform's own status checks are quantized to ~5 s, so tighter loops buy nothing. Most short jobs finish in well under a minute (a 100-job burst of short transcodes drains in ~15-30 seconds). A prediction sitting in `starting` unusually long is queued behind a concurrency cap — keep polling; see [Rate limits & concurrency](/video/billing-limits#rate-limits--concurrency).
 
 ```json
 {
   "id": "1f0fdf4d-...",
+  "input": {
+    "capability": "transcode",
+    "tier": "cpu",
+    "input_url": "https://your-host.example/source.mp4",
+    "params": { "vcodec": "h264", "crf": 28 }
+  },
+  "logs": null,
   "status": "success",
   "output": ["https://cdn-us.eachlabs.ai/uploads/9b967c93-....mp4"],
-  "metrics": { "predict_time": 194.86, "cost": 0.2865 }
+  "metrics": { "predict_time": 194.86, "cost": 0.2865 },
+  "urls": {
+    "get": "https://api.eachlabs.ai/v1/prediction/1f0fdf4d-...",
+    "cancel": "https://api.eachlabs.ai/v1/prediction/1f0fdf4d-.../cancel"
+  }
 }
 ```
 
-- `output` — hosted artifact URL(s) for media capabilities, or a structured JSON object for the analysis capabilities (`probe`, `scene_detect`, `silence_detect`). The exact JSON per output class is in [Response shapes](/video/capabilities#response-shapes).
-- `metrics.cost` — what the job actually billed, in USD. Rejected and failed jobs bill `0`.
+- `output` — hosted artifact URL(s) for media capabilities, or a structured JSON object for the analysis capabilities (`probe`, `scene_detect`, `silence_detect`, `audio_analysis`). The exact JSON per output class is in [Response shapes](/video/capabilities#response-shapes).
+- `metrics.cost` — what the job actually billed, in USD. Rejected, failed, and cancelled jobs bill `0` (see [Failed compute](/video/billing-limits#failed-compute) for how failures are metered).
 - `metrics.predict_time` — the prediction's **full wall time** in seconds, from processing start to completion detection, including internal queueing and poll quantization. It is **not** the billed quantity: cost comes from the engine-metered billed execution seconds × the tier rate. In the example above the engine metered 191 billed seconds → `191 × $0.0015 = $0.2865`, while `predict_time` reads 194.86 — see [the formula](/video/billing-limits#the-formula).
-- On `status: "error"` the prediction carries an error code and message; the full catalog, with billing impact per class, is in the [error catalog](/video/billing-limits#error-catalog).
+- `input` — your submitted input, echoed back. `logs` is present on every poll and is `null` today.
+- `urls.get` — this prediction's poll URL. `urls.cancel` — its cancel endpoint (`POST`, same `X-API-Key` header); cancellation is record-only and a cancelled prediction never bills — see [Cancelling a prediction](/video/billing-limits#cancelling-a-prediction).
+- On `status: "error"` the `output` object carries `error_code` and `error_message`; the field-by-field envelope with two real captured examples, and the billing impact per class, are in the [error catalog](/video/billing-limits#error-catalog).
 - Download or persist artifacts promptly; treat artifact URLs as valid for at least 24 hours.
 
 ## 5. Optional: completion webhooks
