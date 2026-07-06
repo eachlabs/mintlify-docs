@@ -53,4 +53,4 @@ Terminal failures surface with `status: "error"` and an `output.error_code`. Dur
 
 ## Raw ffmpeg (`run_ffmpeg`)
 
-Beyond the 37 named capabilities there is an escalated mode that accepts a raw ffmpeg command for long-tail cases, with strict server-side command validation. It is **scope-gated and off by default** — ask us to enable it for your key if you have a use case the named capabilities don't cover.
+Beyond the 37 named capabilities there is a raw-ffmpeg mode for long-tail cases, **available to beta organizations today** — contract and examples in the [capabilities reference](/video/capabilities#run_ffmpeg). The enforced safety boundary is server-side argv validation (`argv[0]` limited to `ffmpeg`/`ffprobe`; denied tokens include URL schemes, `movie=`/`amovie=` filter sources, `-protocol_whitelist`, bare `-`, and path traversal) plus a network-closed engine. Every `run_ffmpeg` job bills under the same formula as any capability. Access may move to per-key grants later in the beta.

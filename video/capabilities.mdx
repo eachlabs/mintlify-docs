@@ -7,7 +7,7 @@ description: "Every operation the eachlabs Video API accepts — parameters, bou
 **Private beta.** This page is shared by direct link only. The surface below is validated server-side with `additionalProperties: false` — a request is either exactly this shape or it is rejected before any compute runs, at $0. Contracts here are stable for the beta; additions may land, removals will not without notice.
 </Note>
 
-Every job is submitted the same way: `POST https://api.eachlabs.ai/v1/prediction` with header `X-API-Key`, body `{"model": "eachlabs-video-api", "input": {"capability": "<name>", "tier": "cpu", "input_url": "...", "params": {...}}}`, then poll `GET /v1/prediction/{id}` until a terminal status. `tier` is **required** (`cpu` or `gpu`). Analysis capabilities (`probe`, `scene_detect`, `silence_detect`) return structured JSON in `output`; everything else returns hosted artifact URL(s). See [Quickstart](/video/quickstart) for the input URL requirements and [Billing & Limits](/video/billing-limits) for pricing mechanics.
+Every capability job is submitted the same way: `POST https://api.eachlabs.ai/v1/prediction` with header `X-API-Key`, body `{"model": "eachlabs-video-api", "input": {"capability": "<name>", "tier": "cpu", "input_url": "...", "params": {...}}}`, then poll `GET /v1/prediction/{id}` until a terminal status. `tier` is **required** (`cpu` or `gpu`). Analysis capabilities (`probe`, `scene_detect`, `silence_detect`) return structured JSON in `output`; everything else returns hosted artifact URL(s). See [Quickstart](/video/quickstart) for the input URL requirements and [Billing & Limits](/video/billing-limits) for pricing mechanics. For long-tail cases the named capabilities don't cover, a raw-ffmpeg mode with a different top-level contract is documented at [run_ffmpeg](#run_ffmpeg), and multi-step patterns are collected under [Recipes](#recipes).
 
 <Warning>
 `tier: "gpu"` is a **beta tier** — capacity is limited and several codecs are cpu-only (rejected on gpu, noted per capability). Use it where a capability supports it; fall back to `cpu` for anything gpu rejects.
@@ -23,7 +23,7 @@ Swap or mix a video's audio track using a second input as the audio source; vide
 
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
-| `mode` | string | `replace` \| `mix` | `"replace"` | no | replace: -shortest (output runs to the shorter stream); mix: amix ending with the shorter audio over the full video |
+| `mode` | string | `replace` \| `mix` | `"replace"` | no | replace: -shortest (output runs to the shorter stream); mix: amix ending with the shorter audio over the full video. A base video with **no audio stream** is accepted for `replace` — the new track is simply added |
 | `container` | string | `mp4` \| `mkv` | `"mp4"` | no |  |
 | `normalize` | boolean |  | `true` | no | mix only: true halves each track (no-clip-safe); false preserves source levels |
 
@@ -45,6 +45,10 @@ Swap or mix a video's audio track using a second input as the audio source; vide
   }
 }
 ```
+
+<Note>
+There is no start-offset parameter. To delay the incoming audio, pre-pad it locally before upload: `ffmpeg -i narration.mp3 -af "adelay=3000|3000" padded.mp3` adds 3s of leading silence. MP3 padding carries ~46ms of encoder-delay skew — pad as WAV or AAC when you need frame-accurate sync.
+</Note>
 
 ## captions
 
@@ -147,6 +151,10 @@ Losslessly rejoin 2-50 already-encoded, SAME-codec chunks via the concat demuxer
 **Inputs:** `input_urls` (2-50 (must equal the `inputs` param)) · **Tiers:** `cpu` · `gpu` · **Output:** media — single file
 
 <Note>**GPU behavior:** tier-agnostic (stream copy)</Note>
+
+<Warning>
+Chunks produced by stream-copy `trim` carry discard-flagged pre-roll back to the previous keyframe, which becomes **visible** after `concat_copy` (measured +1.35s on a 30s target) — use `silence_remove` (keep-ranges) for frame-accurate multi-range editing.
+</Warning>
 
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
@@ -1058,6 +1066,10 @@ Cut a clip [start, start+duration) via stream copy — no re-encode.
 
 <Note>**GPU behavior:** tier-agnostic (-c copy, no encoder)</Note>
 
+<Warning>
+Stream-copy trim outputs carry discard-flagged pre-roll back to the previous keyframe — players skip it, but it becomes **visible** after `concat_copy` (measured +1.35s on a 30s target). Use `silence_remove` (keep-ranges) for frame-accurate multi-range editing.
+</Warning>
+
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
 | `start` | number | min 0 | `0` | no | zero-bill reject when &gt;= probed source duration (empty output) |
@@ -1138,3 +1150,65 @@ Overlay a second input (image or video) onto the primary video at a pixel offset
   }
 }
 ```
+
+## run_ffmpeg
+
+Raw ffmpeg/ffprobe for long-tail cases the 37 named capabilities don't cover. **Available to beta organizations today**; access may move to per-key grants later in the beta.
+
+**Different contract.** `run_ffmpeg` is a top-level `mode`, not a capability — the input carries `mode`, `argv`, `input_url`, `output_format`, and `tier` (no `capability`, no `params`):
+
+```json
+{
+  "model": "eachlabs-video-api",
+  "input": {
+    "mode": "run_ffmpeg",
+    "tier": "cpu",
+    "input_url": "<YOUR_INPUT_URL>",
+    "output_format": "mp3",
+    "argv": ["ffmpeg", "-hide_banner", "-nostats", "-i", "{input}", "-af", "acompressor=threshold=-18dB:ratio=2:attack=30,loudnorm=I=-14:TP=-1.0:LRA=11,alimiter=limit=0.891:level=false", "-ar", "44100", "-c:a", "libmp3lame", "-b:a", "320k", "{output}"]
+  }
+}
+```
+
+The example above is a working audio-mastering command (compress → normalize to -14 LUFS → true-peak limit → 320k MP3). Two gotchas it encodes:
+
+- `alimiter` needs `level=false` — the default (`level=true`) re-normalizes after limiting and **silently defeats the true-peak ceiling**.
+- The explicit `-ar 44100` is required — `loudnorm` internally upsamples to 192kHz, and without an explicit rate the output stays at 192kHz.
+
+**Placeholders.** Never write paths or URLs into `argv`. The server substitutes `{input}` (the staged input), `{input0}`, `{input1}`, … (indexed inputs), and `{output}` (the artifact path, whose extension comes from `output_format`).
+
+**The enforced safety boundary.** Commands are validated server-side and the engine is network-closed — a job cannot reach the network at all. Every `run_ffmpeg` job is billed like any capability job. The argv restrictions:
+
+- `argv[0]` must be `ffmpeg` or `ffprobe`.
+- Denied tokens include: URL schemes (`http://`, `https://`, …), `movie=` / `amovie=` filter sources, `-protocol_whitelist`, bare `-` (stdin/stdout), and path traversal.
+
+**ffprobe.** With `argv[0]: "ffprobe"` the JSON is returned inline in the prediction `output` — no media artifact.
+
+**Analysis-to-file pattern.** Filters that print metadata can write their report to the artifact instead of producing media — point the filter's `file=` at `{output}` and satisfy ffmpeg's output requirement with the `-f null /dev/null` sink:
+
+```json
+"output_format": "vtt",
+"argv": ["ffmpeg", "-i", "{input}", "-af", "ametadata=mode=print:file={output}", "-f", "null", "/dev/null"]
+```
+
+<Note>
+**Two-pass loudnorm.** Single-pass `loudnorm` is dynamic and can land off-target. For mastering-grade accuracy run a first pass with `loudnorm=...:print_format=json` through the `-f null /dev/null` sink to measure, then a second pass feeding back `measured_I`, `measured_LRA`, `measured_TP` with `linear=true` — this lands within 0.5 LU of target.
+</Note>
+
+## Recipes
+
+Multi-step patterns verified end-to-end against production.
+
+### Clip list + first frames: `segment` → `stills`
+
+Split with `segment`, then run `stills` with `position: "first"` on each chunk — segment output URLs are directly usable as the next job's `input_url`. For boundary-accurate frames set `reencode: true` on the segment job: stream-copy segmentation cuts only on keyframes, and measured chunk durations drifted to 33.36s / 33.33s / 23.33s against a requested 30/30/30 split.
+
+### Split on silence with a max-duration cap: `silence_detect` → `trim` per segment
+
+1. Run `silence_detect` on the source.
+2. Compute capped cut points client-side: cut at each `silence_end`; hard-cut when a segment would exceed your max duration; skip segments shorter than your min; cap the tail.
+3. Submit one `trim` per computed segment.
+
+<Note>
+Stream-copy `trim` carries +0.00–0.17s of end drift per segment. When exact boundaries matter, use `silence_remove` (keep-ranges, re-encodes) instead of per-segment trims.
+</Note>
