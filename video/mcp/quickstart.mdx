@@ -54,7 +54,7 @@ The agent chains the `trim` and `captions` tools; each tool call returns the hos
 
 ## Tool inventory
 
-One tool per capability — identical names and parameters to the [capabilities reference](/video/capabilities) — plus `run_ffmpeg` (raw ffmpeg, available to beta organizations today; caller argv is restricted server-side and the engine is network-closed — see [run_ffmpeg](/video/capabilities#run_ffmpeg); access may move to per-key grants later) and `get_job` for checking a long-running job later. Parameters are validated client-side before submit, and server-side again (`additionalProperties: false`), so a malformed tool call never bills.
+One tool per capability — identical names and parameters to the [capabilities reference](/video/capabilities) — plus `run_ffmpeg` (raw ffmpeg, available to beta organizations today; caller argv is restricted server-side and commands can only read their staged local inputs — see [run_ffmpeg](/video/capabilities#run_ffmpeg); access may move to per-key grants later) and `get_job` for checking a long-running job later. Parameters are validated client-side before submit, and server-side again (`additionalProperties: false`), so a malformed tool call never bills.
 
 ## Notes for agent builders
 
