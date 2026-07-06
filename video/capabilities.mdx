@@ -222,7 +222,7 @@ Drop the video stream and write the audio track in the requested format (STT-rea
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
 | `format` | string | `mp3` \| `wav` \| `m4a` | `"mp3"` | no |  |
-| `sample_rate` | integer | min 8000, max 48000 | — | no | resample in Hz (e.g. 16000 for STT); omit keeps source rate |
+| `sample_rate` | integer | min 8000, max 48000 | — | no | resample in Hz (e.g. 16000 for STT); omit keeps source rate for wav/m4a — mp3 output is always downsampled to 48 kHz |
 | `mono` | boolean |  | `false` | no | downmix to one channel |
 
 ```json
@@ -452,7 +452,7 @@ Package an input into a single-rendition CMAF HLS + DASH adaptive-bitrate bundle
 
 ## package_abr_ladder
 
-Encode a TRUE multi-rendition CMAF HLS + DASH ladder (re-encodes every rung, any source codec). Rejects upscaling; default ladder clipped to source height.
+Encode a TRUE multi-rendition CMAF HLS + DASH ladder (re-encodes every rung, any source codec). When the source height is probeable, upscaling is rejected and the default ladder is clipped to source height; when the source cannot be probed, the ladder is NOT clipped (fail-open, may upscale).
 
 **Inputs:** `input_url` (1) · **Tiers:** `cpu` · `gpu` · **Output:** bundle — master.m3u8 + manifest.mpd over shared fmp4 segments
 
@@ -460,8 +460,8 @@ Encode a TRUE multi-rendition CMAF HLS + DASH ladder (re-encodes every rung, any
 
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
-| `renditions` | array | 1–6 items; each item requires `height` (`360` \| `480` \| `720` \| `1080` \| `1440` \| `2160`) and `bitrate_kbps` (100–50000) | — | no | mutually exclusive with ladder; duplicate heights rejected; height above source rejected (no upscaling) |
-| `ladder` | string | `360p` \| `480p` \| `720p` \| `1080p` \| `1440p` \| `2160p` | — | no | preset rung set, clipped to source height |
+| `renditions` | array | 1–6 items; each item requires `height` (`360` \| `480` \| `720` \| `1080` \| `1440` \| `2160`) and `bitrate_kbps` (100–50000) | — | no | mutually exclusive with ladder; duplicate heights rejected; height above source rejected (no upscaling) when the source is probeable — unprobeable source skips the check |
+| `ladder` | string | `360p` \| `480p` \| `720p` \| `1080p` \| `1440p` \| `2160p` | — | no | preset rung set, clipped to source height when probeable (unclipped if the probe fails) |
 | `segment_duration` | integer | min 1, max 30 | `4` | no |  |
 
 ```json
@@ -745,7 +745,7 @@ Split input into fixed-duration chunks (seg_000, seg_001, ...) — multi-output.
 |-|-|-|-|-|-|
 | `segment_seconds` | integer | min 1 | `10` | no |  |
 | `container` | string | `mp4` \| `webm` \| `mkv` | `"mp4"` | no |  |
-| `reencode` | boolean |  | `false` | no | false: stream-copy (cuts only on keyframes, may yield fewer/longer segments); true: exact cuts via forced keyframes, re-encodes H.264 |
+| `reencode` | boolean |  | `false` | no | false: stream-copy (cuts only on keyframes, may yield fewer/longer segments); true: cuts accurate to within one frame via forced keyframes, re-encodes H.264 |
 | `crf` | integer | min 0, max 51 | `23` | no | reencode=true only |
 
 ```json
@@ -1060,7 +1060,7 @@ Container/codec transcode with server-side normalization and defaults.
 
 ## trim
 
-Cut a clip [start, start+duration) via stream copy — no re-encode.
+Cut a clip of roughly `duration` seconds via stream copy — no re-encode. The cut snaps to the keyframe at or before `start` (playback start is trimmed via an edit list); the end can drift by up to packet granularity. For frame-accurate cuts use `silence_remove` with a single `keep_ranges` range.
 
 **Inputs:** `input_url` (1) · **Tiers:** `cpu` · `gpu` · **Output:** media — single file
 
@@ -1201,7 +1201,7 @@ Multi-step patterns verified end-to-end against production.
 
 ### Clip list + first frames: `segment` → `stills`
 
-Split with `segment`, then run `stills` with `position: "first"` on each chunk — segment output URLs are directly usable as the next job's `input_url`. For boundary-accurate frames set `reencode: true` on the segment job: stream-copy segmentation cuts only on keyframes, and measured chunk durations drifted to 33.36s / 33.33s / 23.33s against a requested 30/30/30 split.
+Split with `segment`, then run `stills` with `position: "first"` on each chunk — segment output URLs are directly usable as the next job's `input_url`. For boundary-accurate frames (to within one frame) set `reencode: true` on the segment job: stream-copy segmentation cuts only on keyframes, and measured chunk durations drifted to 33.36s / 33.33s / 23.33s against a requested 30/30/30 split.
 
 ### Split on silence with a max-duration cap: `silence_detect` → `trim` per segment
 
