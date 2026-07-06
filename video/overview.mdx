@@ -1,6 +1,6 @@
 ---
 title: "Video API (Beta)"
-description: "Run production video operations — transcode, trim, captions, packaging, analysis — through the eachlabs prediction API with per-second billing."
+description: "Run production video capabilities — transcode, trim, captions, packaging, analysis — through the eachlabs prediction API with per-second billing."
 ---
 
 <Note>
@@ -9,9 +9,11 @@ description: "Run production video operations — transcode, trim, captions, pac
 
 ## What is the Video API?
 
-One API for programmatic video work: **37 ready-made capabilities** — transcoding, trimming, captions and subtitle composition, watermarks, overlays, audio operations, HLS/DASH packaging, thumbnails and sprites — including three structured **analysis operations** (`probe`, `scene_detect`, `silence_detect`) that return JSON instead of media.
+One API for programmatic video work: **37 ready-made capabilities** — transcoding, trimming, captions and subtitle composition, watermarks, overlays, audio work, HLS/DASH packaging, thumbnails and sprites — including three structured **analysis capabilities** (`probe`, `scene_detect`, `silence_detect`) that return JSON instead of media.
 
 It runs behind the same [eachlabs prediction API](/api/overview) you may already use for AI models: the same API key, the same submit-and-poll flow, the same billing. Model slug: **`eachlabs-video-api`**.
+
+**Terminology.** A **job** is the unit of video work the engine executes; it is tracked as a **prediction** — the API object you submit and poll. On the prediction, `metrics.predict_time` measures the full wall time of the run, while billing is metered separately from the job's ffmpeg execution wall — the two differ by design (see [Billing & Limits](/video/billing-limits)).
 
 ```json
 {
@@ -19,7 +21,7 @@ It runs behind the same [eachlabs prediction API](/api/overview) you may already
   "input": {
     "capability": "trim",
     "tier": "cpu",
-    "input_url": "<YOUR_INPUT_URL>",
+    "input_url": "YOUR_INPUT_URL",
     "params": { "start": 3.0, "duration": 12.5 }
   }
 }
@@ -29,12 +31,12 @@ It runs behind the same [eachlabs prediction API](/api/overview) you may already
 
 - **Strict validation, $0 rejects.** Every capability validates its parameters server-side with `additionalProperties: false`. A malformed request — wrong enum, out-of-range value, unknown key, structurally incompatible input — is rejected *before any compute runs* and costs nothing.
 - **Per-second integer billing, no multipliers.** You pay `billed_seconds × tier rate`. No resolution, codec, or duration multipliers. Details in [Billing & Limits](/video/billing-limits).
-- **Deliver-or-don't-bill.** If we fail to deliver your output — platform fault, upload failure — you are not billed. A job killed at the runtime cap bills exactly the cap, never more.
+- **Deliver-or-don't-bill for platform faults.** If a failure on our side — including an upload failure — prevents delivering your output, you are not billed and the error is marked retryable. Failures caused by your input after compute starts bill the compute consumed: a mid-run ffmpeg failure bills the elapsed execution wall, and a job killed at the 3600 s execution cap bills exactly 3600 seconds. The full matrix is in [Billing & Limits](/video/billing-limits).
 - **You never pay for an empty output.** Requests whose parameters would produce nothing (a trim starting past the end of the clip, a fade beyond the video's duration) are rejected at $0 by a probe gate before execution.
 
 ## How results come back
 
-Submit returns a prediction ID; poll `GET /v1/prediction/{id}` until a terminal status. Successful media jobs return hosted artifact URL(s) in `output`; analysis jobs return structured JSON. Completion webhooks are available through the platform's standard `webhook_url` on executions.
+Submit returns a prediction ID; poll `GET /v1/prediction/{id}` until a terminal status (`success`, `error`, or `cancelled`). Successful media jobs return hosted artifact URL(s) in `output`; analysis jobs return structured JSON — the exact JSON per output class is in [Response shapes](/video/capabilities#response-shapes). Completion webhooks are available through the platform's standard `webhook_url`.
 
 ## Get started
 
@@ -43,10 +45,10 @@ Submit returns a prediction ID; poll `GET /v1/prediction/{id}` until a terminal 
     Submit your first job and poll it to completion.
   </Card>
   <Card title="Capabilities Reference" icon="list" href="/video/capabilities">
-    All 37 operations with parameters, bounds, and copy-pasteable request bodies.
+    All 37 capabilities with parameters, bounds, and copy-pasteable request bodies.
   </Card>
   <Card title="Billing & Limits" icon="credit-card" href="/video/billing-limits">
-    The billing formula, the $0-reject guarantees, and every limit stated plainly.
+    The billing formula, the $0-reject guarantees, and the full error catalog.
   </Card>
   <Card title="MCP for AI Agents" icon="robot" href="/video/mcp/quickstart">
     Drive the Video API from Claude, Cursor, or any MCP-capable agent.

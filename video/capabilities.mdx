@@ -1,23 +1,50 @@
 ---
 title: "Capabilities Reference (Beta)"
-description: "Every operation the eachlabs Video API accepts — parameters, bounds, tiers, and copy-pasteable request bodies."
+description: "Every capability the eachlabs Video API accepts — parameters, bounds, tiers, copy-pasteable request bodies, and response shapes."
 ---
 
 <Note>
 **Private beta.** This page is shared by direct link only. The surface below is validated server-side with `additionalProperties: false` — a request is either exactly this shape or it is rejected before any compute runs, at $0. Contracts here are stable for the beta; additions may land, removals will not without notice.
 </Note>
 
-Every capability job is submitted the same way: `POST https://api.eachlabs.ai/v1/prediction` with header `X-API-Key`, body `{"model": "eachlabs-video-api", "input": {"capability": "<name>", "tier": "cpu", "input_url": "...", "params": {...}}}`, then poll `GET /v1/prediction/{id}` until a terminal status. `tier` is **required** (`cpu` or `gpu`). Analysis capabilities (`probe`, `scene_detect`, `silence_detect`) return structured JSON in `output`; everything else returns hosted artifact URL(s). See [Quickstart](/video/quickstart) for the input URL requirements and [Billing & Limits](/video/billing-limits) for pricing mechanics. For long-tail cases the named capabilities don't cover, a raw-ffmpeg mode with a different top-level contract is documented at [run_ffmpeg](#run_ffmpeg), and multi-step patterns are collected under [Recipes](#recipes).
+Every capability job is submitted the same way: `POST https://api.eachlabs.ai/v1/prediction` with header `X-API-Key`, body `{"model": "eachlabs-video-api", "input": {"capability": "<name>", "tier": "cpu", "input_url": "...", "params": {...}}}`, then poll `GET /v1/prediction/{id}` until a terminal status. `tier` is **required** (`cpu` or `gpu`). Analysis capabilities (`probe`, `scene_detect`, `silence_detect`) return structured JSON in `output`; everything else returns hosted artifact URL(s) — the exact JSON per output class is in [Response shapes](#response-shapes). See [Quickstart](/video/quickstart) for the input URL requirements and [Billing & Limits](/video/billing-limits) for pricing mechanics and the error catalog. For long-tail cases the named capabilities don't cover, a raw-ffmpeg mode with a different top-level contract is documented at [run_ffmpeg](#run_ffmpeg), and multi-step patterns are collected under [Recipes](#recipes).
+
+The 37 capabilities by category (sections below are alphabetical):
+
+| Category | Capabilities |
+|-|-|
+| Transform & geometry | `crop`, `pad`, `reframe`, `reframe_track`, `rotate`, `scale` |
+| Encode & convert | `gif`, `transcode` |
+| Time & speed | `fade`, `reverse`, `segment`, `silence_remove`, `speed`, `trim` |
+| Audio | `audio_replace`, `extract_audio`, `loudnorm`, `volume` |
+| Composition & branding | `captions`, `color`, `concat`, `concat_copy`, `lut3d`, `overlay`, `slideshow`, `subtitle_compose`, `watermark` |
+| Packaging | `hls_ladder`, `package_abr`, `package_abr_ladder` |
+| Stills & sprites | `poster`, `stills`, `storyboard_sprites`, `thumbnails` |
+| Analysis | `probe`, `scene_detect`, `silence_detect` |
 
 <Warning>
 `tier: "gpu"` is a **beta tier** — capacity is limited and several codecs are cpu-only (rejected on gpu, noted per capability). Use it where a capability supports it; fall back to `cpu` for anything gpu rejects.
 </Warning>
 
+## Encode defaults
+
+Re-encoding capabilities that expose no codec knobs (`crop`, `scale`, `pad`, `rotate`, `overlay`, `watermark`, `speed`, `reverse`, `fade`, `color`, `reframe`, `reframe_track`, `concat`, `captions`, `lut3d`, `silence_remove`, `slideshow`) share one fixed encode contract, keyed on the `container` parameter:
+
+| Container | Video codec | Audio codec | Other |
+|-|-|-|-|
+| `mp4` | libx264 (h264_nvenc on gpu) | aac | `+faststart` |
+| `mkv` | libx264 (h264_nvenc on gpu) | aac |  |
+| `webm` | libvpx-vp9 — cpu only, rejected on gpu | libopus |  |
+
+- CRF, audio bitrate, and sample rate are left at ffmpeg's defaults (effectively CRF 23 for x264 and 128k AAC) unless the capability exposes a `crf` knob (`transcode`, `poster`, `segment` with `reencode: true`).
+- The gpu tier pins `-c:v h264_nvenc -pix_fmt yuv420p`.
+- Deviations: `volume` and `loudnorm` stream-copy the video (mp4/mkv only) and touch only audio; `slideshow` encodes at fixed quality 23; `concat` resamples audio to 44.1 kHz stereo.
+
 ## audio_replace
 
 Swap or mix a video's audio track using a second input as the audio source; video always stream-copied.
 
-**Inputs:** `input_urls` (2) · **Tiers:** `cpu` · `gpu` · **Output:** media — single file
+**Inputs:** `input_urls` (2) — `input_urls[0]` is the base video, `input_urls[1]` is the audio source · **Tiers:** `cpu` · `gpu` · **Output:** media — single file
 
 <Note>**GPU behavior:** tier-agnostic (video copied, aac everywhere)</Note>
 
@@ -34,8 +61,8 @@ Swap or mix a video's audio track using a second input as the audio source; vide
     "capability": "audio_replace",
     "tier": "cpu",
     "input_urls": [
-      "<YOUR_INPUT_URL_1>",
-      "<YOUR_INPUT_URL_2>"
+      "YOUR_INPUT_URL_1",
+      "YOUR_INPUT_URL_2"
     ],
     "params": {
       "mode": "replace",
@@ -54,7 +81,7 @@ There is no start-offset parameter. To delay the incoming audio, pre-pad it loca
 
 Burn a subtitle track (SRT/VTT/ASS) into the video via libass, with optional style overrides.
 
-**Inputs:** `input_urls` (2) · **Tiers:** `cpu` only · **Output:** media — single file
+**Inputs:** `input_urls` (2) — `input_urls[0]` is the video, `input_urls[1]` is the subtitle file (SRT/VTT/ASS) · **Tiers:** `cpu` only · **Output:** media — single file
 
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
@@ -70,8 +97,8 @@ Burn a subtitle track (SRT/VTT/ASS) into the video via libass, with optional sty
     "capability": "captions",
     "tier": "cpu",
     "input_urls": [
-      "<YOUR_INPUT_URL_1>",
-      "<YOUR_INPUT_URL_2>"
+      "YOUR_INPUT_URL_1",
+      "YOUR_INPUT_URL_2"
     ],
     "params": {
       "container": "mp4"
@@ -100,7 +127,7 @@ Color-grade via ffmpeg eq: brightness/contrast/saturation/gamma. All-defaults is
   "input": {
     "capability": "color",
     "tier": "cpu",
-    "input_url": "<YOUR_INPUT_URL>",
+    "input_url": "YOUR_INPUT_URL",
     "params": {
       "brightness": 0,
       "contrast": 1,
@@ -114,7 +141,7 @@ Color-grade via ffmpeg eq: brightness/contrast/saturation/gamma. All-defaults is
 
 Join 2-10 inputs end-to-end, normalizing each to a common WxH canvas and 44.1kHz stereo (accepts mixed resolutions/formats).
 
-**Inputs:** `input_urls` (2-10 (must equal the `inputs` param)) · **Tiers:** `cpu` · `gpu` · **Output:** media — single file
+**Inputs:** `input_urls` (2-10, must equal the `inputs` param; joined in array order) · **Tiers:** `cpu` · `gpu` · **Output:** media — single file
 
 <Note>**GPU behavior:** gpu pins h264_nvenc; webm rejects on gpu; WxH > 4096 rejects on gpu</Note>
 
@@ -132,8 +159,8 @@ Join 2-10 inputs end-to-end, normalizing each to a common WxH canvas and 44.1kHz
     "capability": "concat",
     "tier": "cpu",
     "input_urls": [
-      "<YOUR_INPUT_URL_1>",
-      "<YOUR_INPUT_URL_2>"
+      "YOUR_INPUT_URL_1",
+      "YOUR_INPUT_URL_2"
     ],
     "params": {
       "inputs": 2,
@@ -146,14 +173,14 @@ Join 2-10 inputs end-to-end, normalizing each to a common WxH canvas and 44.1kHz
 
 ## concat_copy
 
-Losslessly rejoin 2-50 already-encoded, SAME-codec chunks via the concat demuxer with -c copy (no re-encode).
+Losslessly rejoin 2-50 already-encoded, **same-codec** chunks via the concat demuxer with -c copy (no re-encode).
 
-**Inputs:** `input_urls` (2-50 (must equal the `inputs` param)) · **Tiers:** `cpu` · `gpu` · **Output:** media — single file
+**Inputs:** `input_urls` (2-50, must equal the `inputs` param; joined in array order) · **Tiers:** `cpu` · `gpu` · **Output:** media — single file
 
 <Note>**GPU behavior:** tier-agnostic (stream copy)</Note>
 
 <Warning>
-Chunks produced by stream-copy `trim` carry discard-flagged pre-roll back to the previous keyframe, which becomes **visible** after `concat_copy` (measured +1.35s on a 30s target) — use `silence_remove` (keep-ranges) for frame-accurate multi-range editing.
+Chunks produced by stream-copy `trim` carry discard-flagged pre-roll back to the previous keyframe, which becomes **visible** after `concat_copy` (measured +1.35s on a 30s target) — use `silence_remove` (its `ranges` parameter) for frame-accurate multi-range editing.
 </Warning>
 
 | Parameter | Type | Constraints | Default | Required | Notes |
@@ -168,8 +195,8 @@ Chunks produced by stream-copy `trim` carry discard-flagged pre-roll back to the
     "capability": "concat_copy",
     "tier": "cpu",
     "input_urls": [
-      "<YOUR_INPUT_URL_1>",
-      "<YOUR_INPUT_URL_2>"
+      "YOUR_INPUT_URL_1",
+      "YOUR_INPUT_URL_2"
     ],
     "params": {
       "inputs": 2,
@@ -201,7 +228,7 @@ Cut a width x height rectangle out of the frame (centered unless x/y given).
   "input": {
     "capability": "crop",
     "tier": "cpu",
-    "input_url": "<YOUR_INPUT_URL>",
+    "input_url": "YOUR_INPUT_URL",
     "params": {
       "width": 640,
       "height": 480,
@@ -231,7 +258,7 @@ Drop the video stream and write the audio track in the requested format (STT-rea
   "input": {
     "capability": "extract_audio",
     "tier": "cpu",
-    "input_url": "<YOUR_INPUT_URL>",
+    "input_url": "YOUR_INPUT_URL",
     "params": {
       "format": "mp3",
       "mono": false
@@ -260,7 +287,7 @@ Video fade-in and/or fade-out with matching audio afade.
   "input": {
     "capability": "fade",
     "tier": "cpu",
-    "input_url": "<YOUR_INPUT_URL>",
+    "input_url": "YOUR_INPUT_URL",
     "params": {
       "type": "both",
       "fade_in_duration": 1.0,
@@ -290,7 +317,7 @@ Convert a clip to an animated GIF at a given fps and width (lanczos, single pass
   "input": {
     "capability": "gif",
     "tier": "cpu",
-    "input_url": "<YOUR_INPUT_URL>",
+    "input_url": "YOUR_INPUT_URL",
     "params": {
       "fps": 10,
       "width": 480
@@ -301,17 +328,21 @@ Convert a clip to an animated GIF at a given fps and width (lanczos, single pass
 
 ## hls_ladder
 
-Encode a multi-rendition adaptive-bitrate HLS ladder (master.m3u8 + N variant playlists/segments) in one pass. Re-encodes each rung; upscaling NOT rejected.
+Encode a multi-rendition adaptive-bitrate HLS ladder (master.m3u8 + N variant playlists/segments) in one pass. Re-encodes each rung; upscaling is **not** rejected.
 
-**Inputs:** `input_url` (1) · **Tiers:** `cpu` · `gpu` · **Output:** bundle — master.m3u8 + stream_N.m3u8 variants + shared TS segments
+**Inputs:** `input_url` (1) · **Tiers:** `cpu` · `gpu` · **Output:** bundle `{"primary": master.m3u8, "artifacts": [...]}` in `output` — master.m3u8 + stream_N.m3u8 variants + shared TS segments — see [Response shapes](#response-shapes)
 
 <Note>**GPU behavior:** gpu uses h264_nvenc; over-4096 derived rung width rejects pre-billing</Note>
 
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
-| `renditions` | array | 1–6 items; each item requires `height` (`144` \| `240` \| `360` \| `480` \| `720` \| `1080` \| `1440` \| `2160`) and `bitrate_kbps` (100–50000) | — | no | mutually exclusive with ladder; duplicate heights rejected |
-| `ladder` | string | `240p` \| `360p` \| `480p` \| `720p` \| `1080p` | — | no |  |
+| `renditions` | array | 1-6 items; each item requires `height` (`144` \| `240` \| `360` \| `480` \| `720` \| `1080` \| `1440` \| `2160`) and `bitrate_kbps` (100-50000) | — | no | mutually exclusive with ladder; duplicate heights rejected |
+| `ladder` | string | `240p` \| `360p` \| `480p` \| `720p` \| `1080p` | — | no | exact rungs (height@kbps): 240p = 240@600; 360p = 360@1000, 240@600; 480p = 480@1500, 360@1000, 240@600; 720p = 720@3000, 480@1500, 360@1000; 1080p = 1080@5000, 720@3000, 480@1500 |
 | `segment_duration` | integer | min 1, max 30 | `4` | no |  |
+
+<Note>
+Omitting both `renditions` and `ladder` applies the default `720p` preset (720@3000, 480@1500, 360@1000). Supplying both is rejected at $0 — they are mutually exclusive.
+</Note>
 
 ```json
 {
@@ -319,7 +350,7 @@ Encode a multi-rendition adaptive-bitrate HLS ladder (master.m3u8 + N variant pl
   "input": {
     "capability": "hls_ladder",
     "tier": "cpu",
-    "input_url": "<YOUR_INPUT_URL>",
+    "input_url": "YOUR_INPUT_URL",
     "params": {
       "renditions": [
         { "height": 720, "bitrate_kbps": 2800 },
@@ -346,13 +377,20 @@ Normalize audio loudness to an EBU R128 target (single-pass); video stream-copie
 | `lra` | number | min 1, max 50 | `11` | no | loudness range in LU |
 | `container` | string | `mp4` \| `mkv` | `"mp4"` | no |  |
 
+<Note>
+- The input must carry an audio stream — a video-only input is rejected at $0 before billing.
+- The audio track is re-encoded to AAC regardless of its source codec, and the output sample rate is **not preserved**: loudnorm internally resamples to 192 kHz and no rate reset is applied, so the AAC output lands at 96 kHz (the highest rate AAC accepts), not the source rate.
+- Normalization is single-pass, so the output's measured integrated loudness can deviate from `target_i` — especially on short or highly dynamic inputs. For mastering-grade accuracy use the two-pass pattern under [run_ffmpeg](#run_ffmpeg).
+- loudnorm outputs mp4/mkv video containers only. For audio-in/audio-out mastering (e.g. MP3 to a -14 LUFS MP3) use the [run_ffmpeg](#run_ffmpeg) mastering example.
+</Note>
+
 ```json
 {
   "model": "eachlabs-video-api",
   "input": {
     "capability": "loudnorm",
     "tier": "cpu",
-    "input_url": "<YOUR_INPUT_URL>",
+    "input_url": "YOUR_INPUT_URL",
     "params": {
       "target_i": -14,
       "true_peak": -1,
@@ -366,7 +404,7 @@ Normalize audio loudness to an EBU R128 target (single-pass); video stream-copie
 
 Color-grade through a caller-supplied .cube 3D LUT (lut3d filter).
 
-**Inputs:** `input_urls` (2) · **Tiers:** `cpu` only · **Output:** media — single file
+**Inputs:** `input_urls` (2) — `input_urls[0]` is the video, `input_urls[1]` is the `.cube` LUT file · **Tiers:** `cpu` only · **Output:** media — single file
 
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
@@ -380,8 +418,8 @@ Color-grade through a caller-supplied .cube 3D LUT (lut3d filter).
     "capability": "lut3d",
     "tier": "cpu",
     "input_urls": [
-      "<YOUR_INPUT_URL_1>",
-      "<YOUR_INPUT_URL_2>"
+      "YOUR_INPUT_URL_1",
+      "YOUR_INPUT_URL_2"
     ],
     "params": {
       "container": "mp4"
@@ -394,9 +432,9 @@ Color-grade through a caller-supplied .cube 3D LUT (lut3d filter).
 
 Composite a second video/image over a base at a named corner/center anchor, with optional margin and pre-scale.
 
-**Inputs:** `input_urls` (2) · **Tiers:** `cpu` · `gpu` · **Output:** media — single file
+**Inputs:** `input_urls` (2) — `input_urls[0]` is the base video, `input_urls[1]` is the overlay (video or image) · **Tiers:** `cpu` · `gpu` · **Output:** media — single file
 
-<Note>**GPU behavior:** GPU SUPPORTED: full-GPU overlay_cuda for top_left/center with no scale; software composite + NVENC otherwise; webm rejects on gpu. (The MCP repo's description saying 'cpu tier only' is stale.)</Note>
+<Note>**GPU behavior:** gpu supported — full-GPU overlay_cuda for top_left/center with no scale; software composite + NVENC otherwise; webm rejects on gpu</Note>
 
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
@@ -412,8 +450,8 @@ Composite a second video/image over a base at a named corner/center anchor, with
     "capability": "overlay",
     "tier": "cpu",
     "input_urls": [
-      "<YOUR_INPUT_URL_1>",
-      "<YOUR_INPUT_URL_2>"
+      "YOUR_INPUT_URL_1",
+      "YOUR_INPUT_URL_2"
     ],
     "params": {
       "position": "bottom_right",
@@ -428,7 +466,7 @@ Composite a second video/image over a base at a named corner/center anchor, with
 
 Package an input into a single-rendition CMAF HLS + DASH adaptive-bitrate bundle (clear, no DRM). Stream-copies — never re-encodes.
 
-**Inputs:** `input_url` (1) · **Tiers:** `cpu` · `gpu` · **Output:** bundle — &#123;primary: master.m3u8, artifacts: [...]&#125; — manifest.mpd + master.m3u8 + fmp4 segments
+**Inputs:** `input_url` (1) · **Tiers:** `cpu` · `gpu` · **Output:** bundle `{"primary": master.m3u8, "artifacts": [...]}` in `output` — manifest.mpd + master.m3u8 + fmp4 segments — see [Response shapes](#response-shapes)
 
 <Note>**GPU behavior:** tier-agnostic (stream copy)</Note>
 
@@ -442,7 +480,7 @@ Package an input into a single-rendition CMAF HLS + DASH adaptive-bitrate bundle
   "input": {
     "capability": "package_abr",
     "tier": "cpu",
-    "input_url": "<YOUR_INPUT_URL>",
+    "input_url": "YOUR_INPUT_URL",
     "params": {
       "segment_duration": 4
     }
@@ -452,17 +490,21 @@ Package an input into a single-rendition CMAF HLS + DASH adaptive-bitrate bundle
 
 ## package_abr_ladder
 
-Encode a TRUE multi-rendition CMAF HLS + DASH ladder (re-encodes every rung, any source codec). When the source height is probeable, upscaling is rejected and the default ladder is clipped to source height; when the source cannot be probed, the ladder is NOT clipped (fail-open, may upscale).
+Encode a **true** multi-rendition CMAF HLS + DASH ladder (re-encodes every rung, any source codec). When the source height is probeable, upscaling is rejected and the default ladder is clipped to source height; when the source cannot be probed, the ladder is **not** clipped (fail-open, may upscale).
 
-**Inputs:** `input_url` (1) · **Tiers:** `cpu` · `gpu` · **Output:** bundle — master.m3u8 + manifest.mpd over shared fmp4 segments
+**Inputs:** `input_url` (1) · **Tiers:** `cpu` · `gpu` · **Output:** bundle `{"primary": master.m3u8, "artifacts": [...]}` in `output` — master.m3u8 + manifest.mpd over shared fmp4 segments — see [Response shapes](#response-shapes)
 
 <Note>**GPU behavior:** gpu uses h264_nvenc; a rung whose derived width exceeds 4096 rejects pre-billing</Note>
 
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
-| `renditions` | array | 1–6 items; each item requires `height` (`360` \| `480` \| `720` \| `1080` \| `1440` \| `2160`) and `bitrate_kbps` (100–50000) | — | no | mutually exclusive with ladder; duplicate heights rejected; height above source rejected (no upscaling) when the source is probeable — unprobeable source skips the check |
-| `ladder` | string | `360p` \| `480p` \| `720p` \| `1080p` \| `1440p` \| `2160p` | — | no | preset rung set, clipped to source height when probeable (unclipped if the probe fails) |
+| `renditions` | array | 1-6 items; each item requires `height` (`360` \| `480` \| `720` \| `1080` \| `1440` \| `2160`) and `bitrate_kbps` (100-50000) | — | no | mutually exclusive with ladder; duplicate heights rejected; height above source rejected (no upscaling) when the source is probeable — unprobeable source skips the check |
+| `ladder` | string | `360p` \| `480p` \| `720p` \| `1080p` \| `1440p` \| `2160p` | — | no | preset rung set, clipped to source height when probeable (unclipped if the probe fails). Exact rungs (height@kbps): 360p = 360@1000; 480p = 480@1500, 360@1000; 720p = 720@3000, 480@1500, 360@1000; 1080p = 1080@5000, 720@3000, 480@1500; 1440p = 1440@8000, 1080@5000, 720@3000; 2160p = 2160@16000, 1080@5000, 720@3000 (2160p does **not** include a 1440 rung) |
 | `segment_duration` | integer | min 1, max 30 | `4` | no |  |
+
+<Note>
+Omitting both `renditions` and `ladder` applies the default ladder — 1080@5000, 720@2800, 480@1200 — clipped to the source height when probeable. Supplying both is rejected at $0 — they are mutually exclusive.
+</Note>
 
 ```json
 {
@@ -470,7 +512,7 @@ Encode a TRUE multi-rendition CMAF HLS + DASH ladder (re-encodes every rung, any
   "input": {
     "capability": "package_abr_ladder",
     "tier": "cpu",
-    "input_url": "<YOUR_INPUT_URL>",
+    "input_url": "YOUR_INPUT_URL",
     "params": {
       "renditions": [
         { "height": 1080, "bitrate_kbps": 5000 },
@@ -505,7 +547,7 @@ Frame the picture inside a width x height canvas filled with a background color.
   "input": {
     "capability": "pad",
     "tier": "cpu",
-    "input_url": "<YOUR_INPUT_URL>",
+    "input_url": "YOUR_INPUT_URL",
     "params": {
       "width": 1280,
       "height": 720,
@@ -519,7 +561,7 @@ Frame the picture inside a width x height canvas filled with a background color.
 
 One input -> two named outputs in one pass: a transcoded H.264 MP4 ('video') and a still-frame JPEG ('thumbnail').
 
-**Inputs:** `input_url` (1) · **Tiers:** `cpu` · `gpu` · **Output:** media — named outputs object &#123;video, thumbnail&#125; (also mirrored in output_urls)
+**Inputs:** `input_url` (1) · **Tiers:** `cpu` · `gpu` · **Output:** named-outputs object `{"video": ..., "thumbnail": ...}` in `output` — see [Response shapes](#response-shapes)
 
 <Note>**GPU behavior:** gpu uses h264_nvenc; source > 4096px rejects on gpu</Note>
 
@@ -534,7 +576,7 @@ One input -> two named outputs in one pass: a transcoded H.264 MP4 ('video') and
   "input": {
     "capability": "poster",
     "tier": "cpu",
-    "input_url": "<YOUR_INPUT_URL>",
+    "input_url": "YOUR_INPUT_URL",
     "params": {
       "crf": 23,
       "thumbnail_second": 0
@@ -547,7 +589,7 @@ One input -> two named outputs in one pass: a transcoded H.264 MP4 ('video') and
 
 Inspect an input with ffprobe and return the JSON metadata (format + streams) as the structured result — no media artifact, no egress.
 
-**Inputs:** `input_url` (1) · **Tiers:** `cpu` · `gpu` · **Output:** analysis_json — ffprobe JSON document in the result (EgressStdout)
+**Inputs:** `input_url` (1) · **Tiers:** `cpu` · `gpu` · **Output:** analysis JSON — the ffprobe document (`format` + `streams`) returned directly in `output`; no uploaded artifact
 
 <Note>**GPU behavior:** tier-agnostic</Note>
 
@@ -559,7 +601,7 @@ No parameters — an empty `params` object is valid.
   "input": {
     "capability": "probe",
     "tier": "cpu",
-    "input_url": "<YOUR_INPUT_URL>",
+    "input_url": "YOUR_INPUT_URL",
     "params": {}
   }
 }
@@ -584,7 +626,7 @@ Convert a clip to a social aspect ratio via scale+crop (fill) or scale+pad (fit)
   "input": {
     "capability": "reframe",
     "tier": "cpu",
-    "input_url": "<YOUR_INPUT_URL>",
+    "input_url": "YOUR_INPUT_URL",
     "params": {
       "aspect": "9:16",
       "mode": "crop",
@@ -598,12 +640,24 @@ Convert a clip to a social aspect ratio via scale+crop (fill) or scale+pad (fit)
 
 Pan a fixed-size crop window across the frame following a subject, driven by a crop-track sidecar (sendcmd script).
 
-**Inputs:** `input_urls` (2) · **Tiers:** `cpu` only · **Output:** media — single file
+**Inputs:** `input_urls` (2) — `input_urls[0]` is the source video, `input_urls[1]` is the crop-track sidecar (sendcmd script) · **Tiers:** `cpu` only · **Output:** media — single file
+
+**The sidecar.** `input_urls[1]` is a raw ffmpeg [sendcmd](https://ffmpeg.org/ffmpeg-filters.html#sendcmd_002c-asendcmd) script the engine splices in as `sendcmd=f=<sidecar>,crop=W:H`. One command per line:
+
+```text
+0.0 crop x 16, crop y 16;
+2.5 crop x 240, crop y 16;
+5.0 crop x 480, crop y 120;
+```
+
+- `<seconds> crop x <px>, crop y <px>;` — the timestamp in seconds, then the pixel coordinates of the crop window's **top-left corner** relative to the source frame.
+- The window is `width`x`height` (fixed by params), starts centered, and values **step-hold** between timestamps — there is no interpolation.
+- The script is **not parsed or validated server-side**: a malformed sidecar fails at execution as a **billed** `exec_error`, not a $0 reject. Validate it locally before submitting.
 
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
-| `width` | integer | min 1, max 8192 | `640` | no |  |
-| `height` | integer | min 1, max 8192 | `360` | no |  |
+| `width` | integer | min 1, max 8192 | `640` | no | crop window width in px |
+| `height` | integer | min 1, max 8192 | `360` | no | crop window height in px |
 | `container` | string | `mp4` \| `webm` \| `mkv` | `"mp4"` | no |  |
 
 ```json
@@ -613,8 +667,8 @@ Pan a fixed-size crop window across the frame following a subject, driven by a c
     "capability": "reframe_track",
     "tier": "cpu",
     "input_urls": [
-      "<YOUR_INPUT_URL_1>",
-      "<YOUR_INPUT_URL_2>"
+      "YOUR_INPUT_URL_1",
+      "YOUR_INPUT_URL_2"
     ],
     "params": {
       "width": 640,
@@ -643,7 +697,7 @@ Play the clip backwards (video reverse + audio areverse). Buffers the whole clip
   "input": {
     "capability": "reverse",
     "tier": "cpu",
-    "input_url": "<YOUR_INPUT_URL>",
+    "input_url": "YOUR_INPUT_URL",
     "params": {
       "container": "mp4"
     }
@@ -670,7 +724,7 @@ Rotate the picture in fixed 90-degree clockwise steps (transpose, no interpolati
   "input": {
     "capability": "rotate",
     "tier": "cpu",
-    "input_url": "<YOUR_INPUT_URL>",
+    "input_url": "YOUR_INPUT_URL",
     "params": {
       "degrees": 90,
       "container": "mp4"
@@ -699,7 +753,7 @@ Resize video to a target width/height, keeping audio.
   "input": {
     "capability": "scale",
     "tier": "cpu",
-    "input_url": "<YOUR_INPUT_URL>",
+    "input_url": "YOUR_INPUT_URL",
     "params": {
       "width": 1280,
       "height": -2,
@@ -713,7 +767,7 @@ Resize video to a target width/height, keeping audio.
 
 Detect hard cuts and return the structured scene list as the result — a metadata analysis, not a media artifact.
 
-**Inputs:** `input_url` (1) · **Tiers:** `cpu` only · **Output:** analysis_json — &#123;"scenes": [&#123;time, score&#125;]&#125; in the result; no uploaded artifact, zero egress
+**Inputs:** `input_url` (1) · **Tiers:** `cpu` only · **Output:** analysis JSON — `{"scenes": [{time, score}]}` in `output` (`time` in seconds, `score` in 0-1); no uploaded artifact, zero egress
 
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
@@ -725,7 +779,7 @@ Detect hard cuts and return the structured scene list as the result — a metada
   "input": {
     "capability": "scene_detect",
     "tier": "cpu",
-    "input_url": "<YOUR_INPUT_URL>",
+    "input_url": "YOUR_INPUT_URL",
     "params": {
       "threshold": 0.3
     }
@@ -737,7 +791,7 @@ Detect hard cuts and return the structured scene list as the result — a metada
 
 Split input into fixed-duration chunks (seg_000, seg_001, ...) — multi-output.
 
-**Inputs:** `input_url` (1) · **Tiers:** `cpu` · `gpu` · **Output:** media — multiple files as output_urls (seg_%03d.&lt;ext>)
+**Inputs:** `input_url` (1) · **Tiers:** `cpu` · `gpu` · **Output:** media — URL array in `output`, one entry per chunk, index-ordered (`seg_000`, `seg_001`, …) — see [Response shapes](#response-shapes)
 
 <Note>**GPU behavior:** reencode=true uses h264_nvenc on gpu; reencode+webm rejected on every tier (H.264 cannot mux into webm)</Note>
 
@@ -754,7 +808,7 @@ Split input into fixed-duration chunks (seg_000, seg_001, ...) — multi-output.
   "input": {
     "capability": "segment",
     "tier": "cpu",
-    "input_url": "<YOUR_INPUT_URL>",
+    "input_url": "YOUR_INPUT_URL",
     "params": {
       "segment_seconds": 10,
       "container": "mp4",
@@ -768,7 +822,7 @@ Split input into fixed-duration chunks (seg_000, seg_001, ...) — multi-output.
 
 Detect silent spans in the audio and return the structured list as the result. No silence found = valid empty result.
 
-**Inputs:** `input_url` (1) · **Tiers:** `cpu` only · **Output:** analysis_json — &#123;"silences": [&#123;start, end, duration&#125;]&#125; in the result; no artifact, zero egress
+**Inputs:** `input_url` (1) · **Tiers:** `cpu` only · **Output:** analysis JSON — `{"silences": [{start, end, duration}]}` in `output` (all fields in seconds); no artifact, zero egress
 
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
@@ -781,7 +835,7 @@ Detect silent spans in the audio and return the structured list as the result. N
   "input": {
     "capability": "silence_detect",
     "tier": "cpu",
-    "input_url": "<YOUR_INPUT_URL>",
+    "input_url": "YOUR_INPUT_URL",
     "params": {
       "noise_db": -30,
       "min_silence_seconds": 0.5
@@ -800,7 +854,7 @@ Keep only the supplied time ranges and close the gaps into one continuous output
 
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
-| `ranges` | array | 1–100 items; each item requires `start` and `end` (seconds) | — | yes | ranges to KEEP, sorted ascending, non-overlapping; unsorted/overlapping/empty rejected; zero-bill reject when all ranges start past EOF or total kept window &lt; 1 frame |
+| `ranges` | array | 1-100 items; each item requires `start` and `end` (seconds) | — | yes | ranges to **keep**, sorted ascending, non-overlapping; unsorted/overlapping/empty rejected; zero-bill reject when all ranges start past EOF or total kept window &lt; 1 frame |
 | `container` | string | `mp4` \| `webm` \| `mkv` | `"mp4"` | no |  |
 
 ```json
@@ -809,7 +863,7 @@ Keep only the supplied time ranges and close the gaps into one continuous output
   "input": {
     "capability": "silence_remove",
     "tier": "cpu",
-    "input_url": "<YOUR_INPUT_URL>",
+    "input_url": "YOUR_INPUT_URL",
     "params": {
       "ranges": [
         { "start": 0.0, "end": 4.2 },
@@ -825,7 +879,7 @@ Keep only the supplied time ranges and close the gaps into one continuous output
 
 Turn 2-50 still images into one silent video (each looped image_duration, normalized to a common canvas, optional Ken Burns zoom, concatenated).
 
-**Inputs:** `input_urls` (2-50 (must equal the `images` param)) · **Tiers:** `cpu` · `gpu` · **Output:** media — single silent video
+**Inputs:** `input_urls` (2-50, must equal the `images` param; shown in array order) · **Tiers:** `cpu` · `gpu` · **Output:** media — single silent video
 
 <Note>**GPU behavior:** mp4/mkv use h264 (NVENC on gpu); webm targets vp9 which has no NVENC encoder — webm rejects on gpu; canvas > 4096 rejects on gpu</Note>
 
@@ -846,8 +900,8 @@ Turn 2-50 still images into one silent video (each looped image_duration, normal
     "capability": "slideshow",
     "tier": "cpu",
     "input_urls": [
-      "<YOUR_INPUT_URL_1>",
-      "<YOUR_INPUT_URL_2>"
+      "YOUR_INPUT_URL_1",
+      "YOUR_INPUT_URL_2"
     ],
     "params": {
       "images": 2,
@@ -877,7 +931,7 @@ Change playback speed by a factor (video setpts + pitch-preserving atempo chain)
   "input": {
     "capability": "speed",
     "tier": "cpu",
-    "input_url": "<YOUR_INPUT_URL>",
+    "input_url": "YOUR_INPUT_URL",
     "params": {
       "factor": 2.0,
       "container": "mp4"
@@ -907,7 +961,7 @@ Extract a single frame as JPEG or PNG (first, last, or at an exact timestamp).
   "input": {
     "capability": "stills",
     "tier": "cpu",
-    "input_url": "<YOUR_INPUT_URL>",
+    "input_url": "YOUR_INPUT_URL",
     "params": {
       "position": "at",
       "timestamp": 12.5,
@@ -919,9 +973,9 @@ Extract a single frame as JPEG or PNG (first, last, or at an exact timestamp).
 
 ## storyboard_sprites
 
-Sample one frame per interval, pack into ONE tiled sprite sheet plus a server-computed WebVTT thumbnail index.
+Sample one frame per interval, pack into **one** tiled sprite sheet plus a server-computed WebVTT thumbnail index.
 
-**Inputs:** `input_url` (1) · **Tiers:** `cpu` · `gpu` · **Output:** media — named outputs &#123;sheet: sprites.&lt;ext>, vtt: sprites.vtt&#125;
+**Inputs:** `input_url` (1) · **Tiers:** `cpu` · `gpu` · **Output:** named-outputs object `{"sheet": ..., "vtt": ...}` in `output` — see [Response shapes](#response-shapes)
 
 <Note>**GPU behavior:** tier-agnostic</Note>
 
@@ -940,7 +994,7 @@ Sample one frame per interval, pack into ONE tiled sprite sheet plus a server-co
   "input": {
     "capability": "storyboard_sprites",
     "tier": "cpu",
-    "input_url": "<YOUR_INPUT_URL>",
+    "input_url": "YOUR_INPUT_URL",
     "params": {
       "interval_seconds": 2,
       "tile_width": 160,
@@ -958,7 +1012,7 @@ Author a styled, animated ASS caption document from words+hook+style and burn it
 
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
-| `words` | array | 1+ items; each item requires `text` (string), `start_ms` and `end_ms` (integers 0–86400000) | — | yes | the word-level timing track the captions animate over |
+| `words` | array | 1+ items; each item requires `text` (string), `start_ms` and `end_ms` (integers 0-86400000) | — | yes | the word-level timing track the captions animate over |
 | `hook` | object | requires `text`, `start_ms`, `end_ms` (same bounds as words items) | — | no | optional headline shown above the captions |
 | `style.font` | string | `Liberation Sans` \| `Liberation Serif` \| `Liberation Mono` \| `DejaVu Sans` \| `DejaVu Serif` \| `DejaVu Sans Mono` | `"Liberation Sans"` | no |  |
 | `style.font_size_pct` | integer | min 3, max 15 | `5` | no |  |
@@ -983,7 +1037,7 @@ Author a styled, animated ASS caption document from words+hook+style and burn it
   "input": {
     "capability": "subtitle_compose",
     "tier": "cpu",
-    "input_url": "<YOUR_INPUT_URL>",
+    "input_url": "YOUR_INPUT_URL",
     "params": {
       "words": [
         { "text": "never", "start_ms": 0, "end_ms": 420 },
@@ -1002,7 +1056,7 @@ Author a styled, animated ASS caption document from words+hook+style and burn it
 
 Extract one image frame every interval_seconds — multi-output.
 
-**Inputs:** `input_url` (1) · **Tiers:** `cpu` · `gpu` · **Output:** media — multiple images as output_urls (thumb_%03d.&lt;ext>)
+**Inputs:** `input_url` (1) · **Tiers:** `cpu` · `gpu` · **Output:** media — URL array in `output`, one entry per frame, index-ordered (`thumb_000`, `thumb_001`, …) — see [Response shapes](#response-shapes)
 
 <Note>**GPU behavior:** tier-agnostic (image encoder only)</Note>
 
@@ -1017,7 +1071,7 @@ Extract one image frame every interval_seconds — multi-output.
   "input": {
     "capability": "thumbnails",
     "tier": "cpu",
-    "input_url": "<YOUR_INPUT_URL>",
+    "input_url": "YOUR_INPUT_URL",
     "params": {
       "interval_seconds": 2,
       "format": "jpg"
@@ -1032,7 +1086,7 @@ Container/codec transcode with server-side normalization and defaults.
 
 **Inputs:** `input_url` (1) · **Tiers:** `cpu` · `gpu` · **Output:** media — single file, container-chosen extension
 
-<Note>**GPU behavior:** NVENC only: h264->h264_nvenc, hevc->hevc_nvenc; vp9/av1 vcodec, opus acodec, and pix_fmt yuv444p all reject pre-billing on gpu (transcode.go:encoderFor, audioCodecFor, nvencPixFmts)</Note>
+<Note>**GPU behavior:** NVENC only: h264->h264_nvenc, hevc->hevc_nvenc; vp9/av1 vcodec, opus acodec, and pix_fmt yuv444p all reject pre-billing on gpu</Note>
 
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
@@ -1048,7 +1102,7 @@ Container/codec transcode with server-side normalization and defaults.
   "input": {
     "capability": "transcode",
     "tier": "cpu",
-    "input_url": "<YOUR_INPUT_URL>",
+    "input_url": "YOUR_INPUT_URL",
     "params": {
       "container": "mp4",
       "vcodec": "h264",
@@ -1060,14 +1114,14 @@ Container/codec transcode with server-side normalization and defaults.
 
 ## trim
 
-Cut a clip of roughly `duration` seconds via stream copy — no re-encode. The cut snaps to the keyframe at or before `start` (playback start is trimmed via an edit list); the end can drift by up to packet granularity. For frame-accurate cuts use `silence_remove` with a single `keep_ranges` range.
+Cut a clip of roughly `duration` seconds via stream copy — no re-encode. The cut snaps to the keyframe at or before `start` (playback start is trimmed via an edit list); the end can drift by up to packet granularity. For frame-accurate cuts use `silence_remove` with a single `ranges` entry.
 
 **Inputs:** `input_url` (1) · **Tiers:** `cpu` · `gpu` · **Output:** media — single file
 
 <Note>**GPU behavior:** tier-agnostic (-c copy, no encoder)</Note>
 
 <Warning>
-Stream-copy trim outputs carry discard-flagged pre-roll back to the previous keyframe — players skip it, but it becomes **visible** after `concat_copy` (measured +1.35s on a 30s target). Use `silence_remove` (keep-ranges) for frame-accurate multi-range editing.
+Stream-copy trim outputs carry discard-flagged pre-roll back to the previous keyframe — players skip it, but it becomes **visible** after `concat_copy` (measured +1.35s on a 30s target). Use `silence_remove` (its `ranges` parameter) for frame-accurate multi-range editing.
 </Warning>
 
 | Parameter | Type | Constraints | Default | Required | Notes |
@@ -1081,7 +1135,7 @@ Stream-copy trim outputs carry discard-flagged pre-roll back to the previous key
   "input": {
     "capability": "trim",
     "tier": "cpu",
-    "input_url": "<YOUR_INPUT_URL>",
+    "input_url": "YOUR_INPUT_URL",
     "params": {
       "start": 0,
       "duration": 5
@@ -1109,7 +1163,7 @@ Scale audio loudness by a linear factor; video is stream-copied untouched.
   "input": {
     "capability": "volume",
     "tier": "cpu",
-    "input_url": "<YOUR_INPUT_URL>",
+    "input_url": "YOUR_INPUT_URL",
     "params": {
       "factor": 2.0,
       "container": "mp4"
@@ -1122,7 +1176,7 @@ Scale audio loudness by a linear factor; video is stream-copied untouched.
 
 Overlay a second input (image or video) onto the primary video at a pixel offset.
 
-**Inputs:** `input_urls` (2) · **Tiers:** `cpu` · `gpu` · **Output:** media — single file
+**Inputs:** `input_urls` (2) — `input_urls[0]` is the base video, `input_urls[1]` is the watermark (image or video) · **Tiers:** `cpu` · `gpu` · **Output:** media — single file
 
 <Note>**GPU behavior:** gpu pins h264_nvenc; webm container rejects on gpu; base > 4096px rejects on gpu</Note>
 
@@ -1139,8 +1193,8 @@ Overlay a second input (image or video) onto the primary video at a pixel offset
     "capability": "watermark",
     "tier": "cpu",
     "input_urls": [
-      "<YOUR_INPUT_URL_1>",
-      "<YOUR_INPUT_URL_2>"
+      "YOUR_INPUT_URL_1",
+      "YOUR_INPUT_URL_2"
     ],
     "params": {
       "x": 10,
@@ -1151,11 +1205,93 @@ Overlay a second input (image or video) onto the primary video at a pixel offset
 }
 ```
 
+## Response shapes
+
+Every result arrives in the polled prediction's `output` field. There are exactly five shapes, determined by the capability's output class; the sibling fields (`status`, `metrics`) are identical across all of them.
+
+**1. URL array** — every single-file media capability. Single-output jobs return a one-element array:
+
+```json
+{
+  "id": "1f0fdf4d-...",
+  "status": "success",
+  "output": ["https://cdn-us.eachlabs.ai/uploads/9b967c93-....mp4"],
+  "metrics": { "predict_time": 14.2, "cost": 0.015 }
+}
+```
+
+**2. Multi-output URL array** — `segment`, `thumbnails`. Same array, one URL per produced file, index-ordered (`seg_000`, `seg_001`, …):
+
+```json
+{
+  "id": "7a2c91be-...",
+  "status": "success",
+  "output": [
+    "https://cdn-us.eachlabs.ai/uploads/....-seg_000.mp4",
+    "https://cdn-us.eachlabs.ai/uploads/....-seg_001.mp4",
+    "https://cdn-us.eachlabs.ai/uploads/....-seg_002.mp4"
+  ],
+  "metrics": { "predict_time": 9.8, "cost": 0.0105 }
+}
+```
+
+**3. Named-outputs object** — `poster` (`video`, `thumbnail`) and `storyboard_sprites` (`sheet`, `vtt`). `output` maps output name → URL:
+
+```json
+{
+  "id": "c04d55e1-...",
+  "status": "success",
+  "output": {
+    "video": "https://cdn-us.eachlabs.ai/uploads/....mp4",
+    "thumbnail": "https://cdn-us.eachlabs.ai/uploads/....jpg"
+  },
+  "metrics": { "predict_time": 8.3, "cost": 0.009 }
+}
+```
+
+**4. Bundle** — `hls_ladder`, `package_abr`, `package_abr_ladder`. `output` is `{primary, artifacts}`: `primary` is the entrypoint a player opens (master.m3u8), `artifacts` lists every produced file in deterministic (name-sorted) order with `role` ∈ `playlist` | `init` | `segment` | `media`:
+
+```json
+{
+  "id": "e81b3f09-...",
+  "status": "success",
+  "output": {
+    "primary": "https://cdn-us.eachlabs.ai/uploads/....-master.m3u8",
+    "artifacts": [
+      { "name": "master.m3u8", "url": "https://cdn-us.eachlabs.ai/uploads/....-master.m3u8", "role": "playlist" },
+      { "name": "seg_000.ts", "url": "https://cdn-us.eachlabs.ai/uploads/....-seg_000.ts", "role": "segment" },
+      { "name": "stream_0.m3u8", "url": "https://cdn-us.eachlabs.ai/uploads/....-stream_0.m3u8", "role": "playlist" }
+    ]
+  },
+  "metrics": { "predict_time": 42.7, "cost": 0.057 }
+}
+```
+
+**5. Analysis JSON** — `probe`, `scene_detect`, `silence_detect` (and `run_ffmpeg` with `ffprobe`). `output` is the JSON document itself; no artifact is uploaded:
+
+```json
+{
+  "id": "281e4953-...",
+  "status": "success",
+  "output": { "silences": [ { "start": 12.46, "end": 14.02, "duration": 1.56 } ] },
+  "metrics": { "predict_time": 4.1, "cost": 0.0075 }
+}
+```
+
 ## run_ffmpeg
 
-Raw ffmpeg/ffprobe for long-tail cases the 37 named capabilities don't cover. **Available to beta organizations today**; access may move to per-key grants later in the beta.
+Raw ffmpeg/ffprobe for long-tail cases the named capabilities don't cover. **Available to beta organizations today**; access may move to per-key grants later in the beta. This section is the canonical statement of the `run_ffmpeg` contract — other pages link here.
 
-**Different contract.** `run_ffmpeg` is a top-level `mode`, not a capability — the input carries `mode`, `argv`, `input_url`, `output_format`, and `tier` (no `capability`, no `params`):
+**Different contract.** `run_ffmpeg` is a top-level `mode`, not a capability — the input carries `mode`, `argv`, `input_url` (or `input_urls`), `output_format`, and `tier` (no `capability`, no `params`):
+
+| Field | Type | Constraints | Default | Required | Notes |
+|-|-|-|-|-|-|
+| `mode` | string | `run_ffmpeg` | — | yes | selects raw mode |
+| `argv` | array of strings | `argv[0]` must be `ffmpeg` or `ffprobe`; denied tokens below | — | yes | use placeholders, never literal media paths or URLs |
+| `input_url` | string | https media URL or `s3://` URI | — | one of `input_url` / `input_urls` | binds `{input}` |
+| `input_urls` | array of strings | ordered | — | one of `input_url` / `input_urls` | one URL binds `{input}`; N URLs bind `{input0}`, `{input1}`, … in array order |
+| `output_format` | string | `mp4` \| `webm` \| `mkv` \| `mov` \| `gif` \| `mp3` \| `wav` \| `m4a` \| `jpg` \| `png` \| `vtt` \| `hls` \| `dash` | `mp4` | no | sets `{output}`'s extension; `hls` → `.m3u8`, `dash` → `.mpd`; unknown or empty values fall back to `mp4` |
+| `tier` | string | `cpu` \| `gpu` | — | yes |  |
 
 ```json
 {
@@ -1163,7 +1299,7 @@ Raw ffmpeg/ffprobe for long-tail cases the 37 named capabilities don't cover. **
   "input": {
     "mode": "run_ffmpeg",
     "tier": "cpu",
-    "input_url": "<YOUR_INPUT_URL>",
+    "input_url": "YOUR_INPUT_URL",
     "output_format": "mp3",
     "argv": ["ffmpeg", "-hide_banner", "-nostats", "-i", "{input}", "-af", "acompressor=threshold=-18dB:ratio=2:attack=30,loudnorm=I=-14:TP=-1.0:LRA=11,alimiter=limit=0.891:level=false", "-ar", "44100", "-c:a", "libmp3lame", "-b:a", "320k", "{output}"]
   }
@@ -1177,6 +1313,21 @@ The example above is a working audio-mastering command (compress → normalize t
 
 **Placeholders.** Never write media paths or URLs into `argv` — staged placeholder paths are the only way to reach your media, and the only literal path a job needs is the `/dev/null` sink shown below. The server substitutes `{input}` (the staged input), `{input0}`, `{input1}`, … (indexed inputs), and `{output}` (the artifact path, whose extension comes from `output_format`).
 
+**Multiple inputs.** Pass `input_urls`; each URL binds its index placeholder in array order. Example — replace a video's audio track with `-c copy`:
+
+```json
+{
+  "model": "eachlabs-video-api",
+  "input": {
+    "mode": "run_ffmpeg",
+    "tier": "cpu",
+    "input_urls": ["YOUR_INPUT_URL_1", "YOUR_INPUT_URL_2"],
+    "output_format": "mp4",
+    "argv": ["ffmpeg", "-i", "{input0}", "-i", "{input1}", "-map", "0:v", "-map", "1:a", "-c", "copy", "-shortest", "{output}"]
+  }
+}
+```
+
 **The enforced safety boundary.** Commands are validated server-side, and ffmpeg runs with an injected `-protocol_whitelist file` — commands can read local files only, never the network. Every `run_ffmpeg` job is billed like any capability job. The argv restrictions:
 
 - `argv[0]` must be `ffmpeg` or `ffprobe`.
@@ -1187,8 +1338,16 @@ The example above is a working audio-mastering command (compress → normalize t
 **Analysis-to-file pattern.** Filters that print metadata can write their report to the artifact instead of producing media — point the filter's `file=` at `{output}` and satisfy ffmpeg's output requirement with the `-f null /dev/null` sink:
 
 ```json
-"output_format": "vtt",
-"argv": ["ffmpeg", "-i", "{input}", "-af", "ametadata=mode=print:file={output}", "-f", "null", "/dev/null"]
+{
+  "model": "eachlabs-video-api",
+  "input": {
+    "mode": "run_ffmpeg",
+    "tier": "cpu",
+    "input_url": "YOUR_INPUT_URL",
+    "output_format": "vtt",
+    "argv": ["ffmpeg", "-i", "{input}", "-af", "ametadata=mode=print:file={output}", "-f", "null", "/dev/null"]
+  }
+}
 ```
 
 <Note>
@@ -1210,5 +1369,5 @@ Split with `segment`, then run `stills` with `position: "first"` on each chunk �
 3. Submit one `trim` per computed segment.
 
 <Note>
-Stream-copy `trim` carries +0.00–0.17s of end drift per segment. When exact boundaries matter, use `silence_remove` (keep-ranges, re-encodes) instead of per-segment trims.
+Stream-copy `trim` carries +0.00-0.17s of end drift per segment. When exact boundaries matter, use `silence_remove` (its `ranges` parameter; re-encodes) instead of per-segment trims.
 </Note>

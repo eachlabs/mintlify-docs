@@ -1,6 +1,6 @@
 ---
 title: "Billing & Limits (Beta)"
-description: "The exact billing formula, the $0-reject guarantees, and every operational limit of the Video API."
+description: "The exact billing formula, the $0-reject guarantees, the full error catalog, and every operational limit of the Video API."
 ---
 
 <Note>
@@ -9,7 +9,7 @@ description: "The exact billing formula, the $0-reject guarantees, and every ope
 
 ## The formula
 
-```
+```text
 billed_seconds = min( max( ceil(execution_wall_seconds), tier_floor ), 3600 )
 cost           = billed_seconds × tier_rate
 ```
@@ -19,8 +19,10 @@ cost           = billed_seconds × tier_rate
 | `cpu` | 5s | 0.0015 | Generally available |
 | `gpu` | 5s | 0.0024 | **Beta** — limited capacity, some codecs cpu-only (noted per capability) |
 
+- **Only ffmpeg wall time is metered.** `execution_wall_seconds` is the time the media command actually runs. Input staging, queueing, and artifact upload are never billed. This is why `metrics.predict_time` — the prediction's full wall time, which includes those phases plus the platform's ~5 s status-check quantization — is always larger than the billed seconds and is **not** the billed quantity.
 - **No multipliers.** Resolution, codec, container, and input duration never multiply the price — you pay for execution seconds only.
-- **Integer seconds, capped.** Wall time is rounded up to whole seconds, floored at the tier floor, and hard-capped at 3600. A job killed at the cap bills exactly 3600 seconds, never more.
+- **Integer seconds, floored and capped.** Wall time is rounded up to whole seconds, floored at the tier floor (a 1.2 s job bills 5 s), and hard-capped at 3600.
+- **Worked example.** A cpu job whose ffmpeg run takes 190.3 s bills `ceil(190.3) = 191` seconds → `191 × 0.0015 = $0.2865`. The same prediction's `predict_time` might read `194.86` — the extra ~4 s is queueing and poll quantization on top of the metered 191 s.
 - `metrics.cost` on the prediction is the authoritative charge for that job.
 
 ## When you pay nothing — guaranteed $0
@@ -30,27 +32,91 @@ cost           = billed_seconds × tier_rate
 | Invalid request | Unknown capability, wrong enum, out-of-range value, unknown parameter key, missing/invalid `tier`, wrong input count |
 | Input rejected pre-compute | Input over the size budget, input duration over 3600s, unsupported input URL, structurally incompatible input (e.g. audio operation on a video with no audio track) |
 | Parameters that would produce an empty output | `trim` starting at/past the end of the clip, `fade` scheduled beyond the video's duration, sub-frame output windows |
-| Platform faults | Any failure on our side — including output-upload failure. **Deliver-or-don't-bill:** if you did not get the artifact, you were not billed |
-| Execution timeout | A job killed by the platform execution ceiling bills $0 |
+| Platform faults | Any failure on our side — including output-upload failure. **Deliver-or-don't-bill:** if the failure is ours, you were not billed, and the error is marked retryable |
+
+## When compute is billed without an artifact
+
+A failure caused by your input **after compute starts** bills the compute it consumed. Exactly two such cases exist:
+
+| Event | Delivered | Billed | `failure_class` | Retryable |
+|-|-|-|-|-|
+| The job reaches 3600 s of metered ffmpeg wall | Nothing — the job is killed at the cap | Exactly 3600 s × tier rate | `billed_seconds_cap` | No |
+| ffmpeg fails mid-run after N seconds, on input content that passed the pre-compute probe gate (corrupt media, an impossible mux) | Nothing | `ceil(N)` seconds, tier floor applies | `exec_error` | No |
+
+There is no other execution kill: the 3600 s billed-seconds cap is the only ceiling that terminates a running job. Total job wall clock (staging + queueing + upload) is unmetered and can exceed 3600 s without a kill. A platform fault at any point — before, during, or after compute — always bills $0 and is retryable.
+
+## Error catalog
+
+Every failure surfaces on the polled prediction as `status: "error"` — never `"failed"` — with an error code and a message; `metrics.cost` carries what it billed. Submitting a prediction essentially always succeeds with a prediction ID: errors arrive when you poll.
+
+### The public error codes
+
+| Code | When | Where the specific reason lives | Billing |
+|-|-|-|-|
+| `PROVIDER_REJECTED` | An input URL could not be staged (unreachable, not public, not identifiable as media) | The message names the offending URL | $0 |
+| `INPUT_VALIDATION_ERROR` | The engine rejected the job before compute — invalid command/params (`invalid_command`) or input rejected at the probe gate (`input_rejected`) | Message reads `Input rejected: <specific reason>` (e.g. `duration_over_cap`) | $0 |
+| `PROVIDER_FAILED` | The engine refused the submit itself | The engine's reject code (table below) and message | $0 |
+| `PROVIDER_RATE_LIMIT` | The platform gave up re-enqueuing a job held back by an in-flight concurrency cap | — | $0 |
+| `exec_error`, `billed_seconds_cap`, `platform_fault`, `platform_drift` | A job that failed after the engine accepted it surfaces its failure class directly as the error code | The message carries the specific failure reason | Per the failure-class table below |
+
+### Engine submit rejects — synchronous, all $0
+
+The engine validates every submit synchronously. The platform submits on your behalf, so you see these as `PROVIDER_FAILED` with the engine's code in the message; a direct engine integration sees the HTTP status with body `{code, message, retryable, stage}`.
+
+| Code | HTTP | Meaning | Retryable |
+|-|-|-|-|
+| `invalid_command` | 400 | Malformed request, params, or argv | No |
+| `unknown_capability` | 400 | Capability name not recognized | No |
+| `encoder_unavailable` | 400 | Requested encoder not on the tier's image (e.g. webm on gpu) | No |
+| `filter_unavailable` | 400 | Requested filter not on the tier's image | No |
+| `output_resolution_too_large` | 400 | Output dimension over the tier's limit (gpu > 4096 px) | No |
+| `protocol_denied` | 400 | argv referenced a denied protocol or URL scheme (`run_ffmpeg`) | No |
+| `flag_denied` | 400 | argv used a denied ffmpeg flag (`run_ffmpeg`) | No |
+| `literal_path` | 400 | Literal filesystem path in argv — use placeholders (`run_ffmpeg`) | No |
+| `placeholder_unbound` | 400 | argv placeholder with no bound input (`run_ffmpeg`) | No |
+| `placeholder_syntax` | 400 | Malformed argv placeholder (`run_ffmpeg`) | No |
+| `unauthorized` | 401 | Missing or invalid engine credentials (platform-managed) | No |
+| `scope_denied` | 403 | Capability or mode not granted to the organization | No |
+| `job_not_found` | 404 | Unknown job ID on poll/result/cancel | No |
+| `idempotency_conflict` / `job_exists` | 409 | Duplicate submit under the same idempotency key | No |
+| `rate_limited` | 429 | Global engine submit bucket tripped | Yes — the platform retries it for you |
+| `platform_fault` | 502 | Engine-side fault | Yes |
+
+### Failure classes after the engine accepts a job — asynchronous, at poll time
+
+| `failure_class` | Surfaces as | Billing | Fault | Retryable |
+|-|-|-|-|-|
+| `invalid_command` | `INPUT_VALIDATION_ERROR` | $0 | Customer | No |
+| `input_rejected` | `INPUT_VALIDATION_ERROR`, message carries the gate reason (e.g. `duration_over_cap`) | $0 | Customer | No |
+| `exec_error` | Error code `exec_error` | Elapsed ffmpeg wall (`ceil`, 5 s floor) | Customer | No |
+| `billed_seconds_cap` | Error code `billed_seconds_cap` | Exactly 3600 s | Customer | No |
+| `platform_fault` | Error code `platform_fault` | $0 | Platform | Yes |
+| `platform_drift` | Error code `platform_drift` | $0 | Platform | No — resubmit |
+| — (job cancelled) | Prediction status `cancelled` | Wall time consumed before the cancel | Customer | No |
+
+The engine emits `retryable` on every terminal failure. It is `true` only for `platform_fault` — the one class where retrying the same request can succeed. Every other failure is deterministic: fix the request or the input instead of retrying.
+
+## Rate limits & concurrency
+
+- **No per-organization rate limit on submits today** (beta). `POST /v1/prediction` is not throttled per key or per org.
+- **One global engine submit bucket** — 50 requests/s, burst 100, shared across all organizations — protects the engine. You never see it as an HTTP 429: the platform absorbs it and retries the submit internally (3 attempts, 2 s base backoff). A persistently throttled submit surfaces as the prediction erroring with `PROVIDER_FAILED` (`rate_limited` in the message) at $0.
+- **In-flight execution caps** exist per provider on the platform side. A job held back by a cap is re-enqueued with backoff — you observe a prolonged `starting` status, not an error. If the platform exhausts its re-enqueue budget, the prediction errors with `PROVIDER_RATE_LIMIT` at $0.
+- **Worker concurrency is bounded platform-wide** (32 concurrent job actions per worker); bursts queue rather than fail — a 100-job burst of short transcodes drains in ~15-30 s.
 
 ## Limits
 
 | Limit | Value | Behavior at the limit |
 |-|-|-|
-| Total input size per job | 2 GiB (all inputs combined) | Rejected at $0 before download completes |
-| Max input duration | 3600 seconds | Rejected at $0 at the probe gate (`duration_over_cap`) |
-| Execution wall ceiling | 70 minutes per job | Job errors at $0. Covers a full re-encode up to the 3600s billed cap plus overhead; very long 1080p full re-encodes are the only workload that can approach it (analysis/trim/copy operations are unaffected). This ceiling may increase further during the beta |
+| Total input size per job | 2 GiB (all inputs combined) | Rejected at $0. An over-budget input is refused from its declared `Content-Length` before download; a source that declares no length is downloaded against the remaining budget and rejected mid-stream the moment it exceeds it — still $0 |
+| Max input duration | 3600 seconds | Rejected at $0 at the probe gate (`input_rejected`, reason `duration_over_cap`) |
+| Execution kill cap | 3600 s of metered ffmpeg wall | The job is killed, delivers nothing, and bills exactly 3600 s (`billed_seconds_cap`, customer fault, non-retryable). This is the only execution kill — see [When compute is billed without an artifact](#when-compute-is-billed-without-an-artifact) |
 | `tier` | Required on every request | Missing/empty tier is rejected at $0 |
 | Output artifacts | Hosted URLs (CDN) | Treat URLs as valid for at least 24 hours; download or persist promptly |
 
 ## Retries — read before automating
 
-A retried submit creates a **second, separately billed job** — the prediction API does not deduplicate submits today. Submit once, persist the returned `predictionID`, and drive all retry logic through polling that ID. Gateway-level idempotency keys are on the beta roadmap.
-
-## Errors, honestly
-
-Terminal failures surface with `status: "error"` and an `output.error_code`. During the beta, engine-side rejections currently surface with the generic code `PROVIDER_FAILED` and the reject class in `error_message` (for example `input_rejected`) — richer, self-diagnosable reject reasons are actively being rolled out. One thing you can always rely on today: rejected work bills `metrics.cost: 0`. When the error object includes `retryable`, it tells you whether a retry can help.
+A retried submit creates a **second, separately billed job** — the prediction API does not deduplicate submits today. Submit once, persist the returned `predictionID`, and drive all retry logic through polling that ID. Gateway-level idempotency keys are on the beta roadmap. Retry a *failed* prediction only when its error is retryable (`platform_fault`); every other failure class is deterministic and will fail again.
 
 ## Raw ffmpeg (`run_ffmpeg`)
 
-Beyond the 37 named capabilities there is a raw-ffmpeg mode for long-tail cases, **available to beta organizations today** — contract and examples in the [capabilities reference](/video/capabilities#run_ffmpeg). The enforced safety boundary is server-side argv validation (`argv[0]` limited to `ffmpeg`/`ffprobe`; denied tokens include URL schemes, `movie=`/`amovie=` filter sources, `-protocol_whitelist` overrides, and bare `-`) plus an injected `-protocol_whitelist file` so commands can read local files only, never the network. Every `run_ffmpeg` job bills under the same formula as any capability. Access may move to per-key grants later in the beta.
+Beyond the named capabilities there is a raw-ffmpeg mode for long-tail cases, **available to beta organizations today**. The full contract — parameter table, `output_format` allowlist, placeholder binding, and the enforced safety boundary — lives in the [capabilities reference](/video/capabilities#run_ffmpeg). Every `run_ffmpeg` job bills under the same formula as any capability. Access may move to per-key grants later in the beta.

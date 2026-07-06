@@ -16,8 +16,12 @@ Grab a key from the [dashboard](https://www.eachlabs.ai/api-keys). Every request
 `input_url` (and `input_urls`) accept a **publicly downloadable `https` URL** to a media file — we stage your media into eachlabs storage automatically before processing. `s3://` input URIs from your onboarding keep working unchanged, and you can chain jobs by passing a previous job's `output` URL as the next job's input.
 
 <Note>
-The URL must point directly at a media file — a media file extension (`.mp4`, `.mov`, `.mp3`, …) or a `mime_type=` query parameter. A URL we cannot stage (unreachable, not public, or not identifiable as media) is rejected at $0 with a clear reason (`PROVIDER_REJECTED`).
+The URL must point directly at a media file, identified by its file extension. The staged extensions are: video `.mp4` `.webm` `.mov` `.avi` `.mkv` `.flv`; audio `.mp3` `.wav` `.ogg` `.flac` `.m4a` `.aac` `.opus` `.wma`; image `.png` `.jpg` `.jpeg` `.gif` `.webp` `.bmp` `.tiff`; subtitle `.vtt`. A URL with **no** path extension can declare its type with a `mime_type=` query parameter (e.g. `mime_type=video_mp4`). A URL we cannot stage (unreachable, not public, or not identifiable as media) is rejected at $0 with `PROVIDER_REJECTED` and the offending URL in the message.
 </Note>
+
+<Warning>
+Text sidecar files outside that list (`.srt`/`.ass` subtitles, `.cube` LUTs, sendcmd scripts) are not staged from arbitrary public URLs. Host them on eachlabs storage instead — an `s3://` URI from your onboarding or a `cdn-us.eachlabs.ai` URL — or use `.vtt` for subtitles, which stages like any media file.
+</Warning>
 
 ## 3. Submit a job
 
@@ -34,7 +38,7 @@ curl -X POST "https://api.eachlabs.ai/v1/prediction" \
     "input": {
       "capability": "transcode",
       "tier": "cpu",
-      "input_url": "<YOUR_INPUT_URL>",
+      "input_url": "YOUR_INPUT_URL",
       "params": { "vcodec": "h264", "crf": 28 }
     }
   }'
@@ -51,7 +55,7 @@ resp = requests.post(
         "input": {
             "capability": "transcode",
             "tier": "cpu",
-            "input_url": "<YOUR_INPUT_URL>",
+            "input_url": "YOUR_INPUT_URL",
             "params": {"vcodec": "h264", "crf": 28},
         },
     },
@@ -71,7 +75,7 @@ const resp = await fetch("https://api.eachlabs.ai/v1/prediction", {
     input: {
       capability: "transcode",
       tier: "cpu",
-      input_url: "<YOUR_INPUT_URL>",
+      input_url: "YOUR_INPUT_URL",
       params: { vcodec: "h264", crf: 28 },
     },
   }),
@@ -94,7 +98,7 @@ curl "https://api.eachlabs.ai/v1/prediction/PREDICTION_ID" \
   -H "X-API-Key: YOUR_API_KEY"
 ```
 
-Status moves `starting` → `processing` → **`success`** or **`error`**. Poll every few seconds; most short jobs finish in well under a minute (a 100-job burst of short transcodes drains in ~15–30 seconds).
+The typical flow is `starting` → `processing` → **`success`**. The complete status set is `starting`, `created`, `processing`, `success`, `error`, `cancelled` — a failed prediction reports `error`, never `"failed"`. Poll every 3-5 seconds: the platform's own status checks are quantized to ~5 s, so tighter loops buy nothing. Most short jobs finish in well under a minute (a 100-job burst of short transcodes drains in ~15-30 seconds). A prediction sitting in `starting` unusually long is queued behind a concurrency cap — keep polling; see [Rate limits & concurrency](/video/billing-limits#rate-limits--concurrency).
 
 ```json
 {
@@ -105,8 +109,10 @@ Status moves `starting` → `processing` → **`success`** or **`error`**. Poll 
 }
 ```
 
-- `output` — hosted artifact URL(s) for media capabilities, or a structured JSON object for the analysis capabilities (`probe`, `scene_detect`, `silence_detect`).
+- `output` — hosted artifact URL(s) for media capabilities, or a structured JSON object for the analysis capabilities (`probe`, `scene_detect`, `silence_detect`). The exact JSON per output class is in [Response shapes](/video/capabilities#response-shapes).
 - `metrics.cost` — what the job actually billed, in USD. Rejected and failed jobs bill `0`.
+- `metrics.predict_time` — the prediction's **full wall time** in seconds, from processing start to completion detection, including internal queueing and poll quantization. It is **not** the billed quantity: cost comes from the engine-metered billed execution seconds × the tier rate. In the example above the engine metered 191 billed seconds → `191 × $0.0015 = $0.2865`, while `predict_time` reads 194.86 — see [the formula](/video/billing-limits#the-formula).
+- On `status: "error"` the prediction carries an error code and message; the full catalog, with billing impact per class, is in the [error catalog](/video/billing-limits#error-catalog).
 - Download or persist artifacts promptly; treat artifact URLs as valid for at least 24 hours.
 
 ## 5. Optional: completion webhooks
@@ -117,9 +123,9 @@ Instead of polling, pass the platform's standard `webhook_url` when creating the
 
 <CardGroup cols={2}>
   <Card title="Capabilities Reference" icon="list" href="/video/capabilities">
-    All 37 operations with parameters and request bodies.
+    Every capability with parameters, request bodies, and response shapes.
   </Card>
   <Card title="Billing & Limits" icon="credit-card" href="/video/billing-limits">
-    The billing formula and every limit stated plainly.
+    The billing formula, the error catalog, and the operational limits.
   </Card>
 </CardGroup>
