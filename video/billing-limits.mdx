@@ -180,7 +180,7 @@ The engine validates every submit synchronously. The platform submits on your be
 | `input_rejected` | `INPUT_VALIDATION_ERROR`, `error_message` carries the gate reason (e.g. `duration_over_cap`) | $0 | Customer | No |
 | `exec_error` | `PROVIDER_FAILED`, `error_message: "exec_error"` | Engine meters elapsed ffmpeg wall (`ceil`, 5 s floor) — settles $0 today | Customer | No |
 | `billed_seconds_cap` | `PROVIDER_FAILED`, `error_message: "billed_seconds_cap"` | Engine meters exactly 3600 s — settles $0 today | Customer | No |
-| `platform_fault` | `PROVIDER_FAILED`, `error_message: "platform_fault"`, `retryable: true` | $0 | Platform | **Yes** — retry the same request |
+| `platform_fault` | `PROVIDER_FAILED`, `error_message: "platform_fault"` | $0 | Platform | **Yes** — retry the same request. Identify it by `error_message`, not the envelope `retryable` field, which reads `false` even here. |
 | `platform_drift` | `PROVIDER_FAILED`, `error_message: "platform_drift"` | $0 | Platform | No — deterministic (below) |
 | — (job cancelled) | Prediction status `cancelled` | $0 — a cancelled prediction never bills | — | — |
 

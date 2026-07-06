@@ -65,7 +65,7 @@ Before compute starts, staged inputs pass through an ffprobe gate. The gate's ch
 
    (An image counts as a video stream — still-image watermarks and overlays pass.)
 3. **Empty-output parameters** — the per-capability zero-bill rejects noted in the tables below (`trim` start at/past EOF, `fade_out_start` at/past EOF, `stills`/`poster` timestamps at/past EOF, `keep_ranges` windows entirely past EOF or under one frame).
-4. **Tier and encoder constraints** — checked at submit, before the probe (gpu 4096 px output ceiling, webm-on-gpu, cpu-only codecs), each noted per capability.
+4. **Tier and encoder constraints** — webm-on-gpu, cpu-only codecs, and gpu output ceilings computed from your params are checked at submit; ceiling checks that need the source's own dimensions (e.g. `keep_ranges`, `segment` with `reencode`) run at execute after the probe and are skipped when the source cannot be probed. Each is noted per capability.
 
 **Geometry is not probed.** A `crop` window larger than the source frame, or a `pad` `x`/`y` offset that pushes the picture outside the canvas, passes the gate and fails at execution as `exec_error` (verified against production) — probe the source first when its dimensions are uncertain. If the probe itself cannot read the source, the gates that need probe data fail open and the job proceeds.
 
@@ -1555,7 +1555,8 @@ The example above is a working audio-mastering command (compress → normalize t
 - `argv[0]` must be `ffmpeg` or `ffprobe`.
 - **URL schemes are an allow-list of one** (`protocol_denied`): any token carrying a `scheme:` prefix is denied unless the scheme is `expr:` (ffmpeg's expression prefix). Nested prefixes are unwrapped recursively — `async:file:...`-style chains are caught.
 - **Denied tokens** (`flag_denied`): `-protocol_whitelist` (the sandbox injects its own), a bare `-` (stdin/stdout), `movie=` / `amovie=` filter sources (an arbitrary-file-read vector), and `-safe` with any value other than the literal `1`.
-- **Literal paths** (`literal_path`): any token containing a `/../` or leading `../` traversal.
+- **Placeholder-assembled paths** reject `..` traversal; raw literal path tokens are permitted in `run_ffmpeg` (it compiles in escalated mode — `/dev/null` and plain local paths pass validation, though only staged placeholder paths resolve to your media).
+- **`-var_stream_map`** values are checked against a strict grammar; a nonconforming value rejects as `invalid_command`.
 - **Placeholder bindings**: a bound value may not begin with `-` (`flag_denied`), may not contain `..` traversal, and, when spliced inside a filtergraph argument, may not contain the filtergraph metacharacters `` , : ; ' [ ] \ ``.
 
 **ffprobe.** With `argv[0]: "ffprobe"` the JSON is returned inline in the prediction `output` — no media artifact.
