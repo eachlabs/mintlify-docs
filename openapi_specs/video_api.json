@@ -7,6 +7,10 @@
     "x-generator": "be-monorepo/video-api cmd/openapigen"
   },
   "jsonSchemaDialect": "https://json-schema.org/draft/2020-12/schema",
+  "externalDocs": {
+    "description": "Human documentation for the video surface",
+    "url": "https://docs.eachlabs.ai/video/overview"
+  },
   "servers": [
     {
       "url": "https://api.eachlabs.ai"
@@ -17,15 +21,41 @@
       "ApiKeyAuth": []
     }
   ],
+  "tags": [
+    {
+      "name": "video",
+      "description": "eachlabs Video API prediction surface"
+    }
+  ],
   "paths": {
     "/v1/prediction": {
       "post": {
-        "description": "Submits one video capability job (or a raw run_ffmpeg job) for the eachlabs-video-api model and returns a prediction id to poll. Billing is per engine-metered execution second on the chosen tier with deliver-or-don't-bill semantics: a prediction that does not deliver its artifact settles at $0 in beta.",
+        "description": "Submits one video capability job (or a raw run_ffmpeg job) for the eachlabs-video-api model and returns a prediction id to poll. Billing is per engine-metered execution second on the chosen tier with deliver-or-don't-bill semantics: a prediction that does not deliver its artifact settles at $0 in beta (tier rates are on the billing docs page, not in this contract). Input media longer than 3600 seconds is rejected before billing (duration_over_cap); execution is killed at the 3600-metered-seconds cap. Submission is not idempotent on this surface — no idempotency key is exposed, so a timed-out POST may still have created a prediction; poll before resubmitting.",
         "operationId": "createVideoPrediction",
         "requestBody": {
           "content": {
             "application/json": {
               "examples": {
+                "concat": {
+                  "summary": "Join two clips end to end on a 1280x720 canvas (multi-input via input_urls, consumed in order)",
+                  "value": {
+                    "input": {
+                      "capability": "concat",
+                      "input_urls": [
+                        "https://your-host.example/clip-1.mp4",
+                        "https://your-host.example/clip-2.mp4"
+                      ],
+                      "params": {
+                        "container": "mp4",
+                        "height": 720,
+                        "inputs": 2,
+                        "width": 1280
+                      },
+                      "tier": "cpu"
+                    },
+                    "model": "eachlabs-video-api"
+                  }
+                },
                 "transcode": {
                   "summary": "Transcode a source file to h264 at crf 28",
                   "value": {
@@ -55,7 +85,7 @@
               "application/json": {
                 "example": {
                   "message": "Prediction created successfully",
-                  "predictionID": "d63b9b70-...",
+                  "predictionID": "d63b9b70-5a2e-4c8f-9b1d-3e7a86c40f52",
                   "status": "success"
                 },
                 "schema": {
@@ -65,7 +95,7 @@
             },
             "description": "Prediction accepted."
           },
-          "401": {
+          "400": {
             "content": {
               "application/json": {
                 "schema": {
@@ -73,10 +103,34 @@
                 }
               }
             },
-            "description": "Missing or invalid X-API-Key."
+            "description": "Malformed request body; details maps field names to validation messages."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Empty object.",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Missing or invalid X-API-Key. The body is an empty JSON object today."
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GatewayError"
+                }
+              }
+            },
+            "description": "Any other gateway failure."
           }
         },
-        "summary": "Submit a video job"
+        "summary": "Submit a video job",
+        "tags": [
+          "video"
+        ]
       }
     },
     "/v1/prediction/{id}": {
@@ -146,7 +200,7 @@
                   "success": {
                     "summary": "Terminal success with one hosted artifact",
                     "value": {
-                      "id": "1f0fdf4d-...",
+                      "id": "1f0fdf4d-7b3c-4e9a-8d25-c61f90ab4e73",
                       "input": {
                         "capability": "transcode",
                         "input_url": "https://your-host.example/source.mp4",
@@ -166,8 +220,8 @@
                       ],
                       "status": "success",
                       "urls": {
-                        "cancel": "https://api.eachlabs.ai/v1/prediction/1f0fdf4d-.../cancel",
-                        "get": "https://api.eachlabs.ai/v1/prediction/1f0fdf4d-..."
+                        "cancel": "https://api.eachlabs.ai/v1/prediction/1f0fdf4d-7b3c-4e9a-8d25-c61f90ab4e73/cancel",
+                        "get": "https://api.eachlabs.ai/v1/prediction/1f0fdf4d-7b3c-4e9a-8d25-c61f90ab4e73"
                       }
                     }
                   }
@@ -179,6 +233,17 @@
             },
             "description": "Current prediction state."
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Empty object.",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Missing or invalid X-API-Key. The body is an empty JSON object today."
+          },
           "404": {
             "content": {
               "application/json": {
@@ -188,14 +253,27 @@
               }
             },
             "description": "No prediction with that id."
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GatewayError"
+                }
+              }
+            },
+            "description": "Any other gateway failure."
           }
         },
-        "summary": "Poll a prediction"
+        "summary": "Poll a prediction",
+        "tags": [
+          "video"
+        ]
       }
     },
     "/v1/prediction/{id}/cancel": {
       "post": {
-        "description": "Record-only cancellation: the prediction is marked cancelled and never bills.",
+        "description": "Record-only cancellation: the prediction is marked cancelled and never bills. There is no 404 on this route today — an unknown id (or a backend cancel failure) surfaces as a 500 gateway error.",
         "operationId": "cancelVideoPrediction",
         "parameters": [
           {
@@ -218,7 +296,18 @@
             },
             "description": "Cancellation recorded."
           },
-          "404": {
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "description": "Empty object.",
+                  "type": "object"
+                }
+              }
+            },
+            "description": "Missing or invalid X-API-Key. The body is an empty JSON object today."
+          },
+          "500": {
             "content": {
               "application/json": {
                 "schema": {
@@ -226,10 +315,23 @@
                 }
               }
             },
-            "description": "No prediction with that id."
+            "description": "Unknown prediction id or a backend cancel failure."
+          },
+          "default": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GatewayError"
+                }
+              }
+            },
+            "description": "Any other gateway failure."
           }
         },
-        "summary": "Cancel a prediction"
+        "summary": "Cancel a prediction",
+        "tags": [
+          "video"
+        ]
       }
     }
   },
@@ -262,8 +364,182 @@
         ],
         "type": "object"
       },
+      "CapabilityInput": {
+        "description": "One of the 41 capability input envelopes, discriminated by the capability field.",
+        "discriminator": {
+          "mapping": {
+            "audio_analysis": "#/components/schemas/CapabilityInput_audio_analysis",
+            "audio_master": "#/components/schemas/CapabilityInput_audio_master",
+            "audio_replace": "#/components/schemas/CapabilityInput_audio_replace",
+            "captions": "#/components/schemas/CapabilityInput_captions",
+            "color": "#/components/schemas/CapabilityInput_color",
+            "concat": "#/components/schemas/CapabilityInput_concat",
+            "concat_copy": "#/components/schemas/CapabilityInput_concat_copy",
+            "crop": "#/components/schemas/CapabilityInput_crop",
+            "extract_audio": "#/components/schemas/CapabilityInput_extract_audio",
+            "fade": "#/components/schemas/CapabilityInput_fade",
+            "gif": "#/components/schemas/CapabilityInput_gif",
+            "hls_ladder": "#/components/schemas/CapabilityInput_hls_ladder",
+            "keep_ranges": "#/components/schemas/CapabilityInput_keep_ranges",
+            "loudnorm": "#/components/schemas/CapabilityInput_loudnorm",
+            "lut3d": "#/components/schemas/CapabilityInput_lut3d",
+            "overlay": "#/components/schemas/CapabilityInput_overlay",
+            "package_abr": "#/components/schemas/CapabilityInput_package_abr",
+            "package_abr_ladder": "#/components/schemas/CapabilityInput_package_abr_ladder",
+            "pad": "#/components/schemas/CapabilityInput_pad",
+            "poster": "#/components/schemas/CapabilityInput_poster",
+            "probe": "#/components/schemas/CapabilityInput_probe",
+            "reframe": "#/components/schemas/CapabilityInput_reframe",
+            "reframe_track": "#/components/schemas/CapabilityInput_reframe_track",
+            "reverse": "#/components/schemas/CapabilityInput_reverse",
+            "rotate": "#/components/schemas/CapabilityInput_rotate",
+            "scale": "#/components/schemas/CapabilityInput_scale",
+            "scene_detect": "#/components/schemas/CapabilityInput_scene_detect",
+            "segment": "#/components/schemas/CapabilityInput_segment",
+            "silence_detect": "#/components/schemas/CapabilityInput_silence_detect",
+            "silence_remove": "#/components/schemas/CapabilityInput_silence_remove",
+            "silence_split": "#/components/schemas/CapabilityInput_silence_split",
+            "slideshow": "#/components/schemas/CapabilityInput_slideshow",
+            "speed": "#/components/schemas/CapabilityInput_speed",
+            "stills": "#/components/schemas/CapabilityInput_stills",
+            "storyboard_sprites": "#/components/schemas/CapabilityInput_storyboard_sprites",
+            "subtitle_compose": "#/components/schemas/CapabilityInput_subtitle_compose",
+            "thumbnails": "#/components/schemas/CapabilityInput_thumbnails",
+            "transcode": "#/components/schemas/CapabilityInput_transcode",
+            "trim": "#/components/schemas/CapabilityInput_trim",
+            "volume": "#/components/schemas/CapabilityInput_volume",
+            "watermark": "#/components/schemas/CapabilityInput_watermark"
+          },
+          "propertyName": "capability"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/CapabilityInput_audio_analysis"
+          },
+          {
+            "$ref": "#/components/schemas/CapabilityInput_audio_master"
+          },
+          {
+            "$ref": "#/components/schemas/CapabilityInput_audio_replace"
+          },
+          {
+            "$ref": "#/components/schemas/CapabilityInput_captions"
+          },
+          {
+            "$ref": "#/components/schemas/CapabilityInput_color"
+          },
+          {
+            "$ref": "#/components/schemas/CapabilityInput_concat"
+          },
+          {
+            "$ref": "#/components/schemas/CapabilityInput_concat_copy"
+          },
+          {
+            "$ref": "#/components/schemas/CapabilityInput_crop"
+          },
+          {
+            "$ref": "#/components/schemas/CapabilityInput_extract_audio"
+          },
+          {
+            "$ref": "#/components/schemas/CapabilityInput_fade"
+          },
+          {
+            "$ref": "#/components/schemas/CapabilityInput_gif"
+          },
+          {
+            "$ref": "#/components/schemas/CapabilityInput_hls_ladder"
+          },
+          {
+            "$ref": "#/components/schemas/CapabilityInput_keep_ranges"
+          },
+          {
+            "$ref": "#/components/schemas/CapabilityInput_loudnorm"
+          },
+          {
+            "$ref": "#/components/schemas/CapabilityInput_lut3d"
+          },
+          {
+            "$ref": "#/components/schemas/CapabilityInput_overlay"
+          },
+          {
+            "$ref": "#/components/schemas/CapabilityInput_package_abr"
+          },
+          {
+            "$ref": "#/components/schemas/CapabilityInput_package_abr_ladder"
+          },
+          {
+            "$ref": "#/components/schemas/CapabilityInput_pad"
+          },
+          {
+            "$ref": "#/components/schemas/CapabilityInput_poster"
+          },
+          {
+            "$ref": "#/components/schemas/CapabilityInput_probe"
+          },
+          {
+            "$ref": "#/components/schemas/CapabilityInput_reframe"
+          },
+          {
+            "$ref": "#/components/schemas/CapabilityInput_reframe_track"
+          },
+          {
+            "$ref": "#/components/schemas/CapabilityInput_reverse"
+          },
+          {
+            "$ref": "#/components/schemas/CapabilityInput_rotate"
+          },
+          {
+            "$ref": "#/components/schemas/CapabilityInput_scale"
+          },
+          {
+            "$ref": "#/components/schemas/CapabilityInput_scene_detect"
+          },
+          {
+            "$ref": "#/components/schemas/CapabilityInput_segment"
+          },
+          {
+            "$ref": "#/components/schemas/CapabilityInput_silence_detect"
+          },
+          {
+            "$ref": "#/components/schemas/CapabilityInput_silence_remove"
+          },
+          {
+            "$ref": "#/components/schemas/CapabilityInput_silence_split"
+          },
+          {
+            "$ref": "#/components/schemas/CapabilityInput_slideshow"
+          },
+          {
+            "$ref": "#/components/schemas/CapabilityInput_speed"
+          },
+          {
+            "$ref": "#/components/schemas/CapabilityInput_stills"
+          },
+          {
+            "$ref": "#/components/schemas/CapabilityInput_storyboard_sprites"
+          },
+          {
+            "$ref": "#/components/schemas/CapabilityInput_subtitle_compose"
+          },
+          {
+            "$ref": "#/components/schemas/CapabilityInput_thumbnails"
+          },
+          {
+            "$ref": "#/components/schemas/CapabilityInput_transcode"
+          },
+          {
+            "$ref": "#/components/schemas/CapabilityInput_trim"
+          },
+          {
+            "$ref": "#/components/schemas/CapabilityInput_volume"
+          },
+          {
+            "$ref": "#/components/schemas/CapabilityInput_watermark"
+          }
+        ]
+      },
       "CapabilityInput_audio_analysis": {
-        "description": "Input envelope for the \"audio_analysis\" capability. The params schema below is the complete, canonical contract for this capability.",
+        "description": "Input envelope for the \"audio_analysis\" capability. The params schema below is the complete, canonical contract for this capability; send params explicitly ({} accepts every default) — required fields inside it are enforced at submit as invalid_command.",
         "properties": {
           "capability": {
             "const": "audio_analysis",
@@ -307,12 +583,13 @@
           }
         },
         "required": [
-          "capability"
+          "capability",
+          "params"
         ],
         "type": "object"
       },
       "CapabilityInput_audio_master": {
-        "description": "Input envelope for the \"audio_master\" capability. The params schema below is the complete, canonical contract for this capability.",
+        "description": "Input envelope for the \"audio_master\" capability. The params schema below is the complete, canonical contract for this capability; send params explicitly ({} accepts every default) — required fields inside it are enforced at submit as invalid_command.",
         "properties": {
           "capability": {
             "const": "audio_master",
@@ -400,12 +677,13 @@
           }
         },
         "required": [
-          "capability"
+          "capability",
+          "params"
         ],
         "type": "object"
       },
       "CapabilityInput_audio_replace": {
-        "description": "Input envelope for the \"audio_replace\" capability. The params schema below is the complete, canonical contract for this capability.",
+        "description": "Input envelope for the \"audio_replace\" capability. The params schema below is the complete, canonical contract for this capability; send params explicitly ({} accepts every default) — required fields inside it are enforced at submit as invalid_command.",
         "properties": {
           "capability": {
             "const": "audio_replace",
@@ -480,12 +758,13 @@
           }
         },
         "required": [
-          "capability"
+          "capability",
+          "params"
         ],
         "type": "object"
       },
       "CapabilityInput_captions": {
-        "description": "Input envelope for the \"captions\" capability. The params schema below is the complete, canonical contract for this capability.",
+        "description": "Input envelope for the \"captions\" capability. The params schema below is the complete, canonical contract for this capability; send params explicitly ({} accepts every default) — required fields inside it are enforced at submit as invalid_command.",
         "properties": {
           "capability": {
             "const": "captions",
@@ -558,12 +837,13 @@
           }
         },
         "required": [
-          "capability"
+          "capability",
+          "params"
         ],
         "type": "object"
       },
       "CapabilityInput_color": {
-        "description": "Input envelope for the \"color\" capability. The params schema below is the complete, canonical contract for this capability.",
+        "description": "Input envelope for the \"color\" capability. The params schema below is the complete, canonical contract for this capability; send params explicitly ({} accepts every default) — required fields inside it are enforced at submit as invalid_command.",
         "properties": {
           "capability": {
             "const": "color",
@@ -644,12 +924,13 @@
           }
         },
         "required": [
-          "capability"
+          "capability",
+          "params"
         ],
         "type": "object"
       },
       "CapabilityInput_concat": {
-        "description": "Input envelope for the \"concat\" capability. The params schema below is the complete, canonical contract for this capability.",
+        "description": "Input envelope for the \"concat\" capability. The params schema below is the complete, canonical contract for this capability; send params explicitly ({} accepts every default) — required fields inside it are enforced at submit as invalid_command.",
         "properties": {
           "capability": {
             "const": "concat",
@@ -722,12 +1003,13 @@
           }
         },
         "required": [
-          "capability"
+          "capability",
+          "params"
         ],
         "type": "object"
       },
       "CapabilityInput_concat_copy": {
-        "description": "Input envelope for the \"concat_copy\" capability. The params schema below is the complete, canonical contract for this capability.",
+        "description": "Input envelope for the \"concat_copy\" capability. The params schema below is the complete, canonical contract for this capability; send params explicitly ({} accepts every default) — required fields inside it are enforced at submit as invalid_command.",
         "properties": {
           "capability": {
             "const": "concat_copy",
@@ -788,12 +1070,13 @@
           }
         },
         "required": [
-          "capability"
+          "capability",
+          "params"
         ],
         "type": "object"
       },
       "CapabilityInput_crop": {
-        "description": "Input envelope for the \"crop\" capability. The params schema below is the complete, canonical contract for this capability.",
+        "description": "Input envelope for the \"crop\" capability. The params schema below is the complete, canonical contract for this capability; send params explicitly ({} accepts every default) — required fields inside it are enforced at submit as invalid_command.",
         "properties": {
           "capability": {
             "const": "crop",
@@ -870,12 +1153,13 @@
           }
         },
         "required": [
-          "capability"
+          "capability",
+          "params"
         ],
         "type": "object"
       },
       "CapabilityInput_extract_audio": {
-        "description": "Input envelope for the \"extract_audio\" capability. The params schema below is the complete, canonical contract for this capability.",
+        "description": "Input envelope for the \"extract_audio\" capability. The params schema below is the complete, canonical contract for this capability; send params explicitly ({} accepts every default) — required fields inside it are enforced at submit as invalid_command.",
         "properties": {
           "capability": {
             "const": "extract_audio",
@@ -941,12 +1225,13 @@
           }
         },
         "required": [
-          "capability"
+          "capability",
+          "params"
         ],
         "type": "object"
       },
       "CapabilityInput_fade": {
-        "description": "Input envelope for the \"fade\" capability. The params schema below is the complete, canonical contract for this capability.",
+        "description": "Input envelope for the \"fade\" capability. The params schema below is the complete, canonical contract for this capability; send params explicitly ({} accepts every default) — required fields inside it are enforced at submit as invalid_command.",
         "properties": {
           "capability": {
             "const": "fade",
@@ -1048,12 +1333,13 @@
           }
         },
         "required": [
-          "capability"
+          "capability",
+          "params"
         ],
         "type": "object"
       },
       "CapabilityInput_gif": {
-        "description": "Input envelope for the \"gif\" capability. The params schema below is the complete, canonical contract for this capability.",
+        "description": "Input envelope for the \"gif\" capability. The params schema below is the complete, canonical contract for this capability; send params explicitly ({} accepts every default) — required fields inside it are enforced at submit as invalid_command.",
         "properties": {
           "capability": {
             "const": "gif",
@@ -1110,12 +1396,13 @@
           }
         },
         "required": [
-          "capability"
+          "capability",
+          "params"
         ],
         "type": "object"
       },
       "CapabilityInput_hls_ladder": {
-        "description": "Input envelope for the \"hls_ladder\" capability. The params schema below is the complete, canonical contract for this capability.",
+        "description": "Input envelope for the \"hls_ladder\" capability. The params schema below is the complete, canonical contract for this capability; send params explicitly ({} accepts every default) — required fields inside it are enforced at submit as invalid_command.",
         "properties": {
           "capability": {
             "const": "hls_ladder",
@@ -1214,12 +1501,13 @@
           }
         },
         "required": [
-          "capability"
+          "capability",
+          "params"
         ],
         "type": "object"
       },
       "CapabilityInput_keep_ranges": {
-        "description": "Input envelope for the \"keep_ranges\" capability. The params schema below is the complete, canonical contract for this capability.",
+        "description": "Input envelope for the \"keep_ranges\" capability. The params schema below is the complete, canonical contract for this capability; send params explicitly ({} accepts every default) — required fields inside it are enforced at submit as invalid_command.",
         "properties": {
           "capability": {
             "const": "keep_ranges",
@@ -1303,12 +1591,13 @@
           }
         },
         "required": [
-          "capability"
+          "capability",
+          "params"
         ],
         "type": "object"
       },
       "CapabilityInput_loudnorm": {
-        "description": "Input envelope for the \"loudnorm\" capability. The params schema below is the complete, canonical contract for this capability.",
+        "description": "Input envelope for the \"loudnorm\" capability. The params schema below is the complete, canonical contract for this capability; send params explicitly ({} accepts every default) — required fields inside it are enforced at submit as invalid_command.",
         "properties": {
           "capability": {
             "const": "loudnorm",
@@ -1382,12 +1671,13 @@
           }
         },
         "required": [
-          "capability"
+          "capability",
+          "params"
         ],
         "type": "object"
       },
       "CapabilityInput_lut3d": {
-        "description": "Input envelope for the \"lut3d\" capability. The params schema below is the complete, canonical contract for this capability.",
+        "description": "Input envelope for the \"lut3d\" capability. The params schema below is the complete, canonical contract for this capability; send params explicitly ({} accepts every default) — required fields inside it are enforced at submit as invalid_command.",
         "properties": {
           "capability": {
             "const": "lut3d",
@@ -1449,12 +1739,13 @@
           }
         },
         "required": [
-          "capability"
+          "capability",
+          "params"
         ],
         "type": "object"
       },
       "CapabilityInput_overlay": {
-        "description": "Input envelope for the \"overlay\" capability. The params schema below is the complete, canonical contract for this capability.",
+        "description": "Input envelope for the \"overlay\" capability. The params schema below is the complete, canonical contract for this capability; send params explicitly ({} accepts every default) — required fields inside it are enforced at submit as invalid_command.",
         "properties": {
           "capability": {
             "const": "overlay",
@@ -1534,12 +1825,13 @@
           }
         },
         "required": [
-          "capability"
+          "capability",
+          "params"
         ],
         "type": "object"
       },
       "CapabilityInput_package_abr": {
-        "description": "Input envelope for the \"package_abr\" capability. The params schema below is the complete, canonical contract for this capability.",
+        "description": "Input envelope for the \"package_abr\" capability. The params schema below is the complete, canonical contract for this capability; send params explicitly ({} accepts every default) — required fields inside it are enforced at submit as invalid_command.",
         "properties": {
           "capability": {
             "const": "package_abr",
@@ -1591,12 +1883,13 @@
           }
         },
         "required": [
-          "capability"
+          "capability",
+          "params"
         ],
         "type": "object"
       },
       "CapabilityInput_package_abr_ladder": {
-        "description": "Input envelope for the \"package_abr_ladder\" capability. The params schema below is the complete, canonical contract for this capability.",
+        "description": "Input envelope for the \"package_abr_ladder\" capability. The params schema below is the complete, canonical contract for this capability; send params explicitly ({} accepts every default) — required fields inside it are enforced at submit as invalid_command.",
         "properties": {
           "capability": {
             "const": "package_abr_ladder",
@@ -1694,12 +1987,13 @@
           }
         },
         "required": [
-          "capability"
+          "capability",
+          "params"
         ],
         "type": "object"
       },
       "CapabilityInput_pad": {
-        "description": "Input envelope for the \"pad\" capability. The params schema below is the complete, canonical contract for this capability.",
+        "description": "Input envelope for the \"pad\" capability. The params schema below is the complete, canonical contract for this capability; send params explicitly ({} accepts every default) — required fields inside it are enforced at submit as invalid_command.",
         "properties": {
           "capability": {
             "const": "pad",
@@ -1781,12 +2075,13 @@
           }
         },
         "required": [
-          "capability"
+          "capability",
+          "params"
         ],
         "type": "object"
       },
       "CapabilityInput_poster": {
-        "description": "Input envelope for the \"poster\" capability. The params schema below is the complete, canonical contract for this capability.",
+        "description": "Input envelope for the \"poster\" capability. The params schema below is the complete, canonical contract for this capability; send params explicitly ({} accepts every default) — required fields inside it are enforced at submit as invalid_command.",
         "properties": {
           "capability": {
             "const": "poster",
@@ -1845,12 +2140,13 @@
           }
         },
         "required": [
-          "capability"
+          "capability",
+          "params"
         ],
         "type": "object"
       },
       "CapabilityInput_probe": {
-        "description": "Input envelope for the \"probe\" capability. The params schema below is the complete, canonical contract for this capability.",
+        "description": "Input envelope for the \"probe\" capability. The params schema below is the complete, canonical contract for this capability; send params explicitly ({} accepts every default) — required fields inside it are enforced at submit as invalid_command.",
         "properties": {
           "capability": {
             "const": "probe",
@@ -1894,12 +2190,13 @@
           }
         },
         "required": [
-          "capability"
+          "capability",
+          "params"
         ],
         "type": "object"
       },
       "CapabilityInput_reframe": {
-        "description": "Input envelope for the \"reframe\" capability. The params schema below is the complete, canonical contract for this capability.",
+        "description": "Input envelope for the \"reframe\" capability. The params schema below is the complete, canonical contract for this capability; send params explicitly ({} accepts every default) — required fields inside it are enforced at submit as invalid_command.",
         "properties": {
           "capability": {
             "const": "reframe",
@@ -1982,12 +2279,13 @@
           }
         },
         "required": [
-          "capability"
+          "capability",
+          "params"
         ],
         "type": "object"
       },
       "CapabilityInput_reframe_track": {
-        "description": "Input envelope for the \"reframe_track\" capability. The params schema below is the complete, canonical contract for this capability.",
+        "description": "Input envelope for the \"reframe_track\" capability. The params schema below is the complete, canonical contract for this capability; send params explicitly ({} accepts every default) — required fields inside it are enforced at submit as invalid_command.",
         "properties": {
           "capability": {
             "const": "reframe_track",
@@ -2056,12 +2354,13 @@
           }
         },
         "required": [
-          "capability"
+          "capability",
+          "params"
         ],
         "type": "object"
       },
       "CapabilityInput_reverse": {
-        "description": "Input envelope for the \"reverse\" capability. The params schema below is the complete, canonical contract for this capability.",
+        "description": "Input envelope for the \"reverse\" capability. The params schema below is the complete, canonical contract for this capability; send params explicitly ({} accepts every default) — required fields inside it are enforced at submit as invalid_command.",
         "properties": {
           "capability": {
             "const": "reverse",
@@ -2116,12 +2415,13 @@
           }
         },
         "required": [
-          "capability"
+          "capability",
+          "params"
         ],
         "type": "object"
       },
       "CapabilityInput_rotate": {
-        "description": "Input envelope for the \"rotate\" capability. The params schema below is the complete, canonical contract for this capability.",
+        "description": "Input envelope for the \"rotate\" capability. The params schema below is the complete, canonical contract for this capability; send params explicitly ({} accepts every default) — required fields inside it are enforced at submit as invalid_command.",
         "properties": {
           "capability": {
             "const": "rotate",
@@ -2184,12 +2484,13 @@
           }
         },
         "required": [
-          "capability"
+          "capability",
+          "params"
         ],
         "type": "object"
       },
       "CapabilityInput_scale": {
-        "description": "Input envelope for the \"scale\" capability. The params schema below is the complete, canonical contract for this capability.",
+        "description": "Input envelope for the \"scale\" capability. The params schema below is the complete, canonical contract for this capability; send params explicitly ({} accepts every default) — required fields inside it are enforced at submit as invalid_command.",
         "properties": {
           "capability": {
             "const": "scale",
@@ -2253,12 +2554,13 @@
           }
         },
         "required": [
-          "capability"
+          "capability",
+          "params"
         ],
         "type": "object"
       },
       "CapabilityInput_scene_detect": {
-        "description": "Input envelope for the \"scene_detect\" capability. The params schema below is the complete, canonical contract for this capability.",
+        "description": "Input envelope for the \"scene_detect\" capability. The params schema below is the complete, canonical contract for this capability; send params explicitly ({} accepts every default) — required fields inside it are enforced at submit as invalid_command.",
         "properties": {
           "capability": {
             "const": "scene_detect",
@@ -2310,12 +2612,13 @@
           }
         },
         "required": [
-          "capability"
+          "capability",
+          "params"
         ],
         "type": "object"
       },
       "CapabilityInput_segment": {
-        "description": "Input envelope for the \"segment\" capability. The params schema below is the complete, canonical contract for this capability.",
+        "description": "Input envelope for the \"segment\" capability. The params schema below is the complete, canonical contract for this capability; send params explicitly ({} accepts every default) — required fields inside it are enforced at submit as invalid_command.",
         "properties": {
           "capability": {
             "const": "segment",
@@ -2401,12 +2704,13 @@
           }
         },
         "required": [
-          "capability"
+          "capability",
+          "params"
         ],
         "type": "object"
       },
       "CapabilityInput_silence_detect": {
-        "description": "Input envelope for the \"silence_detect\" capability. The params schema below is the complete, canonical contract for this capability.",
+        "description": "Input envelope for the \"silence_detect\" capability. The params schema below is the complete, canonical contract for this capability; send params explicitly ({} accepts every default) — required fields inside it are enforced at submit as invalid_command.",
         "properties": {
           "capability": {
             "const": "silence_detect",
@@ -2465,12 +2769,13 @@
           }
         },
         "required": [
-          "capability"
+          "capability",
+          "params"
         ],
         "type": "object"
       },
       "CapabilityInput_silence_remove": {
-        "description": "Input envelope for the \"silence_remove\" capability. The params schema below is the complete, canonical contract for this capability.",
+        "description": "Input envelope for the \"silence_remove\" capability. The params schema below is the complete, canonical contract for this capability; send params explicitly ({} accepts every default) — required fields inside it are enforced at submit as invalid_command.",
         "properties": {
           "capability": {
             "const": "silence_remove",
@@ -2554,12 +2859,13 @@
           }
         },
         "required": [
-          "capability"
+          "capability",
+          "params"
         ],
         "type": "object"
       },
       "CapabilityInput_silence_split": {
-        "description": "Input envelope for the \"silence_split\" capability. The params schema below is the complete, canonical contract for this capability.",
+        "description": "Input envelope for the \"silence_split\" capability. The params schema below is the complete, canonical contract for this capability; send params explicitly ({} accepts every default) — required fields inside it are enforced at submit as invalid_command.",
         "properties": {
           "capability": {
             "const": "silence_split",
@@ -2654,12 +2960,13 @@
           }
         },
         "required": [
-          "capability"
+          "capability",
+          "params"
         ],
         "type": "object"
       },
       "CapabilityInput_slideshow": {
-        "description": "Input envelope for the \"slideshow\" capability. The params schema below is the complete, canonical contract for this capability.",
+        "description": "Input envelope for the \"slideshow\" capability. The params schema below is the complete, canonical contract for this capability; send params explicitly ({} accepts every default) — required fields inside it are enforced at submit as invalid_command.",
         "properties": {
           "capability": {
             "const": "slideshow",
@@ -2753,12 +3060,13 @@
           }
         },
         "required": [
-          "capability"
+          "capability",
+          "params"
         ],
         "type": "object"
       },
       "CapabilityInput_speed": {
-        "description": "Input envelope for the \"speed\" capability. The params schema below is the complete, canonical contract for this capability.",
+        "description": "Input envelope for the \"speed\" capability. The params schema below is the complete, canonical contract for this capability; send params explicitly ({} accepts every default) — required fields inside it are enforced at submit as invalid_command.",
         "properties": {
           "capability": {
             "const": "speed",
@@ -2820,12 +3128,13 @@
           }
         },
         "required": [
-          "capability"
+          "capability",
+          "params"
         ],
         "type": "object"
       },
       "CapabilityInput_stills": {
-        "description": "Input envelope for the \"stills\" capability. The params schema below is the complete, canonical contract for this capability.",
+        "description": "Input envelope for the \"stills\" capability. The params schema below is the complete, canonical contract for this capability; send params explicitly ({} accepts every default) — required fields inside it are enforced at submit as invalid_command.",
         "properties": {
           "capability": {
             "const": "stills",
@@ -2916,12 +3225,13 @@
           }
         },
         "required": [
-          "capability"
+          "capability",
+          "params"
         ],
         "type": "object"
       },
       "CapabilityInput_storyboard_sprites": {
-        "description": "Input envelope for the \"storyboard_sprites\" capability. The params schema below is the complete, canonical contract for this capability.",
+        "description": "Input envelope for the \"storyboard_sprites\" capability. The params schema below is the complete, canonical contract for this capability; send params explicitly ({} accepts every default) — required fields inside it are enforced at submit as invalid_command.",
         "properties": {
           "capability": {
             "const": "storyboard_sprites",
@@ -3005,12 +3315,13 @@
           }
         },
         "required": [
-          "capability"
+          "capability",
+          "params"
         ],
         "type": "object"
       },
       "CapabilityInput_subtitle_compose": {
-        "description": "Input envelope for the \"subtitle_compose\" capability. The params schema below is the complete, canonical contract for this capability.",
+        "description": "Input envelope for the \"subtitle_compose\" capability. The params schema below is the complete, canonical contract for this capability; send params explicitly ({} accepts every default) — required fields inside it are enforced at submit as invalid_command.",
         "properties": {
           "capability": {
             "const": "subtitle_compose",
@@ -3234,12 +3545,13 @@
           }
         },
         "required": [
-          "capability"
+          "capability",
+          "params"
         ],
         "type": "object"
       },
       "CapabilityInput_thumbnails": {
-        "description": "Input envelope for the \"thumbnails\" capability. The params schema below is the complete, canonical contract for this capability.",
+        "description": "Input envelope for the \"thumbnails\" capability. The params schema below is the complete, canonical contract for this capability; send params explicitly ({} accepts every default) — required fields inside it are enforced at submit as invalid_command.",
         "properties": {
           "capability": {
             "const": "thumbnails",
@@ -3297,12 +3609,13 @@
           }
         },
         "required": [
-          "capability"
+          "capability",
+          "params"
         ],
         "type": "object"
       },
       "CapabilityInput_transcode": {
-        "description": "Input envelope for the \"transcode\" capability. The params schema below is the complete, canonical contract for this capability.",
+        "description": "Input envelope for the \"transcode\" capability. The params schema below is the complete, canonical contract for this capability; send params explicitly ({} accepts every default) — required fields inside it are enforced at submit as invalid_command.",
         "properties": {
           "capability": {
             "const": "transcode",
@@ -3391,12 +3704,13 @@
           }
         },
         "required": [
-          "capability"
+          "capability",
+          "params"
         ],
         "type": "object"
       },
       "CapabilityInput_trim": {
-        "description": "Input envelope for the \"trim\" capability. The params schema below is the complete, canonical contract for this capability.",
+        "description": "Input envelope for the \"trim\" capability. The params schema below is the complete, canonical contract for this capability; send params explicitly ({} accepts every default) — required fields inside it are enforced at submit as invalid_command.",
         "properties": {
           "capability": {
             "const": "trim",
@@ -3453,12 +3767,13 @@
           }
         },
         "required": [
-          "capability"
+          "capability",
+          "params"
         ],
         "type": "object"
       },
       "CapabilityInput_volume": {
-        "description": "Input envelope for the \"volume\" capability. The params schema below is the complete, canonical contract for this capability.",
+        "description": "Input envelope for the \"volume\" capability. The params schema below is the complete, canonical contract for this capability; send params explicitly ({} accepts every default) — required fields inside it are enforced at submit as invalid_command.",
         "properties": {
           "capability": {
             "const": "volume",
@@ -3518,12 +3833,13 @@
           }
         },
         "required": [
-          "capability"
+          "capability",
+          "params"
         ],
         "type": "object"
       },
       "CapabilityInput_watermark": {
-        "description": "Input envelope for the \"watermark\" capability. The params schema below is the complete, canonical contract for this capability.",
+        "description": "Input envelope for the \"watermark\" capability. The params schema below is the complete, canonical contract for this capability; send params explicitly ({} accepts every default) — required fields inside it are enforced at submit as invalid_command.",
         "properties": {
           "capability": {
             "const": "watermark",
@@ -3590,7 +3906,8 @@
           }
         },
         "required": [
-          "capability"
+          "capability",
+          "params"
         ],
         "type": "object"
       },
@@ -3619,7 +3936,7 @@
         "type": "object"
       },
       "EngineRejectError": {
-        "description": "Engine-side reject body: how the video engine refuses a submission at $0, surfaced inside the gateway error envelope's error_message.",
+        "description": "Engine error body (code, message, retryable, stage), surfaced inside the gateway error envelope's error_message. Most codes reject a submission synchronously at $0; input_rejected surfaces post-accept as INPUT_VALIDATION_ERROR carrying the input-gate reason (e.g. duration_over_cap), and billed_seconds_cap marks a post-accept kill at the metered cap. An unexpected engine fault emits code \"internal_error\" with stage \"internal\", outside these enums.",
         "properties": {
           "code": {
             "enum": [
@@ -3724,6 +4041,7 @@
             "type": "string"
           },
           "retryable": {
+            "description": "Reads false even for platform_fault — the one genuinely retryable failure class. Identify retryability from error_message and the failure class, never from this field.",
             "type": "boolean"
           },
           "status": {
@@ -3734,10 +4052,16 @@
             "type": "boolean"
           }
         },
+        "required": [
+          "success",
+          "error",
+          "error_code",
+          "error_message"
+        ],
         "type": "object"
       },
       "FailureClass": {
-        "description": "Engine failure class recorded for a failed job, surfaced through error_message. platform_fault is the only retryable class.",
+        "description": "Engine failure class recorded for a non-success job; for error predictions it travels in error_message. platform_fault is the only retryable class (note the envelope retryable field reads false even then). A cancelled job surfaces as prediction status \"cancelled\" with no error envelope — \"canceled\" never appears in error_message.",
         "enum": [
           "invalid_command",
           "input_rejected",
@@ -3750,16 +4074,17 @@
         "type": "string"
       },
       "GatewayError": {
-        "description": "Gateway-level error body (authentication, unknown prediction, malformed request).",
+        "description": "Gateway-level error body for malformed requests, unknown predictions, and internal failures, e.g. {\"status\": 404, \"error\": \"not found\"}. Authentication failures are the exception: a missing or invalid X-API-Key returns 401 with an empty JSON object body today.",
         "properties": {
           "details": {
-            "type": "string"
+            "description": "Optional detail: a string, or for request-validation failures an object mapping field names to messages."
           },
           "error": {
             "type": "string"
           },
           "status": {
-            "type": "string"
+            "description": "HTTP status code echoed in the body.",
+            "type": "integer"
           }
         },
         "type": "object"
@@ -3771,8 +4096,8 @@
             "type": "string"
           },
           "input": {
-            "description": "Your submitted input, echoed back.",
-            "type": "object"
+            "$ref": "#/components/schemas/VideoInput",
+            "description": "Your submitted input, echoed back."
           },
           "logs": {
             "description": "Present on every poll; null today.",
@@ -3804,7 +4129,7 @@
             "$ref": "#/components/schemas/PredictionOutput"
           },
           "status": {
-            "description": "Typical flow: starting → processing → success. Terminal states: success, error, cancelled. created is the record's initial state before platform pickup (pickup is normally immediate, so a poll loop may never observe it). A failed prediction reports \"error\", never \"failed\". Poll every 3-5 seconds — platform status checks are quantized to ~5 s, tighter loops buy nothing.",
+            "description": "Typical flow: starting → processing → success. Terminal states: success, error, cancelled. The video surface writes \"starting\" as the initial state; \"created\" appears only on legacy paths, so a poll loop may never observe it. A failed prediction reports \"error\", never \"failed\". Poll every 3-5 seconds — platform status checks are quantized to ~5 s, tighter loops buy nothing.",
             "enum": [
               "created",
               "starting",
@@ -3868,13 +4193,13 @@
             "type": "null"
           }
         ],
-        "description": "Value of the poll envelope's output field. The shape follows the capability's output class: media capabilities deliver hosted artifact URL(s) as an array (single-artifact capabilities deliver a one-element array); analysis capabilities (probe, scene_detect, silence_detect, audio_analysis) deliver structured JSON (an object, which may also arrive as a JSON string or as a URL to a JSON body); packaging capabilities (hls_ladder, abr_bundle) deliver the manifest plus artifacts. On status \"error\" this is the ErrorOutput object. Download or persist artifact URLs promptly; treat them as valid for at least 24 hours."
+        "description": "Value of the poll envelope's output field. The shape follows the capability's output class: media capabilities deliver hosted artifact URL(s) as an array (single-artifact capabilities deliver a one-element array); analysis capabilities (probe, scene_detect, silence_detect, audio_analysis) deliver structured JSON (an object, which may also arrive as a JSON string or as a URL to a JSON body); packaging capabilities (package_abr, package_abr_ladder, hls_ladder) deliver the manifest plus artifacts. On status \"error\" this is the ErrorOutput object. Download or persist artifact URLs promptly; treat them as valid for at least 24 hours."
       },
       "RunFFmpegInput": {
-        "description": "Input envelope for raw run_ffmpeg mode — the escape hatch for long-tail cases no named capability covers. Requires the run_ffmpeg scope on the API key. Unlike capability jobs it is not pre-checked against the execution-time ceiling: a long re-encode can be killed at the platform time limit and still bill — prefer a capability when one fits.",
+        "description": "Input envelope for raw run_ffmpeg mode — the escape hatch for long-tail cases no named capability covers. Access is granted per-organization during the beta; the server holds the scope, a caller cannot self-grant it via the API key. The same gates as capability jobs apply: a staged input longer than 3600 seconds is rejected before billing (duration_over_cap), and execution is killed at the 3600-metered-seconds cap — a killed job wastes its wall clock and, like every non-success prediction, settles metrics.cost 0 in beta. Prefer a capability when one fits.",
         "properties": {
           "argv": {
-            "description": "Full argv whose first token must be exactly ffmpeg or ffprobe (an ffprobe argv returns its captured stdout as the job result instead of a file). Reference media only via {placeholders}: one input_url binds {input}, N input_urls bind {input0}, {input1}, … in array order, and the output path is {output} (extension set by output_format). Rejected outright: any URL or protocol scheme in any token (http:, file:, concat:, and so on — the only allowed prefix is expr: for expression values; at runtime only the file protocol is available), the movie= and amovie= filters, -protocol_whitelist, -safe with any value other than 1, and the bare token - (stdin/stdout): for a discard sink write -f null /dev/null instead of -f null -. That is the complete deny list; anything else passes validation (raw local path tokens like /dev/null are permitted, though only placeholder paths resolve to your media) — a command ffmpeg itself rejects fails at execution as exec_error.",
+            "description": "Full argv whose first token must be exactly ffmpeg or ffprobe (an ffprobe argv returns its captured stdout as the job result instead of a file). Reference media only via {placeholders}: one input_url binds {input}, N input_urls bind {input0}, {input1}, … in array order, and the output path is {output} (extension set by output_format). Rejected at submit with the named code: any URL or protocol scheme in any token (http:, file:, concat:, and so on — the only allowed prefix is expr: for expression values; at runtime only the file protocol is available), the movie= and amovie= filters, -protocol_whitelist, -safe with any value other than 1, the bare token - (stdin/stdout — for a discard sink write -f null /dev/null instead of -f null -), a -var_stream_map value outside the strict v:<n>/a:<n> grammar (name:/agroup: options are rejected as invalid_command), placeholder-assembled paths containing ../ (literal_path) or starting with - (flag_denied), and filtergraph metacharacters in spliced bound paths (invalid_command). Raw literal path tokens like /dev/null pass validation (run_ffmpeg compiles in escalated mode), though only placeholder paths resolve to your media; a command ffmpeg itself rejects fails at execution as exec_error.",
             "items": {
               "type": "string"
             },
@@ -3934,130 +4259,10 @@
         "type": "object"
       },
       "VideoInput": {
-        "description": "The job to run: one of the 41 capability input envelopes, or raw run_ffmpeg mode. An omitted capability defaults to \"transcode\" and an omitted tier defaults to \"cpu\" — always send both explicitly.",
+        "description": "The job to run: a capability input envelope (dispatch on the capability field) or raw run_ffmpeg mode (mode: \"run_ffmpeg\"). The gateway tolerates an omitted capability/tier by defaulting to transcode/cpu, but this contract requires capability explicitly — omission is not a supported integration path.",
         "oneOf": [
           {
-            "$ref": "#/components/schemas/CapabilityInput_audio_analysis"
-          },
-          {
-            "$ref": "#/components/schemas/CapabilityInput_audio_master"
-          },
-          {
-            "$ref": "#/components/schemas/CapabilityInput_audio_replace"
-          },
-          {
-            "$ref": "#/components/schemas/CapabilityInput_captions"
-          },
-          {
-            "$ref": "#/components/schemas/CapabilityInput_color"
-          },
-          {
-            "$ref": "#/components/schemas/CapabilityInput_concat"
-          },
-          {
-            "$ref": "#/components/schemas/CapabilityInput_concat_copy"
-          },
-          {
-            "$ref": "#/components/schemas/CapabilityInput_crop"
-          },
-          {
-            "$ref": "#/components/schemas/CapabilityInput_extract_audio"
-          },
-          {
-            "$ref": "#/components/schemas/CapabilityInput_fade"
-          },
-          {
-            "$ref": "#/components/schemas/CapabilityInput_gif"
-          },
-          {
-            "$ref": "#/components/schemas/CapabilityInput_hls_ladder"
-          },
-          {
-            "$ref": "#/components/schemas/CapabilityInput_keep_ranges"
-          },
-          {
-            "$ref": "#/components/schemas/CapabilityInput_loudnorm"
-          },
-          {
-            "$ref": "#/components/schemas/CapabilityInput_lut3d"
-          },
-          {
-            "$ref": "#/components/schemas/CapabilityInput_overlay"
-          },
-          {
-            "$ref": "#/components/schemas/CapabilityInput_package_abr"
-          },
-          {
-            "$ref": "#/components/schemas/CapabilityInput_package_abr_ladder"
-          },
-          {
-            "$ref": "#/components/schemas/CapabilityInput_pad"
-          },
-          {
-            "$ref": "#/components/schemas/CapabilityInput_poster"
-          },
-          {
-            "$ref": "#/components/schemas/CapabilityInput_probe"
-          },
-          {
-            "$ref": "#/components/schemas/CapabilityInput_reframe"
-          },
-          {
-            "$ref": "#/components/schemas/CapabilityInput_reframe_track"
-          },
-          {
-            "$ref": "#/components/schemas/CapabilityInput_reverse"
-          },
-          {
-            "$ref": "#/components/schemas/CapabilityInput_rotate"
-          },
-          {
-            "$ref": "#/components/schemas/CapabilityInput_scale"
-          },
-          {
-            "$ref": "#/components/schemas/CapabilityInput_scene_detect"
-          },
-          {
-            "$ref": "#/components/schemas/CapabilityInput_segment"
-          },
-          {
-            "$ref": "#/components/schemas/CapabilityInput_silence_detect"
-          },
-          {
-            "$ref": "#/components/schemas/CapabilityInput_silence_remove"
-          },
-          {
-            "$ref": "#/components/schemas/CapabilityInput_silence_split"
-          },
-          {
-            "$ref": "#/components/schemas/CapabilityInput_slideshow"
-          },
-          {
-            "$ref": "#/components/schemas/CapabilityInput_speed"
-          },
-          {
-            "$ref": "#/components/schemas/CapabilityInput_stills"
-          },
-          {
-            "$ref": "#/components/schemas/CapabilityInput_storyboard_sprites"
-          },
-          {
-            "$ref": "#/components/schemas/CapabilityInput_subtitle_compose"
-          },
-          {
-            "$ref": "#/components/schemas/CapabilityInput_thumbnails"
-          },
-          {
-            "$ref": "#/components/schemas/CapabilityInput_transcode"
-          },
-          {
-            "$ref": "#/components/schemas/CapabilityInput_trim"
-          },
-          {
-            "$ref": "#/components/schemas/CapabilityInput_volume"
-          },
-          {
-            "$ref": "#/components/schemas/CapabilityInput_watermark"
+            "$ref": "#/components/schemas/CapabilityInput"
           },
           {
             "$ref": "#/components/schemas/RunFFmpegInput"
@@ -4074,8 +4279,12 @@
             "const": "eachlabs-video-api",
             "type": "string"
           },
+          "webhook_secret": {
+            "description": "Optional shared secret: the platform signs each webhook body with HMAC-SHA256 so the receiver can verify authenticity.",
+            "type": "string"
+          },
           "webhook_url": {
-            "description": "Optional platform completion webhook, called when the prediction reaches a terminal status. See https://docs.eachlabs.ai/api/webhooks/overview.",
+            "description": "Optional completion webhook: on a terminal status the platform POSTs a JSON payload (same field family as the poll envelope) to this URL, with bounded retries (~30 s, ~2 min, ~10 min). Payload and delivery-history APIs: https://docs.eachlabs.ai/api/webhooks/payload-reference.",
             "format": "uri",
             "type": "string"
           }
