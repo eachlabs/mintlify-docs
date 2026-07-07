@@ -809,7 +809,7 @@ Pan a fixed-size crop window across the frame following a subject, driven by a c
 
 - `<seconds> crop x <px>, crop y <px>;` — the timestamp in seconds, then the pixel coordinates of the crop window's **top-left corner** relative to the source frame.
 - The window is `width`x`height` (fixed by params), starts centered, and values **step-hold** between timestamps — there is no interpolation.
-- The script is **not parsed or validated server-side**: a malformed sidecar fails at execution as a **billed** `exec_error`, not a $0 reject. Validate it locally before submitting.
+- The script is **not parsed or validated server-side**: a malformed sidecar fails at execution as a metered `exec_error` (settles $0 in beta), not a pre-run reject. Validate it locally before submitting.
 
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
@@ -1231,7 +1231,7 @@ Author a styled, animated ASS caption document from words+hook+style and burn it
 
 Extract one image frame every interval_seconds — multi-output.
 
-**Inputs:** `input_url` (1) · **Tiers:** `cpu` · `gpu` · **Output:** media — URL array in `output`, one entry per frame, index-ordered (`thumb_000`, `thumb_001`, …) — see [Response shapes](#response-shapes)
+**Inputs:** `input_url` (1) · **Tiers:** `cpu` · `gpu` · **Output:** media — URL array in `output`, one entry per frame, index-ordered (`thumb_001`, `thumb_002`, …) — see [Response shapes](#response-shapes)
 
 <Note>**GPU behavior:** tier-agnostic (image encoder only)</Note>
 

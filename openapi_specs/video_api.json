@@ -205,12 +205,12 @@
               "application/json": {
                 "examples": {
                   "error": {
-                    "summary": "Zero-billed input-validation reject (real captured envelope)",
+                    "summary": "Zero-billed input-validation reject (captured envelope shape)",
                     "value": {
                       "id": "eb474c68-0fc6-40a3-8c4a-63f1b064b8b0",
                       "input": {
                         "capability": "silence_remove",
-                        "input_url": "https://raw.githubusercontent.com/canberksinangil/video-api-e2e-fixtures/main/long120s_sections.mp4",
+                        "input_url": "https://your-host.example/long-source.mp4",
                         "params": {
                           "ranges": [
                             {
@@ -3661,7 +3661,7 @@
           "params": {
             "$schema": "https://json-schema.org/draft/2020-12/schema",
             "title": "thumbnails",
-            "description": "Extract one frame every interval_seconds across the whole clip (first frame at t=0), producing about ceil(duration / interval_seconds) images named thumb_001, thumb_002, and so on, returned in time order as the output_urls array - every frame is uploaded (artifact upload is never billed). Frames keep the full source resolution; there is no resize parameter. For small tiled previews use storyboard_sprites instead.",
+            "description": "Extract one frame every interval_seconds across the whole clip (first frame at t=0), producing about ceil(duration / interval_seconds) images named thumb_001, thumb_002, and so on, returned in time order as the output_urls array - every frame is uploaded (artifact upload is not billed in beta). Frames keep the full source resolution; there is no resize parameter. For small tiled previews use storyboard_sprites instead.",
             "type": "object",
             "properties": {
               "interval_seconds": {
@@ -4077,7 +4077,7 @@
           "classification": {
             "properties": {
               "category": {
-                "description": "Known values: VALIDATION, PROVIDER, AUTH, RATE_LIMIT, NETWORK, TIMEOUT.",
+                "description": "Known values: VALIDATION, PROVIDER, AUTH, RATE_LIMIT, NETWORK, TIMEOUT, INTERNAL.",
                 "type": "string"
               }
             },
@@ -4115,7 +4115,7 @@
             "type": "string"
           },
           "retryable": {
-            "description": "Set by the platform's error classification: true for rate-limit, timeout, and network classes; false otherwise — including engine platform_fault, the one engine failure class that IS retryable. For engine-side failures use error_message and the failure class as the retry authority, not this field.",
+            "description": "Set by the platform's error classification: true for rate-limit, timeout, network, provider-5xx, and worker-lost classes; false otherwise — including engine platform_fault, the one engine failure class that IS retryable. For engine-side failures use error_message and the failure class as the retry authority, not this field.",
             "type": "boolean"
           },
           "status": {
