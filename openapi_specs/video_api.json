@@ -34,7 +34,7 @@
   "paths": {
     "/v1/prediction": {
       "post": {
-        "description": "Submits one video capability job (or a raw run_ffmpeg job) for the eachlabs-video-api model and returns a prediction id to poll. Billing is per engine-metered execution second on the chosen tier with deliver-or-don't-bill semantics: a prediction that does not deliver its artifact settles at $0 in beta (tier rates are on the billing docs page, not in this contract). Input media longer than 3600 seconds is rejected before billing (duration_over_cap); execution is killed at the 3600-metered-seconds cap. Submission is not idempotent on this surface — no idempotency key is exposed, so a timed-out POST may still have created a prediction; poll before resubmitting.",
+        "description": "Submits one video capability job (or a raw run_ffmpeg job) for the eachlabs-video-api model and returns a prediction id to poll. Billing is per engine-metered execution second on the chosen tier with deliver-or-don't-bill semantics: a prediction that does not deliver its artifact settles at $0 in beta (tier rates are on the billing docs page, not in this contract). Input media longer than 3600 seconds is rejected before billing (duration_over_cap); execution is killed at the 3600-metered-seconds cap. Submission is not idempotent on this surface — no idempotency key is exposed, so a timed-out POST may still have created a prediction; poll before resubmitting. The gateway applies no video-specific HTTP request rate limit today (no 429 path); engine-level throttling surfaces asynchronously as an error prediction with error_code PROVIDER_RATE_LIMIT.",
         "operationId": "createVideoPrediction",
         "requestBody": {
           "content": {
@@ -204,6 +204,42 @@
             "content": {
               "application/json": {
                 "examples": {
+                  "analysis": {
+                    "summary": "Analysis capability: structured JSON in output, no artifact",
+                    "value": {
+                      "id": "7c31ba02-9e4d-4f6a-b18c-52e7d04a86c9",
+                      "input": {
+                        "capability": "probe",
+                        "input_url": "https://your-host.example/source.mp4",
+                        "params": {},
+                        "tier": "cpu"
+                      },
+                      "logs": null,
+                      "metrics": {
+                        "cost": 0.0075,
+                        "predict_time": 4.12
+                      },
+                      "output": {
+                        "format": {
+                          "duration": "12.032000",
+                          "format_name": "mov,mp4,m4a,3gp,3g2,mj2"
+                        },
+                        "streams": [
+                          {
+                            "codec_name": "h264",
+                            "codec_type": "video",
+                            "height": 720,
+                            "width": 1280
+                          }
+                        ]
+                      },
+                      "status": "success",
+                      "urls": {
+                        "cancel": "https://api.eachlabs.ai/v1/prediction/7c31ba02-9e4d-4f6a-b18c-52e7d04a86c9/cancel",
+                        "get": "https://api.eachlabs.ai/v1/prediction/7c31ba02-9e4d-4f6a-b18c-52e7d04a86c9"
+                      }
+                    }
+                  },
                   "error": {
                     "summary": "Zero-billed input-validation reject (captured envelope shape)",
                     "value": {
@@ -370,6 +406,11 @@
           "200": {
             "content": {
               "application/json": {
+                "example": {
+                  "message": "Prediction canceled successfully",
+                  "predictionID": "1f0fdf4d-7b3c-4e9a-8d25-c61f90ab4e73",
+                  "status": "success"
+                },
                 "schema": {
                   "$ref": "#/components/schemas/CancelPredictionResponse"
                 }
@@ -1589,7 +1630,7 @@
         "type": "object"
       },
       "CapabilityInput_keep_ranges": {
-        "description": "Input envelope for the \"keep_ranges\" capability. The params schema below is the complete, canonical contract for this capability; send params explicitly (this capability has required params) — required fields inside it are enforced at submit as invalid_command.",
+        "description": "Input envelope for the \"keep_ranges\" capability. The params schema below is the complete, canonical contract for this capability; send params explicitly (this capability has required params) — required fields inside it are enforced at submit as invalid_command. Also accepted as \"silence_remove\" — one capability, one billing bucket.",
         "properties": {
           "capability": {
             "const": "keep_ranges",
@@ -2857,7 +2898,7 @@
         "type": "object"
       },
       "CapabilityInput_silence_remove": {
-        "description": "Input envelope for the \"silence_remove\" capability. The params schema below is the complete, canonical contract for this capability; send params explicitly (this capability has required params) — required fields inside it are enforced at submit as invalid_command.",
+        "description": "Input envelope for the \"silence_remove\" capability. The params schema below is the complete, canonical contract for this capability; send params explicitly (this capability has required params) — required fields inside it are enforced at submit as invalid_command. Also accepted as \"keep_ranges\" — one capability, one billing bucket.",
         "properties": {
           "capability": {
             "const": "silence_remove",
@@ -4115,7 +4156,7 @@
             "type": "string"
           },
           "retryable": {
-            "description": "Set by the platform's error classification: true for rate-limit, timeout, network, provider-5xx, and worker-lost classes; false otherwise — including engine platform_fault, the one engine failure class that IS retryable. For engine-side failures use error_message and the failure class as the retry authority, not this field.",
+            "description": "Set by the platform's error classification: true for rate-limit, network, provider-5xx, and worker-lost classes (a max-duration EXECUTION_TIMEOUT reads false despite its timeout class — its producer overrides the classifier); false otherwise — including engine platform_fault, the one engine failure class that IS retryable. For engine-side failures use error_message and the failure class as the retry authority, not this field.",
             "type": "boolean"
           },
           "status": {
@@ -4264,7 +4305,7 @@
             "type": "null"
           }
         ],
-        "description": "Value of the poll envelope's output field. The shape follows the capability's output class: media capabilities deliver hosted artifact URL(s) as an array (single-artifact capabilities deliver a one-element array); analysis capabilities (probe, scene_detect, silence_detect, audio_analysis) deliver structured JSON (an object, which may also arrive as a JSON string or as a URL to a JSON body); packaging capabilities (package_abr, package_abr_ladder, hls_ladder) deliver the manifest plus artifacts. On status \"error\" this is the ErrorOutput object. Download or persist artifact URLs promptly; treat them as valid for at least 24 hours."
+        "description": "Value of the poll envelope's output field. Capability descriptions that mention an output_urls array refer to THIS field — through the gateway the artifact URL array IS the output value. The shape follows the capability's output class: media capabilities deliver hosted artifact URL(s) as an array (single-artifact capabilities deliver a one-element array); analysis capabilities (probe, scene_detect, silence_detect, audio_analysis) deliver structured JSON (an object, which may also arrive as a JSON string or as a URL to a JSON body); packaging capabilities (package_abr, package_abr_ladder, hls_ladder) deliver the manifest plus artifacts. On status \"error\" this is the ErrorOutput object. Download or persist artifact URLs promptly; treat them as valid for at least 24 hours."
       },
       "RunFFmpegInput": {
         "description": "Input envelope for raw run_ffmpeg mode — the escape hatch for long-tail cases no named capability covers. Access is a beta grant managed server-side (per organization during the beta); it cannot be self-granted via the API key, and a submit without the grant fails as the engine scope_denied reject (an engine 403 — surfaced with platform error_code PROVIDER_AUTH_ERROR). The same gates as capability jobs apply: a staged input longer than 3600 seconds is rejected before billing (duration_over_cap), and execution is killed at the 3600-metered-seconds cap — a killed job wastes its wall clock and, like every non-success prediction, settles metrics.cost 0 in beta. Prefer a capability when one fits.",
