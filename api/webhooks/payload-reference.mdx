@@ -5,46 +5,54 @@ description: "Everything you need to know about webhook payloads and how to hand
 
 ## Webhook Delivery
 
-When an event wraps up, each::labs fires off an HTTP POST to your configured `webhook_url`.
+When a prediction reaches a terminal state, each::labs fires off an HTTP POST to your configured `webhook_url`. Webhooks fire only on completion or failure — there are no webhooks for intermediate states, and cancellations do not trigger one.
 
 - **Method:** `POST`
 - **Content-Type:** `application/json`
-- **Expected response:** `200 OK` to acknowledge receipt
+- **Expected response:** any `2xx` status to acknowledge receipt; `4xx`/`5xx` responses trigger a retry
 
 ## Payload Structure
 
-### Prediction Complete
+Webhook payloads use a compact two-value status vocabulary: `succeeded` or `failed`. This differs from the richer lifecycle you see when polling — use [Get Prediction](/api/predictions/get-prediction) if you need the full six-state view (`created`, `starting`, `processing`, `success`, `error`, `cancelled`).
+
+### Prediction Succeeded
 
 ```json
 {
-  "id": "abc123-def456-ghi789",
-  "status": "success",
-  "output": "https://storage.example.com/predictions/abc123/image.jpg",
-  "input": {
-    "prompt": "A beautiful sunset over the ocean",
-    "aspect_ratio": "16:9"
+  "exec_id": "abc123-def456-ghi789",
+  "flow_id": null,
+  "status": "succeeded",
+  "output": {
+    "url": "https://storage.example.com/predictions/abc123/image.jpg"
   },
-  "metrics": {
-    "predict_time": 12.5,
-    "cost": 0.05
-  }
+  "error": ""
 }
 ```
+
+- `exec_id` — the prediction ID you received from [Create Prediction](/api/predictions/create-prediction)
+- `flow_id` — the workflow ID when the prediction was triggered by a workflow, otherwise `null`
+- `output` — the prediction output; its shape depends on the model (string, array, or object)
 
 ### Prediction Failed
 
 ```json
 {
-  "id": "abc123-def456-ghi789",
+  "exec_id": "abc123-def456-ghi789",
+  "flow_id": null,
   "status": "failed",
-  "output": null,
-  "input": {
-    "prompt": "A beautiful sunset over the ocean",
-    "aspect_ratio": "16:9"
-  },
-  "logs": "Error: Model timeout after 30s"
+  "output": [
+    {
+      "id": "",
+      "status": "",
+      "output": "",
+      "error": "Error: Model timeout after 30s"
+    }
+  ],
+  "error": ""
 }
 ```
+
+On failure, `output` is an array wrapping the error detail: read `output[0].error` for the failure reason. The top-level `error` field is always an empty string.
 
 ## Webhook Handler Examples
 
@@ -58,12 +66,13 @@ app = FastAPI()
 async def handle_webhook(request: Request):
     payload = await request.json()
 
-    if payload["status"] == "success":
-        output_url = payload["output"]
-        print(f"Prediction complete: {output_url}")
+    if payload["status"] == "succeeded":
+        output = payload["output"]
+        print(f"Prediction complete: {output}")
         # Process the output...
     elif payload["status"] == "failed":
-        print(f"Prediction failed: {payload.get('logs')}")
+        detail = payload["output"][0]["error"] if payload["output"] else "unknown"
+        print(f"Prediction failed: {detail}")
 
     return {"received": True}
 ```
@@ -72,11 +81,12 @@ async def handle_webhook(request: Request):
 app.post("/webhooks/prediction", (req, res) => {
   const payload = req.body;
 
-  if (payload.status === "success") {
-    console.log(`Prediction complete: ${payload.output}`);
+  if (payload.status === "succeeded") {
+    console.log(`Prediction complete: ${JSON.stringify(payload.output)}`);
     // Process the output...
   } else if (payload.status === "failed") {
-    console.log(`Prediction failed: ${payload.logs}`);
+    const detail = payload.output?.[0]?.error ?? "unknown";
+    console.log(`Prediction failed: ${detail}`);
   }
 
   res.json({ received: true });
@@ -88,34 +98,24 @@ app.post("/webhooks/prediction", (req, res) => {
 
 ### Webhook Secret Verification
 
-If you set a `webhook_secret` when creating your prediction, you can use it to make sure incoming webhooks are legit.
+If you set a `webhook_secret` when creating your prediction, every delivery carries it verbatim in the `X-Webhook-Secret` header. Verify it with a constant-time string comparison:
 
 ```python
 import hmac
-import hashlib
 
-def verify_webhook(payload_body: bytes, signature: str, secret: str) -> bool:
-    expected = hmac.new(
-        secret.encode(),
-        payload_body,
-        hashlib.sha256
-    ).hexdigest()
-    return hmac.compare_digest(expected, signature)
+def verify_webhook(request_secret_header: str, secret: str) -> bool:
+    return hmac.compare_digest(request_secret_header, secret)
 ```
+
+The header carries the secret itself — no body signature is computed, so verification is a header comparison, not an HMAC of the payload.
 
 ## Retry Behavior
 
-| Attempt | Delay |
-|---------|-------|
-| 1st retry | ~30 seconds |
-| 2nd retry | ~2 minutes |
-| 3rd retry | ~10 minutes |
-
-Retries stop after all attempts are used up. Use [Get Webhook](/api/webhooks/get-webhook) to check out the full delivery history.
+Deliveries are attempted up to 3 times in total: the initial attempt plus 2 retries, spaced roughly 10 seconds apart. Retries stop after that. Use [Get Webhook](/api/webhooks/get-webhook) to check out the full delivery history.
 
 ## Best Practices
 
-- Return `200 OK` as fast as you can, then process data asynchronously
+- Return `2xx` as fast as you can, then process data asynchronously
 - Implement idempotency, since you may receive the same webhook more than once
 - Log incoming payloads for debugging
 - Use `webhook_secret` to verify payload authenticity

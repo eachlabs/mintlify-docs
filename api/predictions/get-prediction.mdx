@@ -36,7 +36,7 @@ while True:
     )
     data = response.json()
 
-    if data["status"] in ("success", "failed", "cancelled"):
+    if data["status"] in ("success", "error", "cancelled"):
         break
 
     print(f"Status: {data['status']}...")
@@ -57,7 +57,7 @@ async function waitForPrediction(predictionId) {
     );
     const data = await response.json();
 
-    if (["success", "failed", "cancelled"].includes(data.status)) {
+    if (["success", "error", "cancelled"].includes(data.status)) {
       return data;
     }
 
@@ -100,7 +100,7 @@ console.log(`Output: ${result.output}`);
 |-------|------|-------------|
 | `id` | string | Prediction ID |
 | `input` | object | Input parameters used |
-| `status` | string | `starting`, `processing`, `success`, `failed`, or `cancelled` |
+| `status` | string | `created`, `starting`, `processing`, `success`, `error`, or `cancelled` |
 | `output` | string \| array \| object | Prediction output (type depends on model) |
 | `logs` | string \| null | Execution logs |
 | `metrics.predict_time` | number | Processing time in seconds |
@@ -112,10 +112,11 @@ console.log(`Output: ${result.output}`);
 
 | Status | Description |
 |--------|-------------|
+| `created` | Prediction is queued, not yet started |
 | `starting` | Prediction is initializing |
 | `processing` | Model is processing the input |
 | `success` | Prediction completed successfully |
-| `failed` | Prediction failed |
+| `error` | Prediction failed |
 | `cancelled` | Prediction was cancelled |
 
 ## Error Responses
