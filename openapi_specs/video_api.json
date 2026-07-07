@@ -669,7 +669,7 @@
             "type": "string"
           },
           "input_url": {
-            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
+            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt .srt .ass; color LUT .cube), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
             "format": "uri",
             "type": "string"
           },
@@ -719,7 +719,7 @@
             "type": "string"
           },
           "input_url": {
-            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
+            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt .srt .ass; color LUT .cube), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
             "format": "uri",
             "type": "string"
           },
@@ -784,7 +784,8 @@
                   "wav",
                   "m4a"
                 ],
-                "default": "mp3"
+                "default": "mp3",
+                "description": "Output audio format and codec (default mp3): mp3 encodes with libmp3lame and m4a with AAC, both honoring the bitrate param; wav writes lossless PCM and rejects an explicit bitrate."
               }
             },
             "additionalProperties": false
@@ -813,7 +814,7 @@
             "type": "string"
           },
           "input_url": {
-            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
+            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt .srt .ass; color LUT .cube), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
             "format": "uri",
             "type": "string"
           },
@@ -894,7 +895,7 @@
             "type": "string"
           },
           "input_url": {
-            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
+            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt .srt .ass; color LUT .cube), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
             "format": "uri",
             "type": "string"
           },
@@ -973,7 +974,7 @@
             "type": "string"
           },
           "input_url": {
-            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
+            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt .srt .ass; color LUT .cube), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
             "format": "uri",
             "type": "string"
           },
@@ -994,6 +995,7 @@
           "params": {
             "$schema": "https://json-schema.org/draft/2020-12/schema",
             "title": "color",
+            "description": "Color-grade the clip: brightness, contrast, saturation, and gamma. Video and audio are always re-encoded (audio becomes AAC for mp4/mkv or Opus for webm); nothing is stream-copied, and an all-default call is an identity grade that still re-encodes without visibly changing the picture. Runs on the cpu tier only: a request on the gpu tier is rejected before billing.",
             "type": "object",
             "properties": {
               "brightness": {
@@ -1031,7 +1033,8 @@
                   "webm",
                   "mkv"
                 ],
-                "default": "mp4"
+                "default": "mp4",
+                "description": "Output container: mp4 (default), webm or mkv; video is re-encoded to the container's default codec (H.264 for mp4/mkv, VP9 for webm) and audio to AAC for mp4/mkv or Opus for webm."
               }
             },
             "additionalProperties": false
@@ -1060,7 +1063,7 @@
             "type": "string"
           },
           "input_url": {
-            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
+            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt .srt .ass; color LUT .cube), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
             "format": "uri",
             "type": "string"
           },
@@ -1110,7 +1113,8 @@
                   "webm",
                   "mkv"
                 ],
-                "default": "mp4"
+                "default": "mp4",
+                "description": "Output container (default mp4): no video or audio codec is pinned on the cpu tier, so ffmpeg's per-container default encoders apply (H.264 video for mp4/mkv, VP9 for webm, and the muxer's default audio encoder); on the gpu tier video is instead forced to the GPU H.264 encoder and webm is rejected before billing (no GPU webm encoder); mp4 output is written with the faststart flag so it progressive-plays."
               }
             },
             "additionalProperties": false
@@ -1139,7 +1143,7 @@
             "type": "string"
           },
           "input_url": {
-            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
+            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt .srt .ass; color LUT .cube), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
             "format": "uri",
             "type": "string"
           },
@@ -1160,6 +1164,7 @@
           "params": {
             "$schema": "https://json-schema.org/draft/2020-12/schema",
             "title": "concat_copy",
+            "description": "Rejoin already-encoded chunks of one video into a single mp4 (default), mkv or ts file via the concat demuxer with -c copy: video and audio are copied byte for byte, never re-encoded, so codecs, resolution and quality are preserved exactly, and since no encoder runs the capability is accepted on every tier. Supply the chunks in play order via input_urls (2-50, set by inputs); all chunks must match on video codec, width, height and pixel format and on audio codec, sample rate and channel count, and must agree on whether an audio stream is present - any mismatch is rejected before billing. An mp4 output additionally gets a faststart moov relocation so it can start playing before the file fully downloads; to join dissimilar inputs use concat instead, which normalizes and re-encodes.",
             "type": "object",
             "properties": {
               "inputs": {
@@ -1167,7 +1172,7 @@
                 "minimum": 2,
                 "maximum": 50,
                 "default": 2,
-                "description": "Number of chunks to rejoin (2-50); supply exactly this many input_urls in play order. All chunks must match exactly on video codec, width, height and pixel format, and on audio codec, sample rate and channel count, and every chunk must contain an audio stream - any mismatch or missing audio is rejected before billing, because a byte-copy join of divergent streams produces a corrupt file."
+                "description": "Number of chunks to rejoin (2-50); supply exactly this many input_urls in play order. All chunks must match exactly on video codec, width, height and pixel format, and on audio codec, sample rate and channel count, and must agree on whether an audio stream is present - any mismatch is rejected before billing, because a byte-copy join of divergent streams produces a corrupt file."
               },
               "container": {
                 "type": "string",
@@ -1206,7 +1211,7 @@
             "type": "string"
           },
           "input_url": {
-            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
+            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt .srt .ass; color LUT .cube), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
             "format": "uri",
             "type": "string"
           },
@@ -1227,19 +1232,22 @@
           "params": {
             "$schema": "https://json-schema.org/draft/2020-12/schema",
             "title": "crop",
+            "description": "Cut a width x height rectangle out of the frame; x/y position the rectangle and omitting them centers it. The rectangle is not checked against the source dimensions at submit, so a rectangle that does not fit inside the source fails at execution. Video and audio are always re-encoded (audio becomes AAC for mp4/mkv or Opus for webm); nothing is stream-copied.",
             "type": "object",
             "properties": {
               "width": {
                 "type": "integer",
                 "minimum": 1,
                 "maximum": 8192,
-                "default": 640
+                "default": 640,
+                "description": "Crop rectangle width in pixels (default 640). On the gpu tier a rectangle wider or taller than 4096 pixels is rejected before billing (GPU H.264 encoder ceiling); resubmit on the cpu tier."
               },
               "height": {
                 "type": "integer",
                 "minimum": 1,
                 "maximum": 8192,
-                "default": 480
+                "default": 480,
+                "description": "Crop rectangle height in pixels (default 480). On the gpu tier a rectangle wider or taller than 4096 pixels is rejected before billing (GPU H.264 encoder ceiling); resubmit on the cpu tier."
               },
               "x": {
                 "type": "integer",
@@ -1260,7 +1268,8 @@
                   "webm",
                   "mkv"
                 ],
-                "default": "mp4"
+                "default": "mp4",
+                "description": "Output container. On the gpu tier webm is rejected before billing (the gpu tier has no webm encoder); resubmit on the cpu tier."
               }
             },
             "additionalProperties": false
@@ -1289,7 +1298,7 @@
             "type": "string"
           },
           "input_url": {
-            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
+            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt .srt .ass; color LUT .cube), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
             "format": "uri",
             "type": "string"
           },
@@ -1361,7 +1370,7 @@
             "type": "string"
           },
           "input_url": {
-            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
+            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt .srt .ass; color LUT .cube), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
             "format": "uri",
             "type": "string"
           },
@@ -1422,7 +1431,8 @@
                   "webm",
                   "mkv"
                 ],
-                "default": "mp4"
+                "default": "mp4",
+                "description": "Output container (default mp4): it fixes the pinned audio codec (AAC for mp4/mkv, Opus for webm) while video uses the container's cpu default encoder (H.264 for mp4/mkv, VP9 for webm), and mp4 output is written with the faststart flag so it progressive-plays."
               }
             },
             "if": {
@@ -1469,7 +1479,7 @@
             "type": "string"
           },
           "input_url": {
-            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
+            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt .srt .ass; color LUT .cube), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
             "format": "uri",
             "type": "string"
           },
@@ -1497,7 +1507,8 @@
                 "type": "integer",
                 "minimum": 1,
                 "maximum": 50,
-                "default": 10
+                "default": 10,
+                "description": "Output GIF frame rate in frames per second (default 10): the whole clip is resampled to exactly this constant rate regardless of the source frame rate, and a value outside 1-50 is rejected rather than clamped."
               },
               "width": {
                 "type": "integer",
@@ -1532,7 +1543,7 @@
             "type": "string"
           },
           "input_url": {
-            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
+            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt .srt .ass; color LUT .cube), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
             "format": "uri",
             "type": "string"
           },
@@ -1637,7 +1648,7 @@
             "type": "string"
           },
           "input_url": {
-            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
+            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt .srt .ass; color LUT .cube), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
             "format": "uri",
             "type": "string"
           },
@@ -1727,7 +1738,7 @@
             "type": "string"
           },
           "input_url": {
-            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
+            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt .srt .ass; color LUT .cube), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
             "format": "uri",
             "type": "string"
           },
@@ -1778,7 +1789,8 @@
                   "mp4",
                   "mkv"
                 ],
-                "default": "mp4"
+                "default": "mp4",
+                "description": "Output container (default mp4), limited to mp4 and mkv because the video stream is copied untouched and must land in a container that accepts it; the audio track is re-encoded to AAC in either container, and mp4 output is written with the faststart flag so it progressive-plays."
               }
             },
             "additionalProperties": false
@@ -1807,7 +1819,7 @@
             "type": "string"
           },
           "input_url": {
-            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
+            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt .srt .ass; color LUT .cube), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
             "format": "uri",
             "type": "string"
           },
@@ -1828,6 +1840,7 @@
           "params": {
             "$schema": "https://json-schema.org/draft/2020-12/schema",
             "title": "lut3d",
+            "description": "Color-grade the video with a 3D LUT. Supply exactly two inputs in order: the first is the video, the second is the LUT as a .cube file. The whole video is re-encoded to apply the grade. Runs on the cpu tier only: a request on the gpu tier is rejected before billing.",
             "type": "object",
             "properties": {
               "interp": {
@@ -1846,7 +1859,8 @@
                   "webm",
                   "mkv"
                 ],
-                "default": "mp4"
+                "default": "mp4",
+                "description": "Output container. Audio is always re-encoded to the container's native codec - AAC for mp4/mkv, Opus for webm - never copied from the source. mp4 output is written with faststart so playback can begin before the file fully downloads."
               }
             },
             "additionalProperties": false
@@ -1875,7 +1889,7 @@
             "type": "string"
           },
           "input_url": {
-            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
+            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt .srt .ass; color LUT .cube), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
             "format": "uri",
             "type": "string"
           },
@@ -1961,7 +1975,7 @@
             "type": "string"
           },
           "input_url": {
-            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
+            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt .srt .ass; color LUT .cube), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
             "format": "uri",
             "type": "string"
           },
@@ -2019,7 +2033,7 @@
             "type": "string"
           },
           "input_url": {
-            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
+            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt .srt .ass; color LUT .cube), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
             "format": "uri",
             "type": "string"
           },
@@ -2123,7 +2137,7 @@
             "type": "string"
           },
           "input_url": {
-            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
+            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt .srt .ass; color LUT .cube), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
             "format": "uri",
             "type": "string"
           },
@@ -2144,19 +2158,22 @@
           "params": {
             "$schema": "https://json-schema.org/draft/2020-12/schema",
             "title": "pad",
+            "description": "Frame the picture inside a width x height canvas filled with a background color, centered unless x/y are given. The canvas is not checked against the source dimensions at submit, so a canvas smaller than the picture fails at execution. Video and audio are always re-encoded (audio becomes AAC for mp4/mkv or Opus for webm); nothing is stream-copied.",
             "type": "object",
             "properties": {
               "width": {
                 "type": "integer",
                 "minimum": 1,
                 "maximum": 8192,
-                "default": 1280
+                "default": 1280,
+                "description": "Output canvas width in pixels (default 1280). On the gpu tier a canvas wider or taller than 4096 pixels is rejected before billing (GPU H.264 encoder ceiling); resubmit on the cpu tier."
               },
               "height": {
                 "type": "integer",
                 "minimum": 1,
                 "maximum": 8192,
-                "default": 720
+                "default": 720,
+                "description": "Output canvas height in pixels (default 720). On the gpu tier a canvas wider or taller than 4096 pixels is rejected before billing (GPU H.264 encoder ceiling); resubmit on the cpu tier."
               },
               "x": {
                 "type": "integer",
@@ -2182,7 +2199,8 @@
                   "webm",
                   "mkv"
                 ],
-                "default": "mp4"
+                "default": "mp4",
+                "description": "Output container. On the gpu tier webm is rejected before billing (the gpu tier has no webm encoder); resubmit on the cpu tier."
               }
             },
             "additionalProperties": false
@@ -2211,7 +2229,7 @@
             "type": "string"
           },
           "input_url": {
-            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
+            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt .srt .ass; color LUT .cube), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
             "format": "uri",
             "type": "string"
           },
@@ -2276,7 +2294,7 @@
             "type": "string"
           },
           "input_url": {
-            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
+            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt .srt .ass; color LUT .cube), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
             "format": "uri",
             "type": "string"
           },
@@ -2326,7 +2344,7 @@
             "type": "string"
           },
           "input_url": {
-            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
+            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt .srt .ass; color LUT .cube), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
             "format": "uri",
             "type": "string"
           },
@@ -2386,7 +2404,8 @@
                   "webm",
                   "mkv"
                 ],
-                "default": "mp4"
+                "default": "mp4",
+                "description": "Output container: the video is re-encoded with the container's default encoder (H.264 for mp4/mkv, VP9 for webm - no explicit video codec is set), and mp4 output is written with faststart so playback can begin before the file fully downloads."
               }
             },
             "additionalProperties": false
@@ -2415,7 +2434,7 @@
             "type": "string"
           },
           "input_url": {
-            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
+            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt .srt .ass; color LUT .cube), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
             "format": "uri",
             "type": "string"
           },
@@ -2460,7 +2479,8 @@
                   "webm",
                   "mkv"
                 ],
-                "default": "mp4"
+                "default": "mp4",
+                "description": "Output container: the video is re-encoded with the container's default encoder (H.264 for mp4/mkv, VP9 for webm - no explicit video codec is set), and mp4 output is written with faststart so playback can begin before the file fully downloads."
               }
             },
             "additionalProperties": false,
@@ -2490,7 +2510,7 @@
             "type": "string"
           },
           "input_url": {
-            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
+            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt .srt .ass; color LUT .cube), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
             "format": "uri",
             "type": "string"
           },
@@ -2551,7 +2571,7 @@
             "type": "string"
           },
           "input_url": {
-            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
+            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt .srt .ass; color LUT .cube), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
             "format": "uri",
             "type": "string"
           },
@@ -2572,6 +2592,7 @@
           "params": {
             "$schema": "https://json-schema.org/draft/2020-12/schema",
             "title": "rotate",
+            "description": "Rotate the picture clockwise in fixed 90-degree steps (90, 180, or 270); 90 and 270 swap the output width and height, and arbitrary angles are not supported. Video and audio are always re-encoded (audio becomes AAC for mp4/mkv or Opus for webm); nothing is stream-copied.",
             "type": "object",
             "properties": {
               "degrees": {
@@ -2591,7 +2612,8 @@
                   "webm",
                   "mkv"
                 ],
-                "default": "mp4"
+                "default": "mp4",
+                "description": "Output container. On the gpu tier webm is rejected before billing (the gpu tier has no webm encoder), and a source wider or taller than 4096 pixels is rejected before billing (GPU H.264 encoder ceiling); resubmit on the cpu tier. The resolution check is skipped when the input could not be probed."
               }
             },
             "additionalProperties": false
@@ -2620,7 +2642,7 @@
             "type": "string"
           },
           "input_url": {
-            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
+            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt .srt .ass; color LUT .cube), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
             "format": "uri",
             "type": "string"
           },
@@ -2641,13 +2663,15 @@
           "params": {
             "$schema": "https://json-schema.org/draft/2020-12/schema",
             "title": "scale",
+            "description": "Resize the video to a target width and height; the default height preserves the source aspect ratio rounded to an even dimension. Video and audio are always re-encoded (video to the container default H.264 for mp4/mkv or VP9 for webm on the cpu tier, and to GPU H.264 on the gpu tier; audio to AAC for mp4/mkv or Opus for webm); nothing is stream-copied. Runs on both tiers: on the gpu tier a scale target wider or taller than 4096 pixels is rejected before billing (GPU H.264 encoder ceiling - resubmit on the cpu tier), and when the height is aspect-derived from an unprobed source only the width axis is checked.",
             "type": "object",
             "properties": {
               "width": {
                 "type": "integer",
                 "minimum": 1,
                 "maximum": 8192,
-                "default": 1280
+                "default": 1280,
+                "description": "Output width in pixels; on the gpu tier a target wider or taller than 4096 pixels is rejected before billing (GPU H.264 encoder ceiling - resubmit on the cpu tier), and the gpu tier's full-GPU path rounds an odd width down to the nearest even value."
               },
               "height": {
                 "type": "integer",
@@ -2661,7 +2685,8 @@
                   "webm",
                   "mkv"
                 ],
-                "default": "mp4"
+                "default": "mp4",
+                "description": "Output container: mp4 (default), webm or mkv; it selects the re-encode codecs (audio becomes AAC for mp4/mkv or Opus for webm), and on the gpu tier webm is rejected before billing (the gpu tier has no webm encoder - resubmit on the cpu tier)."
               }
             },
             "additionalProperties": false
@@ -2690,7 +2715,7 @@
             "type": "string"
           },
           "input_url": {
-            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
+            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt .srt .ass; color LUT .cube), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
             "format": "uri",
             "type": "string"
           },
@@ -2748,7 +2773,7 @@
             "type": "string"
           },
           "input_url": {
-            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
+            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt .srt .ass; color LUT .cube), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
             "format": "uri",
             "type": "string"
           },
@@ -2785,7 +2810,8 @@
                   "webm",
                   "mkv"
                 ],
-                "default": "mp4"
+                "default": "mp4",
+                "description": "Container for every produced chunk: with the default reencode=false both source streams are copied unchanged, so the container must be able to hold the source codecs (webm holds only VP8/VP9/AV1 video and Opus/Vorbis audio, so a copied H.264/AAC source fails at execution), and with reencode=true video becomes H.264 - invalid in webm, rejected before billing - while audio is re-encoded to the container's default codec (no audio codec is pinned)."
               },
               "reencode": {
                 "type": "boolean",
@@ -2840,7 +2866,7 @@
             "type": "string"
           },
           "input_url": {
-            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
+            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt .srt .ass; color LUT .cube), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
             "format": "uri",
             "type": "string"
           },
@@ -2905,7 +2931,7 @@
             "type": "string"
           },
           "input_url": {
-            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
+            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt .srt .ass; color LUT .cube), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
             "format": "uri",
             "type": "string"
           },
@@ -2995,7 +3021,7 @@
             "type": "string"
           },
           "input_url": {
-            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
+            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt .srt .ass; color LUT .cube), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
             "format": "uri",
             "type": "string"
           },
@@ -3052,7 +3078,8 @@
                   "webm",
                   "mkv"
                 ],
-                "default": "mp4"
+                "default": "mp4",
+                "description": "Container for every produced segment: with the default reencode=false both source streams are copied unchanged, so the container must be able to hold the source codecs (webm holds only VP8/VP9/AV1 video and Opus/Vorbis audio, so a copied H.264/AAC source fails at execution), and with reencode=true video becomes H.264 - invalid in webm, rejected before billing - while audio is re-encoded to the container's default codec (no audio codec is pinned)."
               },
               "reencode": {
                 "type": "boolean",
@@ -3096,7 +3123,7 @@
             "type": "string"
           },
           "input_url": {
-            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
+            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt .srt .ass; color LUT .cube), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
             "format": "uri",
             "type": "string"
           },
@@ -3138,7 +3165,8 @@
                 "type": "integer",
                 "minimum": 1,
                 "maximum": 60,
-                "default": 30
+                "default": 30,
+                "description": "Output frame rate: each image contributes about image_duration*fps frames, and with effect kenburns the zoom advances a fixed step per output frame, so a higher fps (or a longer image_duration) carries the zoom further toward its 1.5x cap."
               },
               "effect": {
                 "type": "string",
@@ -3146,7 +3174,8 @@
                   "none",
                   "kenburns"
                 ],
-                "default": "none"
+                "default": "none",
+                "description": "Per-image treatment: none fits the image onto the canvas preserving its aspect ratio (black letterbox or pillarbox bars), kenburns center-crops it to fill the canvas and slowly zooms in on its center, so an aspect-mismatched image loses its edges."
               },
               "container": {
                 "type": "string",
@@ -3155,19 +3184,22 @@
                   "webm",
                   "mkv"
                 ],
-                "default": "mp4"
+                "default": "mp4",
+                "description": "Output container with a pinned video codec: mp4 (default) and mkv encode h264, webm encodes vp9; mp4 is written with +faststart so it progressive-plays, and webm is rejected before billing on the gpu tier (no NVENC vp9 encoder) - submit webm on the cpu tier."
               },
               "width": {
                 "type": "integer",
                 "minimum": 16,
                 "maximum": 8192,
-                "default": 1280
+                "default": 1280,
+                "description": "Canvas width in pixels - together with height it is the output resolution every image is normalized to; on the gpu tier an mp4 or mkv output wider or taller than 4096 pixels is rejected before billing (the GPU h264 encoder ceiling, with no software fallback on that tier) - use the cpu tier for larger canvases."
               },
               "height": {
                 "type": "integer",
                 "minimum": 16,
                 "maximum": 8192,
-                "default": 720
+                "default": 720,
+                "description": "Canvas height in pixels - together with width it is the output resolution every image is normalized to; the same gpu-tier pre-billing rejection applies to an output wider or taller than 4096 pixels."
               }
             },
             "additionalProperties": false
@@ -3196,7 +3228,7 @@
             "type": "string"
           },
           "input_url": {
-            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
+            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt .srt .ass; color LUT .cube), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
             "format": "uri",
             "type": "string"
           },
@@ -3264,7 +3296,7 @@
             "type": "string"
           },
           "input_url": {
-            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
+            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt .srt .ass; color LUT .cube), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
             "format": "uri",
             "type": "string"
           },
@@ -3285,6 +3317,7 @@
           "params": {
             "$schema": "https://json-schema.org/draft/2020-12/schema",
             "title": "stills",
+            "description": "Extract exactly one frame from the clip as a jpg (default) or png image: position selects the first frame, the last frame, or the frame at an exact timestamp. The frame is always decoded and encoded to the chosen image format - nothing is stream-copied - and audio is discarded, since the output is a single image file. The only encode is the software mjpeg/png image encoder - no video-stream encoder and no GPU is needed - so the capability runs on every tier.",
             "type": "object",
             "properties": {
               "position": {
@@ -3309,7 +3342,8 @@
                   "jpg",
                   "png"
                 ],
-                "default": "jpg"
+                "default": "jpg",
+                "description": "Output image format: jpg (default) or png; the command pins no image encoder, so the file extension selects the codec, and the quality parameter applies only to jpg (png is lossless)."
               },
               "quality": {
                 "type": "integer",
@@ -3361,7 +3395,7 @@
             "type": "string"
           },
           "input_url": {
-            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
+            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt .srt .ass; color LUT .cube), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
             "format": "uri",
             "type": "string"
           },
@@ -3402,19 +3436,22 @@
                 "type": "integer",
                 "minimum": 16,
                 "maximum": 8192,
-                "default": 90
+                "default": 90,
+                "description": "Tile height in pixels: each sampled frame is stretched to exactly tile_width x tile_height without preserving its aspect ratio (see tile_width), making the sheet rows*tile_height pixels tall."
               },
               "columns": {
                 "type": "integer",
                 "minimum": 1,
                 "maximum": 20,
-                "default": 5
+                "default": 5,
+                "description": "Tile columns in the sheet, filled left to right before wrapping to the next row: the sheet is columns*tile_width pixels wide, and columns*rows caps how many thumbnails are kept (see interval_seconds)."
               },
               "rows": {
                 "type": "integer",
                 "minimum": 1,
                 "maximum": 20,
-                "default": 5
+                "default": 5,
+                "description": "Tile rows in the sheet: the sheet is rows*tile_height pixels tall, and columns*rows caps how many thumbnails are kept (see interval_seconds)."
               },
               "format": {
                 "type": "string",
@@ -3422,7 +3459,8 @@
                   "jpg",
                   "png"
                 ],
-                "default": "jpg"
+                "default": "jpg",
+                "description": "Image format of the sheet: jpg (default) or png; it names the sheet output sprites.jpg or sprites.png, and the vtt index cues reference the sheet by that filename."
               }
             },
             "additionalProperties": false
@@ -3451,7 +3489,7 @@
             "type": "string"
           },
           "input_url": {
-            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
+            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt .srt .ass; color LUT .cube), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
             "format": "uri",
             "type": "string"
           },
@@ -3649,7 +3687,8 @@
                   "webm",
                   "mkv"
                 ],
-                "default": "mp4"
+                "default": "mp4",
+                "description": "Output container: audio is always re-encoded to the container's native codec (AAC for mp4/mkv, Opus for webm - never copied), the burned video is re-encoded with the container's default encoder (H.264 for mp4/mkv, VP9 for webm - no explicit video codec is set), and mp4 output is written with faststart so playback can begin before the file fully downloads."
               }
             },
             "required": [
@@ -3681,7 +3720,7 @@
             "type": "string"
           },
           "input_url": {
-            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
+            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt .srt .ass; color LUT .cube), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
             "format": "uri",
             "type": "string"
           },
@@ -3708,7 +3747,8 @@
               "interval_seconds": {
                 "type": "number",
                 "minimum": 0.1,
-                "default": 2
+                "default": 2,
+                "description": "Seconds between extracted frames; the output count scales as ceil(duration / interval_seconds), so a small interval on a long clip yields proportionally many uploaded images, and a value below the 0.1 minimum is rejected rather than clamped (there is no upper bound)."
               },
               "format": {
                 "type": "string",
@@ -3716,7 +3756,8 @@
                   "jpg",
                   "png"
                 ],
-                "default": "jpg"
+                "default": "jpg",
+                "description": "Image format of every extracted frame: jpg (default) or png, setting the extension the frames are encoded with and named by (thumb_001.jpg, thumb_002.jpg, and so on)."
               }
             },
             "additionalProperties": false
@@ -3745,7 +3786,7 @@
             "type": "string"
           },
           "input_url": {
-            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
+            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt .srt .ass; color LUT .cube), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
             "format": "uri",
             "type": "string"
           },
@@ -3776,7 +3817,8 @@
                   "webm",
                   "mkv"
                 ],
-                "default": "mp4"
+                "default": "mp4",
+                "description": "Output container: mp4 and mkv accept every vcodec/acodec in the enums (vp9-in-mp4 included), webm pairs only with vcodec vp9 or av1 and acodec opus (any other pairing is rejected before billing), and mp4 output is written with faststart so playback can begin before the file fully downloads."
               },
               "vcodec": {
                 "type": "string",
@@ -3840,7 +3882,7 @@
             "type": "string"
           },
           "input_url": {
-            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
+            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt .srt .ass; color LUT .cube), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
             "format": "uri",
             "type": "string"
           },
@@ -3903,7 +3945,7 @@
             "type": "string"
           },
           "input_url": {
-            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
+            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt .srt .ass; color LUT .cube), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
             "format": "uri",
             "type": "string"
           },
@@ -3940,7 +3982,8 @@
                   "mp4",
                   "mkv"
                 ],
-                "default": "mp4"
+                "default": "mp4",
+                "description": "Output container: mp4 output is written with faststart so playback can begin before the file fully downloads, mkv output is not; both carry the copied video stream with the audio re-encoded to AAC."
               }
             },
             "additionalProperties": false
@@ -3969,7 +4012,7 @@
             "type": "string"
           },
           "input_url": {
-            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
+            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt .srt .ass; color LUT .cube), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
             "format": "uri",
             "type": "string"
           },
@@ -4318,7 +4361,7 @@
             "type": "array"
           },
           "input_url": {
-            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
+            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt .srt .ass; color LUT .cube), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
             "format": "uri",
             "type": "string"
           },
