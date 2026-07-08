@@ -9,15 +9,15 @@ description: "Every capability the eachlabs Video API accepts — parameters, bo
 
 Every capability job is submitted the same way: `POST https://api.eachlabs.ai/v1/prediction` with header `X-API-Key`, body `{"model": "eachlabs-video-api", "input": {"capability": "<name>", "tier": "cpu", "input_url": "...", "params": {...}}}`, then poll `GET /v1/prediction/{id}` until a terminal status. `tier` is **required** (`cpu` or `gpu`). Analysis capabilities (`probe`, `scene_detect`, `silence_detect`, `audio_analysis`) return structured JSON in `output`; everything else returns hosted artifact URL(s) — the exact JSON per output class is in [Response shapes](#response-shapes). See [Quickstart](/video/quickstart) for the input URL requirements and [Billing & Limits](/video/billing-limits) for pricing mechanics and the error catalog. For long-tail cases the named capabilities don't cover, a raw-ffmpeg mode with a different top-level contract is documented at [run_ffmpeg](#run_ffmpeg), and multi-step patterns are collected under [Recipes](#recipes).
 
-The 40 capabilities by category (sections below are alphabetical; `keep_ranges` and `silence_remove` are one capability under two accepted names, so the API accepts 41 capability names):
+The 44 capabilities by category (sections below are alphabetical; `keep_ranges` and `silence_remove` are one capability under two accepted names, so the API accepts 45 capability names):
 
 | Category | Capabilities |
 |-|-|
 | Transform & geometry | `crop`, `pad`, `reframe`, `reframe_track`, `rotate`, `scale` |
 | Encode & convert | `gif`, `transcode` |
 | Time & speed | `fade`, `keep_ranges` (alias `silence_remove`), `reverse`, `segment`, `silence_split`, `speed`, `trim` |
-| Audio | `audio_master`, `audio_replace`, `extract_audio`, `loudnorm`, `volume` |
-| Composition & branding | `captions`, `color`, `concat`, `concat_copy`, `lut3d`, `overlay`, `slideshow`, `subtitle_compose`, `watermark` |
+| Audio | `audio_duck`, `audio_master`, `audio_replace`, `extract_audio`, `loudnorm`, `volume` |
+| Composition & branding | `captions`, `color`, `concat`, `concat_copy`, `crossfade`, `lut3d`, `overlay`, `slideshow`, `sticker_overlay`, `subtitle_compose`, `title_card`, `watermark` |
 | Packaging | `hls_ladder`, `package_abr`, `package_abr_ladder` |
 | Stills & sprites | `poster`, `stills`, `storyboard_sprites`, `thumbnails` |
 | Analysis | `audio_analysis`, `probe`, `scene_detect`, `silence_detect` |
@@ -28,7 +28,7 @@ The 40 capabilities by category (sections below are alphabetical; `keep_ranges` 
 
 ## Encode defaults
 
-Re-encoding capabilities that expose no codec knobs (`crop`, `scale`, `pad`, `rotate`, `overlay`, `watermark`, `speed`, `reverse`, `fade`, `color`, `reframe`, `reframe_track`, `concat`, `captions`, `lut3d`, `keep_ranges`/`silence_remove`, `slideshow`) share one fixed encode contract, keyed on the `container` parameter:
+Re-encoding capabilities that expose no codec knobs (`crop`, `scale`, `pad`, `rotate`, `overlay`, `watermark`, `speed`, `reverse`, `fade`, `color`, `reframe`, `reframe_track`, `concat`, `captions`, `lut3d`, `keep_ranges`/`silence_remove`, `slideshow`, `crossfade`, `sticker_overlay`, `title_card`) share one fixed encode contract, keyed on the `container` parameter:
 
 | Container | Video codec | Audio codec | Other |
 |-|-|-|-|
@@ -53,18 +53,22 @@ Before compute starts, staged inputs pass through an ffprobe gate. The gate's ch
 | `audio_master` | — | input |
 | `loudnorm` | — | input |
 | `silence_split` | — | input |
+| `audio_duck` | — | both inputs |
 | `segment` (only when `first_frame: true`) | input | — |
 | `audio_replace` (`mode: replace`) | base (`input_urls[0]`) | audio source (`input_urls[1]`) |
 | `audio_replace` (`mode: mix`) | base | base **and** audio source |
+| `title_card` | input | — |
 | `watermark` | both inputs | — |
 | `overlay` | both inputs | — |
+| `sticker_overlay` | both inputs | — |
 | `hls_ladder` | input | input |
 | `package_abr_ladder` | input | input |
+| `crossfade` | both inputs | both inputs |
 | `concat` | every input | every input |
 | `slideshow` | every input | — |
 
    (An image counts as a video stream — still-image watermarks and overlays pass.)
-3. **Empty-output parameters** — the per-capability zero-bill rejects noted in the tables below (`trim` start at/past EOF, `fade_out_start` at/past EOF, `stills`/`poster` timestamps at/past EOF, `keep_ranges` windows entirely past EOF or under one frame).
+3. **Empty-output parameters** — the per-capability zero-bill rejects noted in the tables below (`trim` start at/past EOF, `fade_out_start` at/past EOF, `stills`/`poster` timestamps at/past EOF, `keep_ranges` windows entirely past EOF or under one frame, `title_card`/`sticker_overlay` show windows outside the probed duration, `crossfade` `offset`/`duration` exceeding the first input's probed duration).
 4. **Tier and encoder constraints** — webm-on-gpu, cpu-only codecs, and gpu output ceilings computed from your params are checked at submit; ceiling checks that need the source's own dimensions (e.g. `keep_ranges`, `segment` with `reencode`) run at execute after the probe and are skipped when the source cannot be probed. Each is noted per capability.
 
 **Geometry is not probed.** A `crop` window larger than the source frame, or a `pad` `x`/`y` offset that pushes the picture outside the canvas, passes the gate and fails at execution as `exec_error` (verified against production) — probe the source first when its dimensions are uncertain. If the probe itself cannot read the source, the gates that need probe data fail open and the job proceeds.
@@ -117,6 +121,46 @@ A real production result:
   }
 }
 ```
+
+## audio_duck
+
+Duck a music/program bed under a voice track: the voice drives a sidechain compressor that lowers the music while the voice is above threshold, and the same voice is then mixed on top — output carries the voice over the ducked bed, audio-only.
+
+**Inputs:** `input_urls` (2) — `input_urls[0]` is the music/program bed, `input_urls[1]` is the voice · **Tiers:** `cpu` only (a `gpu` request is rejected at $0) · **Output:** media — single audio file (mp3/wav/m4a)
+
+| Parameter | Type | Constraints | Default | Required | Notes |
+|-|-|-|-|-|-|
+| `threshold` | number | min 0.000976563, max 1 | `0.05` | no | voice level that triggers the duck, as **linear** amplitude where 1 is full scale (0 dBFS); the default 0.05 is about -26 dBFS. Lower values duck on quieter voice |
+| `ratio` | number | min 1, max 20 | `8` | no | how hard the music is reduced above threshold: 1 leaves it untouched, 20 flattens it; 8 is a firm broadcast-style duck |
+| `attack_ms` | number | min 0.01, max 2000 | `20` | no | milliseconds for the duck to fully engage after the voice crosses threshold |
+| `release_ms` | number | min 0.01, max 9000 | `250` | no | milliseconds for the music to recover to full level after the voice falls below threshold |
+| `container` | string | `mp3` \| `wav` \| `m4a` | `"mp3"` | no | mp3 encodes with libmp3lame, m4a with AAC; wav writes lossless PCM |
+
+```json
+{
+  "model": "eachlabs-video-api",
+  "input": {
+    "capability": "audio_duck",
+    "tier": "cpu",
+    "input_urls": [
+      "YOUR_INPUT_URL_1",
+      "YOUR_INPUT_URL_2"
+    ],
+    "params": {
+      "threshold": 0.05,
+      "ratio": 8,
+      "container": "mp3"
+    }
+  }
+}
+```
+
+<Note>
+- The output runs **exactly as long as `input_urls[0]`'s audio**: a voice longer than the music is truncated at the music's end; a shorter voice leaves the remaining music playing at full level.
+- The output is always audio-only and inherits `input_urls[0]`'s sample rate and channel count — a video `input_urls[0]` contributes only its audio track, its video stream is discarded. Sample-rate or channel-layout mismatches never reject: the voice is silently resampled and up/down-mixed to the music's format.
+- Levels are never auto-normalized — the voice and the ducked music keep their source loudness, which can clip if both are hot.
+- Both inputs must carry an audio stream — an input without one is rejected at $0 before billing.
+</Note>
 
 ## audio_master
 
@@ -357,6 +401,44 @@ The window is **not checked against the source frame**: a `width`/`height` (or `
   }
 }
 ```
+
+## crossfade
+
+Crossfade two clips into one: the video transition starts `offset` seconds into the first clip and blends into the second over `duration` seconds (xfade); the audio is always crossfaded at the junction of the two audio tracks over the same `duration` (acrossfade ignores `offset`).
+
+**Inputs:** `input_urls` (2) — joined in order, first into second · **Tiers:** `cpu` only (a `gpu` request is rejected at $0) · **Output:** media — single file
+
+| Parameter | Type | Constraints | Default | Required | Notes |
+|-|-|-|-|-|-|
+| `transition` | string | `circleclose` \| `circleopen` \| `dissolve` \| `fade` \| `fadeblack` \| `fadewhite` \| `pixelize` \| `radial` \| `slidedown` \| `slideleft` \| `slideright` \| `slideup` \| `wipedown` \| `wipeleft` \| `wiperight` \| `wipeup` | `"fade"` | no | which xfade wipe/blend the video transition uses; the audio always uses a plain acrossfade regardless |
+| `duration` | number | min 0.1, max 10 | `1` | no | transition length in seconds, shared by the video xfade and the audio acrossfade; must not exceed the first input's probed duration (rejected at $0; unchecked when the duration is unknown) |
+| `offset` | number | min 0, max 86400 | — | no | seconds into the first input where the video transition starts; omit for the junction (first input duration − `duration`, derived from the probe). `offset` + `duration` must not exceed the first input's probed duration (rejected at $0; unchecked when unknown) |
+| `container` | string | `mp4` \| `webm` \| `mkv` | `"mp4"` | no |  |
+
+```json
+{
+  "model": "eachlabs-video-api",
+  "input": {
+    "capability": "crossfade",
+    "tier": "cpu",
+    "input_urls": [
+      "YOUR_INPUT_URL_1",
+      "YOUR_INPUT_URL_2"
+    ],
+    "params": {
+      "transition": "fade",
+      "duration": 1
+    }
+  }
+}
+```
+
+<Note>
+- With `offset` omitted, video and audio cross at the same junction and the output runs first + second − `duration` seconds. When the first input's duration cannot be probed (direct bindings), an omitted `offset` is rejected at $0 — supply it explicitly. An `offset` earlier than the junction switches the video to the second clip early while the audio still crosses at the junction, so the audio track outlasts the video track.
+- Both inputs must contain a video **and** an audio stream — an input missing either is rejected at $0 before billing.
+- The second input's video is scaled (stretched, square pixels) to the probed size of the first input; when that size is unknown the input sizes must already match or the run fails at execution. Both inputs must share a frame rate — mismatched rates fail at execution; container timebases are normalized in-graph, so inputs with identical frame rates but different encoder timescales are safe.
+- A second input shorter than `duration` truncates the transition. Video and audio are always re-encoded (audio becomes AAC for mp4/mkv or Opus for webm); nothing is stream-copied.
+</Note>
 
 ## extract_audio
 
@@ -1111,6 +1193,49 @@ Change playback speed by a factor (video setpts + pitch-preserving atempo chain)
 }
 ```
 
+## sticker_overlay
+
+Composite the second input (typically a still image: a sticker, logo, or watermark) over the base video, visible only inside a timed window — [overlay](#overlay)'s anchors plus `start`/`end` visibility.
+
+**Inputs:** `input_urls` (2) — `input_urls[0]` is the base video, `input_urls[1]` is the sticker (image or video) · **Tiers:** `cpu` only (a `gpu` request is rejected at $0) · **Output:** media — single file
+
+| Parameter | Type | Constraints | Default | Required | Notes |
+|-|-|-|-|-|-|
+| `start` | number | min 0, max 3600 | — | **yes** | second of the base video the sticker appears (inclusive); must be &lt; `end` when `end` is supplied. Zero-bill reject when at/past the probed source duration (the sticker would never appear) |
+| `end` | number | min 0, max 3600 | — | no | second the sticker disappears; omit to keep it visible until the end of the source. Must be &gt; `start`; a value past the probed source duration is rejected at $0 — **never silently clamped** (omit `end` to run to the source end) |
+| `position` | string | `top_left` \| `top_right` \| `bottom_left` \| `bottom_right` \| `center` | `"bottom_right"` | no | corners offset by margin; center ignores margin |
+| `margin` | number | min 0, max 1024 | `0` | no | inset in pixels from the anchored edge(s); ignored for center |
+| `scale` | number | min 0.05, max 4 | `1` | no | resize the sticker before compositing (bicubic, aspect preserved); the default 1 composites at native size with no resample pass |
+| `container` | string | `mp4` \| `webm` \| `mkv` | `"mp4"` | no |  |
+
+```json
+{
+  "model": "eachlabs-video-api",
+  "input": {
+    "capability": "sticker_overlay",
+    "tier": "cpu",
+    "input_urls": [
+      "YOUR_INPUT_URL_1",
+      "YOUR_INPUT_URL_2"
+    ],
+    "params": {
+      "start": 2,
+      "end": 8,
+      "position": "bottom_right",
+      "margin": 24,
+      "scale": 0.5
+    }
+  }
+}
+```
+
+<Note>
+- The window only shows or hides the sticker — an **animated** sticker plays on the base's timeline from t=0, not from `start`: an animation shorter than `start` shows only its frozen last frame inside the window; one that ends before `end` stays frozen on its last frame for the remainder; one that runs longer has its extra tail dropped. A still image is unaffected.
+- No opacity control — the sticker's own alpha channel (e.g. a transparent PNG) is honored, and fully opaque pixels stay fully opaque. A sticker larger than the frame (natively or after `scale`) is composited with the out-of-frame overflow cropped; the output always keeps the base's resolution and duration.
+- Only the base's audio is kept (a silent base still succeeds); the sticker input's audio is discarded. Both inputs must contain a video stream (a still image counts) — an input without one is rejected at $0 before billing.
+- The window checks compare against the source's **video stream** duration when it disagrees with the container duration; when the source cannot be probed the window is range-checked only. Video and audio are always re-encoded (audio becomes AAC for mp4/mkv or Opus for webm); nothing is stream-copied.
+</Note>
+
 ## stills
 
 Extract a single frame as JPEG or PNG (first, last, or at an exact timestamp).
@@ -1254,6 +1379,47 @@ Extract one image frame every interval_seconds — multi-output.
   }
 }
 ```
+
+## title_card
+
+Draw a text title over the single input video (drawtext) with an optional show window — the text is rendered from a staged file, never interpreted.
+
+**Inputs:** `input_url` (1) · **Tiers:** `cpu` only (a `gpu` request is rejected at $0) · **Output:** media — single file
+
+| Parameter | Type | Constraints | Default | Required | Notes |
+|-|-|-|-|-|-|
+| `text` | string | 1–200 chars after normalization | — | **yes** | drawn verbatim; newlines render as line breaks (multi-line titles supported). Normalization before rendering: CRLF/CR → LF, tabs → single spaces, other control characters removed, leading/trailing whitespace trimmed. Empty or over 200 chars after normalization rejects at $0 |
+| `font` | string | `Liberation Sans` \| `Liberation Serif` \| `Liberation Mono` \| `DejaVu Sans` \| `DejaVu Serif` \| `DejaVu Sans Mono` | `"Liberation Sans"` | no | families bundled in the runtime image, rendered from the family's baked font file — never a fontconfig fallback |
+| `font_size` | integer | min 12, max 288 | `64` | no | text size in pixels |
+| `font_color` | string |  | `"white"` | no | named (black, white, gray/grey, red, green, blue, yellow) or #RRGGBB hex |
+| `position` | string | `center` \| `top` \| `bottom` \| `top_left` \| `top_right` \| `bottom_left` \| `bottom_right` | `"center"` | no | anchor for the text block; non-center anchors are inset from the frame edge by 5% of the frame dimension |
+| `start` | number | min 0, max 86400 | — | no | seconds when the title becomes visible; supplied alone it shows the title from `start` to the end of the video. Zero-bill reject when at/past the probed source duration (the title would never show) |
+| `end` | number | &gt; 0, max 86400 | — | no | seconds when the title stops being visible; supplied alone it shows the title from the beginning until `end`. Must be &gt; `start` when both are given; an `end` past the probed source duration rejects at $0 |
+| `container` | string | `mp4` \| `webm` \| `mkv` | `"mp4"` | no |  |
+
+```json
+{
+  "model": "eachlabs-video-api",
+  "input": {
+    "capability": "title_card",
+    "tier": "cpu",
+    "input_url": "YOUR_INPUT_URL",
+    "params": {
+      "text": "Chapter One",
+      "font_size": 96,
+      "position": "center",
+      "start": 0,
+      "end": 4
+    }
+  }
+}
+```
+
+<Note>
+- **Injection-safe by construction:** the text is staged as a server-generated text file and rendered with expansion disabled, so it is drawn verbatim — quotes, colons, backslashes, and ffmpeg `%{...}` expansion sequences have no effect on the command.
+- Omit both `start` and `end` to show the title for the whole video. When the source duration cannot be probed, the window is range-checked only.
+- The input must contain a video stream — rejected at $0 before billing otherwise. Video and audio are always re-encoded (audio becomes AAC for mp4/mkv or Opus for webm); nothing is stream-copied.
+</Note>
 
 ## transcode
 

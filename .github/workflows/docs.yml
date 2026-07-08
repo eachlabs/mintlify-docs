@@ -32,3 +32,33 @@ jobs:
 
       - name: Check broken links
         run: npm run broken-links
+
+  video-api-mirror:
+    name: video-api OpenAPI mirror sync
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check mirror-guard token
+        id: token
+        env:
+          BE_MONOREPO_READ_TOKEN: ${{ secrets.BE_MONOREPO_READ_TOKEN }}
+        run: |
+          if [ -n "$BE_MONOREPO_READ_TOKEN" ]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::BE_MONOREPO_READ_TOKEN secret is not configured; skipping video-api OpenAPI mirror verification"
+          fi
+
+      - name: Verify video-api OpenAPI mirror
+        if: steps.token.outputs.available == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.BE_MONOREPO_READ_TOKEN }}
+        run: |
+          printf 'Authorization: Bearer %s\n' "$GITHUB_TOKEN" | curl -fsSL -H @- \
+            -H "Accept: application/vnd.github.raw" \
+            "https://api.github.com/repos/eachlabs/be-monorepo/contents/video-api/scripts/check-docs-mirror.sh?ref=main" \
+            -o /tmp/check-docs-mirror.sh
+          bash /tmp/check-docs-mirror.sh openapi_specs/video_api.json

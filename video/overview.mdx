@@ -9,7 +9,7 @@ description: "Run production video capabilities — transcode, trim, captions, p
 
 ## What is the Video API?
 
-One API for programmatic video work: **40 ready-made capabilities** — transcoding, trimming, silence-aware splitting, captions and subtitle composition, watermarks, overlays, audio replacement and mastering, HLS/DASH packaging, thumbnails and sprites — including four structured **analysis capabilities** (`probe`, `scene_detect`, `silence_detect`, `audio_analysis`) that return JSON instead of media.
+One API for programmatic video work: **44 ready-made capabilities** — transcoding, trimming, silence-aware splitting, captions and subtitle composition, watermarks, overlays and stickers, crossfades and title cards, audio replacement, ducking and mastering, HLS/DASH packaging, thumbnails and sprites — including four structured **analysis capabilities** (`probe`, `scene_detect`, `silence_detect`, `audio_analysis`) that return JSON instead of media.
 
 It runs behind the same [eachlabs prediction API](/api/overview) you may already use for AI models: the same API key, the same submit-and-poll flow, the same billing. Model slug: **`eachlabs-video-api`**.
 
@@ -45,7 +45,7 @@ Submit returns a prediction ID; poll `GET /v1/prediction/{id}` until a terminal 
     Submit your first job and poll it to completion.
   </Card>
   <Card title="Capabilities Reference" icon="list" href="/video/capabilities">
-    All 40 capabilities with parameters, bounds, and copy-pasteable request bodies.
+    All 44 capabilities with parameters, bounds, and copy-pasteable request bodies.
   </Card>
   <Card title="Billing & Limits" icon="credit-card" href="/video/billing-limits">
     The billing formula, the $0-reject guarantees, and the full error catalog.

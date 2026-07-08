@@ -3,7 +3,7 @@
   "info": {
     "title": "eachlabs Video API (beta)",
     "version": "v1-beta",
-    "description": "Machine-readable contract for the eachlabs Video API: 41 capability input schemas embedded token-for-token from the engine's capability registry (the canonical contract — content and key order preserved, whitespace re-flowed; keep_ranges and silence_remove are one capability under two accepted names), the prediction submit/poll/cancel envelopes, and the error taxonomy. GENERATED — do not edit by hand; regenerate with `make openapi` in be-monorepo/video-api. Human documentation: https://docs.eachlabs.ai/video/overview.",
+    "description": "Machine-readable contract for the eachlabs Video API: 45 capability input schemas embedded token-for-token from the engine's capability registry (the canonical contract — content and key order preserved, whitespace re-flowed; keep_ranges and silence_remove are one capability under two accepted names), the prediction submit/poll/cancel envelopes, and the error taxonomy. GENERATED — do not edit by hand; regenerate with `make openapi` in be-monorepo/video-api. Human documentation: https://docs.eachlabs.ai/video/overview.",
     "contact": {
       "name": "eachlabs",
       "url": "https://docs.eachlabs.ai/video/overview"
@@ -488,10 +488,11 @@
         "type": "object"
       },
       "CapabilityInput": {
-        "description": "One of the 41 capability input envelopes, discriminated by the capability field.",
+        "description": "One of the 45 capability input envelopes, discriminated by the capability field.",
         "discriminator": {
           "mapping": {
             "audio_analysis": "#/components/schemas/CapabilityInput_audio_analysis",
+            "audio_duck": "#/components/schemas/CapabilityInput_audio_duck",
             "audio_master": "#/components/schemas/CapabilityInput_audio_master",
             "audio_replace": "#/components/schemas/CapabilityInput_audio_replace",
             "captions": "#/components/schemas/CapabilityInput_captions",
@@ -499,6 +500,7 @@
             "concat": "#/components/schemas/CapabilityInput_concat",
             "concat_copy": "#/components/schemas/CapabilityInput_concat_copy",
             "crop": "#/components/schemas/CapabilityInput_crop",
+            "crossfade": "#/components/schemas/CapabilityInput_crossfade",
             "extract_audio": "#/components/schemas/CapabilityInput_extract_audio",
             "fade": "#/components/schemas/CapabilityInput_fade",
             "gif": "#/components/schemas/CapabilityInput_gif",
@@ -524,10 +526,12 @@
             "silence_split": "#/components/schemas/CapabilityInput_silence_split",
             "slideshow": "#/components/schemas/CapabilityInput_slideshow",
             "speed": "#/components/schemas/CapabilityInput_speed",
+            "sticker_overlay": "#/components/schemas/CapabilityInput_sticker_overlay",
             "stills": "#/components/schemas/CapabilityInput_stills",
             "storyboard_sprites": "#/components/schemas/CapabilityInput_storyboard_sprites",
             "subtitle_compose": "#/components/schemas/CapabilityInput_subtitle_compose",
             "thumbnails": "#/components/schemas/CapabilityInput_thumbnails",
+            "title_card": "#/components/schemas/CapabilityInput_title_card",
             "transcode": "#/components/schemas/CapabilityInput_transcode",
             "trim": "#/components/schemas/CapabilityInput_trim",
             "volume": "#/components/schemas/CapabilityInput_volume",
@@ -538,6 +542,9 @@
         "oneOf": [
           {
             "$ref": "#/components/schemas/CapabilityInput_audio_analysis"
+          },
+          {
+            "$ref": "#/components/schemas/CapabilityInput_audio_duck"
           },
           {
             "$ref": "#/components/schemas/CapabilityInput_audio_master"
@@ -559,6 +566,9 @@
           },
           {
             "$ref": "#/components/schemas/CapabilityInput_crop"
+          },
+          {
+            "$ref": "#/components/schemas/CapabilityInput_crossfade"
           },
           {
             "$ref": "#/components/schemas/CapabilityInput_extract_audio"
@@ -636,6 +646,9 @@
             "$ref": "#/components/schemas/CapabilityInput_speed"
           },
           {
+            "$ref": "#/components/schemas/CapabilityInput_sticker_overlay"
+          },
+          {
             "$ref": "#/components/schemas/CapabilityInput_stills"
           },
           {
@@ -646,6 +659,9 @@
           },
           {
             "$ref": "#/components/schemas/CapabilityInput_thumbnails"
+          },
+          {
+            "$ref": "#/components/schemas/CapabilityInput_title_card"
           },
           {
             "$ref": "#/components/schemas/CapabilityInput_transcode"
@@ -693,6 +709,95 @@
             "description": "Measure the audio track: integrated loudness (LUFS), loudness range (LU), true peak (dBTP), sample peak (dBFS), and the astats clipping indicators flat_factor (dB flatness of consecutive equal samples) and peak_count (occurrences of the max sample) via astats+ebur128. Returns structured JSON, no uploaded artifact (zero egress). The input MUST carry an audio stream: a video-only input is rejected before billing. Any field that cannot be measured is omitted from the result rather than reported as zero: a digitally silent input returns no true_peak_dbtp and no sample_peak_dbfs (silence has no finite dB peak), and any statistic ffmpeg reports as -inf/nan is likewise omitted. Treat a missing field as not-measurable, never as 0. Runs on the cpu tier only: a request on the gpu tier is rejected before billing.",
             "type": "object",
             "properties": {},
+            "additionalProperties": false
+          },
+          "tier": {
+            "default": "cpu",
+            "description": "Compute tier (pricing/hardware class). gpu is a beta tier with limited capacity.",
+            "enum": [
+              "cpu",
+              "gpu"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "capability",
+          "params"
+        ],
+        "type": "object"
+      },
+      "CapabilityInput_audio_duck": {
+        "description": "Input envelope for the \"audio_duck\" capability. The params schema below is the complete, canonical contract for this capability; send params explicitly ({} accepts every default) — required fields inside it are enforced at submit as invalid_command.",
+        "properties": {
+          "capability": {
+            "const": "audio_duck",
+            "type": "string"
+          },
+          "input_url": {
+            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt .srt .ass; color LUT .cube), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
+            "format": "uri",
+            "type": "string"
+          },
+          "input_urls": {
+            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order.",
+            "items": {
+              "format": "uri",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "mode": {
+            "const": "capability",
+            "default": "capability",
+            "description": "Optional for capability jobs; \"capability\" is the default mode.",
+            "type": "string"
+          },
+          "params": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "title": "audio_duck",
+            "description": "Duck a music/program bed under a voice track using two inputs: input0 is the music, input1 is the voice. The voice drives a sidechain compressor that lowers the music while the voice is above threshold, and the SAME voice is then mixed on top, so the output carries the voice over the ducked bed. The output is always audio-only (mp3, wav, or m4a): a video input0 contributes only its audio track and its video stream is discarded. The output runs exactly as long as input0's audio: a voice longer than the music is truncated at the music's end, and a voice shorter than the music leaves the remaining music playing at full level. Inputs that differ in sample rate or channel layout are never rejected: the voice is silently resampled and up/down-mixed to the music's format, and the output inherits input0's sample rate and channel count. Levels are never auto-normalized: the voice and the ducked music keep their source loudness, which can clip if both are hot. Both inputs must carry an audio stream: an input without one is rejected before billing. Runs on the cpu tier only: a request on the gpu tier is rejected before billing.",
+            "type": "object",
+            "properties": {
+              "threshold": {
+                "type": "number",
+                "minimum": 0.000976563,
+                "maximum": 1,
+                "default": 0.05,
+                "description": "Voice level that triggers the duck, as LINEAR amplitude where 1 is full scale (0 dBFS); the default 0.05 is about -26 dBFS. The music is compressed while the voice is above this level; lower values duck on quieter voice."
+              },
+              "ratio": {
+                "type": "number",
+                "minimum": 1,
+                "maximum": 20,
+                "default": 8,
+                "description": "How hard the music is reduced once the voice crosses threshold: 1 leaves it untouched, 20 flattens it. The default 8 is a firm broadcast-style duck."
+              },
+              "attack_ms": {
+                "type": "number",
+                "minimum": 0.01,
+                "maximum": 2000,
+                "default": 20,
+                "description": "Milliseconds for the duck to fully engage after the voice crosses threshold."
+              },
+              "release_ms": {
+                "type": "number",
+                "minimum": 0.01,
+                "maximum": 9000,
+                "default": 250,
+                "description": "Milliseconds for the music to recover to full level after the voice falls below threshold."
+              },
+              "container": {
+                "type": "string",
+                "enum": [
+                  "mp3",
+                  "wav",
+                  "m4a"
+                ],
+                "default": "mp3",
+                "description": "Output audio format and codec (default mp3): mp3 encodes with libmp3lame and m4a with AAC; wav writes lossless PCM."
+              }
+            },
             "additionalProperties": false
           },
           "tier": {
@@ -1270,6 +1375,103 @@
                 ],
                 "default": "mp4",
                 "description": "Output container. On the gpu tier webm is rejected before billing (the gpu tier has no webm encoder); resubmit on the cpu tier."
+              }
+            },
+            "additionalProperties": false
+          },
+          "tier": {
+            "default": "cpu",
+            "description": "Compute tier (pricing/hardware class). gpu is a beta tier with limited capacity.",
+            "enum": [
+              "cpu",
+              "gpu"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "capability",
+          "params"
+        ],
+        "type": "object"
+      },
+      "CapabilityInput_crossfade": {
+        "description": "Input envelope for the \"crossfade\" capability. The params schema below is the complete, canonical contract for this capability; send params explicitly ({} accepts every default) — required fields inside it are enforced at submit as invalid_command.",
+        "properties": {
+          "capability": {
+            "const": "crossfade",
+            "type": "string"
+          },
+          "input_url": {
+            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt .srt .ass; color LUT .cube), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
+            "format": "uri",
+            "type": "string"
+          },
+          "input_urls": {
+            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order.",
+            "items": {
+              "format": "uri",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "mode": {
+            "const": "capability",
+            "default": "capability",
+            "description": "Optional for capability jobs; \"capability\" is the default mode.",
+            "type": "string"
+          },
+          "params": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "title": "crossfade",
+            "description": "Crossfade two clips into one. Supply exactly two inputs in order: the video transition starts offset seconds into the first clip and blends into the second over duration seconds (xfade); the audio is always crossfaded at the junction of the two audio tracks over the same duration (acrossfade ignores offset). With offset omitted it is derived from the probed first input (first duration minus duration) so video and audio cross at the same junction and the output runs first plus second minus duration seconds; when the first input's duration cannot be probed (direct bindings), an omitted offset is rejected before billing - supply offset explicitly. A supplied offset earlier than the junction switches the video to the second clip early while the audio still crosses at the junction, so the audio track outlasts the video track. Both inputs must contain a video AND an audio stream - an input missing either is rejected before billing. The second input's video is scaled (stretched, square pixels) to the probed size of the first input; when that size is unknown the input sizes must already match or the run fails at execution. Both inputs must share a frame rate - mismatched rates fail at execution; container timebases are normalized in-graph, so inputs with identical frame rates but different encoder timescales are safe. A second input shorter than duration truncates the transition. Video and audio are always re-encoded (audio becomes AAC for mp4/mkv or Opus for webm); nothing is stream-copied. Runs on the cpu tier only: a request on the gpu tier is rejected before billing.",
+            "type": "object",
+            "properties": {
+              "transition": {
+                "type": "string",
+                "enum": [
+                  "circleclose",
+                  "circleopen",
+                  "dissolve",
+                  "fade",
+                  "fadeblack",
+                  "fadewhite",
+                  "pixelize",
+                  "radial",
+                  "slidedown",
+                  "slideleft",
+                  "slideright",
+                  "slideup",
+                  "wipedown",
+                  "wipeleft",
+                  "wiperight",
+                  "wipeup"
+                ],
+                "default": "fade",
+                "description": "Which xfade wipe/blend the video transition uses; the audio always uses a plain acrossfade regardless."
+              },
+              "duration": {
+                "type": "number",
+                "minimum": 0.1,
+                "maximum": 10,
+                "default": 1,
+                "description": "Transition length in seconds, shared by the video xfade and the audio acrossfade. Must not exceed the first input's probed duration (rejected before billing; unchecked when the duration is unknown)."
+              },
+              "offset": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 86400,
+                "description": "Seconds into the first input where the video transition starts. Omit for the junction (first input duration minus duration, derived from the probe). offset plus duration must not exceed the first input's probed duration (rejected before billing; unchecked when the duration is unknown). The audio crossfade ignores offset and always sits at the audio junction."
+              },
+              "container": {
+                "type": "string",
+                "enum": [
+                  "mp4",
+                  "webm",
+                  "mkv"
+                ],
+                "default": "mp4",
+                "description": "Output container (default mp4): it fixes the pinned audio codec (AAC for mp4/mkv, Opus for webm) while video uses the container's cpu default encoder (H.264 for mp4/mkv, VP9 for webm), and mp4 output is written with the faststart flag so it progressive-plays."
               }
             },
             "additionalProperties": false
@@ -3288,6 +3490,108 @@
         ],
         "type": "object"
       },
+      "CapabilityInput_sticker_overlay": {
+        "description": "Input envelope for the \"sticker_overlay\" capability. The params schema below is the complete, canonical contract for this capability; send params explicitly (this capability has required params) — required fields inside it are enforced at submit as invalid_command.",
+        "properties": {
+          "capability": {
+            "const": "sticker_overlay",
+            "type": "string"
+          },
+          "input_url": {
+            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt .srt .ass; color LUT .cube), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
+            "format": "uri",
+            "type": "string"
+          },
+          "input_urls": {
+            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order.",
+            "items": {
+              "format": "uri",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "mode": {
+            "const": "capability",
+            "default": "capability",
+            "description": "Optional for capability jobs; \"capability\" is the default mode.",
+            "type": "string"
+          },
+          "params": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "title": "sticker_overlay",
+            "description": "Composite the second input (input1, typically a still image: a sticker, logo, or watermark) over the base video (input0), visible only inside a timed window: from start until end, or until the end of the source when end is omitted. Placement uses the same anchors as overlay: a named corner/center position inset by margin. The sticker is composited at native size unless scale resizes it (bicubic, aspect preserved); there is no opacity control - the sticker's own alpha channel (e.g. a transparent PNG) is honored, and fully opaque pixels stay fully opaque. A sticker larger than the frame (natively or after scaling) is composited with the out-of-frame overflow cropped; the output always keeps the base's resolution and duration. An animated sticker plays on the base's timeline from t=0, not from start - the window only shows or hides it, so an animation shorter than start shows only its frozen last frame inside the window; one that ends earlier stays frozen on its last frame for the remainder, and one that runs longer has its extra tail dropped. A still image is unaffected. Only the base's audio is kept (a silent base still succeeds); the sticker input's audio is discarded. Both inputs must contain a video stream (a still image counts) - an input without one is rejected before billing. When the source can be probed, a start at or after the source duration and a supplied end past it are rejected before billing (never silently clamped - omit end to run to the source end); the checks compare against the source's video stream duration when it disagrees with the container duration; when it cannot be probed the window is range-checked only. Video and audio are always re-encoded (audio becomes AAC for mp4/mkv or Opus for webm); nothing is stream-copied. Runs on the cpu tier only: a request on the gpu tier is rejected before billing.",
+            "type": "object",
+            "properties": {
+              "start": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 3600,
+                "description": "Second of the base video the sticker appears (inclusive). REQUIRED. Must be less than end when end is supplied; when the source can be probed a start at or after the source duration is rejected before billing (the sticker would never appear)."
+              },
+              "end": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 3600,
+                "description": "Second of the base video the sticker disappears. Omit to keep the sticker visible until the end of the source. Must be greater than start; when the source can be probed a value past the source duration is rejected before billing (never clamped)."
+              },
+              "position": {
+                "type": "string",
+                "enum": [
+                  "top_left",
+                  "top_right",
+                  "bottom_left",
+                  "bottom_right",
+                  "center"
+                ],
+                "default": "bottom_right",
+                "description": "Anchor for the sticker. Corners offset by margin; center ignores margin."
+              },
+              "margin": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1024,
+                "default": 0,
+                "description": "Inset in pixels from the anchored edge(s). Ignored for center."
+              },
+              "scale": {
+                "type": "number",
+                "minimum": 0.05,
+                "maximum": 4,
+                "default": 1,
+                "description": "Factor to resize the sticker before compositing (bicubic, aspect preserved). The default 1 composites at native size with no resample pass."
+              },
+              "container": {
+                "type": "string",
+                "enum": [
+                  "mp4",
+                  "webm",
+                  "mkv"
+                ],
+                "default": "mp4",
+                "description": "Output container (default mp4): it fixes the pinned audio codec (AAC for mp4/mkv, Opus for webm) while video uses the container's cpu default encoder (H.264 for mp4/mkv, VP9 for webm), and mp4 output is written with the faststart flag so it progressive-plays."
+              }
+            },
+            "required": [
+              "start"
+            ],
+            "additionalProperties": false
+          },
+          "tier": {
+            "default": "cpu",
+            "description": "Compute tier (pricing/hardware class). gpu is a beta tier with limited capacity.",
+            "enum": [
+              "cpu",
+              "gpu"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "capability",
+          "params"
+        ],
+        "type": "object"
+      },
       "CapabilityInput_stills": {
         "description": "Input envelope for the \"stills\" capability. The params schema below is the complete, canonical contract for this capability; send params explicitly ({} accepts every default) — required fields inside it are enforced at submit as invalid_command.",
         "properties": {
@@ -3778,6 +4082,126 @@
         ],
         "type": "object"
       },
+      "CapabilityInput_title_card": {
+        "description": "Input envelope for the \"title_card\" capability. The params schema below is the complete, canonical contract for this capability; send params explicitly (this capability has required params) — required fields inside it are enforced at submit as invalid_command.",
+        "properties": {
+          "capability": {
+            "const": "title_card",
+            "type": "string"
+          },
+          "input_url": {
+            "description": "One input media URL: a publicly downloadable https URL pointing directly at a media file identified by its path extension (video .mp4 .webm .mov .avi .mkv .flv; audio .mp3 .wav .ogg .flac .m4a .aac .opus .wma; image .png .jpg .jpeg .gif .webp .bmp .tiff; subtitle .vtt .srt .ass; color LUT .cube), an eachlabs CDN/storage URL (staged directly), or a raw s3:// URI the engine can read. A URL with no path extension may declare its type with a mime_type= query parameter, underscore-encoded — first '_' becomes '/', later '_' becomes '-' (mime_type=video_mp4 is video/mp4; any video/*, audio/*, or image/* type is accepted); the parameter cannot override an unrecognized extension. A URL that cannot be staged is rejected before billing at $0 with error_code PROVIDER_REJECTED. A capability that requires media submitted with no input_url/input_urls at all is rejected at submit (placeholder_unbound, $0).",
+            "format": "uri",
+            "type": "string"
+          },
+          "input_urls": {
+            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order.",
+            "items": {
+              "format": "uri",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "mode": {
+            "const": "capability",
+            "default": "capability",
+            "description": "Optional for capability jobs; \"capability\" is the default mode.",
+            "type": "string"
+          },
+          "params": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "title": "title_card",
+            "description": "Draw a text title over the single input video with the drawtext filter. The text is staged as a server-generated text file and rendered with expansion disabled, so it is drawn verbatim: quotes, colons, backslashes, and ffmpeg %{...} expansion sequences have no effect on the command. Normalization before rendering: CRLF and CR become LF and newlines render as line breaks (multi-line titles are supported); tabs become single spaces; other control characters are removed; leading and trailing whitespace is trimmed. After normalization the text must be non-empty and at most 200 characters or the request is rejected before billing. Show window: omit start and end to show the title for the whole video; start alone shows it from start to the end of the video; end alone shows it from the beginning until end; when both are given, start must be less than end. When the source duration is probed, a start at or after it, or an end past it, is rejected before billing; when the duration is unknown the window is range-checked only. The input must contain a video stream or it is rejected before billing. Video and audio are always re-encoded (audio becomes AAC for mp4/mkv or Opus for webm); nothing is stream-copied. Runs on the cpu tier only: a request on the gpu tier is rejected before billing.",
+            "type": "object",
+            "properties": {
+              "text": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Title text; at most 200 characters after normalization. Newlines render as line breaks."
+              },
+              "font": {
+                "type": "string",
+                "enum": [
+                  "Liberation Sans",
+                  "Liberation Serif",
+                  "Liberation Mono",
+                  "DejaVu Sans",
+                  "DejaVu Serif",
+                  "DejaVu Sans Mono"
+                ],
+                "default": "Liberation Sans",
+                "description": "Font family; must be a family bundled in the runtime image. Rendered from the family's baked font file, never a fontconfig fallback."
+              },
+              "font_size": {
+                "type": "integer",
+                "minimum": 12,
+                "maximum": 288,
+                "default": 64,
+                "description": "Text size in pixels."
+              },
+              "font_color": {
+                "type": "string",
+                "default": "white",
+                "description": "Text color: a named color (black, white, gray, grey, red, green, blue, yellow) or #RRGGBB hex."
+              },
+              "position": {
+                "type": "string",
+                "enum": [
+                  "center",
+                  "top",
+                  "bottom",
+                  "top_left",
+                  "top_right",
+                  "bottom_left",
+                  "bottom_right"
+                ],
+                "default": "center",
+                "description": "Anchor for the text block. Non-center anchors are inset from the frame edge by 5% of the frame dimension."
+              },
+              "start": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 86400,
+                "description": "Seconds when the title becomes visible. Omit (with end also omitted) to show the title for the whole video; supplied alone it shows the title from start to the end of the video. Must be less than end when both are given; a start at or after the probed source duration is rejected before billing (the title would never show)."
+              },
+              "end": {
+                "type": "number",
+                "exclusiveMinimum": 0,
+                "maximum": 86400,
+                "description": "Seconds when the title stops being visible. Supplied alone it shows the title from the beginning until end. Must be greater than start when both are given; an end past the probed source duration is rejected before billing."
+              },
+              "container": {
+                "type": "string",
+                "enum": [
+                  "mp4",
+                  "webm",
+                  "mkv"
+                ],
+                "default": "mp4",
+                "description": "Output container (default mp4): audio is re-encoded to the container's native codec (AAC for mp4/mkv, Opus for webm), video uses the container's cpu default encoder (H.264 for mp4/mkv, VP9 for webm), and mp4 output is written with faststart so it progressive-plays."
+              }
+            },
+            "required": [
+              "text"
+            ],
+            "additionalProperties": false
+          },
+          "tier": {
+            "default": "cpu",
+            "description": "Compute tier (pricing/hardware class). gpu is a beta tier with limited capacity.",
+            "enum": [
+              "cpu",
+              "gpu"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "capability",
+          "params"
+        ],
+        "type": "object"
+      },
       "CapabilityInput_transcode": {
         "description": "Input envelope for the \"transcode\" capability. The params schema below is the complete, canonical contract for this capability; send params explicitly ({} accepts every default) — required fields inside it are enforced at submit as invalid_command.",
         "properties": {
@@ -4108,7 +4532,6 @@
           "code": {
             "enum": [
               "invalid_command",
-              "unknown_capability",
               "encoder_unavailable",
               "filter_unavailable",
               "output_resolution_too_large",
@@ -4118,13 +4541,14 @@
               "placeholder_unbound",
               "placeholder_syntax",
               "input_rejected",
-              "unauthorized",
               "scope_denied",
-              "job_not_found",
+              "unauthorized",
+              "billed_seconds_cap",
               "idempotency_conflict",
               "job_exists",
+              "unknown_capability",
+              "job_not_found",
               "rate_limited",
-              "billed_seconds_cap",
               "platform_fault"
             ],
             "type": "string"
