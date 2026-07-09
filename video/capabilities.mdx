@@ -881,6 +881,8 @@ Pan a fixed-size crop window across the frame following a subject, driven by a c
 
 **Inputs:** `input_urls` (2) — `input_urls[0]` is the source video, `input_urls[1]` is the crop-track sidecar (sendcmd script) · **Tiers:** `cpu` only · **Output:** media — single file
 
+<Warning>**Experimental.** `reframe_track` ships only the execution leg today: the auto-tracking model that would generate crop tracks for you is not yet available, so you must supply your own sendcmd tracking sidecar as `input_urls[1]` (format below). If you cannot produce a crop track yourself, use `reframe` (static crop/pad) instead. The sidecar contract on this page is stable and will not change when auto-tracking lands.</Warning>
+
 **The sidecar.** `input_urls[1]` is a raw ffmpeg [sendcmd](https://ffmpeg.org/ffmpeg-filters.html#sendcmd_002c-asendcmd) script the engine splices in as `sendcmd=f=<sidecar>,crop=W:H`. One command per line:
 
 ```text
