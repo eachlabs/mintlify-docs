@@ -1308,7 +1308,9 @@ Sample one frame per interval, pack into **one** tiled sprite sheet plus a serve
 
 ## subtitle_compose
 
-Author a styled, animated ASS caption document from words+hook+style and burn it in (karaoke-style captions). The .ass is server-generated — no subtitle file input.
+Word-timed, animated captions in the style popularized by TikTok and Shorts editors: you supply the transcript as individual words with millisecond timings, pick a style, and the engine authors the subtitle document server-side and burns it into the video. An optional **hook** — a short headline shown near the top of the frame — can run alongside the captions. No subtitle file is ever uploaded or fetched.
+
+Word timings typically come from a speech-to-text model with word-level timestamps (for example `elevenlabs-speech-to-text-scribe-v2` on this platform); feed its word list straight into `words`.
 
 **Inputs:** `input_url` (1) · **Tiers:** `cpu` only · **Output:** media — single file
 
@@ -1349,9 +1351,79 @@ Author a styled, animated ASS caption document from words+hook+style and burn it
         { "text": "day", "start_ms": 1100, "end_ms": 1600 }
       ],
       "hook": { "text": "GYM RULES", "start_ms": 0, "end_ms": 1600 },
-      "style": { "font": "Liberation Sans", "font_size_pct": 5 }
+      "style": {
+        "font": "Montserrat Black",
+        "hook_font": "Archivo Black",
+        "hook_animation": "none",
+        "active_color": "yellow",
+        "animation": "highlight",
+        "max_words": 3
+      }
     }
   }
+}
+```
+
+### Choosing a font
+
+`Anton`, `Archivo Black`, `Bangers`, and `Montserrat Black` are heavy display faces built for short, loud, uppercase captions — the viral-video look. `Inter`, `Montserrat`, and `Poppins` are text faces that stay readable in longer sentences and calmer edits; the Liberation and DejaVu families are neutral defaults. The same list is available for `style.font`, `style.hook_font`, and `title_card`'s `font`.
+
+### Choosing a hook entrance
+
+`pop` (the default) fades the hook in with a short scale pop. Scaling re-computes line wrapping every frame, so a hook long enough to wrap onto multiple lines can visibly re-wrap mid-animation — for long hooks prefer `fade` (fade-in, never re-wraps) or `none` (appears instantly).
+
+### Style recipes
+
+Ready-to-paste `style` objects for the three most-requested caption looks. Everything else (timing, paging, colors) can be tuned per the parameter table above.
+
+**Bold viral caps** — heavy uppercase captions, active word flips to yellow:
+
+```json
+{
+  "font": "Archivo Black",
+  "hook_font": "Archivo Black",
+  "hook_animation": "fade",
+  "text_color": "white",
+  "active_color": "yellow",
+  "outline_width": 9,
+  "shadow_depth": 4,
+  "animation": "highlight",
+  "max_words": 3,
+  "uppercase": true
+}
+```
+
+**Comic burst** — comic-style caps in short two-word bursts, active word in green:
+
+```json
+{
+  "font": "Bangers",
+  "hook_font": "Bangers",
+  "hook_animation": "pop",
+  "text_color": "white",
+  "active_color": "lime",
+  "outline_width": 10,
+  "shadow_depth": 3,
+  "animation": "highlight",
+  "max_words": 2,
+  "uppercase": true
+}
+```
+
+**Clean karaoke** — sentence-case captions with a left-to-right color sweep, for podcasts and talking-head edits:
+
+```json
+{
+  "font": "Poppins",
+  "hook_font": "Poppins",
+  "hook_animation": "none",
+  "text_color": "white",
+  "active_color": "gold",
+  "outline_width": 5,
+  "shadow_depth": 2,
+  "animation": "fill",
+  "max_words": 5,
+  "uppercase": false
 }
 ```
 
