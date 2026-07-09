@@ -108,6 +108,8 @@ rss: true
   - A delete removes the S3 object and soft-deletes the record, so the file
     drops out of list, download, and storage totals immediately.
   - Deletes are org-scoped: callers can only delete files their own org owns.
+
+  ![Deleting an uploaded file with DELETE /v1/files/:id](https://docs.eachlabs.ai/images/changelog/june-4-2026-storage-delete-api.gif)
 </Update>
 
 <Update label="June 4, 2026" description="Models" rss={{ title: "New image models: MAI-Image-2.5 Edit and Ideogram v4", description: "Models" }}>
@@ -144,6 +146,8 @@ rss: true
     They keep working; the person just can no longer create or delete keys.
   - A Manager manages all of the org's keys; there's no per-key granularity
     today.
+
+  ![Managing member API key access from the Team page](https://docs.eachlabs.ai/images/changelog/june-2-2026-api-keys-org-ownership.gif)
 </Update>
 
 <Update label="June 2, 2026" description="Security" rss={{ title: "Copy your key once, then keep it safe", description: "Security" }}>
@@ -153,6 +157,8 @@ rss: true
   create it, and is never stored anywhere it can be shown again. Copy it then
   and keep it safe. If it's ever lost, just create a new key and delete the
   old one.
+
+  ![The key is shown once at creation - copy it before closing the dialog](https://docs.eachlabs.ai/images/changelog/june-2-2026-security-copy-once.gif)
 </Update>
 
 <Update label="June 2, 2026" description="Usage Analytics" rss={{ title: "Tell dashboard runs apart from API runs", description: "Usage Analytics" }}>
@@ -182,6 +188,8 @@ rss: true
   Signing up no longer auto-creates a key you could neither see nor use.
   Running and uploading inside the dashboard work immediately with zero
   setup; you create a key only when you actually need external API access.
+
+  ![New accounts start without a key - generate one when you need it](https://docs.eachlabs.ai/images/changelog/june-2-2026-api-keys-new-accounts.gif)
 </Update>
 
 <Update label="May 23, 2026" description="Catalog" rss={{ title: "Faster model browsing", description: "Catalog" }}>
@@ -189,6 +197,8 @@ rss: true
 
   Model, provider, and family pages are rebuilt on a new data layer, with
   noticeably faster loads and the newest models shown first.
+
+  ![Browsing the rebuilt model catalog](https://docs.eachlabs.ai/images/changelog/may-23-2026-catalog.gif)
 </Update>
 
 <Update label="May 22, 2026" description="each::storage" rss={{ title: "A home for all your files", description: "each::storage" }}>
