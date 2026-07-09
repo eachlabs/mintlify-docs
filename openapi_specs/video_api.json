@@ -3886,7 +3886,14 @@
                       "Liberation Mono",
                       "DejaVu Sans",
                       "DejaVu Serif",
-                      "DejaVu Sans Mono"
+                      "DejaVu Sans Mono",
+                      "Anton",
+                      "Archivo Black",
+                      "Bangers",
+                      "Inter",
+                      "Montserrat",
+                      "Montserrat Black",
+                      "Poppins"
                     ],
                     "default": "Liberation Sans",
                     "description": "Caption font family; must be a family bundled in the runtime image."
@@ -3906,7 +3913,14 @@
                       "Liberation Mono",
                       "DejaVu Sans",
                       "DejaVu Serif",
-                      "DejaVu Sans Mono"
+                      "DejaVu Sans Mono",
+                      "Anton",
+                      "Archivo Black",
+                      "Bangers",
+                      "Inter",
+                      "Montserrat",
+                      "Montserrat Black",
+                      "Poppins"
                     ],
                     "default": "Liberation Sans"
                   },
@@ -3961,6 +3975,16 @@
                     ],
                     "default": "highlight",
                     "description": "highlight = active-word recolour in place; fill = native karaoke colour sweep."
+                  },
+                  "hook_animation": {
+                    "type": "string",
+                    "enum": [
+                      "pop",
+                      "fade",
+                      "none"
+                    ],
+                    "default": "pop",
+                    "description": "Hook entrance: pop = fade + scale pop (a hook long enough to wrap can re-wrap mid-animation); fade = fade-in only (never re-wraps); none = the hook appears directly with no animation."
                   },
                   "max_words": {
                     "type": "integer",
@@ -4127,7 +4151,14 @@
                   "Liberation Mono",
                   "DejaVu Sans",
                   "DejaVu Serif",
-                  "DejaVu Sans Mono"
+                  "DejaVu Sans Mono",
+                  "Anton",
+                  "Archivo Black",
+                  "Bangers",
+                  "Inter",
+                  "Montserrat",
+                  "Montserrat Black",
+                  "Poppins"
                 ],
                 "default": "Liberation Sans",
                 "description": "Font family; must be a family bundled in the runtime image. Rendered from the family's baked font file, never a fontconfig fallback."

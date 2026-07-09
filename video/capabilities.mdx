@@ -1316,9 +1316,9 @@ Author a styled, animated ASS caption document from words+hook+style and burn it
 |-|-|-|-|-|-|
 | `words` | array | 1+ items, no schema max item count; each item requires `text` (string), `start_ms` and `end_ms` (integers 0-86400000) | — | yes | the word-level timing track the captions animate over |
 | `hook` | object | requires `text`, `start_ms`, `end_ms` (same bounds as words items) | — | no | optional headline shown above the captions |
-| `style.font` | string | `Liberation Sans` \| `Liberation Serif` \| `Liberation Mono` \| `DejaVu Sans` \| `DejaVu Serif` \| `DejaVu Sans Mono` | `"Liberation Sans"` | no |  |
+| `style.font` | string | `Liberation Sans` \| `Liberation Serif` \| `Liberation Mono` \| `DejaVu Sans` \| `DejaVu Serif` \| `DejaVu Sans Mono` \| `Anton` \| `Archivo Black` \| `Bangers` \| `Inter` \| `Montserrat` \| `Montserrat Black` \| `Poppins` | `"Liberation Sans"` | no |  |
 | `style.font_size_pct` | integer | min 3, max 15 | `5` | no |  |
-| `style.hook_font` | string | `Liberation Sans` \| `Liberation Serif` \| `Liberation Mono` \| `DejaVu Sans` \| `DejaVu Serif` \| `DejaVu Sans Mono` | `"Liberation Sans"` | no |  |
+| `style.hook_font` | string | `Liberation Sans` \| `Liberation Serif` \| `Liberation Mono` \| `DejaVu Sans` \| `DejaVu Serif` \| `DejaVu Sans Mono` \| `Anton` \| `Archivo Black` \| `Bangers` \| `Inter` \| `Montserrat` \| `Montserrat Black` \| `Poppins` | `"Liberation Sans"` | no |  |
 | `style.hook_size_pct` | integer | min 4, max 16 | `6` | no |  |
 | `style.text_color` | string |  | `"white"` | no | named palette (white,black,yellow,gold,lime,green,cyan,blue,magenta,pink,red,orange,purple) or #RRGGBB |
 | `style.active_color` | string |  | `"gold"` | no |  |
@@ -1328,6 +1328,7 @@ Author a styled, animated ASS caption document from words+hook+style and burn it
 | `style.shadow_depth` | integer | min 0, max 10 | `3` | no |  |
 | `style.margin_v_pct` | integer | min 5, max 40 | `20` | no |  |
 | `style.animation` | string | `highlight` \| `fill` | `"highlight"` | no |  |
+| `style.hook_animation` | string | `pop` \| `fade` \| `none` | `"pop"` | no | hook entrance: `pop` = fade + scale pop (a long hook that wraps can re-wrap mid-animation); `fade` = fade-in only (never re-wraps); `none` = appears directly |
 | `style.max_words` | integer | min 1, max 6 | `4` | no |  |
 | `style.combine_ms` | integer | min 0, max 2000 | `450` | no |  |
 | `style.uppercase` | boolean |  | `true` | no |  |
@@ -1391,7 +1392,7 @@ Draw a text title over the single input video (drawtext) with an optional show w
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
 | `text` | string | 1–200 chars after normalization | — | **yes** | drawn verbatim; newlines render as line breaks (multi-line titles supported). Normalization before rendering: CRLF/CR → LF, tabs → single spaces, other control characters removed, leading/trailing whitespace trimmed. Empty or over 200 chars after normalization rejects at $0 |
-| `font` | string | `Liberation Sans` \| `Liberation Serif` \| `Liberation Mono` \| `DejaVu Sans` \| `DejaVu Serif` \| `DejaVu Sans Mono` | `"Liberation Sans"` | no | families bundled in the runtime image, rendered from the family's baked font file — never a fontconfig fallback |
+| `font` | string | `Liberation Sans` \| `Liberation Serif` \| `Liberation Mono` \| `DejaVu Sans` \| `DejaVu Serif` \| `DejaVu Sans Mono` \| `Anton` \| `Archivo Black` \| `Bangers` \| `Inter` \| `Montserrat` \| `Montserrat Black` \| `Poppins` | `"Liberation Sans"` | no | families bundled in the runtime image, rendered from the family's baked font file — never a fontconfig fallback |
 | `font_size` | integer | min 12, max 288 | `64` | no | text size in pixels |
 | `font_color` | string |  | `"white"` | no | named (black, white, gray/grey, red, green, blue, yellow) or #RRGGBB hex |
 | `position` | string | `center` \| `top` \| `bottom` \| `top_left` \| `top_right` \| `bottom_left` \| `bottom_right` | `"center"` | no | anchor for the text block; non-center anchors are inset from the frame edge by 5% of the frame dimension |
