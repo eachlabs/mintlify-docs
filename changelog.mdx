@@ -4,6 +4,104 @@ description: "Product updates and releases from each::labs"
 rss: true
 ---
 
+<Update label="July 12, 2026" description="Usage Analytics" rss={{ title: "Faster, fresher execution history and error analytics", description: "Usage Analytics" }}>
+  ## Faster, fresher execution history and error analytics
+
+  - Run History and Error Analytics now use the same higher-capacity execution
+    data path, keeping large workspaces responsive as their history grows.
+  - Error Analytics combines hourly summaries with the latest runs, so recent
+    failures appear without waiting for the next full aggregation window.
+</Update>
+
+<Update label="July 9, 2026" description="LLM Router" rss={{ title: "Browse supported LLMs from the console", description: "LLM Router" }}>
+  ## Browse supported LLMs from the console
+
+  - Signed-in users can now explore the live LLM Router catalog without
+    leaving the console.
+  - Search and filter the available models, compare their capabilities, then
+    open one preselected in the playground to start testing it immediately.
+</Update>
+
+<Update label="July 7, 2026" description="Pricing" rss={{ title: "Model pricing pages load reliably across pricing formats", description: "Pricing" }}>
+  ## Model pricing pages load reliably across pricing formats
+
+  Some Kling and MiniMax model pages could fail to load when a model used a
+  fixed fallback price instead of a formula. Both pricing formats are now
+  supported, so affected model pages and their cost estimates render normally.
+</Update>
+
+<Update label="July 7, 2026" description="API" rss={{ title: "Prediction statuses are consistent across the API and its schema", description: "API" }}>
+  ## Prediction statuses now match everywhere
+
+  - The generated API schema now uses the same prediction status values as
+    production responses, including `error` for failed predictions.
+  - Generated clients can handle terminal failures and cancellation responses
+    without translating between conflicting status names.
+</Update>
+
+<Update label="July 7, 2026" description="each::workflows" rss={{ title: "Cloned workflows start cleanly at version 1", description: "each::workflows" }}>
+  ## Cloned workflows start cleanly at version 1
+
+  A cloned workflow could inherit the source workflow's active version number.
+  Every clone now begins at version 1, giving it a clean and predictable
+  version history of its own.
+</Update>
+
+<Update label="July 6, 2026" description="each::workflows" rss={{ title: "Build workflows with up to 40 parallel branches", description: "each::workflows" }}>
+  ## Build workflows with up to 40 parallel branches
+
+  - A parallel step can now contain up to **40 branches**, up from 10, for
+    wider fan-out workloads in a single workflow.
+  - The editor keeps large parallel steps readable with a scrollable branch
+    list, cleaner connections, and zoom that fits very wide flows.
+</Update>
+
+<Update label="June 26, 2026" description="each::workflows" rss={{ title: "Inspect workflow runs as a visual timeline", description: "each::workflows" }}>
+  ## See exactly what happened in a workflow run
+
+  - Workflow history now includes a builder-like flow diagram with live status
+    updates and clear per-step inputs, outputs, errors, duration, and cost.
+  - Failed runs surface their error at the relevant step, and parallel
+    workflows show the final merged output instead of an intermediate branch.
+  - You can switch between the new visual inspector and the classic detail
+    view at any time.
+</Update>
+
+<Update label="June 25, 2026" description="Billing" rss={{ title: "Top up without leaving your run", description: "Billing" }}>
+  ## Top up without leaving your run
+
+  When a run needs more balance, you can choose a top-up amount, see an
+  estimate of how many similar runs it will cover, and continue to Stripe
+  directly from the run dialog.
+</Update>
+
+<Update label="June 24, 2026" description="Pricing" rss={{ title: "Find current pricing for every public model", description: "Pricing" }}>
+  ## Find current pricing for every public model
+
+  - The [pricing directory](https://www.eachlabs.ai/pricing) now loads current
+    public model prices from the live catalog.
+  - Search by model, filter by modality, sort by popularity, release date,
+    name, or price, and inspect tiered pricing without opening each model page.
+</Update>
+
+<Update label="June 24, 2026" description="Usage Analytics" rss={{ title: "Move from analytics to the exact runs behind them", description: "Usage Analytics" }}>
+  ## Move from analytics to the exact runs behind them
+
+  - Request counts in Usage Analytics now open Run History already filtered to
+    the relevant model while preserving your date range and API-key filter.
+  - The Webhooks page gained consistent filters, clearer status indicators,
+    and more readable delivery details for faster investigation.
+</Update>
+
+<Update label="June 22, 2026" description="Model Comparison" rss={{ title: "Compare models and every output side by side", description: "Model Comparison" }}>
+  ## Compare models and every output side by side
+
+  - Model Comparison now offers responsive result grids, a full-screen compare
+    view, thumbnails, keyboard navigation, and direct downloads.
+  - Multi-output models display every generated result instead of showing only
+    the first one.
+</Update>
+
 <Update label="June 17, 2026" description="API" rss={{ title: "Filter executions by error type", description: "API" }}>
   ## Filter your executions by error type
 
