@@ -3904,7 +3904,7 @@
                       "Public Sans Medium"
                     ],
                     "default": "Liberation Sans",
-                    "description": "Caption font family; must be a family bundled in the runtime image."
+                    "description": "Caption font family; rendered from fonts bundled in the runtime image."
                   },
                   "font_size_pct": {
                     "type": "integer",
@@ -4185,7 +4185,7 @@
                   "Public Sans Medium"
                 ],
                 "default": "Liberation Sans",
-                "description": "Font family; must be a family bundled in the runtime image. Rendered from the family's baked font file, never a fontconfig fallback."
+                "description": "Font family; rendered from the value's baked font file bundled in the runtime image, never a fontconfig fallback."
               },
               "font_size": {
                 "type": "integer",
