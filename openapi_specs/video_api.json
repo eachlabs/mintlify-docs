@@ -3893,7 +3893,15 @@
                       "Inter",
                       "Montserrat",
                       "Montserrat Black",
-                      "Poppins"
+                      "Poppins",
+                      "TikTok Sans",
+                      "TikTok Sans Medium",
+                      "TikTok Display",
+                      "TikTok Display Medium",
+                      "TikTok Text",
+                      "TikTok Text Medium",
+                      "Public Sans",
+                      "Public Sans Medium"
                     ],
                     "default": "Liberation Sans",
                     "description": "Caption font family; must be a family bundled in the runtime image."
@@ -3920,7 +3928,15 @@
                       "Inter",
                       "Montserrat",
                       "Montserrat Black",
-                      "Poppins"
+                      "Poppins",
+                      "TikTok Sans",
+                      "TikTok Sans Medium",
+                      "TikTok Display",
+                      "TikTok Display Medium",
+                      "TikTok Text",
+                      "TikTok Text Medium",
+                      "Public Sans",
+                      "Public Sans Medium"
                     ],
                     "default": "Liberation Sans"
                   },
@@ -4158,7 +4174,15 @@
                   "Inter",
                   "Montserrat",
                   "Montserrat Black",
-                  "Poppins"
+                  "Poppins",
+                  "TikTok Sans",
+                  "TikTok Sans Medium",
+                  "TikTok Display",
+                  "TikTok Display Medium",
+                  "TikTok Text",
+                  "TikTok Text Medium",
+                  "Public Sans",
+                  "Public Sans Medium"
                 ],
                 "default": "Liberation Sans",
                 "description": "Font family; must be a family bundled in the runtime image. Rendered from the family's baked font file, never a fontconfig fallback."
