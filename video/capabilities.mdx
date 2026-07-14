@@ -1318,9 +1318,9 @@ Word timings typically come from a speech-to-text model with word-level timestam
 |-|-|-|-|-|-|
 | `words` | array | 1+ items, no schema max item count; each item requires `text` (string), `start_ms` and `end_ms` (integers 0-86400000) | — | yes | the word-level timing track the captions animate over |
 | `hook` | object | requires `text`, `start_ms`, `end_ms` (same bounds as words items) | — | no | optional headline shown above the captions |
-| `style.font` | string | `Liberation Sans` \| `Liberation Serif` \| `Liberation Mono` \| `DejaVu Sans` \| `DejaVu Serif` \| `DejaVu Sans Mono` \| `Anton` \| `Archivo Black` \| `Bangers` \| `Inter` \| `Montserrat` \| `Montserrat Black` \| `Poppins` | `"Liberation Sans"` | no |  |
+| `style.font` | string | `Liberation Sans` \| `Liberation Serif` \| `Liberation Mono` \| `DejaVu Sans` \| `DejaVu Serif` \| `DejaVu Sans Mono` \| `Anton` \| `Archivo Black` \| `Bangers` \| `Inter` \| `Montserrat` \| `Montserrat Black` \| `Poppins` \| `TikTok Sans` \| `TikTok Sans Medium` \| `TikTok Display` \| `TikTok Display Medium` \| `TikTok Text` \| `TikTok Text Medium` \| `Public Sans` \| `Public Sans Medium` | `"Liberation Sans"` | no |  |
 | `style.font_size_pct` | integer | min 3, max 15 | `5` | no |  |
-| `style.hook_font` | string | `Liberation Sans` \| `Liberation Serif` \| `Liberation Mono` \| `DejaVu Sans` \| `DejaVu Serif` \| `DejaVu Sans Mono` \| `Anton` \| `Archivo Black` \| `Bangers` \| `Inter` \| `Montserrat` \| `Montserrat Black` \| `Poppins` | `"Liberation Sans"` | no |  |
+| `style.hook_font` | string | `Liberation Sans` \| `Liberation Serif` \| `Liberation Mono` \| `DejaVu Sans` \| `DejaVu Serif` \| `DejaVu Sans Mono` \| `Anton` \| `Archivo Black` \| `Bangers` \| `Inter` \| `Montserrat` \| `Montserrat Black` \| `Poppins` \| `TikTok Sans` \| `TikTok Sans Medium` \| `TikTok Display` \| `TikTok Display Medium` \| `TikTok Text` \| `TikTok Text Medium` \| `Public Sans` \| `Public Sans Medium` | `"Liberation Sans"` | no |  |
 | `style.hook_size_pct` | integer | min 4, max 16 | `6` | no |  |
 | `style.text_color` | string |  | `"white"` | no | named palette (white,black,yellow,gold,lime,green,cyan,blue,magenta,pink,red,orange,purple) or #RRGGBB |
 | `style.active_color` | string |  | `"gold"` | no |  |
@@ -1366,7 +1366,7 @@ Word timings typically come from a speech-to-text model with word-level timestam
 
 ### Choosing a font
 
-`Anton`, `Archivo Black`, `Bangers`, and `Montserrat Black` are heavy display faces built for short, loud, uppercase captions — the viral-video look. `Inter`, `Montserrat`, and `Poppins` are text faces that stay readable in longer sentences and calmer edits; the Liberation and DejaVu families are neutral defaults. The same list is available for `style.font`, `style.hook_font`, and `title_card`'s `font`.
+`Anton`, `Archivo Black`, `Bangers`, and `Montserrat Black` are heavy display faces built for short, loud, uppercase captions — the viral-video look. `Inter`, `Montserrat`, and `Poppins` are text faces that stay readable in longer sentences and calmer edits; the Liberation and DejaVu families are neutral defaults. For TikTok-style captions, `TikTok Sans` is the platform's own typeface in its 36pt display cut — `TikTok Display` is an alias of it (identical rendering) — and `TikTok Text` is the 12pt cut, built for small caption sizes; the `Medium` variants are the same cuts at medium weight. `Public Sans` is a neutral UI-style face. The same list is available for `style.font`, `style.hook_font`, and `title_card`'s `font`.
 
 ### Choosing a hook entrance
 
@@ -1464,7 +1464,7 @@ Draw a text title over the single input video (drawtext) with an optional show w
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
 | `text` | string | 1–200 chars after normalization | — | **yes** | drawn verbatim; newlines render as line breaks (multi-line titles supported). Normalization before rendering: CRLF/CR → LF, tabs → single spaces, other control characters removed, leading/trailing whitespace trimmed. Empty or over 200 chars after normalization rejects at $0 |
-| `font` | string | `Liberation Sans` \| `Liberation Serif` \| `Liberation Mono` \| `DejaVu Sans` \| `DejaVu Serif` \| `DejaVu Sans Mono` \| `Anton` \| `Archivo Black` \| `Bangers` \| `Inter` \| `Montserrat` \| `Montserrat Black` \| `Poppins` | `"Liberation Sans"` | no | families bundled in the runtime image, rendered from the family's baked font file — never a fontconfig fallback |
+| `font` | string | `Liberation Sans` \| `Liberation Serif` \| `Liberation Mono` \| `DejaVu Sans` \| `DejaVu Serif` \| `DejaVu Sans Mono` \| `Anton` \| `Archivo Black` \| `Bangers` \| `Inter` \| `Montserrat` \| `Montserrat Black` \| `Poppins` \| `TikTok Sans` \| `TikTok Sans Medium` \| `TikTok Display` \| `TikTok Display Medium` \| `TikTok Text` \| `TikTok Text Medium` \| `Public Sans` \| `Public Sans Medium` | `"Liberation Sans"` | no | rendered from the value's baked font file bundled in the runtime image — never a fontconfig fallback |
 | `font_size` | integer | min 12, max 288 | `64` | no | text size in pixels |
 | `font_color` | string |  | `"white"` | no | named (black, white, gray/grey, red, green, blue, yellow) or #RRGGBB hex |
 | `position` | string | `center` \| `top` \| `bottom` \| `top_left` \| `top_right` \| `bottom_left` \| `bottom_right` | `"center"` | no | anchor for the text block; non-center anchors are inset from the frame edge by 5% of the frame dimension |
