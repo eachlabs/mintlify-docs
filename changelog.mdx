@@ -4,6 +4,32 @@ description: "Product updates and releases from each::labs"
 rss: true
 ---
 
+<Update label="July 16, 2026" description="API" rss={{ title: "Media uploads handle generic image MIME types more reliably", description: "API" }}>
+  ## Media uploads handle generic image MIME types more reliably
+
+  - File inputs can now detect supported image types from the file bytes when an origin serves a valid image as `application/octet-stream`.
+  - This fixes valid customer images being rejected by compatible image-edit models.
+</Update>
+
+<Update label="July 16, 2026" description="Video API" rss={{ title: "Kling O3 video edits respect the keep-audio setting", description: "Video API" }}>
+  ## Kling O3 video edits respect the keep-audio setting
+
+  Kling O3 video-to-video edits now pass the public `keep_audio` setting through to Kling's sound flag, while preserving the existing compatibility behavior for `video_list.keep_original_sound`.
+</Update>
+
+<Update label="July 16, 2026" description="Usage Analytics" rss={{ title: "Request longer historical windows in error analytics", description: "Usage Analytics" }}>
+  ## Request longer historical windows in error analytics
+
+  Execution error analytics now preserves caller-supplied historical start and end ranges older than 30 days instead of truncating them to the recent window.
+</Update>
+
+<Update label="July 14, 2026" description="Video API" rss={{ title: "New TikTok and Public Sans caption fonts", description: "Video API" }}>
+  ## New TikTok and Public Sans caption fonts
+
+  - `subtitle_compose` and `title_card` now support TikTok Sans, TikTok Sans Medium, TikTok Display, TikTok Display Medium, TikTok Text, TikTok Text Medium, Public Sans, and Public Sans Medium.
+  - The Video API docs and OpenAPI spec now list the new font values for caption and title rendering.
+</Update>
+
 <Update label="July 12, 2026" description="Usage Analytics" rss={{ title: "Faster, fresher execution history and error analytics", description: "Usage Analytics" }}>
   ## Faster, fresher execution history and error analytics
 
