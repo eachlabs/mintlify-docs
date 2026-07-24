@@ -791,6 +791,289 @@
         }
       }
     },
+    "/v1/audio/transcriptions": {
+      "post": {
+        "tags": [
+          "OpenAI Compatibility"
+        ],
+        "summary": "Transcribe an audio file",
+        "description": "OpenAI-compatible bounded file transcription. Use `Authorization: Bearer\n<API_KEY>` and `multipart/form-data`. The initial profile supports files up\nto 25 MB and `json` or `verbose_json` responses. Unsupported OpenAI fields\nare rejected explicitly.\n\nThe accepted model set is a curated per-environment allowlist that a model\njoins only after passing contract qualification; `openai/whisper-large-v3`\nis the launch model. Requesting a model outside the allowlist returns a 400\nwithout dispatching audio.\n\nThis endpoint is independently feature-gated during preview rollout. A\ndisabled deployment returns an OpenAI-shaped 404 without dispatching audio.\nIt is synchronous and does not use prediction polling or streaming.\n",
+        "operationId": "createAudioTranscription",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/AudioTranscriptionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OpenAI-compatible JSON transcription response",
+            "headers": {
+              "X-Generation-Id": {
+                "description": "Upstream generation identifier when available.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AudioTranscriptionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid multipart input or unsupported field/model/format",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenAIErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenAIErrorResponse"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Insufficient balance",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenAIErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Capability disabled for this deployment",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenAIErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Audio file exceeds 25 MB",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenAIErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Provider rate limit reached",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenAIErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenAIErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Authentication or transcription service temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenAIErrorResponse"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Transcription request timed out",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenAIErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/audio/speech": {
+      "post": {
+        "tags": [
+          "OpenAI Compatibility"
+        ],
+        "summary": "Stream synthesized speech",
+        "description": "OpenAI-compatible text-to-speech. Use `Authorization: Bearer <API_KEY>`\nand a JSON body. The response is a raw audio byte stream forwarded\nprogressively (no prediction polling); the negotiated content type is\nreturned verbatim (`audio/mpeg` for mp3, `audio/pcm;rate=\u2026;channels=\u2026`\nfor pcm). An omitted `response_format` defaults to `mp3`.\n\nThe accepted model/voice/format set is a curated per-environment\ncatalog that a model joins only after passing contract qualification;\n`deepgram/aura-2` is the launch model. An unsupported model, voice, or\nformat, or a `speed`/`instructions` value for a model that does not\nsupport it, returns a 400 without dispatching a synthesis.\n\nThis endpoint is independently feature-gated during preview rollout. A\ndisabled deployment returns an OpenAI-shaped 404 without dispatching.\n",
+        "operationId": "createAudioSpeech",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AudioSpeechRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Raw audio byte stream. Bytes are forwarded progressively as the\nprovider synthesizes them; the content type is the negotiated\nformat (`audio/mpeg` or `audio/pcm;rate=\u2026;channels=\u2026`).\n",
+            "headers": {
+              "X-Generation-Id": {
+                "description": "Upstream generation identifier for out-of-band billing reconciliation.",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "X-Execution-ID": {
+                "description": "Eachlabs execution identifier for the synthesis.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "audio/mpeg": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "audio/pcm": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Unsupported model/voice/format/param or invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenAIErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenAIErrorResponse"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Insufficient balance",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenAIErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Capability disabled for this deployment",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenAIErrorResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body exceeds the maximum size",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenAIErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Provider rate limit reached",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenAIErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenAIErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Authentication or speech service temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenAIErrorResponse"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Speech request timed out",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenAIErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/workflows/trigger/{workflowID}/{versionID}": {
       "post": {
         "tags": [
@@ -1800,9 +2083,139 @@
           }
         }
       },
+      "AudioTranscriptionRequest": {
+        "type": "object",
+        "required": [
+          "file",
+          "model"
+        ],
+        "properties": {
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "description": "FLAC, MP3/MPEG/MPGA, MP4/M4A, OGG, WAV, or WebM audio up to 25 MB."
+          },
+          "model": {
+            "type": "string",
+            "example": "openai/whisper-large-v3",
+            "description": "Must be in the environment's transcription allowlist. Requesting a model outside it returns 400 without dispatching audio."
+          },
+          "language": {
+            "type": "string",
+            "maxLength": 32,
+            "description": "Optional ISO language code."
+          },
+          "response_format": {
+            "type": "string",
+            "default": "json",
+            "enum": [
+              "json",
+              "verbose_json"
+            ]
+          },
+          "temperature": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "timestamp_granularities[]": {
+            "type": "array",
+            "description": "Available only with `verbose_json`; repeat the multipart field for multiple values.",
+            "items": {
+              "type": "string",
+              "enum": [
+                "word",
+                "segment"
+              ]
+            }
+          }
+        }
+      },
+      "AudioSpeechRequest": {
+        "type": "object",
+        "required": [
+          "model",
+          "input",
+          "voice"
+        ],
+        "properties": {
+          "model": {
+            "type": "string",
+            "example": "deepgram/aura-2",
+            "description": "Must be in the environment's speech catalog. An unlisted model returns 400 without dispatching a synthesis."
+          },
+          "input": {
+            "type": "string",
+            "description": "Text to synthesize. Bounded by the model's per-character limit (counted in Unicode runes)."
+          },
+          "voice": {
+            "type": "string",
+            "example": "aura-2-thalia-en",
+            "description": "Model-specific, namespaced voice id. Must be allowlisted for the model."
+          },
+          "response_format": {
+            "type": "string",
+            "default": "mp3",
+            "description": "Audio format. Omitted defaults to `mp3`. Allowed values are per-model (e.g. `mp3`, `pcm`).",
+            "example": "mp3"
+          },
+          "speed": {
+            "type": "number",
+            "minimum": 0.25,
+            "maximum": 4.0,
+            "description": "Playback speed. Accepted only for models that declare support; otherwise 400."
+          },
+          "instructions": {
+            "type": "string",
+            "description": "Steering instructions. Accepted only for models that declare support; otherwise 400."
+          },
+          "stream_format": {
+            "type": "string",
+            "enum": [
+              "audio"
+            ],
+            "description": "Only raw audio streaming is supported. `sse` is rejected with 400."
+          }
+        }
+      },
+      "AudioTranscriptionResponse": {
+        "type": "object",
+        "required": [
+          "text"
+        ],
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "language": {
+            "type": "string"
+          },
+          "duration": {
+            "type": "number"
+          },
+          "segments": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "words": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "usage": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
       "OpenAIErrorResponse": {
         "type": "object",
-        "description": "OpenAI-compatible error envelope used only by `/v1/chat/completions`.",
+        "description": "OpenAI-compatible error envelope used by chat, audio, and realtime compatibility endpoints.",
         "properties": {
           "error": {
             "type": "object",
