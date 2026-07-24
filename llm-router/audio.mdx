@@ -1,0 +1,153 @@
+---
+title: "Audio API"
+description: "Use OpenAI-compatible file transcription and progressively streamed text-to-speech."
+---
+
+The LLM Router includes OpenAI-compatible endpoints for bounded speech-to-text
+and streamed text-to-speech. Use the same each::labs API key and base URL as
+chat completions:
+
+```text
+https://api.eachlabs.ai/v1
+```
+
+<Warning>
+  The audio API is in staged preview and is enabled per environment. A `404`
+  response means that the capability is not enabled for your deployment yet.
+  Contact [support@eachlabs.ai](mailto:support@eachlabs.ai) before depending on
+  it in production.
+</Warning>
+
+## Current compatibility
+
+| Capability | Endpoint | Current preview models | Behavior |
+| --- | --- | --- | --- |
+| File transcription | `POST /v1/audio/transcriptions` | `openai/whisper-large-v3`, `openai/whisper-large-v3-turbo` | Synchronous JSON response; no prediction polling |
+| Text-to-speech | `POST /v1/audio/speech` | `deepgram/aura-2` | Progressive raw MP3 or PCM bytes |
+
+Realtime WebSocket transcription is not part of this preview. File
+transcription waits for the complete upload and returns one response. Speech
+generation streams raw audio bytes, not Server-Sent Events.
+
+## Transcribe an audio file
+
+The transcription endpoint accepts one audio file as `multipart/form-data`.
+Files may be up to 25 MB and must be FLAC, MP3/MPEG/MPGA, MP4/M4A, OGG, WAV,
+or WebM.
+
+<CodeGroup>
+```python Python
+from openai import OpenAI
+
+client = OpenAI(
+    api_key="YOUR_EACHLABS_API_KEY",
+    base_url="https://api.eachlabs.ai/v1",
+)
+
+with open("speech.wav", "rb") as audio:
+    transcript = client.audio.transcriptions.create(
+        model="openai/whisper-large-v3",
+        file=audio,
+    )
+
+print(transcript.text)
+```
+
+```bash cURL
+curl https://api.eachlabs.ai/v1/audio/transcriptions \
+  -H "Authorization: Bearer $EACHLABS_API_KEY" \
+  -F "model=openai/whisper-large-v3" \
+  -F "file=@speech.wav"
+```
+</CodeGroup>
+
+The default response format is `json`. Use `response_format=verbose_json` to
+request `language`, `duration`, and segment metadata. Word or segment
+timestamps are available only with `verbose_json`:
+
+```bash
+curl https://api.eachlabs.ai/v1/audio/transcriptions \
+  -H "Authorization: Bearer $EACHLABS_API_KEY" \
+  -F "model=openai/whisper-large-v3" \
+  -F "file=@speech.wav" \
+  -F "response_format=verbose_json" \
+  -F "timestamp_granularities[]=word" \
+  -F "timestamp_granularities[]=segment"
+```
+
+## Stream text-to-speech
+
+The speech endpoint begins returning raw audio while synthesis is still in
+progress. Read the response body as a byte stream instead of waiting for a
+prediction or parsing JSON.
+
+The current preview profile supports:
+
+| Model | Voice | Formats | Maximum input |
+| --- | --- | --- | --- |
+| `deepgram/aura-2` | `aura-2-thalia-en` | `mp3`, `pcm` | 2,000 characters |
+
+<CodeGroup>
+```python Python
+from pathlib import Path
+from openai import OpenAI
+
+client = OpenAI(
+    api_key="YOUR_EACHLABS_API_KEY",
+    base_url="https://api.eachlabs.ai/v1",
+)
+
+with client.audio.speech.with_streaming_response.create(
+    model="deepgram/aura-2",
+    voice="aura-2-thalia-en",
+    input="Hello from each labs.",
+    response_format="mp3",
+) as response:
+    response.stream_to_file(Path("speech.mp3"))
+```
+
+```bash cURL
+curl --no-buffer https://api.eachlabs.ai/v1/audio/speech \
+  -H "Authorization: Bearer $EACHLABS_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "deepgram/aura-2",
+    "voice": "aura-2-thalia-en",
+    "input": "Hello from each labs.",
+    "response_format": "mp3"
+  }' \
+  --output speech.mp3
+```
+</CodeGroup>
+
+If `response_format` is omitted, it defaults to `mp3`. The response
+`Content-Type` identifies the returned audio:
+
+- MP3: `audio/mpeg`
+- PCM: `audio/pcm` with its sample rate and channel parameters
+
+The response also includes `X-Execution-ID` for support and billing
+correlation. When the provider supplies one, `X-Generation-Id` is included as
+well.
+
+## Validation and errors
+
+Both endpoints use the OpenAI-compatible error envelope. Unsupported models,
+voices, formats, and fields return `400` before a provider request is sent.
+Common statuses include:
+
+| Status | Meaning |
+| --- | --- |
+| `400` | Invalid or unsupported request |
+| `401` | Missing or invalid Bearer token |
+| `402` | Insufficient balance |
+| `404` | Capability is not enabled for this deployment |
+| `413` | File or request is too large |
+| `429` | Provider rate limit |
+| `503` | Authentication or audio provider is temporarily unavailable |
+| `504` | Audio operation timed out |
+
+<Note>
+  Supply API keys only as `Authorization: Bearer ...`. Query-string API keys
+  are rejected so credentials do not leak into URLs or access logs.
+</Note>
