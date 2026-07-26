@@ -193,6 +193,10 @@
             "pages": ["video/mcp/quickstart"]
           },
           {
+            "group": "Policies",
+            "pages": ["video/acceptable-use", "video/abuse-and-takedown", "video/versioning"]
+          },
+          {
             "group": "OpenAPI Reference",
             "openapi": {
               "source": "/openapi_specs/video_api.json",
