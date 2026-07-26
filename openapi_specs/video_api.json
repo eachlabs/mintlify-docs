@@ -713,10 +713,9 @@
           },
           "tier": {
             "default": "cpu",
-            "description": "Compute tier (pricing/hardware class). gpu is a beta tier with limited capacity.",
+            "description": "Compute tier (pricing/hardware class). A tier outside this enum is rejected at submit before billing at $0.",
             "enum": [
-              "cpu",
-              "gpu"
+              "cpu"
             ],
             "type": "string"
           }
@@ -802,10 +801,9 @@
           },
           "tier": {
             "default": "cpu",
-            "description": "Compute tier (pricing/hardware class). gpu is a beta tier with limited capacity.",
+            "description": "Compute tier (pricing/hardware class). A tier outside this enum is rejected at submit before billing at $0.",
             "enum": [
-              "cpu",
-              "gpu"
+              "cpu"
             ],
             "type": "string"
           }
@@ -897,10 +895,9 @@
           },
           "tier": {
             "default": "cpu",
-            "description": "Compute tier (pricing/hardware class). gpu is a beta tier with limited capacity.",
+            "description": "Compute tier (pricing/hardware class). A tier outside this enum is rejected at submit before billing at $0.",
             "enum": [
-              "cpu",
-              "gpu"
+              "cpu"
             ],
             "type": "string"
           }
@@ -978,10 +975,9 @@
           },
           "tier": {
             "default": "cpu",
-            "description": "Compute tier (pricing/hardware class). gpu is a beta tier with limited capacity.",
+            "description": "Compute tier (pricing/hardware class). A tier outside this enum is rejected at submit before billing at $0.",
             "enum": [
-              "cpu",
-              "gpu"
+              "cpu"
             ],
             "type": "string"
           }
@@ -1057,10 +1053,9 @@
           },
           "tier": {
             "default": "cpu",
-            "description": "Compute tier (pricing/hardware class). gpu is a beta tier with limited capacity.",
+            "description": "Compute tier (pricing/hardware class). A tier outside this enum is rejected at submit before billing at $0.",
             "enum": [
-              "cpu",
-              "gpu"
+              "cpu"
             ],
             "type": "string"
           }
@@ -1146,10 +1141,9 @@
           },
           "tier": {
             "default": "cpu",
-            "description": "Compute tier (pricing/hardware class). gpu is a beta tier with limited capacity.",
+            "description": "Compute tier (pricing/hardware class). A tier outside this enum is rejected at submit before billing at $0.",
             "enum": [
-              "cpu",
-              "gpu"
+              "cpu"
             ],
             "type": "string"
           }
@@ -1226,10 +1220,9 @@
           },
           "tier": {
             "default": "cpu",
-            "description": "Compute tier (pricing/hardware class). gpu is a beta tier with limited capacity.",
+            "description": "Compute tier (pricing/hardware class). A tier outside this enum is rejected at submit before billing at $0.",
             "enum": [
-              "cpu",
-              "gpu"
+              "cpu"
             ],
             "type": "string"
           }
@@ -1294,10 +1287,9 @@
           },
           "tier": {
             "default": "cpu",
-            "description": "Compute tier (pricing/hardware class). gpu is a beta tier with limited capacity.",
+            "description": "Compute tier (pricing/hardware class). A tier outside this enum is rejected at submit before billing at $0.",
             "enum": [
-              "cpu",
-              "gpu"
+              "cpu"
             ],
             "type": "string"
           }
@@ -1381,10 +1373,9 @@
           },
           "tier": {
             "default": "cpu",
-            "description": "Compute tier (pricing/hardware class). gpu is a beta tier with limited capacity.",
+            "description": "Compute tier (pricing/hardware class). A tier outside this enum is rejected at submit before billing at $0.",
             "enum": [
-              "cpu",
-              "gpu"
+              "cpu"
             ],
             "type": "string"
           }
@@ -1478,10 +1469,9 @@
           },
           "tier": {
             "default": "cpu",
-            "description": "Compute tier (pricing/hardware class). gpu is a beta tier with limited capacity.",
+            "description": "Compute tier (pricing/hardware class). A tier outside this enum is rejected at submit before billing at $0.",
             "enum": [
-              "cpu",
-              "gpu"
+              "cpu"
             ],
             "type": "string"
           }
@@ -1550,10 +1540,9 @@
           },
           "tier": {
             "default": "cpu",
-            "description": "Compute tier (pricing/hardware class). gpu is a beta tier with limited capacity.",
+            "description": "Compute tier (pricing/hardware class). A tier outside this enum is rejected at submit before billing at $0.",
             "enum": [
-              "cpu",
-              "gpu"
+              "cpu"
             ],
             "type": "string"
           }
@@ -1659,10 +1648,9 @@
           },
           "tier": {
             "default": "cpu",
-            "description": "Compute tier (pricing/hardware class). gpu is a beta tier with limited capacity.",
+            "description": "Compute tier (pricing/hardware class). A tier outside this enum is rejected at submit before billing at $0.",
             "enum": [
-              "cpu",
-              "gpu"
+              "cpu"
             ],
             "type": "string"
           }
@@ -1723,10 +1711,9 @@
           },
           "tier": {
             "default": "cpu",
-            "description": "Compute tier (pricing/hardware class). gpu is a beta tier with limited capacity.",
+            "description": "Compute tier (pricing/hardware class). A tier outside this enum is rejected at submit before billing at $0.",
             "enum": [
-              "cpu",
-              "gpu"
+              "cpu"
             ],
             "type": "string"
           }
@@ -1828,10 +1815,9 @@
           },
           "tier": {
             "default": "cpu",
-            "description": "Compute tier (pricing/hardware class). gpu is a beta tier with limited capacity.",
+            "description": "Compute tier (pricing/hardware class). A tier outside this enum is rejected at submit before billing at $0.",
             "enum": [
-              "cpu",
-              "gpu"
+              "cpu"
             ],
             "type": "string"
           }
@@ -1918,10 +1904,9 @@
           },
           "tier": {
             "default": "cpu",
-            "description": "Compute tier (pricing/hardware class). gpu is a beta tier with limited capacity.",
+            "description": "Compute tier (pricing/hardware class). A tier outside this enum is rejected at submit before billing at $0.",
             "enum": [
-              "cpu",
-              "gpu"
+              "cpu"
             ],
             "type": "string"
           }
@@ -1999,10 +1984,9 @@
           },
           "tier": {
             "default": "cpu",
-            "description": "Compute tier (pricing/hardware class). gpu is a beta tier with limited capacity.",
+            "description": "Compute tier (pricing/hardware class). A tier outside this enum is rejected at submit before billing at $0.",
             "enum": [
-              "cpu",
-              "gpu"
+              "cpu"
             ],
             "type": "string"
           }
@@ -2069,10 +2053,9 @@
           },
           "tier": {
             "default": "cpu",
-            "description": "Compute tier (pricing/hardware class). gpu is a beta tier with limited capacity.",
+            "description": "Compute tier (pricing/hardware class). A tier outside this enum is rejected at submit before billing at $0.",
             "enum": [
-              "cpu",
-              "gpu"
+              "cpu"
             ],
             "type": "string"
           }
@@ -2155,10 +2138,9 @@
           },
           "tier": {
             "default": "cpu",
-            "description": "Compute tier (pricing/hardware class). gpu is a beta tier with limited capacity.",
+            "description": "Compute tier (pricing/hardware class). A tier outside this enum is rejected at submit before billing at $0.",
             "enum": [
-              "cpu",
-              "gpu"
+              "cpu"
             ],
             "type": "string"
           }
@@ -2213,10 +2195,9 @@
           },
           "tier": {
             "default": "cpu",
-            "description": "Compute tier (pricing/hardware class). gpu is a beta tier with limited capacity.",
+            "description": "Compute tier (pricing/hardware class). A tier outside this enum is rejected at submit before billing at $0.",
             "enum": [
-              "cpu",
-              "gpu"
+              "cpu"
             ],
             "type": "string"
           }
@@ -2317,10 +2298,9 @@
           },
           "tier": {
             "default": "cpu",
-            "description": "Compute tier (pricing/hardware class). gpu is a beta tier with limited capacity.",
+            "description": "Compute tier (pricing/hardware class). A tier outside this enum is rejected at submit before billing at $0.",
             "enum": [
-              "cpu",
-              "gpu"
+              "cpu"
             ],
             "type": "string"
           }
@@ -2409,10 +2389,9 @@
           },
           "tier": {
             "default": "cpu",
-            "description": "Compute tier (pricing/hardware class). gpu is a beta tier with limited capacity.",
+            "description": "Compute tier (pricing/hardware class). A tier outside this enum is rejected at submit before billing at $0.",
             "enum": [
-              "cpu",
-              "gpu"
+              "cpu"
             ],
             "type": "string"
           }
@@ -2474,10 +2453,9 @@
           },
           "tier": {
             "default": "cpu",
-            "description": "Compute tier (pricing/hardware class). gpu is a beta tier with limited capacity.",
+            "description": "Compute tier (pricing/hardware class). A tier outside this enum is rejected at submit before billing at $0.",
             "enum": [
-              "cpu",
-              "gpu"
+              "cpu"
             ],
             "type": "string"
           }
@@ -2524,10 +2502,9 @@
           },
           "tier": {
             "default": "cpu",
-            "description": "Compute tier (pricing/hardware class). gpu is a beta tier with limited capacity.",
+            "description": "Compute tier (pricing/hardware class). A tier outside this enum is rejected at submit before billing at $0.",
             "enum": [
-              "cpu",
-              "gpu"
+              "cpu"
             ],
             "type": "string"
           }
@@ -2614,10 +2591,9 @@
           },
           "tier": {
             "default": "cpu",
-            "description": "Compute tier (pricing/hardware class). gpu is a beta tier with limited capacity.",
+            "description": "Compute tier (pricing/hardware class). A tier outside this enum is rejected at submit before billing at $0.",
             "enum": [
-              "cpu",
-              "gpu"
+              "cpu"
             ],
             "type": "string"
           }
@@ -2690,10 +2666,9 @@
           },
           "tier": {
             "default": "cpu",
-            "description": "Compute tier (pricing/hardware class). gpu is a beta tier with limited capacity.",
+            "description": "Compute tier (pricing/hardware class). A tier outside this enum is rejected at submit before billing at $0.",
             "enum": [
-              "cpu",
-              "gpu"
+              "cpu"
             ],
             "type": "string"
           }
@@ -2751,10 +2726,9 @@
           },
           "tier": {
             "default": "cpu",
-            "description": "Compute tier (pricing/hardware class). gpu is a beta tier with limited capacity.",
+            "description": "Compute tier (pricing/hardware class). A tier outside this enum is rejected at submit before billing at $0.",
             "enum": [
-              "cpu",
-              "gpu"
+              "cpu"
             ],
             "type": "string"
           }
@@ -2822,10 +2796,9 @@
           },
           "tier": {
             "default": "cpu",
-            "description": "Compute tier (pricing/hardware class). gpu is a beta tier with limited capacity.",
+            "description": "Compute tier (pricing/hardware class). A tier outside this enum is rejected at submit before billing at $0.",
             "enum": [
-              "cpu",
-              "gpu"
+              "cpu"
             ],
             "type": "string"
           }
@@ -2895,10 +2868,9 @@
           },
           "tier": {
             "default": "cpu",
-            "description": "Compute tier (pricing/hardware class). gpu is a beta tier with limited capacity.",
+            "description": "Compute tier (pricing/hardware class). A tier outside this enum is rejected at submit before billing at $0.",
             "enum": [
-              "cpu",
-              "gpu"
+              "cpu"
             ],
             "type": "string"
           }
@@ -2953,10 +2925,9 @@
           },
           "tier": {
             "default": "cpu",
-            "description": "Compute tier (pricing/hardware class). gpu is a beta tier with limited capacity.",
+            "description": "Compute tier (pricing/hardware class). A tier outside this enum is rejected at submit before billing at $0.",
             "enum": [
-              "cpu",
-              "gpu"
+              "cpu"
             ],
             "type": "string"
           }
@@ -3046,10 +3017,9 @@
           },
           "tier": {
             "default": "cpu",
-            "description": "Compute tier (pricing/hardware class). gpu is a beta tier with limited capacity.",
+            "description": "Compute tier (pricing/hardware class). A tier outside this enum is rejected at submit before billing at $0.",
             "enum": [
-              "cpu",
-              "gpu"
+              "cpu"
             ],
             "type": "string"
           }
@@ -3111,10 +3081,9 @@
           },
           "tier": {
             "default": "cpu",
-            "description": "Compute tier (pricing/hardware class). gpu is a beta tier with limited capacity.",
+            "description": "Compute tier (pricing/hardware class). A tier outside this enum is rejected at submit before billing at $0.",
             "enum": [
-              "cpu",
-              "gpu"
+              "cpu"
             ],
             "type": "string"
           }
@@ -3201,10 +3170,9 @@
           },
           "tier": {
             "default": "cpu",
-            "description": "Compute tier (pricing/hardware class). gpu is a beta tier with limited capacity.",
+            "description": "Compute tier (pricing/hardware class). A tier outside this enum is rejected at submit before billing at $0.",
             "enum": [
-              "cpu",
-              "gpu"
+              "cpu"
             ],
             "type": "string"
           }
@@ -3303,10 +3271,9 @@
           },
           "tier": {
             "default": "cpu",
-            "description": "Compute tier (pricing/hardware class). gpu is a beta tier with limited capacity.",
+            "description": "Compute tier (pricing/hardware class). A tier outside this enum is rejected at submit before billing at $0.",
             "enum": [
-              "cpu",
-              "gpu"
+              "cpu"
             ],
             "type": "string"
           }
@@ -3408,10 +3375,9 @@
           },
           "tier": {
             "default": "cpu",
-            "description": "Compute tier (pricing/hardware class). gpu is a beta tier with limited capacity.",
+            "description": "Compute tier (pricing/hardware class). A tier outside this enum is rejected at submit before billing at $0.",
             "enum": [
-              "cpu",
-              "gpu"
+              "cpu"
             ],
             "type": "string"
           }
@@ -3476,10 +3442,9 @@
           },
           "tier": {
             "default": "cpu",
-            "description": "Compute tier (pricing/hardware class). gpu is a beta tier with limited capacity.",
+            "description": "Compute tier (pricing/hardware class). A tier outside this enum is rejected at submit before billing at $0.",
             "enum": [
-              "cpu",
-              "gpu"
+              "cpu"
             ],
             "type": "string"
           }
@@ -3578,10 +3543,9 @@
           },
           "tier": {
             "default": "cpu",
-            "description": "Compute tier (pricing/hardware class). gpu is a beta tier with limited capacity.",
+            "description": "Compute tier (pricing/hardware class). A tier outside this enum is rejected at submit before billing at $0.",
             "enum": [
-              "cpu",
-              "gpu"
+              "cpu"
             ],
             "type": "string"
           }
@@ -3677,10 +3641,9 @@
           },
           "tier": {
             "default": "cpu",
-            "description": "Compute tier (pricing/hardware class). gpu is a beta tier with limited capacity.",
+            "description": "Compute tier (pricing/hardware class). A tier outside this enum is rejected at submit before billing at $0.",
             "enum": [
-              "cpu",
-              "gpu"
+              "cpu"
             ],
             "type": "string"
           }
@@ -3771,10 +3734,9 @@
           },
           "tier": {
             "default": "cpu",
-            "description": "Compute tier (pricing/hardware class). gpu is a beta tier with limited capacity.",
+            "description": "Compute tier (pricing/hardware class). A tier outside this enum is rejected at submit before billing at $0.",
             "enum": [
-              "cpu",
-              "gpu"
+              "cpu"
             ],
             "type": "string"
           }
@@ -4042,10 +4004,9 @@
           },
           "tier": {
             "default": "cpu",
-            "description": "Compute tier (pricing/hardware class). gpu is a beta tier with limited capacity.",
+            "description": "Compute tier (pricing/hardware class). A tier outside this enum is rejected at submit before billing at $0.",
             "enum": [
-              "cpu",
-              "gpu"
+              "cpu"
             ],
             "type": "string"
           }
@@ -4108,10 +4069,9 @@
           },
           "tier": {
             "default": "cpu",
-            "description": "Compute tier (pricing/hardware class). gpu is a beta tier with limited capacity.",
+            "description": "Compute tier (pricing/hardware class). A tier outside this enum is rejected at submit before billing at $0.",
             "enum": [
-              "cpu",
-              "gpu"
+              "cpu"
             ],
             "type": "string"
           }
@@ -4243,10 +4203,9 @@
           },
           "tier": {
             "default": "cpu",
-            "description": "Compute tier (pricing/hardware class). gpu is a beta tier with limited capacity.",
+            "description": "Compute tier (pricing/hardware class). A tier outside this enum is rejected at submit before billing at $0.",
             "enum": [
-              "cpu",
-              "gpu"
+              "cpu"
             ],
             "type": "string"
           }
@@ -4339,10 +4298,9 @@
           },
           "tier": {
             "default": "cpu",
-            "description": "Compute tier (pricing/hardware class). gpu is a beta tier with limited capacity.",
+            "description": "Compute tier (pricing/hardware class). A tier outside this enum is rejected at submit before billing at $0.",
             "enum": [
-              "cpu",
-              "gpu"
+              "cpu"
             ],
             "type": "string"
           }
@@ -4402,10 +4360,9 @@
           },
           "tier": {
             "default": "cpu",
-            "description": "Compute tier (pricing/hardware class). gpu is a beta tier with limited capacity.",
+            "description": "Compute tier (pricing/hardware class). A tier outside this enum is rejected at submit before billing at $0.",
             "enum": [
-              "cpu",
-              "gpu"
+              "cpu"
             ],
             "type": "string"
           }
@@ -4469,10 +4426,9 @@
           },
           "tier": {
             "default": "cpu",
-            "description": "Compute tier (pricing/hardware class). gpu is a beta tier with limited capacity.",
+            "description": "Compute tier (pricing/hardware class). A tier outside this enum is rejected at submit before billing at $0.",
             "enum": [
-              "cpu",
-              "gpu"
+              "cpu"
             ],
             "type": "string"
           }
@@ -4542,10 +4498,9 @@
           },
           "tier": {
             "default": "cpu",
-            "description": "Compute tier (pricing/hardware class). gpu is a beta tier with limited capacity.",
+            "description": "Compute tier (pricing/hardware class). A tier outside this enum is rejected at submit before billing at $0.",
             "enum": [
-              "cpu",
-              "gpu"
+              "cpu"
             ],
             "type": "string"
           }
@@ -4878,10 +4833,9 @@
           },
           "tier": {
             "default": "cpu",
-            "description": "Compute tier (pricing/hardware class). gpu is a beta tier with limited capacity.",
+            "description": "Compute tier (pricing/hardware class). A tier outside this enum is rejected at submit before billing at $0.",
             "enum": [
-              "cpu",
-              "gpu"
+              "cpu"
             ],
             "type": "string"
           }
