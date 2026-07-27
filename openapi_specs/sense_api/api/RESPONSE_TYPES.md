@@ -552,7 +552,7 @@ Error occurred during processing.
   "details": {
     "required_balance": 0.50,
     "current_balance": 0.10,
-    "top_up_url": "https://eachlabs.ai/billing"
+    "top_up_url": "https://www.eachlabs.ai/billing"
   }
 }
 ```

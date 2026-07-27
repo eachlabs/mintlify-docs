@@ -25,7 +25,7 @@
   },
   "navbar": {
     "links": [
-      { "label": "Dashboard", "href": "https://eachlabs.ai" },
+      { "label": "Dashboard", "href": "https://www.eachlabs.ai" },
       { "label": "API Docs", "href": "/api/overview" }
     ],
     "primary": {

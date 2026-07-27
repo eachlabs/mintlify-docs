@@ -231,7 +231,7 @@ See [full model list](./MODELS.md) for 500+ available models.
 ```json
 {
   "type": "error",
-  "message": "Insufficient balance. Please top up at https://eachlabs.ai/billing"
+  "message": "Insufficient balance. Please top up at https://www.eachlabs.ai/billing"
 }
 ```
 

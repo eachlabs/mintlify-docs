@@ -2,7 +2,7 @@
 
 > each::labs is the generative media platform for developers and AI agents. Access 500+ production-ready AI models for image, video, audio, and 3D generation through a single API key. Three products: each::api (direct model access), each::workflows (multi-step pipelines), and each::sense (OpenAI-compatible AI agent).
 
-Platform: https://eachlabs.ai
+Platform: https://www.eachlabs.ai
 API Keys: https://www.eachlabs.ai/api-keys
 GitHub: https://github.com/eachlabs
 Discord: https://discord.gg/eachlabs

@@ -930,7 +930,7 @@ except EachsenseError as e:
     print(f"Error ({e.code}): {e}")
 
     if e.code == ErrorCode.INSUFFICIENT_BALANCE:
-        print("Please top up at: https://eachlabs.ai/billing")
+        print("Please top up at: https://www.eachlabs.ai/billing")
     elif e.code == ErrorCode.RATE_LIMITED:
         print(f"Try again in {e.details.get('retry_after', 30)} seconds")
 ```
