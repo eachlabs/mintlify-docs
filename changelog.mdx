@@ -4,18 +4,20 @@ description: "Product updates and releases from each::labs"
 rss: true
 ---
 
-<Update label="July 27, 2026" description="LLM Router" rss={{ title: "Preview: OpenAI-compatible audio transcription and speech", description: "LLM Router" }}>
-  ## Preview: transcribe audio files and stream speech
+<Update label="July 27, 2026" description="LLM Router" rss={{ title: "Audio endpoints: file transcription and streamed speech", description: "LLM Router" }}>
+  ## Transcribe audio files and stream speech
 
-  - The LLM Router documentation now covers two OpenAI-compatible audio
-    endpoints: `POST /v1/audio/transcriptions` for bounded file transcription
-    and `POST /v1/audio/speech` for progressively streamed text-to-speech.
+  - The LLM Router adds two OpenAI-compatible audio endpoints:
+    `POST /v1/audio/transcriptions` for file transcription and
+    `POST /v1/audio/speech` for progressively streamed text-to-speech.
+  - Transcription accepts files up to 25 MB — FLAC, MP3, MP4/M4A, OGG, WAV,
+    or WebM — and returns `json` or `verbose_json` with optional word and
+    segment timestamps. It answers in one response, with no prediction
+    polling.
+  - Speech returns raw MP3 or PCM bytes as synthesis progresses, so playback
+    can start before the full clip is ready.
   - Both use the same API key and base URL as chat completions, so the OpenAI
     SDK works with a base URL change alone.
-  - These endpoints are in **staged preview** and are enabled per environment.
-    A `404` means the capability is not enabled for your deployment yet — talk
-    to [support@eachlabs.ai](mailto:support@eachlabs.ai) before depending on
-    them in production.
 </Update>
 
 <Update label="July 12, 2026" description="Usage Analytics" rss={{ title: "Faster, fresher execution history and error analytics", description: "Usage Analytics" }}>
