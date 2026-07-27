@@ -38,7 +38,7 @@ curl -H "X-API-Key: YOUR_EACHLABS_API_KEY" ...
 curl -H "Authorization: Bearer YOUR_EACHLABS_API_KEY" ...
 ```
 
-Get your API key at: https://eachlabs.ai/settings/api-keys
+Get your API key at: https://www.eachlabs.ai/api-keys
 
 ---
 

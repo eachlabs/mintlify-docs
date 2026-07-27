@@ -44,7 +44,7 @@ Comprehensive guide for handling errors, edge cases, and special scenarios.
 ```
 **HTTP Status:** 401
 
-**Solution:** Verify your API key at https://eachlabs.ai/settings/api-keys
+**Solution:** Verify your API key at https://www.eachlabs.ai/api-keys
 
 #### Expired API Key
 
