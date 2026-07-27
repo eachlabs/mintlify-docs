@@ -1,0 +1,76 @@
+---
+title: "Versioning & Deprecation"
+description: "What counts as a breaking change to the Video API, how much notice you get, and which parts of the contract are already stable during beta."
+---
+
+**Private beta.** These pages are shared by direct link only and are not listed in the public navigation.
+
+<Note>
+The API is versioned in its path: `/v1/prediction`. Everything on this page describes how `/v1` evolves. A change that cannot be made compatibly gets a new version path, not a silent edit to this one.
+</Note>
+
+## The rule that decides everything
+
+Every capability's parameter schema sets `additionalProperties: false`. The engine rejects an unknown key **before any compute runs**, at $0.
+
+That single fact determines which direction of change is safe. Widening what we accept can never break a request you already send. Narrowing it can, because a request that validates today may stop validating tomorrow.
+
+## Compatible changes — shipped without notice
+
+| Change | Why it cannot break you |
+|-|-|
+| Adding an **optional** parameter to a capability | Your existing request omits it and gets the documented default |
+| Adding a **new capability** | Nothing you send today addresses it |
+| Adding a **value to an enum** | Your current value stays valid |
+| **Widening** a numeric bound | Values you already send stay inside the range |
+| Adding a **field to a response** | Only breaks a client that rejects unknown fields — see below |
+| Improving an error **message** | The `error_code` you branch on is unchanged |
+
+These land continuously and are recorded in the [changelog](/changelog).
+
+<Warning>
+Parse responses so that unknown fields are ignored. Most JSON clients do this by default; strict deserializers configured to fail on unknown keys do not. If yours is strict, turn that off for our responses — we treat response-field additions as compatible and will keep making them.
+</Warning>
+
+## Breaking changes — 90 days' notice
+
+| Change | Why it breaks you |
+|-|-|
+| **Removing or renaming** a parameter | A request sending it is rejected by `additionalProperties: false` |
+| **Removing a value** from an enum | A request sending that value stops validating |
+| **Tightening** a numeric bound | A value that was in range falls out of it |
+| **Changing a default** | A request that omits the parameter silently changes behaviour — the most dangerous kind, because nothing errors |
+| **Removing or renaming** a capability | The request is rejected as an unknown capability |
+| **Removing a field** from a response, or changing its type | A client reading it breaks |
+| Adding a **required** parameter | Every existing request for that capability is rejected |
+
+For any of these we give **90 days' notice** before the change takes effect. Notice goes by email to the organizations whose recent traffic is actually affected, and is published in the [changelog](/changelog). The deprecated behaviour keeps working for the full window.
+
+Two things we do not treat as breaking, and you should not rely on: the **exact bytes** of an output file, and the **wall-clock duration** of a job. Encoder versions and infrastructure change; a byte-identical re-render is not part of the contract. Assert on media properties — duration, resolution, codec, stream count — not on file hashes.
+
+## Security exception
+
+A change that closes a security or content-safety hole ships as fast as the risk requires, without the 90-day window. We tell affected organizations what changed and why as soon as we can, and we keep such changes as narrow as the problem allows.
+
+## What "beta" changes
+
+The beta label is about the **rate card and the capability set**, not about the request contract.
+
+**Already stable, and covered by the notice policy above:**
+
+- The submit-and-poll flow, the prediction object, and the terminal statuses.
+- Request shape: `capability`, `tier`, `input_url` / `input_urls`, `params`, `output_format`.
+- Parameter names, bounds, and enums for the documented capabilities.
+- `error_code` values and the $0-reject guarantees in [Billing & Limits](/video/billing-limits).
+
+**Still moving during beta:**
+
+- **Pricing.** Rates may change with shorter notice than 90 days. Current rates are always in [Billing & Limits](/video/billing-limits).
+- **The tier set.** Only `cpu` is offered today; a request for any other tier is rejected at $0. Offering another tier later is a compatible change.
+- **New capabilities**, which arrive continuously.
+
+We do not remove a documented capability during beta without the full 90-day window. Beta means the surface grows and the price may move; it does not mean the ground shifts under a request you already ship.
+
+## Staying informed
+
+Watch the [changelog](/changelog) for every compatible and breaking change. Deprecation notices additionally go by email to affected organizations, so keep a monitored address on your account — it is the only channel that reaches you directly.
