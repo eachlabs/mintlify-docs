@@ -4,6 +4,22 @@ description: "Product updates and releases from each::labs"
 rss: true
 ---
 
+<Update label="July 27, 2026" description="LLM Router" rss={{ title: "Audio endpoints: file transcription and streamed speech", description: "LLM Router" }}>
+  ## Transcribe audio files and stream speech
+
+  - The LLM Router adds two OpenAI-compatible audio endpoints:
+    `POST /v1/audio/transcriptions` for file transcription and
+    `POST /v1/audio/speech` for progressively streamed text-to-speech.
+  - Transcription accepts files up to 25 MB — FLAC, MP3, MP4/M4A, OGG, WAV,
+    or WebM — and returns `json` or `verbose_json` with optional word and
+    segment timestamps. It answers in one response, with no prediction
+    polling.
+  - Speech returns raw MP3 or PCM bytes as synthesis progresses, so playback
+    can start before the full clip is ready.
+  - Both use the same API key and base URL as chat completions, so the OpenAI
+    SDK works with a base URL change alone.
+</Update>
+
 <Update label="July 16, 2026" description="API" rss={{ title: "Media uploads handle generic image MIME types more reliably", description: "API" }}>
   ## Media uploads handle generic image MIME types more reliably
 
