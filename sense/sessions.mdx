@@ -71,7 +71,7 @@ const sessionId = `user-${userId}-portrait-editor`;
 **Clear sessions when done:**
 ```bash
 curl -X DELETE "https://eachsense-agent.core.eachlabs.run/memory?session_id=my-session" \
-  -H "X-API-Key: YOUR_API_KEY"
+  -H "Authorization: Bearer YOUR_API_KEY"
 ```
 
 **Handle session expiry:**

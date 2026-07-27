@@ -30,7 +30,7 @@ Instead of polling for prediction results, you can provide a `webhook_url` when 
 ```bash
 curl -X POST https://api.eachlabs.ai/v1/prediction \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: YOUR_API_KEY" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
     "model": "flux-1-1-pro",
     "version": "1.0.0",

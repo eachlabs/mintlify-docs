@@ -9,9 +9,9 @@ description: "Create a new workflow version or update an existing one."
 PUT https://workflows.eachlabs.run/api/v1/workflows/{workflowID}/versions/{versionID}
 ```
 
-<Warning>
-  This public URL uses a deprecated compatibility host outside the api-service host. It remains supported for now, but will soon move under `https://api.eachlabs.ai`. Keep integrations configurable and switch to the api-service URL once it is published.
-</Warning>
+<Note>
+  This endpoint is served at `https://workflows.eachlabs.run` and is fully supported.
+</Note>
 
 This operation will:
 - Create or update the version
@@ -45,7 +45,7 @@ This operation will:
 ```bash cURL
 curl -X PUT https://workflows.eachlabs.run/api/v1/workflows/WF_ID/versions/v2 \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: YOUR_API_KEY" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
     "version_id": "v2",
     "definition": {
@@ -94,7 +94,7 @@ response = requests.put(
     "https://workflows.eachlabs.run/api/v1/workflows/WF_ID/versions/v2",
     headers={
         "Content-Type": "application/json",
-        "X-API-Key": "YOUR_API_KEY"
+        "Authorization": "Bearer YOUR_API_KEY"
     },
     json={
         "version_id": "v2",
@@ -127,7 +127,7 @@ const response = await fetch(
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
-      "X-API-Key": "YOUR_API_KEY",
+      "Authorization": "Bearer YOUR_API_KEY",
     },
     body: JSON.stringify({
       version_id: "v2",

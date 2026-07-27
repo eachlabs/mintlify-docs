@@ -11,10 +11,10 @@ Discord: https://discord.gg/eachlabs
 
 ## Authentication
 
-All APIs use `X-API-Key` header. each::sense also accepts `Authorization: Bearer <key>` for OpenAI SDK compatibility.
+All APIs authenticate with your API key as a Bearer token in the `Authorization` header.
 
 ```
-X-API-Key: YOUR_API_KEY
+Authorization: Bearer YOUR_API_KEY
 ```
 
 Public endpoints that do NOT require authentication:
@@ -27,13 +27,13 @@ Auth error response: `{"error": "Invalid or missing API key"}` (HTTP 401)
 
 ## Base URLs
 
-| Product | Base URL | Protocol | Status |
-|---------|----------|----------|--------|
-| each::api | `https://api.eachlabs.ai` | REST | Canonical api-service host |
-| each::workflows | `https://workflows.eachlabs.run/api/v1` | REST | Workflows-engine host; planned to route through `https://api.eachlabs.ai` |
-| each::sense | `https://eachsense-agent.core.eachlabs.run` | REST + SSE | Current each::sense host |
+| Product | Base URL | Protocol |
+|-|-|-|
+| each::api | `https://api.eachlabs.ai` | REST |
+| each::workflows | `https://api.eachlabs.ai` | REST |
+| each::sense | `https://eachsense-agent.core.eachlabs.run` | REST + SSE |
 
-Migration notice: each::workflows is planned to route through the api-service host at `https://api.eachlabs.ai`. each::sense continues to use `https://eachsense-agent.core.eachlabs.run`. Keep clients configurable.
+Workflow endpoints with no `api.eachlabs.ai` equivalent (get/update workflow, versions, categories, public workflows) are served from `https://workflows.eachlabs.run/api/v1`, a fully supported host for those endpoints.
 
 ---
 
@@ -43,7 +43,7 @@ Migration notice: each::workflows is planned to route through the api-service ho
 
 ```bash
 curl -X POST https://api.eachlabs.ai/v1/prediction \
-  -H "X-API-Key: YOUR_API_KEY" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
     "model": "flux-2-max",
@@ -61,7 +61,7 @@ Poll for result:
 
 ```bash
 curl https://api.eachlabs.ai/v1/prediction/abc123-def456 \
-  -H "X-API-Key: YOUR_API_KEY"
+  -H "Authorization: Bearer YOUR_API_KEY"
 ```
 
 ### Generate via AI agent (each::sense)
@@ -86,13 +86,13 @@ print(response.generations)  # List of media URLs
 ### Trigger a workflow
 
 ```bash
-curl -X POST https://workflows.eachlabs.run/api/v1/WORKFLOW_ID/trigger \
-  -H "X-API-Key: YOUR_API_KEY" \
+curl -X POST https://api.eachlabs.ai/v1/workflows/trigger/WORKFLOW_ID/v1 \
+  -H "Authorization: Bearer YOUR_API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"version_id": "v1", "inputs": {"prompt": "A sunset landscape"}}'
+  -d '{"inputs": {"prompt": "A sunset landscape"}}'
 ```
 
-Response: `{"execution_id": "exec-123", "status": "queued", "started_at": "..."}`
+Response: `{"execution_id": "exec-123", "status": "queued"}`
 
 ---
 
@@ -234,29 +234,36 @@ Multi-step AI pipelines with versioning, parameter passing, fallbacks, and bulk 
 
 ### Endpoints
 
+On `https://api.eachlabs.ai`:
+
 | Method | Path | Description |
-|--------|------|-------------|
+|-|-|-|
+| `POST` | `/v1/workflows` | Create a workflow |
+| `POST` | `/v1/workflows/trigger/{workflowID}/{versionID}` | Trigger execution |
+| `POST` | `/v1/workflows/bulk-trigger/{workflowID}/{versionID}` | Bulk trigger (1–10 parallel) |
+| `GET` | `/v1/workflows/{workflowID}/executions` | List executions |
+| `GET` | `/v1/workflows/executions/{executionID}` | Get execution details |
+
+On `https://workflows.eachlabs.run/api/v1` (supported host for workflow-management endpoints without an api-service equivalent):
+
+| Method | Path | Description |
+|-|-|-|
 | `GET` | `/categories` | List workflow categories |
-| `POST` | `/workflows` | Create a workflow |
 | `GET` | `/workflows/{id}` | Get workflow (accepts UUID or slug) |
 | `PUT` | `/workflows/{id}` | Update workflow metadata |
 | `PUT` | `/workflows/{id}/versions/{versionID}` | Create or update a version |
-| `POST` | `/{id}/trigger` | Trigger execution |
-| `POST` | `/{id}/bulk-trigger` | Bulk trigger (1–10 parallel) |
-| `GET` | `/workflows/{id}/executions` | List executions |
-| `GET` | `/executions/{executionID}` | Get execution details |
 | `GET` | `/public/@{nickname}/workflows/{slug}/versions/{versionID}` | Get public workflow (no auth) |
-| `POST` | `/public/@{nickname}/workflows/{slug}/versions/{versionID}/trigger` | Trigger public workflow |
+| `POST` | `/public/@{nickname}/workflows/{slug}/versions/{versionID}/trigger` | Trigger public workflow (`api_key` in JSON body) |
 
 ### Create Workflow
 
-`POST https://workflows.eachlabs.run/api/v1/workflows`
+`POST https://api.eachlabs.ai/v1/workflows`
+
+Body accepts `name` (required) and `definition` (optional).
 
 ```json
 {
   "name": "Image Enhancement Pipeline",
-  "description": "Generate and upscale images",
-  "categories": ["image-generation"],
   "definition": {
     "version": "v1",
     "input_schema": {
@@ -290,7 +297,7 @@ Multi-step AI pipelines with versioning, parameter passing, fallbacks, and bulk 
 }
 ```
 
-Response (201): `{workflow_id, slug, name, latest_version_id, status: "active", versions: [...]}`
+Response: the full workflow object, including `versions: [{"version_id": "v1", ...}]`.
 
 ### Step Types
 
@@ -480,25 +487,25 @@ When fallback is used, step metadata includes `fallback_used: true` and `primary
 
 ### Trigger Workflow
 
-`POST https://workflows.eachlabs.run/api/v1/{workflowID}/trigger`
+`POST https://api.eachlabs.ai/v1/workflows/trigger/{workflowID}/{versionID}`
+
+`versionID` is the workflow version, e.g. `v1`. Body fields: `inputs`, `webhook_url`, `webhook_secret`.
 
 ```json
 {
-  "version_id": "v1",
   "inputs": {"prompt": "A sunset landscape"},
   "webhook_url": "https://your-server.com/webhook"
 }
 ```
 
-Response (202): `{"execution_id": "exec-123", "status": "queued", "started_at": "..."}`
+Response (202): `{"execution_id": "exec-123", "status": "queued"}`
 
 ### Bulk Trigger
 
-`POST https://workflows.eachlabs.run/api/v1/{workflowID}/bulk-trigger`
+`POST https://api.eachlabs.ai/v1/workflows/bulk-trigger/{workflowID}/{versionID}`
 
 ```json
 {
-  "version_id": "v1",
   "inputs": [
     {"prompt": "A sunset landscape"},
     {"prompt": "A mountain scene"},
@@ -508,11 +515,11 @@ Response (202): `{"execution_id": "exec-123", "status": "queued", "started_at": 
 }
 ```
 
-Max 10 inputs per request. Response includes `bulk_id` for tracking. Partial failures possible.
+Max 10 inputs per request. Response (202): `{bulk_id, executions: [...]}`. Partial failures possible.
 
 ### Get Execution
 
-`GET https://workflows.eachlabs.run/api/v1/executions/{executionID}`
+`GET https://api.eachlabs.ai/v1/workflows/executions/{executionID}`
 
 ```json
 {
@@ -1088,7 +1095,7 @@ response = client.chat.completions.create(
 ```python
 import requests, time
 
-headers = {"X-API-Key": "YOUR_API_KEY", "Content-Type": "application/json"}
+headers = {"Authorization": "Bearer YOUR_API_KEY", "Content-Type": "application/json"}
 
 # Create prediction
 r = requests.post("https://api.eachlabs.ai/v1/prediction", headers=headers, json={
@@ -1148,7 +1155,7 @@ for await (const chunk of stream) {
 
 **each::api (fetch):**
 ```javascript
-const headers = { "X-API-Key": "YOUR_API_KEY", "Content-Type": "application/json" };
+const headers = { "Authorization": "Bearer YOUR_API_KEY", "Content-Type": "application/json" };
 
 // Create prediction
 const res = await fetch("https://api.eachlabs.ai/v1/prediction", {
@@ -1261,14 +1268,14 @@ Rate limit headers: `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-R
 - [Parameter References](/workflows/concepts/parameter-references)
 - [Fallback Configuration](/workflows/concepts/fallback-configuration)
 - [Categories](/workflows/endpoints/categories): `GET /categories`
-- [Create Workflow](/workflows/endpoints/create-workflow): `POST /workflows`
+- [Create Workflow](/workflows/endpoints/create-workflow): `POST /v1/workflows`
 - [Get Workflow](/workflows/endpoints/get-workflow): `GET /workflows/{id}`
 - [Update Workflow](/workflows/endpoints/update-workflow): `PUT /workflows/{id}`
 - [Create Version](/workflows/endpoints/create-version): `PUT /workflows/{id}/versions/{versionID}`
-- [Trigger Workflow](/workflows/endpoints/trigger-workflow): `POST /{id}/trigger`
-- [Bulk Trigger](/workflows/endpoints/bulk-trigger): `POST /{id}/bulk-trigger`
-- [List Executions](/workflows/endpoints/list-executions): `GET /workflows/{id}/executions`
-- [Get Execution](/workflows/endpoints/get-execution): `GET /executions/{executionID}`
+- [Trigger Workflow](/workflows/endpoints/trigger-workflow): `POST /v1/workflows/trigger/{workflowID}/{versionID}`
+- [Bulk Trigger](/workflows/endpoints/bulk-trigger): `POST /v1/workflows/bulk-trigger/{workflowID}/{versionID}`
+- [List Executions](/workflows/endpoints/list-executions): `GET /v1/workflows/{workflowID}/executions`
+- [Get Execution](/workflows/endpoints/get-execution): `GET /v1/workflows/executions/{executionID}`
 - [Public Workflows](/workflows/endpoints/public-workflows)
 - [Webhooks](/workflows/webhooks)
 - [Examples](/workflows/examples)

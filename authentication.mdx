@@ -5,11 +5,11 @@ description: "Authenticate your requests to all each::labs APIs using API keys."
 
 ## API Key Authentication
 
-All each::labs APIs use API key authentication via the `X-API-Key` header.
+All each::labs APIs authenticate requests with your API key sent as a Bearer token in the `Authorization` header.
 
 ```bash
 curl https://api.eachlabs.ai/v1/models \
-  -H "X-API-Key: YOUR_API_KEY"
+  -H "Authorization: Bearer YOUR_API_KEY"
 ```
 
 ## Getting Your API Key
@@ -25,35 +25,39 @@ curl https://api.eachlabs.ai/v1/models \
 
 ## Using the API Key
 
-Include the `X-API-Key` header in every request:
+Include the `Authorization: Bearer YOUR_API_KEY` header in every request:
 
 <CodeGroup>
 ```bash cURL
 curl https://api.eachlabs.ai/v1/models \
-  -H "X-API-Key: YOUR_API_KEY"
+  -H "Authorization: Bearer YOUR_API_KEY"
 ```
 
 ```python Python
 import requests
 
-headers = {"X-API-Key": "YOUR_API_KEY"}
+headers = {"Authorization": "Bearer YOUR_API_KEY"}
 response = requests.get("https://api.eachlabs.ai/v1/models", headers=headers)
 ```
 
 ```javascript JavaScript
 const response = await fetch("https://api.eachlabs.ai/v1/models", {
-  headers: { "X-API-Key": "YOUR_API_KEY" },
+  headers: { "Authorization": "Bearer YOUR_API_KEY" },
 });
 ```
 </CodeGroup>
 
 ## Authentication per Product
 
-| Product | Header | Base URL | Status |
-|-|-|-|-|
-| each::api | `X-API-Key` | `https://api.eachlabs.ai` | Canonical api-service host |
-| each::workflows | `X-API-Key` | `https://workflows.eachlabs.run/api/v1` | Workflows-engine host; planned to route through `https://api.eachlabs.ai` |
-| each::sense | `X-API-Key` | `https://eachsense-agent.core.eachlabs.run` | Current each::sense host |
+| Product | Header | Base URL |
+|-|-|-|
+| each::api | `Authorization: Bearer YOUR_API_KEY` | `https://api.eachlabs.ai` |
+| each::workflows | `Authorization: Bearer YOUR_API_KEY` | `https://api.eachlabs.ai` |
+| each::sense | `Authorization: Bearer YOUR_API_KEY` | `https://eachsense-agent.core.eachlabs.run` |
+
+<Note>
+  Workflow endpoints with no `api.eachlabs.ai` equivalent (get/update workflow, versions, categories, public workflows) are served from `https://workflows.eachlabs.run/api/v1`, a fully supported host that uses the same Bearer authentication. One exception: public workflow triggers take your key as `api_key` in the JSON request body — see [Public Workflows](/workflows/endpoints/public-workflows).
+</Note>
 
 <Note>
   Some endpoints like `GET /v1/models` (listing models) do not require authentication. Check individual endpoint documentation for details.
@@ -72,8 +76,8 @@ If your API key is missing or invalid, you'll receive a `401` response:
 ### Common Causes
 
 | Issue | Solution |
-|-------|----------|
-| Missing header | Add `X-API-Key: YOUR_KEY` to your request headers |
+|-|-|
+| Missing header | Add `Authorization: Bearer YOUR_API_KEY` to your request headers |
 | Invalid key | Verify the key in your dashboard |
 | Expired key | Generate a new API key |
 | Wrong product URL | Ensure you're using the correct base URL for the product |

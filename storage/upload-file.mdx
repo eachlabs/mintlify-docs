@@ -40,7 +40,7 @@ POST https://api.eachlabs.ai/v1/upload/presign
 ```bash cURL
 curl -X POST https://api.eachlabs.ai/v1/upload/presign \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: YOUR_API_KEY" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
     "content_type": "image/png",
     "file_type": "image"
@@ -54,7 +54,7 @@ resp = requests.post(
     "https://api.eachlabs.ai/v1/upload/presign",
     headers={
         "Content-Type": "application/json",
-        "X-API-Key": "YOUR_API_KEY",
+        "Authorization": "Bearer YOUR_API_KEY",
     },
     json={
         "content_type": "image/png",
@@ -70,7 +70,7 @@ const resp = await fetch("https://api.eachlabs.ai/v1/upload/presign", {
   method: "POST",
   headers: {
     "Content-Type": "application/json",
-    "X-API-Key": "YOUR_API_KEY",
+    "Authorization": "Bearer YOUR_API_KEY",
   },
   body: JSON.stringify({
     content_type: "image/png",

@@ -27,7 +27,7 @@ DELETE https://api.eachlabs.ai/v1/files/{id}
 <CodeGroup>
 ```bash cURL
 curl -X DELETE https://api.eachlabs.ai/v1/files/0dce0f44-b8a5-4f30-91d4-5f6b0c221bf0 \
-  -H "X-API-Key: YOUR_API_KEY"
+  -H "Authorization: Bearer YOUR_API_KEY"
 ```
 
 ```python Python
@@ -35,7 +35,7 @@ import requests
 
 resp = requests.delete(
     "https://api.eachlabs.ai/v1/files/0dce0f44-b8a5-4f30-91d4-5f6b0c221bf0",
-    headers={"X-API-Key": "YOUR_API_KEY"},
+    headers={"Authorization": "Bearer YOUR_API_KEY"},
 )
 print(resp.status_code)  # 204 on success
 ```
@@ -45,7 +45,7 @@ const resp = await fetch(
   "https://api.eachlabs.ai/v1/files/0dce0f44-b8a5-4f30-91d4-5f6b0c221bf0",
   {
     method: "DELETE",
-    headers: { "X-API-Key": "YOUR_API_KEY" },
+    headers: { "Authorization": "Bearer YOUR_API_KEY" },
   },
 );
 // resp.status === 204

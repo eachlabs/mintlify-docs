@@ -17,7 +17,7 @@ The `/chat` endpoint is a unified AI assistant that can generate images, videos,
 Include the API key in the request header:
 
 ```
-X-API-Key: your_api_key_here
+Authorization: Bearer your_api_key_here
 ```
 
 **Security Note:** Session memory is scoped by API key. Users can only access their own sessions - a `session_id` from one API key cannot be accessed by another API key.
@@ -903,7 +903,7 @@ Get conversation memory for a session.
 
 **Headers:**
 ```
-X-API-Key: your_api_key_here
+Authorization: Bearer your_api_key_here
 ```
 
 **Query Parameters:**
@@ -932,7 +932,7 @@ Clear conversation memory for a session.
 
 **Headers:**
 ```
-X-API-Key: your_api_key_here
+Authorization: Bearer your_api_key_here
 ```
 
 **Query Parameters:**
@@ -952,7 +952,7 @@ List all active sessions for the authenticated user.
 
 **Headers:**
 ```
-X-API-Key: your_api_key_here
+Authorization: Bearer your_api_key_here
 ```
 
 **Response:**
@@ -1016,7 +1016,7 @@ import json
 
 response = requests.post(
     'https://api.example.com/chat',
-    headers={'X-API-Key': 'your_key', 'Accept': 'text/event-stream'},
+    headers={'Authorization': 'Bearer your_key', 'Accept': 'text/event-stream'},
     json={'message': 'Generate a portrait', 'stream': True},
     stream=True
 )

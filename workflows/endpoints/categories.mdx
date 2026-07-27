@@ -10,16 +10,16 @@ description: "Retrieve all available workflow categories."
 GET https://workflows.eachlabs.run/api/v1/categories
 ```
 
-<Warning>
-  This public URL uses a deprecated compatibility host outside the api-service host. It remains supported for now, but will soon move under `https://api.eachlabs.ai`. Keep integrations configurable and switch to the api-service URL once it is published.
-</Warning>
+<Note>
+  This endpoint is served at `https://workflows.eachlabs.run` and is fully supported.
+</Note>
 
 ## Code Examples
 
 <CodeGroup>
 ```bash cURL
 curl https://workflows.eachlabs.run/api/v1/categories \
-  -H "X-API-Key: YOUR_API_KEY"
+  -H "Authorization: Bearer YOUR_API_KEY"
 ```
 
 ```python Python
@@ -27,7 +27,7 @@ import requests
 
 response = requests.get(
     "https://workflows.eachlabs.run/api/v1/categories",
-    headers={"X-API-Key": "YOUR_API_KEY"}
+    headers={"Authorization": "Bearer YOUR_API_KEY"}
 )
 
 for cat in response.json()["categories"]:
@@ -37,7 +37,7 @@ for cat in response.json()["categories"]:
 ```javascript JavaScript
 const response = await fetch(
   "https://workflows.eachlabs.run/api/v1/categories",
-  { headers: { "X-API-Key": "YOUR_API_KEY" } }
+  { headers: { "Authorization": "Bearer YOUR_API_KEY" } }
 );
 const { categories } = await response.json();
 categories.forEach((c) => console.log(`${c.slug}: ${c.label}`));

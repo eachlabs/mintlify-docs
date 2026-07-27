@@ -152,7 +152,7 @@ Retrieve conversation history for a session.
 
 ```bash
 curl "https://eachsense-agent.core.eachlabs.run/memory?session_id=my-session" \
-  -H "X-API-Key: YOUR_API_KEY"
+  -H "Authorization: Bearer YOUR_API_KEY"
 ```
 
 **Response:**
@@ -201,7 +201,7 @@ Delete conversation history for a session.
 
 ```bash
 curl -X DELETE "https://eachsense-agent.core.eachlabs.run/memory?session_id=my-session" \
-  -H "X-API-Key: YOUR_API_KEY"
+  -H "Authorization: Bearer YOUR_API_KEY"
 ```
 
 **Response:**
@@ -219,7 +219,7 @@ Get all session IDs for your API key.
 
 ```bash
 curl "https://eachsense-agent.core.eachlabs.run/sessions" \
-  -H "X-API-Key: YOUR_API_KEY"
+  -H "Authorization: Bearer YOUR_API_KEY"
 ```
 
 **Response:**

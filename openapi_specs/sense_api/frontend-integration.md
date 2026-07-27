@@ -29,10 +29,10 @@
 
 ## Authentication
 
-All endpoints that perform AI operations require an API key via the `X-API-Key` header.
+All endpoints that perform AI operations require an API key via the `Authorization` header:
 
 ```
-X-API-Key: your-api-key-here
+Authorization: Bearer your-api-key-here
 ```
 
 If the key is missing or invalid, the API returns:
@@ -68,7 +68,7 @@ The unified chat endpoint. The AI agent decides what to do based on the user's m
 ```json
 POST https://sense.eachlabs.run/chat
 Content-Type: application/json
-X-API-Key: your-api-key
+Authorization: Bearer your-api-key
 
 {
   "message": "Generate a portrait of a woman in cinematic lighting",
@@ -560,7 +560,7 @@ Dedicated workflow builder endpoint for creating/updating AI workflows. Use this
 ```json
 POST https://sense.eachlabs.run/workflow
 Content-Type: application/json
-X-API-Key: your-api-key
+Authorization: Bearer your-api-key
 
 {
   "workflow_id": "abc-123-def-456",
@@ -1016,7 +1016,7 @@ async function chatStream(
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "X-API-Key": apiKey,
+        "Authorization": `Bearer ${apiKey}`,
       },
       body: JSON.stringify({ ...request, stream: true }),
     });

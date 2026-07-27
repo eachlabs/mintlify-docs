@@ -37,7 +37,7 @@ each::labs is a generative media platform for developers and AI agents. Get acce
     ```bash cURL
     curl -X POST https://api.eachlabs.ai/v1/prediction \
       -H "Content-Type: application/json" \
-      -H "X-API-Key: $EACHLABS_API_KEY" \
+      -H "Authorization: Bearer $EACHLABS_API_KEY" \
       -d '{
         "model": "nano-banana-pro",
         "input": {
@@ -52,7 +52,7 @@ each::labs is a generative media platform for developers and AI agents. Get acce
 
     response = requests.post(
         "https://api.eachlabs.ai/v1/prediction",
-        headers={"X-API-Key": "YOUR_API_KEY"},
+        headers={"Authorization": "Bearer YOUR_API_KEY"},
         json={
             "model": "nano-banana-pro",
             "input": {
@@ -70,7 +70,7 @@ each::labs is a generative media platform for developers and AI agents. Get acce
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "X-API-Key": "YOUR_API_KEY",
+        "Authorization": "Bearer YOUR_API_KEY",
       },
       body: JSON.stringify({
         model: "nano-banana-pro",
@@ -106,12 +106,16 @@ each::labs is a generative media platform for developers and AI agents. Get acce
 
 ## Base URLs
 
-| Product | Base URL | Protocol | Status |
-|---------|----------|----------|--------|
-| each::api | `https://api.eachlabs.ai` | REST | Canonical api-service host |
-| each::workflows | `https://workflows.eachlabs.run/api/v1` | REST | Workflows-engine host; planned to route through `https://api.eachlabs.ai` |
-| each::sense | `https://eachsense-agent.core.eachlabs.run` | REST + SSE | Current each::sense host |
-| LLM Router | `https://api.eachlabs.ai/v1` | REST + SSE | Canonical api-service host |
+| Product | Base URL | Protocol |
+|-|-|-|
+| each::api | `https://api.eachlabs.ai` | REST |
+| each::workflows | `https://api.eachlabs.ai` | REST |
+| each::sense | `https://eachsense-agent.core.eachlabs.run` | REST + SSE |
+| LLM Router | `https://api.eachlabs.ai/v1` | REST + SSE |
+
+<Note>
+  Workflow endpoints with no `api.eachlabs.ai` equivalent (get/update workflow, versions, categories, public workflows) are served from `https://workflows.eachlabs.run/api/v1`, a fully supported host for those endpoints.
+</Note>
 
 ## For AI Agents
 

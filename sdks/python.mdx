@@ -68,7 +68,7 @@ def stream_generation(prompt, api_key):
         "https://eachsense-agent.core.eachlabs.run/v1/chat/completions",
         headers={
             "Content-Type": "application/json",
-            "X-API-Key": api_key
+            "Authorization": f"Bearer {api_key}"
         },
         json={
             "messages": [{"role": "user", "content": prompt}],
@@ -110,7 +110,7 @@ SESSION_ID = "my-project"
 URL = "https://eachsense-agent.core.eachlabs.run/v1/chat/completions"
 HEADERS = {
     "Content-Type": "application/json",
-    "X-API-Key": "YOUR_API_KEY"
+    "Authorization": "Bearer YOUR_API_KEY"
 }
 
 def chat(message):
@@ -154,7 +154,7 @@ API_KEY = "YOUR_API_KEY"
 BASE = "https://api.eachlabs.ai/v1"
 HEADERS = {
     "Content-Type": "application/json",
-    "X-API-Key": API_KEY
+    "Authorization": f"Bearer {API_KEY}"
 }
 
 # Create a prediction
@@ -189,28 +189,23 @@ else:
 
 ## each::workflows: Trigger & Poll
 
-<Warning>
-  This public URL uses a deprecated compatibility host outside the api-service host. It remains supported for now, but will soon move under `https://api.eachlabs.ai`. Keep integrations configurable and switch to the api-service URL once it is published.
-</Warning>
-
 ```python
 import requests
 import time
 
 API_KEY = "YOUR_API_KEY"
-BASE = "https://workflows.eachlabs.run/api/v1"
+BASE = "https://api.eachlabs.ai/v1"
 HEADERS = {
     "Content-Type": "application/json",
-    "X-API-Key": API_KEY
+    "Authorization": f"Bearer {API_KEY}"
 }
 
-# Trigger a workflow
+# Trigger a workflow (returns 202 with execution_id and status)
 response = requests.post(
-    f"{BASE}/wf_abc123/trigger",
+    f"{BASE}/workflows/trigger/WORKFLOW_ID/v1",
     headers=HEADERS,
     json={
-        "version_id": "v1",
-        "input": {
+        "inputs": {
             "prompt": "A professional headshot",
             "style": "photorealistic"
         }
@@ -221,7 +216,7 @@ execution_id = execution["execution_id"]
 
 # Poll for completion
 while True:
-    r = requests.get(f"{BASE}/executions/{execution_id}", headers=HEADERS)
+    r = requests.get(f"{BASE}/workflows/executions/{execution_id}", headers=HEADERS)
     status = r.json()
 
     if status["status"] == "completed":

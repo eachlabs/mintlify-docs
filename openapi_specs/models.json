@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "each::labs Official API v1",
-    "description": "Official each::labs API V1.\nThis API provides access to our comprehensive AI model catalog and other resources.\n\n## Public contract notes\n\n- Public API routes handled by request logging include `X-Request-Id` for\n  support and log correlation. Clients may send `X-Request-Id`; otherwise\n  api-service generates one. Root, health, and metrics endpoints are excluded.\n- REST error bodies keep the backward-compatible JSON shape used by existing\n  clients. Most errors include at least `error`; some shared error paths also\n  include `status` and `details`. Use the HTTP status code as the primary\n  programmatic signal unless an endpoint documents a richer envelope.\n- Rate-limit and retry headers are endpoint-dependent. If a response includes\n  `Retry-After`, honor it before retrying; otherwise use bounded exponential\n  backoff for retryable 429/5xx responses.\n- api-service exposes single workflow trigger through\n  `/v1/workflows/trigger/{workflowID}/{versionID}`. Bulk workflow trigger is\n  not routed through api-service; use the workflows-engine public API directly\n  where bulk trigger is required.\n",
+    "description": "Official each::labs API V1.\nThis API provides access to our comprehensive AI model catalog and other resources.\n\n## Public contract notes\n\n- Public API routes handled by request logging include `X-Request-Id` for\n  support and log correlation. Clients may send `X-Request-Id`; otherwise\n  api-service generates one. Root, health, and metrics endpoints are excluded.\n- REST error bodies keep the backward-compatible JSON shape used by existing\n  clients. Most errors include at least `error`; some shared error paths also\n  include `status` and `details`. Use the HTTP status code as the primary\n  programmatic signal unless an endpoint documents a richer envelope.\n- Rate-limit and retry headers are endpoint-dependent. If a response includes\n  `Retry-After`, honor it before retrying; otherwise use bounded exponential\n  backoff for retryable 429/5xx responses.\n",
     "version": "1.0.0",
     "contact": {
       "name": "API Support",
@@ -34,11 +34,11 @@
     },
     {
       "name": "Executions",
-      "description": "Endpoints for listing execution history."
+      "description": "Endpoints for listing and retrieving workflow execution history."
     },
     {
       "name": "Workflows",
-      "description": "Endpoints for triggering workflow executions through api-service."
+      "description": "Endpoints for creating workflows and triggering workflow executions through api-service."
     },
     {
       "name": "OpenAI Compatibility",
@@ -193,7 +193,7 @@
         "operationId": "createPrediction",
         "security": [
           {
-            "ApiKeyAuth": []
+            "BearerAuth": []
           }
         ],
         "requestBody": {
@@ -250,7 +250,7 @@
         "operationId": "runPrediction",
         "security": [
           {
-            "ApiKeyAuth": []
+            "BearerAuth": []
           }
         ],
         "requestBody": {
@@ -332,7 +332,7 @@
         ],
         "security": [
           {
-            "ApiKeyAuth": []
+            "BearerAuth": []
           }
         ],
         "responses": {
@@ -393,7 +393,7 @@
         "operationId": "cancelPrediction",
         "security": [
           {
-            "ApiKeyAuth": []
+            "BearerAuth": []
           }
         ],
         "parameters": [
@@ -446,7 +446,7 @@
         "operationId": "presignUpload",
         "security": [
           {
-            "ApiKeyAuth": []
+            "BearerAuth": []
           }
         ],
         "requestBody": {
@@ -505,7 +505,7 @@
         "operationId": "deleteFile",
         "security": [
           {
-            "ApiKeyAuth": []
+            "BearerAuth": []
           }
         ],
         "parameters": [
@@ -540,144 +540,6 @@
           },
           "409": {
             "$ref": "#/components/responses/Conflict"
-          },
-          "500": {
-            "$ref": "#/components/responses/InternalServerError"
-          }
-        }
-      }
-    },
-    "/v1/executions": {
-      "get": {
-        "tags": [
-          "Executions"
-        ],
-        "summary": "List executions",
-        "description": "Retrieve execution history for the authenticated API key with optional filters.\nModel prediction terminal statuses include `success`, `failed`, and `cancelled`;\nworkflow executions can surface `running`, `completed`, `failed`, or `cancelled`\ndepending on the originating backend.\n",
-        "operationId": "listExecutions",
-        "security": [
-          {
-            "ApiKeyAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "limit",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 100,
-              "default": 20
-            },
-            "description": "Maximum number of executions to return",
-            "example": 20
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "minimum": 0,
-              "default": 0
-            },
-            "description": "Number of executions to skip for pagination",
-            "example": 0
-          },
-          {
-            "name": "model",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            },
-            "description": "Filter executions by model slug",
-            "example": "flux-1-1-pro"
-          },
-          {
-            "name": "status",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            },
-            "description": "Comma-separated status filter",
-            "example": "success,failed"
-          },
-          {
-            "name": "workflow_id",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            },
-            "description": "Filter by workflow ID",
-            "example": "wf_abc123"
-          },
-          {
-            "name": "workflow_execution_id",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            },
-            "description": "Filter by workflow execution ID",
-            "example": "wf_exec_abc123"
-          },
-          {
-            "name": "error_classification",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "content_moderation",
-                "execution_timeout",
-                "invalid_user_input",
-                "invalid_model_config",
-                "provider_auth",
-                "provider_error",
-                "provider_rate_limit",
-                "provider_unavailable",
-                "internal_error",
-                "unknown"
-              ]
-            },
-            "description": "Comma-separated canonical error classification filter. Restricts results to terminal error executions whose classification is in the set; an unrecognized value returns 400. Each value must be one of the listed enum members.",
-            "example": "provider_rate_limit,provider_unavailable"
-          },
-          {
-            "name": "from",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "format": "date-time"
-            },
-            "description": "Start of creation time window, as RFC 3339",
-            "example": "2026-01-01T00:00:00Z"
-          },
-          {
-            "name": "to",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "format": "date-time"
-            },
-            "description": "End of creation time window, as RFC 3339",
-            "example": "2026-01-31T23:59:59Z"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "List of executions",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ListExecutionsResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequest"
-          },
-          "401": {
-            "$ref": "#/components/responses/Unauthorized"
           },
           "500": {
             "$ref": "#/components/responses/InternalServerError"
@@ -932,7 +794,7 @@
           "OpenAI Compatibility"
         ],
         "summary": "Stream synthesized speech",
-        "description": "OpenAI-compatible text-to-speech. Use `Authorization: Bearer <API_KEY>`\nand a JSON body. The response is a raw audio byte stream forwarded\nprogressively (no prediction polling); the negotiated content type is\nreturned verbatim (`audio/mpeg` for mp3, `audio/pcm;rate=\u2026;channels=\u2026`\nfor pcm). An omitted `response_format` defaults to `mp3`.\n\nThe accepted model/voice/format set is a curated per-environment\ncatalog that a model joins only after passing contract qualification;\n`deepgram/aura-2` is the launch model. An unsupported model, voice, or\nformat, or a `speed`/`instructions` value for a model that does not\nsupport it, returns a 400 without dispatching a synthesis.\n\nThis endpoint is independently feature-gated during preview rollout. A\ndisabled deployment returns an OpenAI-shaped 404 without dispatching.\n",
+        "description": "OpenAI-compatible text-to-speech. Use `Authorization: Bearer <API_KEY>`\nand a JSON body. The response is a raw audio byte stream forwarded\nprogressively (no prediction polling); the negotiated content type is\nreturned verbatim (`audio/mpeg` for mp3, `audio/pcm;rate=…;channels=…`\nfor pcm). An omitted `response_format` defaults to `mp3`.\n\nThe accepted model/voice/format set is a curated per-environment\ncatalog that a model joins only after passing contract qualification;\n`deepgram/aura-2` is the launch model. An unsupported model, voice, or\nformat, or a `speed`/`instructions` value for a model that does not\nsupport it, returns a 400 without dispatching a synthesis.\n\nThis endpoint is independently feature-gated during preview rollout. A\ndisabled deployment returns an OpenAI-shaped 404 without dispatching.\n",
         "operationId": "createAudioSpeech",
         "security": [
           {
@@ -951,7 +813,7 @@
         },
         "responses": {
           "200": {
-            "description": "Raw audio byte stream. Bytes are forwarded progressively as the\nprovider synthesizes them; the content type is the negotiated\nformat (`audio/mpeg` or `audio/pcm;rate=\u2026;channels=\u2026`).\n",
+            "description": "Raw audio byte stream. Bytes are forwarded progressively as the\nprovider synthesizes them; the content type is the negotiated\nformat (`audio/mpeg` or `audio/pcm;rate=…;channels=…`).\n",
             "headers": {
               "X-Generation-Id": {
                 "description": "Upstream generation identifier for out-of-band billing reconciliation.",
@@ -1074,17 +936,116 @@
         }
       }
     },
+    "/v1/workflows": {
+      "post": {
+        "tags": [
+          "Workflows"
+        ],
+        "summary": "Create workflow",
+        "description": "Create a new workflow together with its initial version. This route forwards to\nworkflows-engine, which generates the slug, persists the workflow + version, and\nprovisions the execution state machine.\n\nOnly `name` is required. `definition` is the workflow DSL as an arbitrary JSON\nobject (steps, input_schema, metadata). Categories, tags, and visibility are not\naccepted on this route — workflows-engine applies its defaults (categories\n`[\"general\"]`, visibility `private`).\n",
+        "operationId": "createWorkflow",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkflowCreateRequest"
+              },
+              "example": {
+                "name": "My Workflow",
+                "definition": {
+                  "version": "1.0",
+                  "steps": []
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Workflow created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowDetailResponse"
+                },
+                "example": {
+                  "workflow_id": "wf_abc123",
+                  "slug": "my-workflow",
+                  "name": "My Workflow",
+                  "categories": [
+                    "general"
+                  ],
+                  "tags": [],
+                  "status": "active",
+                  "trigger_count": 0,
+                  "clone_count": 0,
+                  "is_public": false,
+                  "production": false,
+                  "created_at": "2026-01-01T00:00:00Z",
+                  "updated_at": "2026-01-01T00:00:00Z",
+                  "versions": [
+                    {
+                      "version_id": "v1",
+                      "slug": "my-workflow",
+                      "published": false,
+                      "locked": false,
+                      "production": false,
+                      "allowed_to_share": false,
+                      "trigger_count": 0,
+                      "created_at": "2026-01-01T00:00:00Z",
+                      "updated_at": "2026-01-01T00:00:00Z",
+                      "definition": {
+                        "version": "1.0",
+                        "steps": []
+                      },
+                      "status": "active"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "408": {
+            "$ref": "#/components/responses/RequestTimeout"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
     "/v1/workflows/trigger/{workflowID}/{versionID}": {
       "post": {
         "tags": [
           "Workflows"
         ],
         "summary": "Trigger workflow execution",
-        "description": "Start an asynchronous workflow execution through api-service. This route forwards to\nworkflows-engine and requires callers to pin the workflow version in the path.\n\nThe immediate response only confirms the workflow was queued. Downstream workflow\nlifecycle statuses are `running`, `completed`, `failed`, and `cancelled`.\napi-service does not expose workflows-engine's bulk trigger route.\n",
+        "description": "Start an asynchronous workflow execution through api-service. This route forwards to\nworkflows-engine and requires callers to pin the workflow version in the path.\n\nThe immediate response only confirms the workflow was queued. Downstream workflow\nlifecycle statuses are `running`, `completed`, `failed`, and `cancelled`.\nTo queue several executions of the same version in one call, use the bulk trigger route.\n",
         "operationId": "triggerWorkflowExecution",
         "security": [
           {
-            "ApiKeyAuth": []
+            "BearerAuth": []
           }
         ],
         "parameters": [
@@ -1182,6 +1143,343 @@
         }
       }
     },
+    "/v1/workflows/bulk-trigger/{workflowID}/{versionID}": {
+      "post": {
+        "tags": [
+          "Workflows"
+        ],
+        "summary": "Bulk trigger workflow executions",
+        "description": "Queue several asynchronous executions of one workflow version in a single call\n(maximum 10 inputs per request). Each entry in `inputs` becomes its own execution;\nall executions share a single `bulk_id` for grouped tracking and consolidated\nwebhook delivery. This route forwards to workflows-engine and requires callers to\npin the workflow version in the path.\n\nThe immediate response only confirms the executions were queued. A per-input failure\nis reported inline on its `executions` entry (`status: failed` + `message`) — the\nbulk call still returns 202 so partial failures don't lose the queued executions.\n",
+        "operationId": "bulkTriggerWorkflowExecutions",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workflowID",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Workflow ID or slug to execute.",
+            "example": "wf_abc123"
+          },
+          {
+            "name": "versionID",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Workflow version ID to execute.",
+            "example": "v1"
+          },
+          {
+            "name": "webhook_url",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            },
+            "description": "Optional compatibility query parameter for execution completion webhooks. The request body field takes precedence when both are present.",
+            "example": "https://your-app.com/webhook"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkflowBulkTriggerRequest"
+              },
+              "example": {
+                "inputs": [
+                  {
+                    "prompt": "A cinematic establishing shot of a mountain lake"
+                  },
+                  {
+                    "prompt": "A close-up of dew on a spider web at sunrise"
+                  }
+                ],
+                "webhook_url": "https://your-app.com/webhook",
+                "webhook_secret": "your-secret-key"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Workflow executions queued",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowBulkTriggerResponse"
+                },
+                "example": {
+                  "bulk_id": "bulk_abc123",
+                  "executions": [
+                    {
+                      "execution_id": "exec_xyz789",
+                      "status": "queued"
+                    },
+                    {
+                      "status": "failed",
+                      "message": "invalid input value"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "402": {
+            "$ref": "#/components/responses/PaymentRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "408": {
+            "$ref": "#/components/responses/RequestTimeout"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/v1/workflows/{workflowID}/executions": {
+      "get": {
+        "tags": [
+          "Executions"
+        ],
+        "summary": "List workflow executions",
+        "description": "Retrieve a paginated list of executions for a specific workflow.\n\nWhen a `bulk_id` query parameter is provided, only executions queued by that bulk\ntrigger operation are returned. Pagination applies with the same `limit` and\n`offset` parameters.\n",
+        "operationId": "listWorkflowExecutions",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workflowID",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Workflow ID or slug.",
+            "example": "wf_abc123"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            },
+            "description": "Maximum number of executions to return per page.",
+            "example": 50
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            },
+            "description": "Number of executions to skip for pagination.",
+            "example": 0
+          },
+          {
+            "name": "bulk_id",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Optional filter: only return executions queued by this bulk trigger operation. The `bulk_id` is returned by the bulk trigger endpoint.",
+            "example": "550e8400-e29b-41d4-a716-446655440000"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of workflow executions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowExecutionsListResponse"
+                },
+                "example": {
+                  "executions": [
+                    {
+                      "execution_id": "exec-1",
+                      "flow_id": "wf-123",
+                      "flow_name": "Text to Image Generator",
+                      "version_id": "v1",
+                      "status": "completed",
+                      "started_at": "2026-01-01T10:00:00Z",
+                      "ended_at": "2026-01-01T10:05:00Z",
+                      "created_at": "2026-01-01T10:00:00Z",
+                      "updated_at": "2026-01-01T10:05:00Z"
+                    },
+                    {
+                      "execution_id": "exec-2",
+                      "flow_id": "wf-123",
+                      "flow_name": "Text to Image Generator",
+                      "version_id": "v1",
+                      "status": "running",
+                      "started_at": "2026-01-01T10:10:00Z",
+                      "created_at": "2026-01-01T10:10:00Z",
+                      "updated_at": "2026-01-01T10:10:00Z"
+                    }
+                  ],
+                  "limit": 50,
+                  "total_count": 142
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/v1/workflows/executions/{executionID}": {
+      "get": {
+        "tags": [
+          "Executions"
+        ],
+        "summary": "Get workflow execution",
+        "description": "Retrieve the detail of a single workflow execution: status, inputs,\nper-step outputs, final output, error, and `total_cost` (the summed\ncost of the run's model executions). Scoped to the authenticated\ncaller's organization; returns 404 when the execution is missing or\nowned by another organization.\n",
+        "operationId": "getWorkflowExecution",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "executionID",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The workflow execution id.",
+            "example": "b3b1f1a0-0000-0000-0000-000000000000"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Workflow execution detail",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "execution_id": {
+                      "type": "string"
+                    },
+                    "workflow_id": {
+                      "type": "string"
+                    },
+                    "version_id": {
+                      "type": "string",
+                      "description": "Workflow version the execution ran against."
+                    },
+                    "bulk_id": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string",
+                      "example": "completed"
+                    },
+                    "started_at": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "RFC3339 timestamp; omitted until the run starts."
+                    },
+                    "completed_at": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "RFC3339 timestamp; omitted until the run finishes."
+                    },
+                    "inputs": {
+                      "type": "object",
+                      "additionalProperties": true
+                    },
+                    "step_outputs": {
+                      "type": "object",
+                      "additionalProperties": true
+                    },
+                    "output": {
+                      "description": "Free-form final output (object, array, or scalar)."
+                    },
+                    "workflow_output": {
+                      "type": "object",
+                      "additionalProperties": true
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "error_cause": {
+                      "type": "string"
+                    },
+                    "total_cost": {
+                      "type": "number",
+                      "format": "double",
+                      "nullable": true,
+                      "description": "Summed cost of the run's model executions. Present only once the execution is terminal (completed/failed/cancelled); omitted while running or if unavailable."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
     "/v1/webhooks": {
       "get": {
         "tags": [
@@ -1192,7 +1490,7 @@
         "operationId": "listWebhooks",
         "security": [
           {
-            "ApiKeyAuth": []
+            "BearerAuth": []
           }
         ],
         "parameters": [
@@ -1250,7 +1548,7 @@
         "operationId": "getWebhook",
         "security": [
           {
-            "ApiKeyAuth": []
+            "BearerAuth": []
           }
         ],
         "parameters": [
@@ -1315,16 +1613,10 @@
       }
     },
     "securitySchemes": {
-      "ApiKeyAuth": {
-        "type": "apiKey",
-        "in": "header",
-        "name": "X-API-Key",
-        "description": "API key for authentication"
-      },
       "BearerAuth": {
         "type": "http",
         "scheme": "bearer",
-        "description": "API key passed as an Authorization Bearer token for OpenAI-compatible endpoints"
+        "description": "API key passed as an Authorization Bearer token: `Authorization: Bearer YOUR_API_KEY`"
       }
     },
     "schemas": {
@@ -1556,6 +1848,369 @@
             ],
             "description": "Execution queue status returned immediately after triggering.",
             "example": "queued"
+          }
+        }
+      },
+      "WorkflowCreateRequest": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Human-readable workflow name. Required.",
+            "example": "My Workflow"
+          },
+          "definition": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Workflow DSL (steps, input_schema, metadata) as a JSON object.",
+            "example": {
+              "version": "1.0",
+              "steps": []
+            }
+          }
+        }
+      },
+      "WorkflowDetailResponse": {
+        "type": "object",
+        "description": "The created workflow (summary fields + its versions).",
+        "properties": {
+          "workflow_id": {
+            "type": "string",
+            "example": "wf_abc123"
+          },
+          "slug": {
+            "type": "string",
+            "example": "my-workflow"
+          },
+          "name": {
+            "type": "string",
+            "example": "My Workflow"
+          },
+          "categories": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "general"
+            ]
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": []
+          },
+          "status": {
+            "type": "string",
+            "example": "active"
+          },
+          "trigger_count": {
+            "type": "integer",
+            "example": 0
+          },
+          "clone_count": {
+            "type": "integer",
+            "example": 0
+          },
+          "is_public": {
+            "type": "boolean",
+            "example": false
+          },
+          "production": {
+            "type": "boolean",
+            "example": false
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "versions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkflowVersionDetail"
+            }
+          }
+        }
+      },
+      "WorkflowVersionDetail": {
+        "type": "object",
+        "properties": {
+          "version_id": {
+            "type": "string",
+            "example": "v1"
+          },
+          "slug": {
+            "type": "string",
+            "example": "my-workflow"
+          },
+          "published": {
+            "type": "boolean",
+            "example": false
+          },
+          "locked": {
+            "type": "boolean",
+            "example": false
+          },
+          "production": {
+            "type": "boolean",
+            "example": false
+          },
+          "allowed_to_share": {
+            "type": "boolean",
+            "example": false
+          },
+          "trigger_count": {
+            "type": "integer",
+            "example": 0
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "definition": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "The version's workflow DSL."
+          },
+          "status": {
+            "type": "string",
+            "example": "active"
+          }
+        }
+      },
+      "WorkflowBulkTriggerRequest": {
+        "type": "object",
+        "required": [
+          "inputs"
+        ],
+        "properties": {
+          "inputs": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 10,
+            "description": "One input object per execution (1–10), each validated against the workflow version's input schema. Every entry must be a JSON object; a non-object entry (array, string, number) rejects the whole request with 400 rather than failing only that item.",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            },
+            "example": [
+              {
+                "prompt": "A cinematic establishing shot of a mountain lake"
+              },
+              {
+                "prompt": "A close-up of dew on a spider web at sunrise"
+              }
+            ]
+          },
+          "webhook_url": {
+            "type": "string",
+            "format": "uri",
+            "description": "Optional webhook URL applied to every execution in the batch.",
+            "example": "https://your-app.com/webhook"
+          },
+          "webhook_secret": {
+            "type": "string",
+            "description": "Optional secret used to sign workflow webhook requests.",
+            "example": "your-secret-key"
+          }
+        }
+      },
+      "WorkflowBulkTriggerResponse": {
+        "type": "object",
+        "properties": {
+          "bulk_id": {
+            "type": "string",
+            "description": "Identifier grouping every execution queued by this request.",
+            "example": "bulk_abc123"
+          },
+          "executions": {
+            "type": "array",
+            "description": "One acknowledgment per input, in request order.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "execution_id": {
+                  "type": "string",
+                  "description": "Queued execution identifier. Absent on a per-input failure.",
+                  "example": "exec_xyz789"
+                },
+                "status": {
+                  "type": "string",
+                  "description": "Per-execution queue status (`queued`) or `failed` for an input that could not be queued.",
+                  "example": "queued"
+                },
+                "message": {
+                  "type": "string",
+                  "description": "Failure reason, present only when status is `failed`.",
+                  "example": "invalid input value"
+                }
+              }
+            }
+          }
+        }
+      },
+      "WorkflowExecutionSummary": {
+        "type": "object",
+        "description": "Summary of one workflow execution, as returned by the list endpoint.",
+        "required": [
+          "execution_id",
+          "flow_id",
+          "flow_name",
+          "version_id",
+          "status",
+          "created_at"
+        ],
+        "properties": {
+          "execution_id": {
+            "type": "string",
+            "description": "Unique execution identifier",
+            "example": "exec-1"
+          },
+          "flow_id": {
+            "type": "string",
+            "description": "Workflow identifier (UUID)",
+            "example": "wf-123"
+          },
+          "flow_name": {
+            "type": "string",
+            "description": "Human-readable workflow name",
+            "example": "Text to Image Generator"
+          },
+          "version_id": {
+            "type": "string",
+            "description": "Version identifier for this execution",
+            "example": "v1"
+          },
+          "api_key": {
+            "type": "string",
+            "description": "User/API key identifier that triggered this execution",
+            "example": "user-456"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "running",
+              "completed",
+              "failed",
+              "cancelled"
+            ],
+            "description": "Current execution status",
+            "example": "completed"
+          },
+          "started_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "RFC3339 timestamp when the execution started (omitted if not started yet)",
+            "example": "2026-01-01T10:00:00Z"
+          },
+          "ended_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "RFC3339 timestamp when the execution completed (omitted for running executions)",
+            "example": "2026-01-01T10:05:00Z"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "RFC3339 timestamp when the execution was created",
+            "example": "2026-01-01T10:00:00Z"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "RFC3339 timestamp when the execution was last updated",
+            "example": "2026-01-01T10:05:00Z"
+          },
+          "deleted_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "RFC3339 timestamp when the execution was soft-deleted (if applicable)"
+          },
+          "inputs": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Input parameters provided when triggering the workflow",
+            "example": {
+              "prompt": "Generate an image of a sunset"
+            }
+          },
+          "step_results": {
+            "description": "Brief summary of step execution results. Structure varies — may be an object with step IDs as keys, or an array.",
+            "oneOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "array",
+                "items": {}
+              }
+            ]
+          },
+          "output": {
+            "type": "string",
+            "description": "Simple string output from the workflow (if available). For complex outputs, use `output_json` instead.",
+            "example": "https://storage.googleapis.com/uploads/image.png"
+          },
+          "output_json": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Structured JSON output from the workflow (if available). Contains the full workflow output when output mapping is configured.",
+            "example": {
+              "image_url": "https://storage.googleapis.com/uploads/image.png",
+              "generation_time": 2.45
+            }
+          },
+          "cost": {
+            "description": "Cost information for this execution (if available). Structure varies by provider and workflow configuration.",
+            "oneOf": [
+              {
+                "type": "object"
+              },
+              {
+                "type": "number"
+              }
+            ]
+          }
+        }
+      },
+      "WorkflowExecutionsListResponse": {
+        "type": "object",
+        "description": "Paginated list of workflow executions",
+        "required": [
+          "executions",
+          "limit",
+          "total_count"
+        ],
+        "properties": {
+          "executions": {
+            "type": "array",
+            "description": "Array of execution summaries",
+            "items": {
+              "$ref": "#/components/schemas/WorkflowExecutionSummary"
+            }
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Applied page size",
+            "example": 50
+          },
+          "total_count": {
+            "type": "integer",
+            "description": "Total number of executions matching the query",
+            "example": 142
           }
         }
       },
@@ -1864,106 +2519,6 @@
             }
           }
         }
-      },
-      "ExecutionSummary": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "description": "Execution identifier",
-            "example": "exec_abc123"
-          },
-          "model": {
-            "type": "string",
-            "description": "Model slug",
-            "example": "flux-1-1-pro"
-          },
-          "status": {
-            "type": "string",
-            "description": "Execution status. Model prediction terminal statuses include `success`,\n`failed`, and `cancelled`; workflow executions can surface `running`,\n`completed`, `failed`, or `cancelled` depending on the originating backend.\n",
-            "example": "success"
-          },
-          "workflow_id": {
-            "type": "string",
-            "nullable": true,
-            "description": "Workflow ID, when execution was triggered by a workflow",
-            "example": "wf_abc123"
-          },
-          "workflow_execution_id": {
-            "type": "string",
-            "nullable": true,
-            "description": "Workflow execution ID, when execution was triggered by a workflow",
-            "example": "wf_exec_abc123"
-          },
-          "execution_cost": {
-            "type": "number",
-            "description": "Execution cost in USD",
-            "example": 0.05
-          },
-          "run_time": {
-            "type": "number",
-            "description": "Runtime in seconds",
-            "example": 12.5
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "description": "Creation timestamp",
-            "example": "2026-01-01T00:00:00Z"
-          },
-          "started_at": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true,
-            "description": "Start timestamp",
-            "example": "2026-01-01T00:00:02Z"
-          },
-          "completed_at": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true,
-            "description": "Completion timestamp",
-            "example": "2026-01-01T00:00:15Z"
-          },
-          "output": {
-            "type": "string",
-            "nullable": true,
-            "description": "Primary execution output, when available",
-            "example": "https://storage.example.com/predictions/abc123/image.jpg"
-          }
-        }
-      },
-      "ListExecutionsResponse": {
-        "type": "object",
-        "properties": {
-          "executions": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ExecutionSummary"
-            }
-          },
-          "total_count": {
-            "type": "integer",
-            "description": "Total number of matching executions",
-            "example": 123
-          },
-          "offset": {
-            "type": "integer",
-            "description": "Applied offset",
-            "example": 0
-          },
-          "limit": {
-            "type": "integer",
-            "description": "Applied limit",
-            "example": 20
-          }
-        },
-        "required": [
-          "executions",
-          "total_count",
-          "offset",
-          "limit"
-        ]
       },
       "ChatCompletionRequest": {
         "type": "object",

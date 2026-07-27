@@ -30,10 +30,6 @@ https://eachsense-agent.core.eachlabs.run
 ## Authentication
 
 ```bash
-# Method 1: X-API-Key header (recommended)
-curl -H "X-API-Key: YOUR_API_KEY" ...
-
-# Method 2: Bearer token (OpenAI SDK compatible)
 curl -H "Authorization: Bearer YOUR_API_KEY" ...
 ```
 
@@ -74,7 +70,7 @@ for chunk in response:
 ```bash cURL
 curl -X POST https://eachsense-agent.core.eachlabs.run/v1/chat/completions \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: YOUR_API_KEY" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
     "messages": [{"role": "user", "content": "Generate a portrait photo"}],
     "stream": false

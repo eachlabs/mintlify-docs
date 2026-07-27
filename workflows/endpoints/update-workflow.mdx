@@ -10,9 +10,9 @@ description: "Update workflow metadata such as name, description, and categories
 PUT https://workflows.eachlabs.run/api/v1/workflows/{workflowID}
 ```
 
-<Warning>
-  This public URL uses a deprecated compatibility host outside the api-service host. It remains supported for now, but will soon move under `https://api.eachlabs.ai`. Keep integrations configurable and switch to the api-service URL once it is published.
-</Warning>
+<Note>
+  This endpoint is served at `https://workflows.eachlabs.run` and is fully supported.
+</Note>
 
 <Note>
   This updates workflow metadata only. To update the definition (steps), use [Create Version](/workflows/endpoints/create-version).
@@ -42,7 +42,7 @@ All fields are optional. Only the fields you provide will be updated.
 ```bash cURL
 curl -X PUT https://workflows.eachlabs.run/api/v1/workflows/WF_ID \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: YOUR_API_KEY" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
     "name": "Text to Image Generator v2",
     "categories": ["image-generation", "production"]
@@ -56,7 +56,7 @@ response = requests.put(
     "https://workflows.eachlabs.run/api/v1/workflows/WF_ID",
     headers={
         "Content-Type": "application/json",
-        "X-API-Key": "YOUR_API_KEY"
+        "Authorization": "Bearer YOUR_API_KEY"
     },
     json={
         "name": "Text to Image Generator v2",
@@ -73,7 +73,7 @@ const response = await fetch(
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
-      "X-API-Key": "YOUR_API_KEY",
+      "Authorization": "Bearer YOUR_API_KEY",
     },
     body: JSON.stringify({
       name: "Text to Image Generator v2",

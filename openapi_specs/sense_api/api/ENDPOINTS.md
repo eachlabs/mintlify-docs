@@ -26,7 +26,7 @@ OpenAI-compatible chat completions endpoint. This is the primary endpoint for al
 ```bash
 curl -X POST https://eachsense-agent.core.eachlabs.run/v1/chat/completions \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: YOUR_API_KEY" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
     "messages": [
       {"role": "user", "content": "Generate a sunset over mountains"}
@@ -127,7 +127,7 @@ Simplified chat endpoint (deprecated, use `/v1/chat/completions` instead).
 ```bash
 curl -X POST https://eachsense-agent.core.eachlabs.run/chat \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: YOUR_API_KEY" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
     "message": "Generate a portrait photo",
     "session_id": "my-session",
@@ -180,7 +180,7 @@ Build or update multi-step AI workflows.
 ```bash
 curl -X POST https://eachsense-agent.core.eachlabs.run/workflow \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: YOUR_API_KEY" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
     "message": "Create a workflow that generates an image then animates it",
     "workflow_id": "wf_existing",
@@ -229,7 +229,7 @@ List available models (OpenAI compatible).
 
 ```bash
 curl https://eachsense-agent.core.eachlabs.run/v1/models \
-  -H "X-API-Key: YOUR_API_KEY"
+  -H "Authorization: Bearer YOUR_API_KEY"
 ```
 
 #### Response
@@ -260,7 +260,7 @@ Retrieve conversation history for a session.
 
 ```bash
 curl "https://eachsense-agent.core.eachlabs.run/memory?session_id=my-session" \
-  -H "X-API-Key: YOUR_API_KEY"
+  -H "Authorization: Bearer YOUR_API_KEY"
 ```
 
 #### Response
@@ -298,7 +298,7 @@ Clear conversation history for a session.
 
 ```bash
 curl -X DELETE "https://eachsense-agent.core.eachlabs.run/memory?session_id=my-session" \
-  -H "X-API-Key: YOUR_API_KEY"
+  -H "Authorization: Bearer YOUR_API_KEY"
 ```
 
 #### Response
@@ -318,7 +318,7 @@ List all sessions for the authenticated user.
 
 ```bash
 curl https://eachsense-agent.core.eachlabs.run/sessions \
-  -H "X-API-Key: YOUR_API_KEY"
+  -H "Authorization: Bearer YOUR_API_KEY"
 ```
 
 #### Response
@@ -392,11 +392,8 @@ curl https://eachsense-agent.core.eachlabs.run/healthz
 | Header | Required | Description |
 |--------|----------|-------------|
 | `Content-Type` | Yes | `application/json` |
-| `X-API-Key` | Yes* | Your Eachlabs API key |
-| `Authorization` | Yes* | `Bearer YOUR_API_KEY` (alternative) |
+| `Authorization` | Yes | `Bearer YOUR_API_KEY` |
 | `X-Session-Id` | No | Session ID (alternative to body param) |
-
-*One of `X-API-Key` or `Authorization` is required.
 
 ### Response Headers
 

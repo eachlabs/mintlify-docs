@@ -22,7 +22,7 @@
   ],
   "security": [
     {
-      "ApiKeyAuth": []
+      "BearerAuth": []
     }
   ],
   "tags": [
@@ -152,7 +152,7 @@
                 }
               }
             },
-            "description": "Missing or invalid X-API-Key. The body is an empty JSON object today."
+            "description": "Missing or invalid API key. The body is an empty JSON object today."
           },
           "422": {
             "content": {
@@ -356,7 +356,7 @@
                 }
               }
             },
-            "description": "Missing or invalid X-API-Key. The body is an empty JSON object today."
+            "description": "Missing or invalid API key. The body is an empty JSON object today."
           },
           "404": {
             "content": {
@@ -427,7 +427,7 @@
                 }
               }
             },
-            "description": "Missing or invalid X-API-Key. The body is an empty JSON object today."
+            "description": "Missing or invalid API key. The body is an empty JSON object today."
           },
           "500": {
             "content": {
@@ -459,11 +459,10 @@
   },
   "components": {
     "securitySchemes": {
-      "ApiKeyAuth": {
-        "description": "Your eachlabs API key (dashboard → API keys), sent on every request. One key authenticates and bills every video operation.",
-        "in": "header",
-        "name": "X-API-Key",
-        "type": "apiKey"
+      "BearerAuth": {
+        "description": "Your eachlabs API key (dashboard → API keys), sent as Authorization: Bearer <api_key> on every request. One key authenticates and bills every video operation.",
+        "scheme": "bearer",
+        "type": "http"
       }
     },
     "schemas": {
@@ -4663,7 +4662,7 @@
         "type": "string"
       },
       "GatewayError": {
-        "description": "Gateway-level error body for errors mapped by the gateway's error handler (unknown prediction, internal failures), e.g. {\"status\": 404, \"error\": \"not found\"}. Exceptions returning an empty JSON object body today: 401 (missing or invalid X-API-Key), 400 (request validation), and 422 (malformed JSON).",
+        "description": "Gateway-level error body for errors mapped by the gateway's error handler (unknown prediction, internal failures), e.g. {\"status\": 404, \"error\": \"not found\"}. Exceptions returning an empty JSON object body today: 401 (missing or invalid API key), 400 (request validation), and 422 (malformed JSON).",
         "properties": {
           "details": {
             "description": "Optional detail; shape varies by the failing layer."
@@ -4732,7 +4731,7 @@
           "urls": {
             "properties": {
               "cancel": {
-                "description": "POST here (same X-API-Key header) to cancel. Cancellation is record-only and a cancelled prediction never bills.",
+                "description": "POST here (same Authorization header) to cancel. Cancellation is record-only and a cancelled prediction never bills.",
                 "format": "uri",
                 "type": "string"
               },

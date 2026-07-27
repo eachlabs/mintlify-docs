@@ -72,7 +72,7 @@ Some models are commonly referred to by shorter names. Use the exact slug when c
   <Step title="Run a prediction">
     ```bash
     curl -X POST https://api.eachlabs.ai/v1/prediction \
-      -H "X-API-Key: $EACHLABS_API_KEY" \
+      -H "Authorization: Bearer $EACHLABS_API_KEY" \
       -H "Content-Type: application/json" \
       -d '{
         "model": "MODEL_SLUG",

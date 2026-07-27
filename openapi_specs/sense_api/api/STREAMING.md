@@ -40,7 +40,7 @@ async function streamChat(message, sessionId) {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-API-Key': 'YOUR_API_KEY'
+      'Authorization': 'Bearer YOUR_API_KEY'
     },
     body: JSON.stringify({
       messages: [{ role: 'user', content: message }],
@@ -138,7 +138,7 @@ function streamWithEventSource(message) {
     new URLSearchParams({ message, stream: 'true' }),
     {
       headers: {
-        'X-API-Key': 'YOUR_API_KEY'
+        'Authorization': 'Bearer YOUR_API_KEY'
       }
     }
   );
@@ -170,7 +170,7 @@ def stream_chat(message: str, session_id: str = None):
         'https://eachsense-agent.core.eachlabs.run/v1/chat/completions',
         headers={
             'Content-Type': 'application/json',
-            'X-API-Key': 'YOUR_API_KEY'
+            'Authorization': 'Bearer YOUR_API_KEY'
         },
         json={
             'messages': [{'role': 'user', 'content': message}],
@@ -251,7 +251,7 @@ async def stream_chat_async(message: str, session_id: str = None):
             'https://eachsense-agent.core.eachlabs.run/v1/chat/completions',
             headers={
                 'Content-Type': 'application/json',
-                'X-API-Key': 'YOUR_API_KEY'
+                'Authorization': 'Bearer YOUR_API_KEY'
             },
             json={
                 'messages': [{'role': 'user', 'content': message}],
@@ -339,7 +339,7 @@ stream_with_openai_sdk("Generate a sunset photo")
 ```bash
 curl -N -X POST https://eachsense-agent.core.eachlabs.run/v1/chat/completions \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: YOUR_API_KEY" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
     "messages": [{"role": "user", "content": "Generate a portrait"}],
     "stream": true
@@ -657,7 +657,7 @@ function handleEvent(event) {
 ```bash
 curl -N -X POST https://eachsense-agent.core.eachlabs.run/chat \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: YOUR_API_KEY" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{"message": "test", "stream": true}' \
   | tee /dev/stderr | cat
 ```
