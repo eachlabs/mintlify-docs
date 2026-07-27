@@ -30,12 +30,10 @@ Input Image → ├─ Branch 2: Edit   ─┤→ Conditional → Upscale (video
 ## Base URL
 
 ```
-https://workflows.eachlabs.run/api/v1
+https://api.eachlabs.ai
 ```
 
-<Warning>
-  This public URL uses a deprecated compatibility host outside the api-service host. It remains supported for now, but will soon move under `https://api.eachlabs.ai`. Keep integrations configurable and switch to the api-service URL once it is published.
-</Warning>
+Workflow creation, triggering, and execution endpoints are served at `https://api.eachlabs.ai`. Management endpoints without an api-service equivalent are served at `https://workflows.eachlabs.run/api/v1` (fully supported).
 
 ## How It Works
 
@@ -57,17 +55,24 @@ https://workflows.eachlabs.run/api/v1
 
 ## Endpoints
 
+### Served at `https://api.eachlabs.ai`
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/v1/workflows` | Create a workflow |
+| `POST` | `/v1/workflows/trigger/{workflowID}/{versionID}` | Trigger execution |
+| `POST` | `/v1/workflows/bulk-trigger/{workflowID}/{versionID}` | Bulk trigger (up to 10) |
+| `GET` | `/v1/workflows/{workflowID}/executions` | List executions |
+| `GET` | `/v1/workflows/executions/{executionID}` | Get execution details |
+
+### Served at `https://workflows.eachlabs.run/api/v1`
+
 | Method | Path | Description |
 |--------|------|-------------|
 | `GET` | `/categories` | List workflow categories |
-| `POST` | `/workflows` | Create a workflow |
 | `GET` | `/workflows/{id}` | Get workflow details |
 | `PUT` | `/workflows/{id}` | Update workflow metadata |
 | `PUT` | `/workflows/{id}/versions/{versionID}` | Create/update a version |
-| `POST` | `/{id}/trigger` | Trigger execution |
-| `POST` | `/{id}/bulk-trigger` | Bulk trigger (up to 10) |
-| `GET` | `/workflows/{id}/executions` | List executions |
-| `GET` | `/executions/{executionID}` | Get execution details |
 | `GET` | `/public/@{nickname}/workflows/{slug}/versions/{versionID}` | Get public workflow |
 | `POST` | `/public/@{nickname}/workflows/{slug}/versions/{versionID}/trigger` | Trigger public workflow |
 

@@ -71,7 +71,7 @@ generate();
 ```bash
 curl -X POST https://eachsense-agent.core.eachlabs.run/v1/chat/completions \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: YOUR_EACHLABS_API_KEY" \
+  -H "Authorization: Bearer YOUR_EACHLABS_API_KEY" \
   -d '{
     "messages": [{"role": "user", "content": "Generate a sunset over mountains"}],
     "stream": false
@@ -91,7 +91,7 @@ response = requests.post(
     "https://eachsense-agent.core.eachlabs.run/v1/chat/completions",
     headers={
         "Content-Type": "application/json",
-        "X-API-Key": "YOUR_API_KEY"
+        "Authorization": "Bearer YOUR_API_KEY"
     },
     json={
         "messages": [{
@@ -112,7 +112,7 @@ print(f"Generated image: {image_url}")
 ```python
 response = requests.post(
     "https://eachsense-agent.core.eachlabs.run/v1/chat/completions",
-    headers={"Content-Type": "application/json", "X-API-Key": "YOUR_API_KEY"},
+    headers={"Content-Type": "application/json", "Authorization": "Bearer YOUR_API_KEY"},
     json={
         "messages": [{
             "role": "user",
@@ -129,7 +129,7 @@ response = requests.post(
 # Request multiple variations
 response = requests.post(
     "https://eachsense-agent.core.eachlabs.run/v1/chat/completions",
-    headers={"Content-Type": "application/json", "X-API-Key": "YOUR_API_KEY"},
+    headers={"Content-Type": "application/json", "Authorization": "Bearer YOUR_API_KEY"},
     json={
         "messages": [{
             "role": "user",
@@ -159,7 +159,7 @@ def generate_video(prompt, session_id=None):
 
     response = requests.post(
         "https://eachsense-agent.core.eachlabs.run/v1/chat/completions",
-        headers={"Content-Type": "application/json", "X-API-Key": "YOUR_API_KEY"},
+        headers={"Content-Type": "application/json", "Authorization": "Bearer YOUR_API_KEY"},
         json={
             "messages": [{"role": "user", "content": prompt}],
             "session_id": session_id,
@@ -204,7 +204,7 @@ print(f"Final video: {video}")
 ```python
 response = requests.post(
     "https://eachsense-agent.core.eachlabs.run/v1/chat/completions",
-    headers={"Content-Type": "application/json", "X-API-Key": "YOUR_API_KEY"},
+    headers={"Content-Type": "application/json", "Authorization": "Bearer YOUR_API_KEY"},
     json={
         "messages": [{
             "role": "user",
@@ -221,7 +221,7 @@ response = requests.post(
 ```python
 response = requests.post(
     "https://eachsense-agent.core.eachlabs.run/v1/chat/completions",
-    headers={"Content-Type": "application/json", "X-API-Key": "YOUR_API_KEY"},
+    headers={"Content-Type": "application/json", "Authorization": "Bearer YOUR_API_KEY"},
     json={
         "messages": [{
             "role": "user",
@@ -244,7 +244,7 @@ response = requests.post(
 ```python
 response = requests.post(
     "https://eachsense-agent.core.eachlabs.run/v1/chat/completions",
-    headers={"Content-Type": "application/json", "X-API-Key": "YOUR_API_KEY"},
+    headers={"Content-Type": "application/json", "Authorization": "Bearer YOUR_API_KEY"},
     json={
         "messages": [{
             "role": "user",
@@ -263,7 +263,7 @@ transparent_image = response.json().get("generations", [])[0]
 ```python
 response = requests.post(
     "https://eachsense-agent.core.eachlabs.run/v1/chat/completions",
-    headers={"Content-Type": "application/json", "X-API-Key": "YOUR_API_KEY"},
+    headers={"Content-Type": "application/json", "Authorization": "Bearer YOUR_API_KEY"},
     json={
         "messages": [{
             "role": "user",
@@ -280,7 +280,7 @@ response = requests.post(
 ```python
 response = requests.post(
     "https://eachsense-agent.core.eachlabs.run/v1/chat/completions",
-    headers={"Content-Type": "application/json", "X-API-Key": "YOUR_API_KEY"},
+    headers={"Content-Type": "application/json", "Authorization": "Bearer YOUR_API_KEY"},
     json={
         "messages": [{
             "role": "user",
@@ -300,7 +300,7 @@ response = requests.post(
 ```python
 response = requests.post(
     "https://eachsense-agent.core.eachlabs.run/v1/chat/completions",
-    headers={"Content-Type": "application/json", "X-API-Key": "YOUR_API_KEY"},
+    headers={"Content-Type": "application/json", "Authorization": "Bearer YOUR_API_KEY"},
     json={
         "messages": [{
             "role": "user",
@@ -341,7 +341,7 @@ class ConversationSession:
             self.base_url,
             headers={
                 "Content-Type": "application/json",
-                "X-API-Key": self.api_key
+                "Authorization": f"Bearer {self.api_key}"
             },
             json=payload
         )
@@ -351,7 +351,7 @@ class ConversationSession:
     def get_history(self):
         response = requests.get(
             f"https://eachsense-agent.core.eachlabs.run/memory?session_id={self.session_id}",
-            headers={"X-API-Key": self.api_key}
+            headers={"Authorization": f"Bearer {self.api_key}"}
         )
         return response.json()
 
@@ -401,7 +401,7 @@ class ConversationSession {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'X-API-Key': this.apiKey
+        'Authorization': `Bearer ${this.apiKey}`
       },
       body: JSON.stringify(payload)
     });
@@ -434,7 +434,7 @@ def chat_with_clarification(message, session_id, api_key):
 
     response = requests.post(
         "https://eachsense-agent.core.eachlabs.run/v1/chat/completions",
-        headers={"Content-Type": "application/json", "X-API-Key": api_key},
+        headers={"Content-Type": "application/json", "Authorization": f"Bearer {api_key}"},
         json={
             "messages": [{"role": "user", "content": message}],
             "session_id": session_id,
@@ -519,7 +519,7 @@ function ChatWithClarification() {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'X-API-Key': process.env.REACT_APP_API_KEY
+            'Authorization': `Bearer ${process.env.REACT_APP_API_KEY}`
           },
           body: JSON.stringify({
             messages: [{ role: 'user', content }],
@@ -643,7 +643,7 @@ def create_and_run_workflow(api_key):
     # Step 1: Create workflow
     create_response = requests.post(
         "https://eachsense-agent.core.eachlabs.run/v1/chat/completions",
-        headers={"Content-Type": "application/json", "X-API-Key": api_key},
+        headers={"Content-Type": "application/json", "Authorization": f"Bearer {api_key}"},
         json={
             "messages": [{
                 "role": "user",
@@ -666,7 +666,7 @@ def create_and_run_workflow(api_key):
     # Step 2: Execute workflow
     execute_response = requests.post(
         "https://eachsense-agent.core.eachlabs.run/v1/chat/completions",
-        headers={"Content-Type": "application/json", "X-API-Key": api_key},
+        headers={"Content-Type": "application/json", "Authorization": f"Bearer {api_key}"},
         json={
             "messages": [{
                 "role": "user",
@@ -709,7 +709,7 @@ output = create_and_run_workflow("YOUR_API_KEY")
 def add_step_to_workflow(workflow_id, version_id, api_key):
     response = requests.post(
         "https://eachsense-agent.core.eachlabs.run/workflow",
-        headers={"Content-Type": "application/json", "X-API-Key": api_key},
+        headers={"Content-Type": "application/json", "Authorization": f"Bearer {api_key}"},
         json={
             "message": "Add a final step to upscale the video to 4K resolution",
             "workflow_id": workflow_id,
@@ -761,7 +761,7 @@ class EachsenseStreamClient:
                 self.base_url,
                 headers={
                     "Content-Type": "application/json",
-                    "X-API-Key": self.api_key
+                    "Authorization": f"Bearer {self.api_key}"
                 },
                 json={
                     "messages": [{"role": "user", "content": message}],
@@ -860,7 +860,7 @@ def robust_request(api_key, payload, max_retries=3):
                 "https://eachsense-agent.core.eachlabs.run/v1/chat/completions",
                 headers={
                     "Content-Type": "application/json",
-                    "X-API-Key": api_key
+                    "Authorization": f"Bearer {api_key}"
                 },
                 json=payload,
                 timeout=300
@@ -977,7 +977,7 @@ class RateLimitedClient:
                 "https://eachsense-agent.core.eachlabs.run/v1/chat/completions",
                 headers={
                     "Content-Type": "application/json",
-                    "X-API-Key": self.api_key
+                    "Authorization": f"Bearer {self.api_key}"
                 },
                 json={
                     "messages": [{"role": "user", "content": message}],
@@ -1061,7 +1061,7 @@ class CachedEachsenseClient:
             "https://eachsense-agent.core.eachlabs.run/v1/chat/completions",
             headers={
                 "Content-Type": "application/json",
-                "X-API-Key": self.api_key
+                "Authorization": f"Bearer {self.api_key}"
             },
             json={
                 "messages": [{"role": "user", "content": message}],

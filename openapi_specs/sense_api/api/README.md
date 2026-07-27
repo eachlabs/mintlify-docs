@@ -28,13 +28,9 @@ https://eachsense-agent.core.eachlabs.run
 
 ## Authentication
 
-The API supports two authentication methods:
+Authenticate with your each::labs API key as a Bearer token:
 
 ```bash
-# Method 1: X-API-Key header (recommended)
-curl -H "X-API-Key: YOUR_EACHLABS_API_KEY" ...
-
-# Method 2: Bearer token (OpenAI SDK compatible)
 curl -H "Authorization: Bearer YOUR_EACHLABS_API_KEY" ...
 ```
 
@@ -49,7 +45,7 @@ Get your API key at: https://www.eachlabs.ai/api-keys
 ```bash
 curl -X POST https://eachsense-agent.core.eachlabs.run/v1/chat/completions \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: YOUR_API_KEY" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
     "messages": [{"role": "user", "content": "Generate a cyberpunk cityscape at night"}],
     "stream": false
@@ -61,7 +57,7 @@ curl -X POST https://eachsense-agent.core.eachlabs.run/v1/chat/completions \
 ```bash
 curl -X POST https://eachsense-agent.core.eachlabs.run/v1/chat/completions \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: YOUR_API_KEY" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
     "messages": [{"role": "user", "content": "Create a 5 second video of a cat"}],
     "stream": true

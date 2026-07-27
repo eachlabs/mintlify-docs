@@ -33,7 +33,7 @@ Comprehensive guide for handling errors, edge cases, and special scenarios.
 ```
 **HTTP Status:** 401
 
-**Solution:** Include `X-API-Key` header or `Authorization: Bearer` header.
+**Solution:** Include an `Authorization: Bearer YOUR_API_KEY` header.
 
 #### Invalid API Key
 
@@ -601,7 +601,7 @@ For non-streaming requests, include an idempotency key:
 
 ```bash
 curl -X POST https://eachsense-agent.core.eachlabs.run/v1/chat/completions \
-  -H "X-API-Key: YOUR_KEY" \
+  -H "Authorization: Bearer YOUR_KEY" \
   -H "X-Idempotency-Key: unique-request-id-123" \
   -d '{...}'
 ```

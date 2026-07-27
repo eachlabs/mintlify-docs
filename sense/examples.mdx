@@ -59,7 +59,7 @@ response = requests.post(
     "https://eachsense-agent.core.eachlabs.run/v1/chat/completions",
     headers={
         "Content-Type": "application/json",
-        "X-API-Key": "YOUR_API_KEY"
+        "Authorization": "Bearer YOUR_API_KEY"
     },
     json={
         "messages": [{"role": "user", "content": "Remove the background from this image"}],
@@ -79,7 +79,7 @@ import requests
 
 SESSION_ID = "design-session"
 URL = "https://eachsense-agent.core.eachlabs.run/v1/chat/completions"
-HEADERS = {"Content-Type": "application/json", "X-API-Key": "YOUR_API_KEY"}
+HEADERS = {"Content-Type": "application/json", "Authorization": "Bearer YOUR_API_KEY"}
 
 def chat(message):
     response = requests.post(URL, headers=HEADERS, json={
@@ -106,7 +106,7 @@ import requests
 import json
 
 URL = "https://eachsense-agent.core.eachlabs.run/v1/chat/completions"
-HEADERS = {"Content-Type": "application/json", "X-API-Key": "YOUR_API_KEY"}
+HEADERS = {"Content-Type": "application/json", "Authorization": "Bearer YOUR_API_KEY"}
 
 # Create workflow
 response = requests.post(URL, headers=HEADERS, json={
@@ -138,7 +138,7 @@ import json
 def stream_generation(prompt):
     response = requests.post(
         "https://eachsense-agent.core.eachlabs.run/v1/chat/completions",
-        headers={"Content-Type": "application/json", "X-API-Key": "YOUR_API_KEY"},
+        headers={"Content-Type": "application/json", "Authorization": "Bearer YOUR_API_KEY"},
         json={
             "messages": [{"role": "user", "content": prompt}],
             "stream": True

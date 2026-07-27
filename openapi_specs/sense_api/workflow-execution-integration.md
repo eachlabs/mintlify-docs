@@ -337,7 +337,7 @@ After a workflow is created, the frontend can fetch its full definition directly
 
 ```
 GET https://workflows.eachlabs.run/api/v1/workflows/{workflow_id}
-X-API-Key: your-api-key
+Authorization: Bearer your-api-key
 Accept: application/json
 ```
 
@@ -416,7 +416,7 @@ interface WorkflowInputField {
 async function fetchWorkflowInputs(workflowId: string, versionId: string, apiKey: string) {
   const response = await fetch(
     `https://workflows.eachlabs.run/api/v1/workflows/${workflowId}`,
-    { headers: { "X-API-Key": apiKey, "Accept": "application/json" } }
+    { headers: { "Authorization": `Bearer ${apiKey}`, "Accept": "application/json" } }
   );
   const data = await response.json();
   const version = data.versions.find((v: any) => v.version_id === versionId) || data.versions[0];

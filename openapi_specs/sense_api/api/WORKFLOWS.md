@@ -110,7 +110,7 @@ Use `$` syntax to reference inputs and previous step outputs:
 ```bash
 curl -X POST https://eachsense-agent.core.eachlabs.run/v1/chat/completions \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: YOUR_API_KEY" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
     "messages": [{
       "role": "user",
@@ -139,7 +139,7 @@ data: [DONE]
 ```bash
 curl -X POST https://eachsense-agent.core.eachlabs.run/workflow \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: YOUR_API_KEY" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
     "message": "Create a UGC video workflow with consistent presenter",
     "stream": true
@@ -155,7 +155,7 @@ curl -X POST https://eachsense-agent.core.eachlabs.run/workflow \
 ```bash
 curl -X POST https://eachsense-agent.core.eachlabs.run/v1/chat/completions \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: YOUR_API_KEY" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
     "messages": [{
       "role": "user",
@@ -170,7 +170,7 @@ curl -X POST https://eachsense-agent.core.eachlabs.run/v1/chat/completions \
 ```bash
 curl -X POST https://eachsense-agent.core.eachlabs.run/v1/chat/completions \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: YOUR_API_KEY" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
     "messages": [{
       "role": "user",
@@ -215,7 +215,7 @@ data: [DONE]
 ```bash
 curl -X POST https://eachsense-agent.core.eachlabs.run/workflow \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: YOUR_API_KEY" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
     "message": "Add a final step to generate subtitles from the video audio",
     "workflow_id": "wf_abc123",
@@ -537,7 +537,7 @@ Workflow execution times out after 15 minutes. For long workflows:
 ```bash
 curl -X POST https://eachsense-agent.core.eachlabs.run/v1/chat/completions \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: YOUR_API_KEY" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
     "messages": [{
       "role": "user",

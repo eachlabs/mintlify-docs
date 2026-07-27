@@ -27,7 +27,7 @@ POST https://eachsense-agent.core.eachlabs.run/workflow
 ```bash cURL
 curl -X POST https://eachsense-agent.core.eachlabs.run/workflow \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: YOUR_API_KEY" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
     "message": "Create a workflow that generates a portrait image then animates it into a 5-second video",
     "stream": true
@@ -41,7 +41,7 @@ response = requests.post(
     "https://eachsense-agent.core.eachlabs.run/workflow",
     headers={
         "Content-Type": "application/json",
-        "X-API-Key": "YOUR_API_KEY"
+        "Authorization": "Bearer YOUR_API_KEY"
     },
     json={
         "message": "Create a workflow that generates a portrait then animates it",
@@ -57,7 +57,7 @@ print(response.json())
 ```bash
 curl -X POST https://eachsense-agent.core.eachlabs.run/workflow \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: YOUR_API_KEY" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
     "message": "Add a final step to upscale the video to 4K",
     "workflow_id": "wf_abc123",

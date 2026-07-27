@@ -3,14 +3,13 @@ title: "Versioning"
 description: "Manage workflow versions for safe iteration and deployment."
 ---
 
-<Warning>
-  This public URL uses a deprecated compatibility host outside the api-service host. It remains supported for now, but will soon move under `https://api.eachlabs.ai`. Keep integrations configurable and switch to the api-service URL once it is published.
-</Warning>
-
+<Note>
+  Version management endpoints are served at `https://workflows.eachlabs.run` and are fully supported.
+</Note>
 
 ## Version Lifecycle
 
-Each workflow can have multiple versions. When you trigger a workflow without specifying a version, the latest version runs automatically.
+Each workflow can have multiple versions. The version to run is selected by the `{versionID}` path segment when triggering.
 
 ### Version States
 
@@ -47,7 +46,7 @@ Versions have three visibility levels:
 ```bash
 curl -X PUT https://workflows.eachlabs.run/api/v1/workflows/WF_ID/versions/v1 \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: YOUR_API_KEY" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
     "version_id": "v1",
     "allowed_to_share": true,
@@ -66,7 +65,7 @@ Use the [Create Version](/workflows/endpoints/create-version) endpoint:
 ```bash
 curl -X PUT https://workflows.eachlabs.run/api/v1/workflows/WF_ID/versions/v2 \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: YOUR_API_KEY" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
     "version_id": "v2",
     "definition": {
@@ -77,13 +76,14 @@ curl -X PUT https://workflows.eachlabs.run/api/v1/workflows/WF_ID/versions/v2 \
   }'
 ```
 
-This sets `v2` as the latest version. Subsequent triggers without a `version_id` will use `v2`.
+This sets `v2` as the latest version.
 
 ## Triggering a Specific Version
 
-```json
-{
-  "version_id": "v1",
-  "inputs": { "prompt": "test" }
-}
+Pass the version in the trigger URL's `{versionID}` path segment:
+
 ```
+POST https://api.eachlabs.ai/v1/workflows/trigger/{workflowID}/{versionID}
+```
+
+For example, trigger `v1` with `POST https://api.eachlabs.ai/v1/workflows/trigger/WF_ID/v1`.

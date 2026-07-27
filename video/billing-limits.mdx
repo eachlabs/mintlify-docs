@@ -199,7 +199,7 @@ Where the cause is parameter-reachable (the 999-clip case) change the request; o
 
 ## Cancelling a prediction
 
-Cancel with `POST https://api.eachlabs.ai/v1/prediction/{id}/cancel` (`X-API-Key` header) — the exact URL is returned on every poll as `urls.cancel`. A cancel is accepted while the prediction has not reached a terminal status and answers `{"status": "success", "message": "Prediction canceled successfully", ...}`; the prediction then polls as `cancelled` with `metrics.cost: 0` — **a cancelled prediction never bills** (verified against production).
+Cancel with `POST https://api.eachlabs.ai/v1/prediction/{id}/cancel` (`Authorization: Bearer` header) — the exact URL is returned on every poll as `urls.cancel`. A cancel is accepted while the prediction has not reached a terminal status and answers `{"status": "success", "message": "Prediction canceled successfully", ...}`; the prediction then polls as `cancelled` with `metrics.cost: 0` — **a cancelled prediction never bills** (verified against production).
 
 <Warning>
 Cancellation is **record-only**: it finalizes your prediction immediately, but it does not reach into the engine — a job already executing runs to completion and its output is discarded. Cancel to detach from a job, not to stop its compute; the 3600 s execution cap is the only thing that terminates a running job.

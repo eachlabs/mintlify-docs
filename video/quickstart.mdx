@@ -9,7 +9,7 @@ description: "Submit a Video API job and poll it to completion in five minutes."
 
 ## 1. Get your API key
 
-Grab a key from the [dashboard](https://www.eachlabs.ai/api-keys). Every request authenticates with the `X-API-Key` header.
+Grab a key from the [dashboard](https://www.eachlabs.ai/api-keys). Every request authenticates with the `Authorization: Bearer YOUR_API_KEY` header.
 
 ## 2. Provide your input video
 
@@ -34,7 +34,7 @@ Any capability from the [reference](/video/capabilities) works the same way. `ti
 ```bash cURL
 curl -X POST "https://api.eachlabs.ai/v1/prediction" \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: YOUR_API_KEY" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
     "model": "eachlabs-video-api",
     "input": {
@@ -51,7 +51,7 @@ import requests
 
 resp = requests.post(
     "https://api.eachlabs.ai/v1/prediction",
-    headers={"X-API-Key": "YOUR_API_KEY"},
+    headers={"Authorization": "Bearer YOUR_API_KEY"},
     json={
         "model": "eachlabs-video-api",
         "input": {
@@ -70,7 +70,7 @@ const resp = await fetch("https://api.eachlabs.ai/v1/prediction", {
   method: "POST",
   headers: {
     "Content-Type": "application/json",
-    "X-API-Key": "YOUR_API_KEY",
+    "Authorization": "Bearer YOUR_API_KEY",
   },
   body: JSON.stringify({
     model: "eachlabs-video-api",
@@ -97,7 +97,7 @@ A successful submit returns:
 
 ```bash
 curl "https://api.eachlabs.ai/v1/prediction/PREDICTION_ID" \
-  -H "X-API-Key: YOUR_API_KEY"
+  -H "Authorization: Bearer YOUR_API_KEY"
 ```
 
 The typical flow is `starting` → `processing` → **`success`**. The complete status set is `starting`, `created`, `processing`, `success`, `error`, `cancelled` — a failed prediction reports `error`, never `"failed"`. `created` is the record's initial state before the platform picks the job up: pickup is normally immediate, so a poll loop usually first observes `starting` or `processing` and may never see it. Poll every 3-5 seconds: the platform's own status checks are quantized to ~5 s, so tighter loops buy nothing. Most short jobs finish in well under a minute (a 100-job burst of short transcodes drains in ~15-30 seconds). A prediction sitting in `starting` unusually long is queued behind a concurrency cap — keep polling; see [Rate limits & concurrency](/video/billing-limits#rate-limits--concurrency).
@@ -126,7 +126,7 @@ The typical flow is `starting` → `processing` → **`success`**. The complete 
 - `metrics.cost` — what the job actually billed, in USD. Rejected, failed, and cancelled jobs bill `0` (see [Failed compute](/video/billing-limits#failed-compute) for how failures are metered).
 - `metrics.predict_time` — the prediction's **full wall time** in seconds, from processing start to completion detection, including internal queueing and poll quantization. It is **not** the billed quantity: cost comes from the engine-metered billed execution seconds × the tier rate. In the example above the engine metered 191 billed seconds → `191 × $0.0015 = $0.2865`, while `predict_time` reads 194.86 — see [the formula](/video/billing-limits#the-formula).
 - `input` — your submitted input, echoed back. `logs` is present on every poll and is `null` today.
-- `urls.get` — this prediction's poll URL. `urls.cancel` — its cancel endpoint (`POST`, same `X-API-Key` header); cancellation is record-only and a cancelled prediction never bills — see [Cancelling a prediction](/video/billing-limits#cancelling-a-prediction).
+- `urls.get` — this prediction's poll URL. `urls.cancel` — its cancel endpoint (`POST`, same `Authorization` header); cancellation is record-only and a cancelled prediction never bills — see [Cancelling a prediction](/video/billing-limits#cancelling-a-prediction).
 - On `status: "error"` the `output` object carries `error_code` and `error_message`; the field-by-field envelope with two real captured examples, and the billing impact per class, are in the [error catalog](/video/billing-limits#error-catalog).
 - Download or persist artifacts promptly; treat artifact URLs as valid for at least 24 hours.
 

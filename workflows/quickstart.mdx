@@ -4,23 +4,16 @@ sidebarTitle: "Quickstart"
 description: "Create and run your first workflow in minutes."
 ---
 
-<Warning>
-  This public URL uses a deprecated compatibility host outside the api-service host. It remains supported for now, but will soon move under `https://api.eachlabs.ai`. Keep integrations configurable and switch to the api-service URL once it is published.
-</Warning>
-
-
 ## 1. Create a Workflow
 
 Create a two-step workflow that generates text and then creates an image from it:
 
 ```bash
-curl -X POST https://workflows.eachlabs.run/api/v1/workflows \
+curl -X POST https://api.eachlabs.ai/v1/workflows \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: YOUR_API_KEY" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
     "name": "Text to Image Generator",
-    "description": "Generates images from text prompts using AI models",
-    "categories": ["image-generation"],
     "definition": {
       "version": "v1",
       "input_schema": {
@@ -63,17 +56,23 @@ Response:
   "workflow_id": "50741f40-8621-4d46-8a91-dff4d873be98",
   "slug": "text-to-image-generator",
   "name": "Text to Image Generator",
-  "latest_version_id": "v1",
-  "status": "active"
+  "status": "active",
+  "versions": [
+    {
+      "version_id": "v1",
+      "slug": "text-to-image-generator",
+      "status": "active"
+    }
+  ]
 }
 ```
 
 ## 2. Trigger the Workflow
 
 ```bash
-curl -X POST https://workflows.eachlabs.run/api/v1/50741f40-8621-4d46-8a91-dff4d873be98/trigger \
+curl -X POST https://api.eachlabs.ai/v1/workflows/trigger/50741f40-8621-4d46-8a91-dff4d873be98/v1 \
   -H "Content-Type: application/json" \
-  -H "X-API-Key: YOUR_API_KEY" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
     "inputs": {
       "prompt": "A majestic mountain landscape at golden hour"
@@ -86,16 +85,15 @@ Response:
 ```json
 {
   "execution_id": "e2dba2bb-bc1d-4651-b6bf-fbbbebdee104",
-  "status": "queued",
-  "started_at": "2025-12-03T10:21:09Z"
+  "status": "queued"
 }
 ```
 
 ## 3. Check Execution Status
 
 ```bash
-curl https://workflows.eachlabs.run/api/v1/executions/e2dba2bb-bc1d-4651-b6bf-fbbbebdee104 \
-  -H "X-API-Key: YOUR_API_KEY"
+curl https://api.eachlabs.ai/v1/workflows/executions/e2dba2bb-bc1d-4651-b6bf-fbbbebdee104 \
+  -H "Authorization: Bearer YOUR_API_KEY"
 ```
 
 Response (completed):

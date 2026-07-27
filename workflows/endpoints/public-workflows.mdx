@@ -9,9 +9,9 @@ description: "Access and trigger public or unlisted workflows by organization ni
 GET https://workflows.eachlabs.run/api/v1/public/@{nickname}/workflows/{slug}/versions/{versionID}
 ```
 
-<Warning>
-  This public URL uses a deprecated compatibility host outside the api-service host. It remains supported for now, but will soon move under `https://api.eachlabs.ai`. Keep integrations configurable and switch to the api-service URL once it is published.
-</Warning>
+<Note>
+  These endpoints are served at `https://workflows.eachlabs.run` and are fully supported.
+</Note>
 
 Retrieve a public or unlisted workflow version. **No authentication required** for reading.
 
@@ -53,11 +53,7 @@ Returns a [WorkflowVersionSummary](/workflows/endpoints/create-version) object i
 POST https://workflows.eachlabs.run/api/v1/public/@{nickname}/workflows/{slug}/versions/{versionID}/trigger
 ```
 
-<Warning>
-  This public URL uses a deprecated compatibility host outside the api-service host. It remains supported for now, but will soon move under `https://api.eachlabs.ai`. Keep integrations configurable and switch to the api-service URL once it is published.
-</Warning>
-
-Trigger a public or unlisted workflow. **Authentication required** via `X-API-Key` header or `api_key` in request body.
+Trigger a public or unlisted workflow. **Authentication required** via `api_key` in the request body.
 
 ### Path Parameters
 
@@ -65,19 +61,15 @@ Same as Get Public Workflow Version above.
 
 ### Request Body
 
-Same as [Trigger Workflow](/workflows/endpoints/trigger-workflow): `inputs`, `version_id`, and `webhook_url`.
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `api_key` | string | Yes | Your API key — this endpoint authenticates via the request body |
+| `inputs` | object | No | Input parameters matching the workflow's input schema |
+| `webhook_url` | string | No | URL to receive completion notification |
 
-### Authentication Options
+### Example
 
-<CodeGroup>
-```bash Header Auth
-curl -X POST "https://workflows.eachlabs.run/api/v1/public/@acme-corp/workflows/my-generator/versions/v1/trigger" \
-  -H "Content-Type: application/json" \
-  -H "X-API-Key: YOUR_API_KEY" \
-  -d '{"inputs": {"prompt": "A mountain landscape"}}'
-```
-
-```bash Body Auth
+```bash cURL
 curl -X POST "https://workflows.eachlabs.run/api/v1/public/@acme-corp/workflows/my-generator/versions/v1/trigger" \
   -H "Content-Type: application/json" \
   -d '{
@@ -85,7 +77,6 @@ curl -X POST "https://workflows.eachlabs.run/api/v1/public/@acme-corp/workflows/
     "inputs": {"prompt": "A mountain landscape"}
   }'
 ```
-</CodeGroup>
 
 ### Response
 

@@ -85,14 +85,17 @@
               "POST /v1/prediction/run",
               "GET /v1/prediction/{id}",
               "POST /v1/prediction/{id}/cancel",
-              "GET /v1/executions",
               "GET /v1/webhooks",
               "GET /v1/webhooks/{execution_id}",
               "GET /v1/llm-router/model-catalog",
               "POST /v1/chat/completions",
               "POST /v1/audio/transcriptions",
               "POST /v1/audio/speech",
-              "POST /v1/workflows/trigger/{workflowID}/{versionID}"
+              "POST /v1/workflows",
+              "POST /v1/workflows/trigger/{workflowID}/{versionID}",
+              "POST /v1/workflows/bulk-trigger/{workflowID}/{versionID}",
+              "GET /v1/workflows/{workflowID}/executions",
+              "GET /v1/workflows/executions/{executionID}"
             ]
           }
         ]
@@ -157,14 +160,9 @@
             },
             "pages": [
               "GET /categories",
-              "POST /workflows",
               "GET /workflows/{workflowID}",
               "PUT /workflows/{workflowID}",
               "PUT /workflows/{workflowID}/versions/{versionID}",
-              "POST /{workflowID}/trigger",
-              "POST /{workflowID}/bulk-trigger",
-              "GET /workflows/{workflowID}/executions",
-              "GET /executions/{executionID}",
               "GET /public/@{nickname}/workflows/{slug}/versions/{versionID}",
               "POST /public/@{nickname}/workflows/{slug}/versions/{versionID}/trigger"
             ]
