@@ -105,8 +105,15 @@ console.log(`Output: ${result.output}`);
 | `logs` | string \| null | Execution logs |
 | `metrics.predict_time` | number | Processing time in seconds |
 | `metrics.cost` | number | Cost in USD |
+| `metrics.tier` | string | Compute tier the execution was billed on (`cpu` or `gpu`). Metered engines (Video API) only; omitted for other models |
+| `metrics.billed_seconds` | integer | Billed compute seconds. Metered engines only; omitted for other models |
+| `metrics.output_gb` | number | Size of the uploaded output artifacts in GB. Metered engines only; omitted for other models |
 | `urls.cancel` | string | URL to cancel the prediction |
 | `urls.get` | string | URL to re-fetch this prediction |
+
+<Note>
+The `metrics.tier`, `metrics.billed_seconds`, and `metrics.output_gb` fields appear only on predictions run against metered engines such as the [Video API](/video/overview), where they show exactly what the execution was billed for. When present, they are emitted even at zero values — for example, a probe job reports `output_gb: 0`.
+</Note>
 
 ### Prediction Status Values
 
