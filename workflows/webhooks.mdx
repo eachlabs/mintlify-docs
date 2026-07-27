@@ -3,10 +3,6 @@ title: "Webhooks"
 description: "Receive automatic notifications when workflow executions complete."
 ---
 
-<Warning>
-  This public URL uses a deprecated compatibility host outside the api-service host. It remains supported for now, but will soon move under `https://api.eachlabs.ai`. Keep integrations configurable and switch to the api-service URL once it is published.
-</Warning>
-
 
 ## Overview
 
@@ -17,7 +13,7 @@ Provide a `webhook_url` when triggering a workflow to receive an HTTP POST with 
 Include `webhook_url` in your trigger request:
 
 ```bash
-curl -X POST https://workflows.eachlabs.run/api/v1/WF_ID/trigger \
+curl -X POST https://api.eachlabs.ai/v1/workflows/trigger/WF_ID/v1 \
   -H "Content-Type: application/json" \
   -H "X-API-Key: YOUR_API_KEY" \
   -d '{

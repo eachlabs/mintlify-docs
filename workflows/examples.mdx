@@ -4,10 +4,6 @@ sidebarTitle: "Examples"
 description: "Complete workflow examples for common use cases."
 ---
 
-<Warning>
-  This public URL uses a deprecated compatibility host outside the api-service host. It remains supported for now, but will soon move under `https://api.eachlabs.ai`. Keep integrations configurable and switch to the api-service URL once it is published.
-</Warning>
-
 
 ## Text-to-Image Pipeline
 
@@ -317,7 +313,7 @@ Or `not` to negate a condition:
 Fire off the same workflow with multiple inputs in one go:
 
 ```bash
-curl -X POST https://workflows.eachlabs.run/api/v1/WF_ID/bulk-trigger \
+curl -X POST https://api.eachlabs.ai/v1/workflows/bulk-trigger/WF_ID/v1 \
   -H "Content-Type: application/json" \
   -H "X-API-Key: YOUR_API_KEY" \
   -d '{
@@ -333,7 +329,7 @@ curl -X POST https://workflows.eachlabs.run/api/v1/WF_ID/bulk-trigger \
 Then track all executions together:
 
 ```bash
-curl "https://workflows.eachlabs.run/api/v1/workflows/WF_ID/executions?bulk_id=BULK_ID" \
+curl "https://api.eachlabs.ai/v1/workflows/WF_ID/executions?bulk_id=BULK_ID" \
   -H "X-API-Key: YOUR_API_KEY"
 ```
 
@@ -344,7 +340,7 @@ import requests
 import time
 
 API_KEY = "YOUR_API_KEY"
-BASE_URL = "https://workflows.eachlabs.run/api/v1"
+BASE_URL = "https://api.eachlabs.ai/v1"
 HEADERS = {
     "Content-Type": "application/json",
     "X-API-Key": API_KEY
@@ -353,7 +349,6 @@ HEADERS = {
 # 1. Create workflow
 workflow = requests.post(f"{BASE_URL}/workflows", headers=HEADERS, json={
     "name": "Quick Image Generator",
-    "description": "Simple text-to-image workflow",
     "definition": {
         "version": "v1",
         "input_schema": {
@@ -375,7 +370,7 @@ print(f"Created workflow: {workflow_id}")
 
 # 2. Trigger execution
 execution = requests.post(
-    f"{BASE_URL}/{workflow_id}/trigger",
+    f"{BASE_URL}/workflows/trigger/{workflow_id}/v1",
     headers=HEADERS,
     json={"inputs": {"prompt": "A serene zen garden at sunrise"}}
 ).json()
@@ -386,7 +381,7 @@ print(f"Execution started: {execution_id}")
 # 3. Poll for results
 while True:
     result = requests.get(
-        f"{BASE_URL}/executions/{execution_id}",
+        f"{BASE_URL}/workflows/executions/{execution_id}",
         headers=HEADERS
     ).json()
 

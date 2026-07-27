@@ -27,14 +27,19 @@ Input Image → ├─ Branch 2: Edit   ─┤→ Conditional → Upscale (video
 - **Webhooks**: Get notified when executions wrap up
 - **Public & unlisted sharing**: Share workflows via direct link or public listing
 
-## Base URL
+## Base URLs
 
-```
-https://workflows.eachlabs.run/api/v1
-```
+each::workflows spans two hosts. Creating, running, and reading executions goes through the main API; workflow management and public browsing stay on the Workflows Engine.
+
+| Base URL | Covers |
+|----------|--------|
+| `https://api.eachlabs.ai` | Create a workflow, trigger, bulk trigger, list executions, get an execution |
+| `https://workflows.eachlabs.run/api/v1` | Get/update a workflow, create a version, categories, public workflows |
+
+Both accept the same `X-API-Key` header. Each endpoint page below states which base URL it uses.
 
 <Warning>
-  This public URL uses a deprecated compatibility host outside the api-service host. It remains supported for now, but will soon move under `https://api.eachlabs.ai`. Keep integrations configurable and switch to the api-service URL once it is published.
+  `https://workflows.eachlabs.run/api/v1` is a compatibility host outside api-service. It remains supported, and the operations still on it are planned to move under `https://api.eachlabs.ai`. Keep integrations configurable.
 </Warning>
 
 ## How It Works
@@ -57,17 +62,24 @@ https://workflows.eachlabs.run/api/v1
 
 ## Endpoints
 
+On `https://api.eachlabs.ai`:
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/v1/workflows` | Create a workflow |
+| `POST` | `/v1/workflows/trigger/{id}/{versionID}` | Trigger execution |
+| `POST` | `/v1/workflows/bulk-trigger/{id}/{versionID}` | Bulk trigger (up to 10) |
+| `GET` | `/v1/workflows/{id}/executions` | List executions |
+| `GET` | `/v1/workflows/executions/{executionID}` | Get execution details |
+
+On `https://workflows.eachlabs.run/api/v1`:
+
 | Method | Path | Description |
 |--------|------|-------------|
 | `GET` | `/categories` | List workflow categories |
-| `POST` | `/workflows` | Create a workflow |
 | `GET` | `/workflows/{id}` | Get workflow details |
 | `PUT` | `/workflows/{id}` | Update workflow metadata |
 | `PUT` | `/workflows/{id}/versions/{versionID}` | Create/update a version |
-| `POST` | `/{id}/trigger` | Trigger execution |
-| `POST` | `/{id}/bulk-trigger` | Bulk trigger (up to 10) |
-| `GET` | `/workflows/{id}/executions` | List executions |
-| `GET` | `/executions/{executionID}` | Get execution details |
 | `GET` | `/public/@{nickname}/workflows/{slug}/versions/{versionID}` | Get public workflow |
 | `POST` | `/public/@{nickname}/workflows/{slug}/versions/{versionID}/trigger` | Trigger public workflow |
 

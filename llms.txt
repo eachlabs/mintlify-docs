@@ -30,10 +30,10 @@ Auth error response: `{"error": "Invalid or missing API key"}` (HTTP 401)
 | Product | Base URL | Protocol | Status |
 |---------|----------|----------|--------|
 | each::api | `https://api.eachlabs.ai` | REST | Canonical api-service host |
-| each::workflows | `https://workflows.eachlabs.run/api/v1` | REST | Workflows-engine host; planned to route through `https://api.eachlabs.ai` |
+| each::workflows | `https://api.eachlabs.ai` (create, trigger, executions), `https://workflows.eachlabs.run/api/v1` (management, public) | REST | Partly migrated; management endpoints still on workflows-engine |
 | each::sense | `https://eachsense-agent.core.eachlabs.run` | REST + SSE | Current each::sense host |
 
-Migration notice: each::workflows is planned to route through the api-service host at `https://api.eachlabs.ai`. each::sense continues to use `https://eachsense-agent.core.eachlabs.run`. Keep clients configurable.
+Migration notice: each::workflows create, trigger, bulk trigger, and execution reads now route through the api-service host at `https://api.eachlabs.ai`. Workflow management (get, update, versions), categories, and public browsing remain on `https://workflows.eachlabs.run/api/v1`. each::sense continues to use `https://eachsense-agent.core.eachlabs.run`. Keep clients configurable.
 
 ---
 
@@ -86,13 +86,13 @@ print(response.generations)  # List of media URLs
 ### Trigger a workflow
 
 ```bash
-curl -X POST https://workflows.eachlabs.run/api/v1/WORKFLOW_ID/trigger \
+curl -X POST https://api.eachlabs.ai/v1/workflows/trigger/WORKFLOW_ID/v1 \
   -H "X-API-Key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
-  -d '{"version_id": "v1", "inputs": {"prompt": "A sunset landscape"}}'
+  -d '{"inputs": {"prompt": "A sunset landscape"}}'
 ```
 
-Response: `{"execution_id": "exec-123", "status": "queued", "started_at": "..."}`
+Response: `{"execution_id": "exec-123", "status": "queued"}`
 
 ---
 
@@ -234,29 +234,34 @@ Multi-step AI pipelines with versioning, parameter passing, fallbacks, and bulk 
 
 ### Endpoints
 
+On `https://api.eachlabs.ai`:
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/v1/workflows` | Create a workflow |
+| `POST` | `/v1/workflows/trigger/{id}/{versionID}` | Trigger execution |
+| `POST` | `/v1/workflows/bulk-trigger/{id}/{versionID}` | Bulk trigger (1–10 parallel) |
+| `GET` | `/v1/workflows/{id}/executions` | List executions |
+| `GET` | `/v1/workflows/executions/{executionID}` | Get execution details |
+
+On `https://workflows.eachlabs.run/api/v1`:
+
 | Method | Path | Description |
 |--------|------|-------------|
 | `GET` | `/categories` | List workflow categories |
-| `POST` | `/workflows` | Create a workflow |
 | `GET` | `/workflows/{id}` | Get workflow (accepts UUID or slug) |
 | `PUT` | `/workflows/{id}` | Update workflow metadata |
 | `PUT` | `/workflows/{id}/versions/{versionID}` | Create or update a version |
-| `POST` | `/{id}/trigger` | Trigger execution |
-| `POST` | `/{id}/bulk-trigger` | Bulk trigger (1–10 parallel) |
-| `GET` | `/workflows/{id}/executions` | List executions |
-| `GET` | `/executions/{executionID}` | Get execution details |
 | `GET` | `/public/@{nickname}/workflows/{slug}/versions/{versionID}` | Get public workflow (no auth) |
 | `POST` | `/public/@{nickname}/workflows/{slug}/versions/{versionID}/trigger` | Trigger public workflow |
 
 ### Create Workflow
 
-`POST https://workflows.eachlabs.run/api/v1/workflows`
+`POST https://api.eachlabs.ai/v1/workflows`
 
 ```json
 {
   "name": "Image Enhancement Pipeline",
-  "description": "Generate and upscale images",
-  "categories": ["image-generation"],
   "definition": {
     "version": "v1",
     "input_schema": {
@@ -290,7 +295,7 @@ Multi-step AI pipelines with versioning, parameter passing, fallbacks, and bulk 
 }
 ```
 
-Response (201): `{workflow_id, slug, name, latest_version_id, status: "active", versions: [...]}`
+Response (201): `{workflow_id, slug, name, categories, tags, status: "active", versions: [...]}`. `categories`, `tags`, and visibility are not accepted on create — the engine defaults to `["general"]` / private.
 
 ### Step Types
 
@@ -480,25 +485,23 @@ When fallback is used, step metadata includes `fallback_used: true` and `primary
 
 ### Trigger Workflow
 
-`POST https://workflows.eachlabs.run/api/v1/{workflowID}/trigger`
+`POST https://api.eachlabs.ai/v1/workflows/trigger/{workflowID}/{versionID}`
 
 ```json
 {
-  "version_id": "v1",
   "inputs": {"prompt": "A sunset landscape"},
   "webhook_url": "https://your-server.com/webhook"
 }
 ```
 
-Response (202): `{"execution_id": "exec-123", "status": "queued", "started_at": "..."}`
+Response (202): `{"execution_id": "exec-123", "status": "queued"}`. The version is pinned in the path; there is no unversioned form.
 
 ### Bulk Trigger
 
-`POST https://workflows.eachlabs.run/api/v1/{workflowID}/bulk-trigger`
+`POST https://api.eachlabs.ai/v1/workflows/bulk-trigger/{workflowID}/{versionID}`
 
 ```json
 {
-  "version_id": "v1",
   "inputs": [
     {"prompt": "A sunset landscape"},
     {"prompt": "A mountain scene"},
@@ -512,7 +515,7 @@ Max 10 inputs per request. Response includes `bulk_id` for tracking. Partial fai
 
 ### Get Execution
 
-`GET https://workflows.eachlabs.run/api/v1/executions/{executionID}`
+`GET https://api.eachlabs.ai/v1/workflows/executions/{executionID}`
 
 ```json
 {
