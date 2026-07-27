@@ -13,9 +13,9 @@
     "resources": {}
   },
   "documentation": "https://docs.eachlabs.ai/mcp",
-  "homepage": "https://eachlabs.ai",
+  "homepage": "https://www.eachlabs.ai",
   "vendor": {
     "name": "eachlabs",
-    "url": "https://eachlabs.ai"
+    "url": "https://www.eachlabs.ai"
   }
 }

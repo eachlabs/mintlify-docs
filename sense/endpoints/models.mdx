@@ -10,6 +10,10 @@ description: "List available models (OpenAI compatible)."
 GET https://eachsense-agent.core.eachlabs.run/v1/models
 ```
 
+Lists the models available through the each::sense OpenAI-compatible interface. The endpoint mirrors OpenAI's `GET /v1/models`, so any OpenAI SDK or tool that performs model discovery — client libraries, gateways, playgrounds, evaluation harnesses — works against each::sense without modification. It requires the same API key as chat completions and is a convenient first call to verify that your key and base URL are configured correctly.
+
+The full list is returned in a single response. There is no pagination and no query parameters are required.
+
 ## Code Examples
 
 <CodeGroup>
@@ -60,6 +64,29 @@ models.data.forEach((m) => console.log(`${m.id} | ${m.owned_by}`));
 }
 ```
 
+### Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `object` | string | Always `"list"`, matching the OpenAI list envelope |
+| `data` | array | Array of model objects available to your API key |
+| `data[].id` | string | Model identifier to pass as `model` in chat completion requests |
+| `data[].object` | string | Always `"model"` |
+| `data[].created` | integer | Unix timestamp of when the model entry was published |
+| `data[].owned_by` | string | Organization that owns the model entry (`"eachlabs"`) |
+
+## Model Selection
+
 <Note>
   The agent orchestrates 500+ underlying AI models, but exposes a single `eachsense/beta` model through the OpenAI-compatible interface. Model selection happens automatically based on your request.
 </Note>
+
+Unlike a typical provider catalog, this list is intentionally short. `eachsense/beta` is not one model — it is the router entry point. When you send a request, each::sense analyzes the intent (text generation, image creation, video, code, and so on) and dispatches it to the best-suited underlying model, so you never hard-code a specific vendor model ID.
+
+In practice this means:
+
+- **Use `eachsense/beta` for every request.** It is also the default when the `model` field is omitted, so existing OpenAI integrations work unchanged.
+- **Don't cache assumptions about capabilities per model ID.** Capabilities evolve behind the same identifier as new underlying models are added to the routing pool.
+- **Steer routing with request parameters, not model IDs.** Use `mode` (`"max"` vs `"eco"`) to trade quality against cost and latency, and `behavior` to switch between agent, plan, and ask styles — see [Chat Completions](/sense/endpoints/chat-completions) for details.
+
+A `401` response from this endpoint indicates a missing or invalid API key; verify the `Authorization: Bearer` header before debugging anything else.

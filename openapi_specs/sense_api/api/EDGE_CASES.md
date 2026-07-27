@@ -360,7 +360,7 @@ async function requestWithRateLimit(url, options) {
   "details": {
     "current_balance": 0.10,
     "required_estimate": 0.50,
-    "top_up_url": "https://eachlabs.ai/billing"
+    "top_up_url": "https://www.eachlabs.ai/billing"
   }
 }
 ```
@@ -440,7 +440,7 @@ For enterprise integrations with NSFW:
   "type": "error",
   "message": "NSFW content requires age verification",
   "error_code": "AGE_VERIFICATION_REQUIRED",
-  "verification_url": "https://eachlabs.ai/verify-age"
+  "verification_url": "https://www.eachlabs.ai/verify-age"
 }
 ```
 
