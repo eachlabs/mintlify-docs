@@ -4,7 +4,7 @@ description: "The exact billing formula, the $0-reject guarantees, the full erro
 ---
 
 <Note>
-**Private beta.** Shared by direct link only. Rates below are the current beta rate card and may be adjusted during the beta with notice; the *mechanics* (integer seconds, no multipliers, $0 rejects) are the contract.
+**Beta.** Rates below are the current beta rate card and may be adjusted during the beta with notice; the *mechanics* (integer seconds, no multipliers, $0 rejects) are the contract.
 </Note>
 
 ## The formula
@@ -17,7 +17,8 @@ cost           = billed_seconds × tier_rate
 | Tier | Floor | Rate (USD/s) | Status |
 |-|-|-|-|
 | `cpu` | 5s | 0.0015 | Generally available |
-| `gpu` | 5s | 0.0024 | **Beta** — limited capacity, some codecs cpu-only (noted per capability) |
+
+`cpu` is the only value `tier` accepts. A `gpu` tier is not currently offered — a request carrying `tier: "gpu"` is rejected at $0 before any compute runs.
 
 - **Only ffmpeg wall time is metered.** `execution_wall_seconds` is the time the media command actually runs. Input staging, queueing, and artifact upload are never billed. This is why `metrics.predict_time` — the prediction's full wall time, which includes those phases plus the platform's ~5 s status-check quantization — is **not** the billed quantity and essentially always differs from it (it can even read lower than the billed seconds when a short job bills the 5 s floor).
 - **No multipliers.** Resolution, codec, container, and input duration never multiply the price — you pay for execution seconds only.
@@ -29,7 +30,7 @@ cost           = billed_seconds × tier_rate
 
 | Case | Example |
 |-|-|
-| Invalid request | Unknown capability, wrong enum, out-of-range value, unknown parameter key, missing/invalid `tier`, wrong input count |
+| Invalid request | Unknown capability, wrong enum, out-of-range value, unknown parameter key, a missing or non-`cpu` `tier`, wrong input count |
 | Input rejected pre-compute | Input over the size budget, input duration over 3600s, unsupported input URL, an input missing a stream the capability declares it needs — the closed per-capability list is in [What the probe gate checks](/video/capabilities#what-the-probe-gate-checks) |
 | Parameters that would produce an empty output | `trim` starting at/past the end of the clip, `fade` scheduled beyond the video's duration, sub-frame output windows |
 | Platform faults | Any failure on our side — including output-upload failure. **Deliver-or-don't-bill:** if the failure is ours, you were not billed. `platform_fault` is retryable; `platform_drift` is deterministic (see [the drift class](#platform_drift-defined)) |
@@ -157,9 +158,9 @@ The engine validates every submit synchronously. The platform submits on your be
 |-|-|-|-|
 | `invalid_command` | 400 | Malformed request, params, or argv | No |
 | `unknown_capability` | 400 | Capability name not recognized | No |
-| `encoder_unavailable` | 400 | Requested encoder not on the tier's image (e.g. webm on gpu) | No |
+| `encoder_unavailable` | 400 | Requested encoder not on the tier's image | No |
 | `filter_unavailable` | 400 | Requested filter not on the tier's image | No |
-| `output_resolution_too_large` | 400 | Output dimension over the tier's limit (gpu > 4096 px) | No |
+| `output_resolution_too_large` | 400 | Output dimension over the tier's limit | No |
 | `protocol_denied` | 400 | argv referenced a denied protocol or URL scheme (`run_ffmpeg`) | No |
 | `flag_denied` | 400 | argv used a denied ffmpeg flag (`run_ffmpeg`) | No |
 | `literal_path` | 400 | Literal filesystem path in argv — use placeholders (`run_ffmpeg`) | No |
@@ -218,7 +219,7 @@ Cancellation is **record-only**: it finalizes your prediction immediately, but i
 | Total input size per job | 2 GiB (all inputs combined) | Rejected at $0. An over-budget input is refused from its declared `Content-Length` before download; a source that declares no length is downloaded against the remaining budget and rejected mid-stream the moment it exceeds it — still $0 |
 | Max input duration | 3600 seconds | Rejected at $0 at the probe gate (`input_rejected`, reason `duration_over_cap`) |
 | Execution kill cap | 3600 s of metered ffmpeg wall | The job is killed, delivers nothing, and the engine meters exactly 3600 s (`billed_seconds_cap`, customer fault, non-retryable; settles $0 in the beta). This is the only execution kill — see [Failed compute](#failed-compute) |
-| `tier` | Required on every request | Missing/empty tier is rejected at $0 |
+| `tier` | Required on every request, value `cpu` | A missing, empty, or `gpu` tier is rejected at $0 |
 | Output artifacts | Hosted URLs (CDN) | Treat URLs as valid for at least 24 hours; download or persist promptly |
 
 ## Retries — read before automating

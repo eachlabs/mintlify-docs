@@ -178,6 +178,39 @@
         ]
       },
       {
+        "tab": "each::video",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": ["video/overview", "video/quickstart"]
+          },
+          {
+            "group": "Reference",
+            "pages": ["video/capabilities", "video/billing-limits"]
+          },
+          {
+            "group": "MCP",
+            "pages": ["video/mcp/quickstart"]
+          },
+          {
+            "group": "Policies",
+            "pages": ["video/acceptable-use", "video/abuse-and-takedown", "video/versioning"]
+          },
+          {
+            "group": "OpenAPI Reference",
+            "openapi": {
+              "source": "/openapi_specs/video_api.json",
+              "directory": "video-api-reference"
+            },
+            "pages": [
+              "POST /v1/prediction",
+              "GET /v1/prediction/{id}",
+              "POST /v1/prediction/{id}/cancel"
+            ]
+          }
+        ]
+      },
+      {
         "tab": "LLM Router",
         "groups": [
           {

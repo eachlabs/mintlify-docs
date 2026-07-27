@@ -1,0 +1,60 @@
+---
+title: "Acceptable Use Policy"
+description: "What you may submit to the eachlabs Video API, what you may not, and what happens when this policy is broken."
+---
+
+<Note>
+This policy governs every request to the Video API (`eachlabs-video-api`) and supplements the [eachlabs Terms of Service](https://www.eachlabs.ai/terms-of-service), under which the service is provided by each::labs, Inc. Where the two conflict, the Terms of Service control.
+</Note>
+
+## What the API does with what you send
+
+The Video API is a server-side media-processing service. You submit a URL; we download the media at that URL into eachlabs storage, run an ffmpeg pipeline over it, and return hosted artifact URLs or structured JSON — the full flow is in [Quickstart](/video/quickstart). We do not author, select, or edit the media you submit; you choose the input, the capability, and the parameters.
+
+That means the content of every job originates with you, and the obligations below are yours.
+
+## You must have the rights to what you submit
+
+By submitting an input URL you confirm that, for every input in the request, you either own the media or hold the rights and permissions needed to download it, process it, and receive the derived output — including rights in any music, footage, images, subtitles, fonts, or LUTs the job composes into the result.
+
+You also confirm that you have the consents required by law for any identifiable person depicted in the media, and that submitting the URL does not breach a licence, a contract, or a platform's terms.
+
+## Prohibited content
+
+Do not submit, process, or produce:
+
+| Category | Includes |
+|-|-|
+| Child sexual abuse material | Any sexual content involving a minor, real or synthetic, in any form. There is no context in which this is permitted |
+| Non-consensual intimate imagery | Intimate or sexual imagery of a person distributed or processed without that person's consent, including material created or altered to depict them |
+| Infringing material | Media you do not hold the rights to, and media whose processing is intended to strip watermarks, credits, DRM signalling, or other rights-management or attribution markers |
+| Harassment and abuse | Media processed to target, threaten, degrade, sexualise, or dox a person or group, or to incite violence against them |
+| Deceptive synthetic media | Content altered or assembled to be presented as an authentic recording of a real person or event in order to defraud, manipulate an election, impersonate an identity, or otherwise deceive someone to their detriment |
+
+Fiction, satire, journalism, research, and consensual adult content are not prohibited by the deceptive-synthetic-media row. What is prohibited is presenting manufactured media as real in order to deceive.
+
+## Prohibited use
+
+Do not use the API to:
+
+| Restriction | What this covers |
+|-|-|
+| Circumvent limits | Spreading load across accounts, keys, or organizations to defeat rate limits, concurrency caps, or the per-job limits in [Billing & Limits](/video/billing-limits#limits); automating account creation for that purpose |
+| Resell raw compute | Reselling or brokering the service as generic, unbranded compute, or fronting it as your own media-processing infrastructure to third parties, rather than building a product on it. Ask us if you are unsure which side of this line your integration falls on |
+| Reach the engine's internals | Probing, fuzzing, or attempting to escape the execution sandbox; attempting to read or influence another organization's jobs, inputs, artifacts, or credentials; attempting to extract engine configuration, credentials, or host state through capability parameters or `run_ffmpeg` argv |
+| Target internal network addresses | Submitting input URLs that resolve to loopback, link-local, private, or otherwise non-public addresses, or to cloud instance-metadata endpoints. Input URLs must be publicly downloadable `https` URLs, or `s3://` URIs on eachlabs storage — see [Provide your input video](/video/quickstart#2-provide-your-input-video) |
+| Interfere with the service | Deliberately degrading availability for other customers, or scanning, load-testing, or penetration-testing the service without our written permission |
+
+## Enforcement
+
+We may remove content and terminate access.
+
+Specifically, when we determine that this policy has been broken we may, without prior notice and at our discretion: reject or cancel individual jobs; delete stored inputs and generated artifacts; suspend an API key, an organization, or an account; terminate access entirely; and preserve and disclose material and account records to law enforcement or another authority where we are legally required to do so, or where we believe disclosure is necessary to prevent imminent harm.
+
+Child sexual abuse material is reported and referred wherever the law requires it, and access is terminated without warning.
+
+Suspension for suspected abuse does not entitle you to a refund of jobs already billed, and terminating access does not release you from charges already incurred. The billing mechanics themselves are unchanged by enforcement action — see [Billing & Limits](/video/billing-limits).
+
+## Reporting a violation
+
+Report abusive content or abusive use, and file copyright takedown notices, through [Abuse & Takedown](/video/abuse-and-takedown).
