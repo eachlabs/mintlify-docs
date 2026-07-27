@@ -3,7 +3,8 @@
   "private": true,
   "scripts": {
     "validate": "mintlify validate",
-    "broken-links": "mintlify broken-links"
+    "broken-links": "mintlify broken-links",
+    "validate-examples": "node scripts/validate-capability-examples.mjs"
   },
   "devDependencies": {
     "mintlify": "4.2.583"
