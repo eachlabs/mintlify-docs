@@ -33,6 +33,23 @@ jobs:
       - name: Check broken links
         run: npm run broken-links
 
+  capability-examples:
+    name: video capability example validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # Runs against the committed openapi_specs/video_api.json, so it works
+      # even when the video-api-mirror job skips for lack of a read token.
+      - name: Validate documented capability examples against the OpenAPI mirror
+        run: npm run validate-examples
+
   video-api-mirror:
     name: video-api OpenAPI mirror sync
     runs-on: ubuntu-latest
