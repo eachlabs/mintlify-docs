@@ -42,7 +42,7 @@ Need to pass your own media as a model input? Upload and manage files under the 
 
 ## Authentication
 
-The model catalog (`GET /v1/models`, `GET /v1/models/{slug}`, `GET /v1/llm-router/model-catalog`) is public; all other endpoints require an API key via the `Authorization: Bearer` header.
+The model catalog (`GET /v1/models`, `GET /v1/model`, `GET /v1/llm-router/model-catalog`) is public; all other endpoints require an API key via the `Authorization: Bearer` header.
 
 ```bash
 curl https://api.eachlabs.ai/v1/model?slug=flux-1-1-pro \
