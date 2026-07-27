@@ -10,6 +10,8 @@ rss: true
   - [Run History](https://www.eachlabs.ai/run-history) now shows the requested
     LLM beneath `eachlabs-llm-router` in both table and preview modes.
   - Routed runs are easier to distinguish without opening each execution.
+  - API clients can read the same value from `requested_model` in
+    `GET /v1/executions`; non-router executions return `null`.
 </Update>
 
 <Update label="July 27, 2026" description="API" rss={{ title: "One authentication scheme and base URL across eachlabs APIs", description: "API" }}>

@@ -34,7 +34,7 @@
     },
     {
       "name": "Executions",
-      "description": "Endpoints for listing and retrieving workflow execution history."
+      "description": "Endpoints for listing execution history."
     },
     {
       "name": "Workflows",
@@ -540,6 +540,144 @@
           },
           "409": {
             "$ref": "#/components/responses/Conflict"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/v1/executions": {
+      "get": {
+        "tags": [
+          "Executions"
+        ],
+        "summary": "List executions",
+        "description": "Retrieve execution history for the authenticated API key with optional filters.\nModel prediction terminal statuses include `success`, `error`, and `cancelled`;\nworkflow executions can surface `running`, `completed`, `failed`, or `cancelled`\ndepending on the originating backend. The `status` filter accepts the\nfour tokens listed on the parameter; unrecognized tokens return 400.\n",
+        "operationId": "listExecutions",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            },
+            "description": "Maximum number of executions to return",
+            "example": 20
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            },
+            "description": "Number of executions to skip for pagination",
+            "example": 0
+          },
+          {
+            "name": "model",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter executions by model slug",
+            "example": "flux-1-1-pro"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Comma-separated status filter. Each token must be one of `created`,\n`starting`, `success`, or `error` (lowercase); any other token\nreturns 400 naming the allowed set. An empty or absent parameter\napplies no status filter.\n",
+            "example": "success,error"
+          },
+          {
+            "name": "workflow_id",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by workflow ID",
+            "example": "wf_abc123"
+          },
+          {
+            "name": "workflow_execution_id",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by workflow execution ID",
+            "example": "wf_exec_abc123"
+          },
+          {
+            "name": "error_classification",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "content_moderation",
+                "execution_timeout",
+                "invalid_user_input",
+                "invalid_model_config",
+                "provider_auth",
+                "provider_error",
+                "provider_rate_limit",
+                "provider_unavailable",
+                "internal_error",
+                "unknown"
+              ]
+            },
+            "description": "Comma-separated canonical error classification filter. Restricts\nresults to terminal error executions whose classification is in the\nset; an unrecognized value returns 400. Each value must be one of\nthe listed enum members.\n",
+            "example": "provider_rate_limit,provider_unavailable"
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "description": "Start of creation time window, as RFC 3339",
+            "example": "2026-01-01T00:00:00Z"
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "description": "End of creation time window, as RFC 3339",
+            "example": "2026-01-31T23:59:59Z"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of executions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListExecutionsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
           },
           "500": {
             "$ref": "#/components/responses/InternalServerError"
@@ -2519,6 +2657,112 @@
             }
           }
         }
+      },
+      "ExecutionSummary": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Execution identifier",
+            "example": "exec_abc123"
+          },
+          "model": {
+            "type": "string",
+            "description": "Model slug",
+            "example": "flux-1-1-pro"
+          },
+          "requested_model": {
+            "type": "string",
+            "nullable": true,
+            "description": "The field is always present in the JSON response. Its value is the original LLM model requested through `eachlabs-llm-router`, or null for other executions",
+            "example": "openai/gpt-4.1-mini"
+          },
+          "status": {
+            "type": "string",
+            "description": "Execution status. Model prediction terminal statuses include `success`,\n`error`, and `cancelled`; workflow executions can surface `running`,\n`completed`, `failed`, or `cancelled` depending on the originating backend.\n",
+            "example": "success"
+          },
+          "workflow_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "Workflow ID, when execution was triggered by a workflow",
+            "example": "wf_abc123"
+          },
+          "workflow_execution_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "Workflow execution ID, when execution was triggered by a workflow",
+            "example": "wf_exec_abc123"
+          },
+          "execution_cost": {
+            "type": "number",
+            "description": "Execution cost in USD",
+            "example": 0.05
+          },
+          "run_time": {
+            "type": "number",
+            "description": "Runtime in seconds",
+            "example": 12.5
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Creation timestamp",
+            "example": "2026-01-01T00:00:00Z"
+          },
+          "started_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Start timestamp",
+            "example": "2026-01-01T00:00:02Z"
+          },
+          "completed_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Completion timestamp",
+            "example": "2026-01-01T00:00:15Z"
+          },
+          "output": {
+            "type": "string",
+            "nullable": true,
+            "description": "Primary execution output, when available",
+            "example": "https://storage.example.com/predictions/abc123/image.jpg"
+          }
+        }
+      },
+      "ListExecutionsResponse": {
+        "type": "object",
+        "properties": {
+          "executions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExecutionSummary"
+            }
+          },
+          "total_count": {
+            "type": "integer",
+            "description": "Total number of matching executions",
+            "example": 123
+          },
+          "offset": {
+            "type": "integer",
+            "description": "Applied offset",
+            "example": 0
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Applied limit",
+            "example": 20
+          }
+        },
+        "required": [
+          "executions",
+          "total_count",
+          "offset",
+          "limit"
+        ]
       },
       "ChatCompletionRequest": {
         "type": "object",
