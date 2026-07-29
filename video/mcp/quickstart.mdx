@@ -1,10 +1,10 @@
 ---
-title: "MCP for AI Agents (Beta)"
+title: "MCP for AI Agents"
 description: "Drive the Video API from Claude, Cursor, or any MCP-capable agent — every capability as a native tool."
 ---
 
 <Note>
-**Private beta.** These pages are shared by direct link only and are not listed in the public navigation. The MCP server package (`@eachlabs/video-api-mcp`) is published publicly on npm — install it with the commands below.
+The MCP server package (`@eachlabs/video-api-mcp`) is published publicly on npm — install it with the commands below.
 </Note>
 
 ## What you get
@@ -48,7 +48,7 @@ The agent chains the `trim` and `captions` tools; each tool call returns the hos
 
 ## Tool inventory
 
-One tool per wrapped capability — same names and parameters as the [capabilities reference](/video/capabilities) (the `keep_ranges`/`silence_remove` pair is exposed under its original wire name, `silence_remove`) — plus `run_ffmpeg` (raw ffmpeg for beta organizations; contract and safety boundary in [run_ffmpeg](/video/capabilities#run_ffmpeg)) and `get_job` for checking a long-running job later. Parameters are validated client-side before submit, and server-side again (`additionalProperties: false`), so a malformed tool call never bills.
+One tool per wrapped capability — same names and parameters as the [capabilities reference](/video/capabilities) (the `keep_ranges`/`silence_remove` pair is exposed under its original wire name, `silence_remove`) — plus `run_ffmpeg` (raw ffmpeg; contract and safety boundary in [run_ffmpeg](/video/capabilities#run_ffmpeg)) and `get_job` for checking a long-running job later. Parameters are validated client-side before submit, and server-side again (`additionalProperties: false`), so a malformed tool call never bills.
 
 ## Notes for agent builders
 

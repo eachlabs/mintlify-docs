@@ -4,6 +4,32 @@ description: "Product updates and releases from each::labs"
 rss: true
 ---
 
+<Update label="July 29, 2026" description="Video API" rss={{ title: "Introducing the eachlabs Video API", description: "Video API" }}>
+  ## Introducing the eachlabs Video API
+
+  One API for programmatic video work, now available to everyone through the
+  same prediction API you already use for AI models — same API key, same
+  submit-and-poll flow, same billing. Model slug: `eachlabs-video-api`.
+
+  - **44 ready-made capabilities** — transcoding, trimming, captions and
+    subtitle composition, watermarks, overlays, crossfades and title cards,
+    audio replacement, ducking and mastering, HLS/DASH packaging, thumbnails
+    and sprites — plus four structured analysis capabilities (`probe`,
+    `scene_detect`, `silence_detect`, `audio_analysis`) that return JSON
+    instead of media. A raw-ffmpeg mode covers long-tail cases the named
+    capabilities don't.
+  - **Per-second pricing on the `cpu` tier**: $0.0015 per billed cpu-second,
+    metered only on the time your media command actually runs — input staging,
+    queueing, and artifact upload are never billed. Every job includes a
+    200 MB output-transfer allowance; beyond it, transfer is $0.30/GB.
+  - **MCP server included**, so agents and AI-powered editors can drive every
+    capability directly — see the [MCP quickstart](/video/mcp/quickstart).
+  - Start with the [overview](/video/overview) and
+    [quickstart](/video/quickstart), browse the full
+    [capability reference](/video/capabilities), and see
+    [billing & limits](/video/billing-limits) for pricing mechanics.
+</Update>
+
 <Update label="July 27, 2026" description="LLM Router" rss={{ title: "See the requested LLM in Run History", description: "LLM Router" }}>
   ## See the requested LLM in Run History
 

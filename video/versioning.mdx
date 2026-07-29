@@ -1,9 +1,7 @@
 ---
 title: "Versioning & Deprecation"
-description: "What counts as a breaking change to the Video API, how much notice you get, and which parts of the contract are already stable during beta."
+description: "What counts as a breaking change to the Video API, how much notice you get, and which parts of the contract are stable."
 ---
-
-**Private beta.** These pages are shared by direct link only and are not listed in the public navigation.
 
 <Note>
 The API is versioned in its path: `/v1/prediction`. Everything on this page describes how `/v1` evolves. A change that cannot be made compatibly gets a new version path, not a silent edit to this one.
@@ -52,9 +50,9 @@ Two things we do not treat as breaking, and you should not rely on: the **exact 
 
 A change that closes a security or content-safety hole ships as fast as the risk requires, without the 90-day window. We tell affected organizations what changed and why as soon as we can, and we keep such changes as narrow as the problem allows.
 
-## What "beta" changes
+## What may change
 
-The beta label is about the **rate card and the capability set**, not about the request contract.
+Two things evolve — the **rate card and the capability set** — never the request contract.
 
 **Already stable, and covered by the notice policy above:**
 
@@ -63,12 +61,12 @@ The beta label is about the **rate card and the capability set**, not about the 
 - Parameter names, bounds, and enums for the documented capabilities.
 - `error_code` values and the $0-reject guarantees in [Billing & Limits](/video/billing-limits).
 
-**Still moving during beta:**
+**May evolve, always with notice:**
 
 - **Pricing.** Rates may change with shorter notice than 90 days. Current rates are always in [Billing & Limits](/video/billing-limits).
 - **New capabilities**, which arrive continuously.
 
-We do not remove a documented capability during beta without the full 90-day window. Beta means the surface grows and the price may move; it does not mean the ground shifts under a request you already ship.
+We do not remove a documented capability without the full 90-day window. The surface grows and the price may move; the ground does not shift under a request you already ship.
 
 ## Staying informed
 
