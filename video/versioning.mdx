@@ -59,14 +59,13 @@ The beta label is about the **rate card and the capability set**, not about the 
 **Already stable, and covered by the notice policy above:**
 
 - The submit-and-poll flow, the prediction object, and the terminal statuses.
-- Request shape: `capability`, `tier`, `input_url` / `input_urls`, `params`, `output_format`.
+- Request shape: `capability`, `input_url` / `input_urls`, `params`, `output_format`.
 - Parameter names, bounds, and enums for the documented capabilities.
 - `error_code` values and the $0-reject guarantees in [Billing & Limits](/video/billing-limits).
 
 **Still moving during beta:**
 
 - **Pricing.** Rates may change with shorter notice than 90 days. Current rates are always in [Billing & Limits](/video/billing-limits).
-- **The tier set.** Only `cpu` is offered today; a request for any other tier is rejected at $0. Offering another tier later is a compatible change.
 - **New capabilities**, which arrive continuously.
 
 We do not remove a documented capability during beta without the full 90-day window. Beta means the surface grows and the price may move; it does not mean the ground shifts under a request you already ship.

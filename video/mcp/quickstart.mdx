@@ -52,6 +52,5 @@ One tool per wrapped capability — same names and parameters as the [capabiliti
 
 ## Notes for agent builders
 
-- `tier` defaults to `cpu` in the MCP tool layer (the raw REST API requires it explicitly).
 - Long jobs: the server polls with backoff; if a job outlives the polling budget the tool returns the prediction ID and your agent resumes with `get_job`.
 - Billing semantics are identical to the REST surface: [Billing & Limits](/video/billing-limits).
