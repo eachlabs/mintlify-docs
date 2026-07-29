@@ -4,35 +4,29 @@ description: "Drive the Video API from Claude, Cursor, or any MCP-capable agent 
 ---
 
 <Note>
-**Private beta.** These pages are shared by direct link only and are not listed in the public navigation. The MCP server package (`@canbo/video-api-mcp`) is access-restricted during the beta — you receive package access at onboarding.
+**Private beta.** These pages are shared by direct link only and are not listed in the public navigation. The MCP server package (`@eachlabs/video-api-mcp`) is published publicly on npm — install it with the commands below.
 </Note>
 
 ## What you get
 
-An MCP server that exposes every Video API capability as a native agent tool — one tool per capability in the [capabilities reference](/video/capabilities), with client-side schema validation, automatic submit-and-poll, and results returned as artifact URLs or structured analysis JSON. Your agent edits video by calling tools; billing and auth ride your existing eachlabs API key.
+An MCP server that exposes the Video API as native agent tools — 37 of the 44 capabilities in the [capabilities reference](/video/capabilities) today, with client-side schema validation, automatic submit-and-poll, and results returned as artifact URLs or structured analysis JSON. Your agent edits video by calling tools; billing and auth ride your existing eachlabs API key. The remaining capabilities (`audio_analysis`, `audio_duck`, `audio_master`, `crossfade`, `silence_split`, `sticker_overlay`, `title_card`) are reachable through the [HTTP API](/video/quickstart) and will be wrapped as tools in a later release.
 
 ## Add it to your MCP client
 
 <Tabs>
   <Tab title="Claude Code">
     ```bash
-    claude mcp add video-api \
-      -e EACHLABS_API_KEY=YOUR_API_KEY \
-      -e EACHLABS_VIDEO_MODEL=eachlabs-video-api \
-      -- npx -y @canbo/video-api-mcp
+    claude mcp add video --env EACHLABS_API_KEY=YOUR_API_KEY -- npx -y @eachlabs/video-api-mcp
     ```
   </Tab>
   <Tab title="Claude Desktop / Cursor">
     ```json
     {
       "mcpServers": {
-        "video-api": {
+        "video": {
           "command": "npx",
-          "args": ["-y", "@canbo/video-api-mcp"],
-          "env": {
-            "EACHLABS_API_KEY": "YOUR_API_KEY",
-            "EACHLABS_VIDEO_MODEL": "eachlabs-video-api"
-          }
+          "args": ["-y", "@eachlabs/video-api-mcp"],
+          "env": { "EACHLABS_API_KEY": "YOUR_API_KEY" }
         }
       }
     }
@@ -40,9 +34,9 @@ An MCP server that exposes every Video API capability as a native agent tool —
   </Tab>
 </Tabs>
 
-<Warning>
-`EACHLABS_VIDEO_MODEL=eachlabs-video-api` is required during the beta — without it the server targets a model slug that is not yet provisioned and every call fails.
-</Warning>
+<Note>
+The server targets the `eachlabs-video-api` model slug by default — no extra configuration is needed. `EACHLABS_VIDEO_MODEL` exists only to override that default.
+</Note>
 
 ## Use it
 
@@ -54,7 +48,7 @@ The agent chains the `trim` and `captions` tools; each tool call returns the hos
 
 ## Tool inventory
 
-One tool per capability — identical names and parameters to the [capabilities reference](/video/capabilities) — plus `run_ffmpeg` (raw ffmpeg for beta organizations; contract and safety boundary in [run_ffmpeg](/video/capabilities#run_ffmpeg)) and `get_job` for checking a long-running job later. Parameters are validated client-side before submit, and server-side again (`additionalProperties: false`), so a malformed tool call never bills.
+One tool per wrapped capability — same names and parameters as the [capabilities reference](/video/capabilities) (the `keep_ranges`/`silence_remove` pair is exposed under its original wire name, `silence_remove`) — plus `run_ffmpeg` (raw ffmpeg for beta organizations; contract and safety boundary in [run_ffmpeg](/video/capabilities#run_ffmpeg)) and `get_job` for checking a long-running job later. Parameters are validated client-side before submit, and server-side again (`additionalProperties: false`), so a malformed tool call never bills.
 
 ## Notes for agent builders
 

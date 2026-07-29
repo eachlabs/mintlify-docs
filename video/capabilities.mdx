@@ -1568,7 +1568,7 @@ Overlay a second input (image or video) onto the primary video at a pixel offset
 
 ## Response shapes
 
-Every result arrives in the polled prediction's `output` field. There are exactly six shapes — five for success, determined by the capability's output class, and one for error; the sibling fields (`status`, `metrics`, `urls`, `input`, `logs`) are identical across all of them (the examples below show the result-bearing fields).
+Every result arrives in the polled prediction's `output` field. There are exactly six shapes — five for success, determined by the capability's output class, and one for error; the sibling fields (`status`, `metrics`, `urls`, `input`, `logs`) are identical across all of them (the examples below show the result-bearing fields). On success, `metrics` carries the billed quantities directly — `billed_seconds`, `output_gb`, `tier` — alongside `cost` and `predict_time`; failed predictions carry only `cost` and `predict_time` (see [Billing & Limits](/video/billing-limits#the-formula)).
 
 **1. URL array** — every single-file media capability. Single-output jobs return a one-element array:
 
@@ -1577,7 +1577,7 @@ Every result arrives in the polled prediction's `output` field. There are exactl
   "id": "1f0fdf4d-...",
   "status": "success",
   "output": ["https://cdn-us.eachlabs.ai/uploads/9b967c93-....mp4"],
-  "metrics": { "predict_time": 14.2, "cost": 0.015 }
+  "metrics": { "predict_time": 14.2, "cost": 0.015, "tier": "cpu", "billed_seconds": 10, "output_gb": 0.0016 }
 }
 ```
 
@@ -1595,7 +1595,7 @@ Every result arrives in the polled prediction's `output` field. There are exactl
     "https://cdn-us.eachlabs.ai/uploads/1d899cd7-....mp4",
     "https://cdn-us.eachlabs.ai/uploads/ee35a903-....jpg"
   ],
-  "metrics": { "predict_time": 19.67, "cost": 0.0225 }
+  "metrics": { "predict_time": 19.67, "cost": 0.0225, "tier": "cpu", "billed_seconds": 15, "output_gb": 0.0027 }
 }
 ```
 
@@ -1610,7 +1610,7 @@ A plain multi-output job (no stills) is the same array without the interleave:
     "https://cdn-us.eachlabs.ai/uploads/....-seg_001.mp4",
     "https://cdn-us.eachlabs.ai/uploads/....-seg_002.mp4"
   ],
-  "metrics": { "predict_time": 9.8, "cost": 0.0105 }
+  "metrics": { "predict_time": 9.8, "cost": 0.0105, "tier": "cpu", "billed_seconds": 7, "output_gb": 0.0021 }
 }
 ```
 
@@ -1624,7 +1624,7 @@ A plain multi-output job (no stills) is the same array without the interleave:
     "video": "https://cdn-us.eachlabs.ai/uploads/....mp4",
     "thumbnail": "https://cdn-us.eachlabs.ai/uploads/....jpg"
   },
-  "metrics": { "predict_time": 8.3, "cost": 0.009 }
+  "metrics": { "predict_time": 8.3, "cost": 0.009, "tier": "cpu", "billed_seconds": 6, "output_gb": 0.0019 }
 }
 ```
 
@@ -1642,7 +1642,7 @@ A plain multi-output job (no stills) is the same array without the interleave:
       { "name": "stream_0.m3u8", "url": "https://cdn-us.eachlabs.ai/uploads/....-stream_0.m3u8", "role": "playlist" }
     ]
   },
-  "metrics": { "predict_time": 42.7, "cost": 0.057 }
+  "metrics": { "predict_time": 42.7, "cost": 0.057, "tier": "cpu", "billed_seconds": 38, "output_gb": 0.0024 }
 }
 ```
 
@@ -1653,7 +1653,7 @@ A plain multi-output job (no stills) is the same array without the interleave:
   "id": "281e4953-...",
   "status": "success",
   "output": { "silences": [ { "start": 12.46, "end": 14.02, "duration": 1.56 } ] },
-  "metrics": { "predict_time": 4.1, "cost": 0.0075 }
+  "metrics": { "predict_time": 4.1, "cost": 0.0075, "tier": "cpu", "billed_seconds": 5, "output_gb": 0 }
 }
 ```
 
@@ -1664,7 +1664,7 @@ A plain multi-output job (no stills) is the same array without the interleave:
   "id": "899cb7f0-...",
   "status": "success",
   "output": { "audio_analysis": { "integrated_lufs": -11.697, "lra": 1.76, "true_peak_dbtp": -4.31, "sample_peak_dbfs": -4.31, "flat_factor": 0, "peak_count": 2 } },
-  "metrics": { "predict_time": 3.71, "cost": 0.0075 }
+  "metrics": { "predict_time": 3.71, "cost": 0.0075, "tier": "cpu", "billed_seconds": 5, "output_gb": 0 }
 }
 ```
 
@@ -1672,7 +1672,7 @@ A plain multi-output job (no stills) is the same array without the interleave:
 
 ```json
 {
-  "id": "22f90f2d-...",
+  "id": "f2762a7e-...",
   "status": "error",
   "output": {
     "classification": { "category": "PROVIDER" },
@@ -1682,7 +1682,7 @@ A plain multi-output job (no stills) is the same array without the interleave:
     "retryable": false,
     "success": false
   },
-  "metrics": { "predict_time": 3.61, "cost": 0 }
+  "metrics": { "predict_time": 2.69, "cost": 0 }
 }
 ```
 
