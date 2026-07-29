@@ -28,11 +28,11 @@ The cost is rounded half-up to 4 decimal places.
 
 `cpu` is the only value `tier` accepts. A `gpu` tier is not currently offered — a request carrying `tier: "gpu"` is rejected at $0 before any compute runs.
 
-- **Only ffmpeg wall time is metered.** `execution_wall_seconds` is the time the media command actually runs. Input staging, queueing, and artifact upload are never billed. This is why `metrics.predict_time` — the prediction's full wall time, which includes those phases plus the platform's ~5 s status-check quantization — is **not** the billed quantity and essentially always differs from it (it can even read lower than the billed seconds when a short job bills the 5 s floor).
+- **Only ffmpeg wall time is metered for compute.** `execution_wall_seconds` is the time the media command actually runs. The *time* spent on input staging, queueing, and artifact upload is never metered. This is why `metrics.predict_time` — the prediction's full wall time, which includes those phases plus the platform's ~5 s status-check quantization — is **not** the billed quantity and essentially always differs from it (it can even read lower than the billed seconds when a short job bills the 5 s floor).
 - **200 MB of output delivery included.** Every job includes the first 0.2 GB of delivered output free; only the excess bills, at $0.30/GB. An output of exactly 0.2 GB is inside the allowance. Most capabilities emit far less than 200 MB and never pay a delivery cent, and the analysis capabilities (`probe`, `scene_detect`, `silence_detect`, `audio_analysis`) produce no artifact at all — the delivery term only bites on genuinely large outputs.
 - **No multipliers.** Resolution, codec, container, and input duration never multiply the price — you pay for execution seconds, plus delivery only beyond the included 200 MB.
 - **Integer seconds, floored and capped.** Wall time is rounded up to whole seconds, floored at the tier floor (a 1.2 s job bills 5 s), and hard-capped at 3600.
-- **Reproduce your bill from the response.** On video-api predictions, `metrics` carries the meter fields — `tier`, `billed_seconds`, and `output_gb` — alongside `cost` and `predict_time`. `metrics.cost` is the authoritative charge, and it always equals the formula applied to those two meter fields.
+- **Reproduce your bill from the response.** On video-api predictions, `metrics` carries the meter fields — `tier`, `billed_seconds`, and `output_gb` — alongside `cost` and `predict_time`. `metrics.cost` is the authoritative charge, and it always equals the formula applied to those two meter fields. Predictions that fail before metering carry only `cost` and `predict_time`.
 - **Worked example.** A cpu job whose ffmpeg run takes 190.3 s bills `ceil(190.3) = 191` seconds; say it delivers a 1.404 GB output. Cost = `191 × 0.0015 + (1.404 - 0.2) × 0.30` = `0.2865 + 0.3612` = **$0.6477** — reproducible from `metrics.billed_seconds: 191` and `metrics.output_gb: 1.404` on the polled prediction. Had the same job delivered 50 MB, the delivery term would be $0 and it would bill $0.2865 flat. (`predict_time` might read `194.86` — the extra ~4 s is queueing and poll quantization on top of the metered 191 s.)
 
 ## When you pay nothing — guaranteed $0
@@ -82,10 +82,10 @@ A real $0 validation reject, captured from production, exactly as polled:
 
 ```json
 {
-  "id": "eb474c68-0fc6-40a3-8c4a-63f1b064b8b0",
+  "id": "1e44fdd0-a565-4f59-908c-c4625dfe5395",
   "input": {
     "capability": "silence_remove",
-    "input_url": "https://raw.githubusercontent.com/canberksinangil/video-api-e2e-fixtures/main/long120s_sections.mp4",
+    "input_url": "https://cdn-us.eachlabs.ai/uploads/35b956ed-0907-474c-86f9-7f3c418212c2.mp4",
     "params": { "ranges": [{ "end": 210, "start": 200 }] },
     "tier": "cpu"
   },
@@ -95,9 +95,9 @@ A real $0 validation reject, captured from production, exactly as polled:
     "classification": { "category": "VALIDATION" },
     "error": "Execution failed",
     "error_code": "INPUT_VALIDATION_ERROR",
-    "error_message": "ranges: range start 200s is at or beyond source duration 120s (empty output)",
+    "error_message": "ranges: range start 200s is at or beyond source duration 5s (empty output)",
     "error_step": "Surface Customer Reject.0",
-    "execution_id": "eb474c68-0fc6-40a3-8c4a-63f1b064b8b0",
+    "execution_id": "1e44fdd0-a565-4f59-908c-c4625dfe5395",
     "model_id": "e3b3d84f-a2dc-46a3-b6e7-e9d80face367",
     "model_slug": "eachlabs-video-api",
     "provider": "videoapi",
@@ -105,10 +105,10 @@ A real $0 validation reject, captured from production, exactly as polled:
     "status": "ERROR",
     "success": false
   },
-  "metrics": { "predict_time": 3.493916429, "cost": 0 },
+  "metrics": { "predict_time": 3.439075, "cost": 0 },
   "urls": {
-    "cancel": "https://api.eachlabs.ai/v1/prediction/eb474c68-0fc6-40a3-8c4a-63f1b064b8b0/cancel",
-    "get": "https://api.eachlabs.ai/v1/prediction/eb474c68-0fc6-40a3-8c4a-63f1b064b8b0"
+    "cancel": "https://api.eachlabs.ai/v1/prediction/1e44fdd0-a565-4f59-908c-c4625dfe5395/cancel",
+    "get": "https://api.eachlabs.ai/v1/prediction/1e44fdd0-a565-4f59-908c-c4625dfe5395"
   }
 }
 ```
@@ -117,10 +117,10 @@ A real execution failure (`exec_error` — a crop window larger than the source 
 
 ```json
 {
-  "id": "22f90f2d-794e-4060-a24f-3cb117801126",
+  "id": "f2762a7e-2362-40cf-be4a-b0cffe2e1177",
   "input": {
     "capability": "crop",
-    "input_url": "https://raw.githubusercontent.com/canberksinangil/video-api-e2e-fixtures/main/long120s_sections.mp4",
+    "input_url": "https://cdn-us.eachlabs.ai/uploads/35b956ed-0907-474c-86f9-7f3c418212c2.mp4",
     "params": { "container": "mp4", "height": 7000, "width": 7000 },
     "tier": "cpu"
   },
@@ -132,7 +132,7 @@ A real execution failure (`exec_error` — a crop window larger than the source 
     "error_code": "PROVIDER_FAILED",
     "error_message": "exec_error",
     "error_step": "poll",
-    "execution_id": "22f90f2d-794e-4060-a24f-3cb117801126",
+    "execution_id": "f2762a7e-2362-40cf-be4a-b0cffe2e1177",
     "model_id": "e3b3d84f-a2dc-46a3-b6e7-e9d80face367",
     "model_slug": "eachlabs-video-api",
     "provider": "videoapi",
@@ -141,10 +141,10 @@ A real execution failure (`exec_error` — a crop window larger than the source 
     "status": "ERROR",
     "success": false
   },
-  "metrics": { "predict_time": 3.610622826, "cost": 0 },
+  "metrics": { "predict_time": 2.691812, "cost": 0 },
   "urls": {
-    "cancel": "https://api.eachlabs.ai/v1/prediction/22f90f2d-794e-4060-a24f-3cb117801126/cancel",
-    "get": "https://api.eachlabs.ai/v1/prediction/22f90f2d-794e-4060-a24f-3cb117801126"
+    "cancel": "https://api.eachlabs.ai/v1/prediction/f2762a7e-2362-40cf-be4a-b0cffe2e1177/cancel",
+    "get": "https://api.eachlabs.ai/v1/prediction/f2762a7e-2362-40cf-be4a-b0cffe2e1177"
   }
 }
 ```
@@ -155,13 +155,13 @@ A real execution failure (`exec_error` — a crop window larger than the source 
 |-|-|-|-|
 | `PROVIDER_REJECTED` | An input URL could not be staged (unreachable, not public, not identifiable as media) | The message names the offending URL | $0 |
 | `INPUT_VALIDATION_ERROR` | The engine rejected the job before compute — invalid command/params (`invalid_command`) or input rejected at the probe gate (`input_rejected`) | `error_message` carries the specific gate reason (first example above) | $0 |
-| `PROVIDER_FAILED` — at submit | The engine refused the submit itself | The engine's reject code (table below) and message | $0 |
+| `PROVIDER_BAD_REQUEST` | The engine refused the submit itself — synchronous validation, `error_step: "Submit Job"` | `error_message` carries the engine's JSON body `{code, message, retryable, stage}`; codes in the table below | $0 |
 | `PROVIDER_FAILED` — post-accept (`error_step: "poll"`) | The job failed after the engine accepted it | `error_message` carries the `failure_class` — `exec_error`, `billed_seconds_cap`, `platform_fault`, or `platform_drift` (second example above) | Per the failure-class table below |
 | `PROVIDER_RATE_LIMIT` | The platform gave up re-enqueuing a job held back by an in-flight concurrency cap | — | $0 |
 
 ### Engine submit rejects — synchronous, all $0
 
-The engine validates every submit synchronously. The platform submits on your behalf, so you see these as `PROVIDER_FAILED` with the engine's code in the message; a direct engine integration sees the HTTP status with body `{code, message, retryable, stage}`.
+The engine validates every submit synchronously. The platform submits on your behalf, so you see these as `PROVIDER_BAD_REQUEST` with `error_step: "Submit Job"`, `http_status: 400`, and the engine's body `{code, message, retryable, stage}` returned verbatim as a JSON string in `error_message` (verified against production — e.g. a `tier: "gpu"` request polls with `error_message: {"code":"invalid_command","message":"tier: must be one of cpu","retryable":false,"stage":"validate"}`). Submit-stage rejects additionally carry diagnostic fields (`http_status`, `root_cause`, `causes`, `timing`) not present on post-accept failures.
 
 | Code | HTTP | Meaning | Retryable |
 |-|-|-|-|
