@@ -705,7 +705,7 @@
           "params": {
             "$schema": "https://json-schema.org/draft/2020-12/schema",
             "title": "audio_analysis",
-            "description": "Measure the audio track: integrated loudness (LUFS), loudness range (LU), true peak (dBTP), sample peak (dBFS), and the astats clipping indicators flat_factor (dB flatness of consecutive equal samples) and peak_count (occurrences of the max sample) via astats+ebur128. Returns structured JSON, no uploaded artifact (zero egress). The input MUST carry an audio stream: a video-only input is rejected before billing. Any field that cannot be measured is omitted from the result rather than reported as zero: a digitally silent input returns no true_peak_dbtp and no sample_peak_dbfs (silence has no finite dB peak), and any statistic ffmpeg reports as -inf/nan is likewise omitted. Treat a missing field as not-measurable, never as 0. Runs on the cpu tier only: a request on the gpu tier is rejected before billing.",
+            "description": "Measure the audio track: integrated loudness (LUFS), loudness range (LU), true peak (dBTP), sample peak (dBFS), and the astats clipping indicators flat_factor (dB flatness of consecutive equal samples) and peak_count (occurrences of the max sample) via astats+ebur128. Returns structured JSON, no uploaded artifact (zero egress). The input MUST carry an audio stream: a video-only input is rejected before billing. Any field that cannot be measured is omitted from the result rather than reported as zero: a digitally silent input returns no true_peak_dbtp and no sample_peak_dbfs (silence has no finite dB peak), and any statistic ffmpeg reports as -inf/nan is likewise omitted. Treat a missing field as not-measurable, never as 0. Runs on the cpu tier.",
             "type": "object",
             "properties": {},
             "additionalProperties": false
@@ -754,7 +754,7 @@
           "params": {
             "$schema": "https://json-schema.org/draft/2020-12/schema",
             "title": "audio_duck",
-            "description": "Duck a music/program bed under a voice track using two inputs: input0 is the music, input1 is the voice. The voice drives a sidechain compressor that lowers the music while the voice is above threshold, and the SAME voice is then mixed on top, so the output carries the voice over the ducked bed. The output is always audio-only (mp3, wav, or m4a): a video input0 contributes only its audio track and its video stream is discarded. The output runs exactly as long as input0's audio: a voice longer than the music is truncated at the music's end, and a voice shorter than the music leaves the remaining music playing at full level. Inputs that differ in sample rate or channel layout are never rejected: the voice is silently resampled and up/down-mixed to the music's format, and the output inherits input0's sample rate and channel count. Levels are never auto-normalized: the voice and the ducked music keep their source loudness, which can clip if both are hot. Both inputs must carry an audio stream: an input without one is rejected before billing. Runs on the cpu tier only: a request on the gpu tier is rejected before billing.",
+            "description": "Duck a music/program bed under a voice track using two inputs: input0 is the music, input1 is the voice. The voice drives a sidechain compressor that lowers the music while the voice is above threshold, and the SAME voice is then mixed on top, so the output carries the voice over the ducked bed. The output is always audio-only (mp3, wav, or m4a): a video input0 contributes only its audio track and its video stream is discarded. The output runs exactly as long as input0's audio: a voice longer than the music is truncated at the music's end, and a voice shorter than the music leaves the remaining music playing at full level. Inputs that differ in sample rate or channel layout are never rejected: the voice is silently resampled and up/down-mixed to the music's format, and the output inherits input0's sample rate and channel count. Levels are never auto-normalized: the voice and the ducked music keep their source loudness, which can clip if both are hot. Both inputs must carry an audio stream: an input without one is rejected before billing. Runs on the cpu tier.",
             "type": "object",
             "properties": {
               "threshold": {
@@ -842,7 +842,7 @@
           "params": {
             "$schema": "https://json-schema.org/draft/2020-12/schema",
             "title": "audio_master",
-            "description": "Master the audio track to a distribution loudness target: compressor -> EBU R128 loudness normalization (single-pass) -> true-peak limiter, written audio-only. The input MUST carry an audio stream: a video-only input is rejected before billing. A fixed gentle compressor (2:1 ratio, -18 dB threshold, 30 ms attack) is always applied before normalization and cannot be disabled; for loudness normalization without compression use the loudnorm capability instead. Normalization runs in a single pass, so the output's measured integrated loudness can deviate from target_lufs, especially on short or highly dynamic inputs; ceiling_dbtp is still enforced by the final limiter. The output is always resampled to 44100 Hz regardless of the source sample rate; there is no way to keep the source rate. Runs on the cpu tier only: a request on the gpu tier is rejected before billing.",
+            "description": "Master the audio track to a distribution loudness target: compressor -> EBU R128 loudness normalization (single-pass) -> true-peak limiter, written audio-only. The input MUST carry an audio stream: a video-only input is rejected before billing. A fixed gentle compressor (2:1 ratio, -18 dB threshold, 30 ms attack) is always applied before normalization and cannot be disabled; for loudness normalization without compression use the loudnorm capability instead. Normalization runs in a single pass, so the output's measured integrated loudness can deviate from target_lufs, especially on short or highly dynamic inputs; ceiling_dbtp is still enforced by the final limiter. The output is always resampled to 44100 Hz regardless of the source sample rate; there is no way to keep the source rate. Runs on the cpu tier.",
             "type": "object",
             "properties": {
               "target_lufs": {
@@ -1016,7 +1016,7 @@
           "params": {
             "$schema": "https://json-schema.org/draft/2020-12/schema",
             "title": "captions",
-            "description": "Burn a subtitle file into the video as open captions. Supply exactly two inputs in order: the first is the video, the second is the subtitle file (SRT, VTT, or ASS). The whole video is re-encoded to apply the burn-in. Runs on the cpu tier only: a request on the gpu tier is rejected before billing.",
+            "description": "Burn a subtitle file into the video as open captions. Supply exactly two inputs in order: the first is the video, the second is the subtitle file (SRT, VTT, or ASS). The whole video is re-encoded to apply the burn-in. Runs on the cpu tier.",
             "type": "object",
             "properties": {
               "font_size": {
@@ -1094,7 +1094,7 @@
           "params": {
             "$schema": "https://json-schema.org/draft/2020-12/schema",
             "title": "color",
-            "description": "Color-grade the clip: brightness, contrast, saturation, and gamma. Video and audio are always re-encoded (audio becomes AAC for mp4/mkv or Opus for webm); nothing is stream-copied, and an all-default call is an identity grade that still re-encodes without visibly changing the picture. Runs on the cpu tier only: a request on the gpu tier is rejected before billing.",
+            "description": "Color-grade the clip: brightness, contrast, saturation, and gamma. Video and audio are always re-encoded (audio becomes AAC for mp4/mkv or Opus for webm); nothing is stream-copied, and an all-default call is an identity grade that still re-encodes without visibly changing the picture. Runs on the cpu tier.",
             "type": "object",
             "properties": {
               "brightness": {
@@ -1196,13 +1196,13 @@
                 "type": "integer",
                 "minimum": 16,
                 "default": 1280,
-                "description": "Output canvas width in pixels (default 1280). Every input is scaled to fit and padded with centered black bars to exactly width x height, so the output is always exactly this size regardless of input sizes. On the gpu tier a canvas wider or taller than 4096 pixels is rejected before billing (GPU H.264 encoder ceiling)."
+                "description": "Output canvas width in pixels (default 1280). Every input is scaled to fit and padded with centered black bars to exactly width x height, so the output is always exactly this size regardless of input sizes."
               },
               "height": {
                 "type": "integer",
                 "minimum": 16,
                 "default": 720,
-                "description": "Output canvas height in pixels (default 720). Every input is scaled to fit and padded with centered black bars to exactly width x height, so the output is always exactly this size regardless of input sizes. On the gpu tier a canvas wider or taller than 4096 pixels is rejected before billing (GPU H.264 encoder ceiling)."
+                "description": "Output canvas height in pixels (default 720). Every input is scaled to fit and padded with centered black bars to exactly width x height, so the output is always exactly this size regardless of input sizes."
               },
               "container": {
                 "type": "string",
@@ -1212,7 +1212,7 @@
                   "mkv"
                 ],
                 "default": "mp4",
-                "description": "Output container (default mp4): no video or audio codec is pinned on the cpu tier, so ffmpeg's per-container default encoders apply (H.264 video for mp4/mkv, VP9 for webm, and the muxer's default audio encoder); on the gpu tier video is instead forced to the GPU H.264 encoder and webm is rejected before billing (no GPU webm encoder); mp4 output is written with the faststart flag so it progressive-plays."
+                "description": "Output container (default mp4): no video or audio codec is pinned on the cpu tier, so ffmpeg's per-container default encoders apply (H.264 video for mp4/mkv, VP9 for webm, and the muxer's default audio encoder); mp4 output is written with the faststart flag so it progressive-plays."
               }
             },
             "additionalProperties": false
@@ -1336,14 +1336,14 @@
                 "minimum": 1,
                 "maximum": 8192,
                 "default": 640,
-                "description": "Crop rectangle width in pixels (default 640). On the gpu tier a rectangle wider or taller than 4096 pixels is rejected before billing (GPU H.264 encoder ceiling); resubmit on the cpu tier."
+                "description": "Crop rectangle width in pixels (default 640)."
               },
               "height": {
                 "type": "integer",
                 "minimum": 1,
                 "maximum": 8192,
                 "default": 480,
-                "description": "Crop rectangle height in pixels (default 480). On the gpu tier a rectangle wider or taller than 4096 pixels is rejected before billing (GPU H.264 encoder ceiling); resubmit on the cpu tier."
+                "description": "Crop rectangle height in pixels (default 480)."
               },
               "x": {
                 "type": "integer",
@@ -1365,7 +1365,7 @@
                   "mkv"
                 ],
                 "default": "mp4",
-                "description": "Output container. On the gpu tier webm is rejected before billing (the gpu tier has no webm encoder); resubmit on the cpu tier."
+                "description": "Output container."
               }
             },
             "additionalProperties": false
@@ -1414,7 +1414,7 @@
           "params": {
             "$schema": "https://json-schema.org/draft/2020-12/schema",
             "title": "crossfade",
-            "description": "Crossfade two clips into one. Supply exactly two inputs in order: the video transition starts offset seconds into the first clip and blends into the second over duration seconds (xfade); the audio is always crossfaded at the junction of the two audio tracks over the same duration (acrossfade ignores offset). With offset omitted it is derived from the probed first input (first duration minus duration) so video and audio cross at the same junction and the output runs first plus second minus duration seconds; when the first input's duration cannot be probed (direct bindings), an omitted offset is rejected before billing - supply offset explicitly. A supplied offset earlier than the junction switches the video to the second clip early while the audio still crosses at the junction, so the audio track outlasts the video track. Both inputs must contain a video AND an audio stream - an input missing either is rejected before billing. The second input's video is scaled (stretched, square pixels) to the probed size of the first input; when that size is unknown the input sizes must already match or the run fails at execution. Both inputs must share a frame rate - mismatched rates fail at execution; container timebases are normalized in-graph, so inputs with identical frame rates but different encoder timescales are safe. A second input shorter than duration truncates the transition. Video and audio are always re-encoded (audio becomes AAC for mp4/mkv or Opus for webm); nothing is stream-copied. Runs on the cpu tier only: a request on the gpu tier is rejected before billing.",
+            "description": "Crossfade two clips into one. Supply exactly two inputs in order: the video transition starts offset seconds into the first clip and blends into the second over duration seconds (xfade); the audio is always crossfaded at the junction of the two audio tracks over the same duration (acrossfade ignores offset). With offset omitted it is derived from the probed first input (first duration minus duration) so video and audio cross at the same junction and the output runs first plus second minus duration seconds; when the first input's duration cannot be probed (direct bindings), an omitted offset is rejected before billing - supply offset explicitly. A supplied offset earlier than the junction switches the video to the second clip early while the audio still crosses at the junction, so the audio track outlasts the video track. Both inputs must contain a video AND an audio stream - an input missing either is rejected before billing. The second input's video is scaled (stretched, square pixels) to the probed size of the first input; when that size is unknown the input sizes must already match or the run fails at execution. Both inputs must share a frame rate - mismatched rates fail at execution; container timebases are normalized in-graph, so inputs with identical frame rates but different encoder timescales are safe. A second input shorter than duration truncates the transition. Video and audio are always re-encoded (audio becomes AAC for mp4/mkv or Opus for webm); nothing is stream-copied. Runs on the cpu tier.",
             "type": "object",
             "properties": {
               "transition": {
@@ -1581,7 +1581,7 @@
           "params": {
             "$schema": "https://json-schema.org/draft/2020-12/schema",
             "title": "fade",
-            "description": "Fade the clip in and/or out. The same fade is applied to the audio track with identical timings; a video-only input still succeeds (the audio fade is skipped). Video and audio are always re-encoded (audio becomes AAC for mp4/mkv or Opus for webm); nothing is stream-copied. Runs on the cpu tier only: a request on the gpu tier is rejected before billing.",
+            "description": "Fade the clip in and/or out. The same fade is applied to the audio track with identical timings; a video-only input still succeeds (the audio fade is skipped). Video and audio are always re-encoded (audio becomes AAC for mp4/mkv or Opus for webm); nothing is stream-copied. Runs on the cpu tier.",
             "type": "object",
             "properties": {
               "type": {
@@ -1752,7 +1752,7 @@
           "params": {
             "$schema": "https://json-schema.org/draft/2020-12/schema",
             "title": "hls_ladder",
-            "description": "Encode a multi-rendition adaptive-bitrate HLS ladder (master.m3u8 + N variant playlists/segments) in one ffmpeg pass. Re-encodes each rung, so any source codec is accepted; the input must carry both a video and an audio stream. Audio is always re-encoded to AAC (one audio track per variant) - the source audio codec is never preserved. The result is a bundle: master.m3u8 is the entrypoint, delivered alongside the per-variant playlists (stream_0.m3u8, stream_1.m3u8, and so on) and their MPEG-TS segments as separate artifact URLs, with a VOD playlist type. Give an explicit renditions list OR a ladder preset (not both); omit both for a default 3-rung 720p ladder. Upscaling above the source is NOT rejected, so choose rungs at or below the source height; source dimensions ARE probed and any rung whose derived width exceeds the GPU h264_nvenc 4096 ceiling is rejected before billing.",
+            "description": "Encode a multi-rendition adaptive-bitrate HLS ladder (master.m3u8 + N variant playlists/segments) in one ffmpeg pass. Re-encodes each rung, so any source codec is accepted; the input must carry both a video and an audio stream. Audio is always re-encoded to AAC (one audio track per variant) - the source audio codec is never preserved. The result is a bundle: master.m3u8 is the entrypoint, delivered alongside the per-variant playlists (stream_0.m3u8, stream_1.m3u8, and so on) and their MPEG-TS segments as separate artifact URLs, with a VOD playlist type. Give an explicit renditions list OR a ladder preset (not both); omit both for a default 3-rung 720p ladder. Upscaling above the source is NOT rejected, so choose rungs at or below the source height.",
             "type": "object",
             "properties": {
               "renditions": {
@@ -1893,7 +1893,7 @@
                   "mkv"
                 ],
                 "default": "mp4",
-                "description": "Output container: mp4 (default), webm or mkv. Audio is re-encoded to the container's codec (AAC for mp4/mkv, Opus for webm). On the gpu tier webm is rejected before billing (the gpu tier has no webm encoder), and a source wider or taller than 4096 pixels is rejected before billing (GPU H.264 encoder ceiling); the resolution check is skipped when the source could not be probed."
+                "description": "Output container: mp4 (default), webm or mkv. Audio is re-encoded to the container's codec (AAC for mp4/mkv, Opus for webm)."
               }
             },
             "required": [
@@ -2025,7 +2025,7 @@
           "params": {
             "$schema": "https://json-schema.org/draft/2020-12/schema",
             "title": "lut3d",
-            "description": "Color-grade the video with a 3D LUT. Supply exactly two inputs in order: the first is the video, the second is the LUT as a .cube file. The whole video is re-encoded to apply the grade. Runs on the cpu tier only: a request on the gpu tier is rejected before billing.",
+            "description": "Color-grade the video with a 3D LUT. Supply exactly two inputs in order: the first is the video, the second is the LUT as a .cube file. The whole video is re-encoded to apply the grade. Runs on the cpu tier.",
             "type": "object",
             "properties": {
               "interp": {
@@ -2130,7 +2130,7 @@
                   "mkv"
                 ],
                 "default": "mp4",
-                "description": "Output container. On the gpu tier webm is rejected before billing (the gpu tier has no webm encoder), and a base wider or taller than 4096 pixels is rejected before billing (GPU H.264 encoder ceiling) - resubmit on the cpu tier. The resolution check is skipped when the input could not be probed, in which case an oversized run fails at execution."
+                "description": "Output container."
               }
             },
             "additionalProperties": false
@@ -2236,7 +2236,7 @@
           "params": {
             "$schema": "https://json-schema.org/draft/2020-12/schema",
             "title": "package_abr_ladder",
-            "description": "Package an input into a multi-rendition CMAF HLS + DASH adaptive-bitrate ladder (master.m3u8 + manifest.mpd over N renditions, clear, no DRM). Re-encodes each rung, so any source codec is accepted; the input must carry both a video and an audio stream. Audio is always re-encoded to a single shared AAC track used by every rendition - the source audio codec is never preserved. Give an explicit renditions list OR a ladder preset (not both); omit both for the default ladder of 1080 at 5000 kbps, 720 at 2800 kbps, and 480 at 1200 kbps, clipped to the source height. Widths are derived from the source aspect (even-rounded), never supplied. A rung taller than the source is rejected (no upscaling). If the source is shorter than every default or preset rung, the ladder collapses to a single rung at the source height (rounded down to even) at 1200 kbps rather than failing. If the source height cannot be probed, the default or preset ladder is used unclipped and explicit rungs are not checked against the source, so upscaling can occur in that case. On the gpu tier any rung whose aspect-derived width exceeds the 4096-pixel GPU encoder ceiling is rejected before billing - resubmit on the cpu tier; that check is skipped when the source dimensions cannot be probed.",
+            "description": "Package an input into a multi-rendition CMAF HLS + DASH adaptive-bitrate ladder (master.m3u8 + manifest.mpd over N renditions, clear, no DRM). Re-encodes each rung, so any source codec is accepted; the input must carry both a video and an audio stream. Audio is always re-encoded to a single shared AAC track used by every rendition - the source audio codec is never preserved. Give an explicit renditions list OR a ladder preset (not both); omit both for the default ladder of 1080 at 5000 kbps, 720 at 2800 kbps, and 480 at 1200 kbps, clipped to the source height. Widths are derived from the source aspect (even-rounded), never supplied. A rung taller than the source is rejected (no upscaling). If the source is shorter than every default or preset rung, the ladder collapses to a single rung at the source height (rounded down to even) at 1200 kbps rather than failing. If the source height cannot be probed, the default or preset ladder is used unclipped and explicit rungs are not checked against the source, so upscaling can occur in that case.",
             "type": "object",
             "properties": {
               "renditions": {
@@ -2347,14 +2347,14 @@
                 "minimum": 1,
                 "maximum": 8192,
                 "default": 1280,
-                "description": "Output canvas width in pixels (default 1280). On the gpu tier a canvas wider or taller than 4096 pixels is rejected before billing (GPU H.264 encoder ceiling); resubmit on the cpu tier."
+                "description": "Output canvas width in pixels (default 1280)."
               },
               "height": {
                 "type": "integer",
                 "minimum": 1,
                 "maximum": 8192,
                 "default": 720,
-                "description": "Output canvas height in pixels (default 720). On the gpu tier a canvas wider or taller than 4096 pixels is rejected before billing (GPU H.264 encoder ceiling); resubmit on the cpu tier."
+                "description": "Output canvas height in pixels (default 720)."
               },
               "x": {
                 "type": "integer",
@@ -2381,7 +2381,7 @@
                   "mkv"
                 ],
                 "default": "mp4",
-                "description": "Output container. On the gpu tier webm is rejected before billing (the gpu tier has no webm encoder); resubmit on the cpu tier."
+                "description": "Output container."
               }
             },
             "additionalProperties": false
@@ -2438,7 +2438,7 @@
                 "minimum": 0,
                 "maximum": 51,
                 "default": 23,
-                "description": "H.264 quality for the video output (lower = higher quality). On the cpu tier this is libx264 -crf; on the gpu tier it is passed to the hardware encoder as -cq - a similar 0-51 scale but not identical quality per value. On the gpu tier a source wider or taller than 4096 pixels is rejected before billing (GPU H.264 encoder ceiling; resubmit on the cpu tier); that check is skipped when the input could not be probed."
+                "description": "H.264 quality for the video output (lower = higher quality). On the cpu tier this is libx264 -crf."
               },
               "thumbnail_second": {
                 "type": "integer",
@@ -2543,7 +2543,7 @@
           "params": {
             "$schema": "https://json-schema.org/draft/2020-12/schema",
             "title": "reframe",
-            "description": "Reframe the clip to a social aspect ratio. Runs on the cpu tier only: a request on the gpu tier is rejected before billing. Video and audio are always re-encoded (audio becomes AAC for mp4/mkv or Opus for webm); nothing is stream-copied.",
+            "description": "Reframe the clip to a social aspect ratio. Runs on the cpu tier. Video and audio are always re-encoded (audio becomes AAC for mp4/mkv or Opus for webm); nothing is stream-copied.",
             "type": "object",
             "properties": {
               "aspect": {
@@ -2632,7 +2632,7 @@
           "params": {
             "$schema": "https://json-schema.org/draft/2020-12/schema",
             "title": "reframe_track",
-            "description": "Pan a fixed-size crop window across the frame, driven by the crop-track sidecar (input1). The window starts centered and moves only when the track issues position commands. The output is a width x height video; video and audio are always re-encoded (audio becomes AAC for mp4/mkv or Opus for webm). Runs on the cpu tier only: a request on the gpu tier is rejected before billing.",
+            "description": "Pan a fixed-size crop window across the frame, driven by the crop-track sidecar (input1). The window starts centered and moves only when the track issues position commands. The output is a width x height video; video and audio are always re-encoded (audio becomes AAC for mp4/mkv or Opus for webm). Runs on the cpu tier.",
             "type": "object",
             "properties": {
               "width": {
@@ -2718,7 +2718,7 @@
                   "mkv"
                 ],
                 "default": "mp4",
-                "description": "Output container. On the gpu tier webm is rejected before billing (the gpu tier has no webm encoder), and a source wider or taller than 4096 pixels is rejected before billing (GPU H.264 encoder ceiling); resubmit on the cpu tier. The resolution check is skipped when the input could not be probed."
+                "description": "Output container."
               }
             },
             "additionalProperties": false
@@ -2788,7 +2788,7 @@
                   "mkv"
                 ],
                 "default": "mp4",
-                "description": "Output container. On the gpu tier webm is rejected before billing (the gpu tier has no webm encoder), and a source wider or taller than 4096 pixels is rejected before billing (GPU H.264 encoder ceiling); resubmit on the cpu tier. The resolution check is skipped when the input could not be probed."
+                "description": "Output container."
               }
             },
             "additionalProperties": false
@@ -2837,7 +2837,7 @@
           "params": {
             "$schema": "https://json-schema.org/draft/2020-12/schema",
             "title": "scale",
-            "description": "Resize the video to a target width and height; the default height preserves the source aspect ratio rounded to an even dimension. Video and audio are always re-encoded (video to the container default H.264 for mp4/mkv or VP9 for webm on the cpu tier, and to GPU H.264 on the gpu tier; audio to AAC for mp4/mkv or Opus for webm); nothing is stream-copied. Runs on both tiers: on the gpu tier a scale target wider or taller than 4096 pixels is rejected before billing (GPU H.264 encoder ceiling - resubmit on the cpu tier), and when the height is aspect-derived from an unprobed source only the width axis is checked.",
+            "description": "Resize the video to a target width and height; the default height preserves the source aspect ratio rounded to an even dimension. Video and audio are always re-encoded (video to the container default H.264 for mp4/mkv or VP9 for webm; audio to AAC for mp4/mkv or Opus for webm); nothing is stream-copied.",
             "type": "object",
             "properties": {
               "width": {
@@ -2845,7 +2845,7 @@
                 "minimum": 1,
                 "maximum": 8192,
                 "default": 1280,
-                "description": "Output width in pixels; on the gpu tier a target wider or taller than 4096 pixels is rejected before billing (GPU H.264 encoder ceiling - resubmit on the cpu tier), and the gpu tier's full-GPU path rounds an odd width down to the nearest even value."
+                "description": "Output width in pixels."
               },
               "height": {
                 "type": "integer",
@@ -2860,7 +2860,7 @@
                   "mkv"
                 ],
                 "default": "mp4",
-                "description": "Output container: mp4 (default), webm or mkv; it selects the re-encode codecs (audio becomes AAC for mp4/mkv or Opus for webm), and on the gpu tier webm is rejected before billing (the gpu tier has no webm encoder - resubmit on the cpu tier)."
+                "description": "Output container: mp4 (default), webm or mkv; it selects the re-encode codecs (audio becomes AAC for mp4/mkv or Opus for webm)."
               }
             },
             "additionalProperties": false
@@ -2909,7 +2909,7 @@
           "params": {
             "$schema": "https://json-schema.org/draft/2020-12/schema",
             "title": "scene_detect",
-            "description": "Analyze the video for hard cuts and return them as a structured list in the job result: one entry per cut with time (seconds of the first frame past the threshold) and score (0..1). No media file is produced or uploaded (zero egress); a video with no cuts above the threshold returns an empty list, which is a success, not an error. The audio track is ignored. Runs on the cpu tier only: a request on the gpu tier is rejected before billing.",
+            "description": "Analyze the video for hard cuts and return them as a structured list in the job result: one entry per cut with time (seconds of the first frame past the threshold) and score (0..1). No media file is produced or uploaded (zero egress); a video with no cuts above the threshold returns an empty list, which is a success, not an error. The audio track is ignored. Runs on the cpu tier.",
             "type": "object",
             "properties": {
               "threshold": {
@@ -3058,7 +3058,7 @@
           "params": {
             "$schema": "https://json-schema.org/draft/2020-12/schema",
             "title": "silence_detect",
-            "description": "Analyze the audio track for silent spans and return them as a structured list in the job result: one entry per span with start, end, and duration in seconds. If the audio ends while still silent, the final entry carries start only and omits end and duration. No media file is produced or uploaded (zero egress); audio with no qualifying silence returns an empty list, which is a success, not an error. The video track is ignored, but the input must contain an audio stream - a video-only input is not rejected up front and fails at execution. Runs on the cpu tier only: a request on the gpu tier is rejected before billing.",
+            "description": "Analyze the audio track for silent spans and return them as a structured list in the job result: one entry per span with start, end, and duration in seconds. If the audio ends while still silent, the final entry carries start only and omits end and duration. No media file is produced or uploaded (zero egress); audio with no qualifying silence returns an empty list, which is a success, not an error. The video track is ignored, but the input must contain an audio stream - a video-only input is not rejected up front and fails at execution. Runs on the cpu tier.",
             "type": "object",
             "properties": {
               "noise_db": {
@@ -3159,7 +3159,7 @@
                   "mkv"
                 ],
                 "default": "mp4",
-                "description": "Output container: mp4 (default), webm or mkv. Audio is re-encoded to the container's codec (AAC for mp4/mkv, Opus for webm). On the gpu tier webm is rejected before billing (the gpu tier has no webm encoder), and a source wider or taller than 4096 pixels is rejected before billing (GPU H.264 encoder ceiling); the resolution check is skipped when the source could not be probed."
+                "description": "Output container: mp4 (default), webm or mkv. Audio is re-encoded to the container's codec (AAC for mp4/mkv, Opus for webm)."
               }
             },
             "required": [
@@ -3211,7 +3211,7 @@
           "params": {
             "$schema": "https://json-schema.org/draft/2020-12/schema",
             "title": "silence_split",
-            "description": "Detect silences and split the file at them in one job: each cut lands at the END of a detected silence, so the silence stays attached to the end of the preceding segment and each new segment starts where sound resumes. Outputs are numbered seg_000, seg_001, and so on, delivered as output_urls in order; a source with no qualifying silence and no forced cap cut comes back as a single file. The input must contain an audio stream (rejected before billing otherwise). Runs on the cpu tier only: a request on the gpu tier is rejected before billing.",
+            "description": "Detect silences and split the file at them in one job: each cut lands at the END of a detected silence, so the silence stays attached to the end of the preceding segment and each new segment starts where sound resumes. Outputs are numbered seg_000, seg_001, and so on, delivered as output_urls in order; a source with no qualifying silence and no forced cap cut comes back as a single file. The input must contain an audio stream (rejected before billing otherwise). Runs on the cpu tier.",
             "type": "object",
             "properties": {
               "noise_db": {
@@ -3312,7 +3312,7 @@
           "params": {
             "$schema": "https://json-schema.org/draft/2020-12/schema",
             "title": "slideshow",
-            "description": "Turn N still images into one SILENT video - no audio track is produced. With effect none each image is fitted onto the width x height canvas preserving its aspect ratio (letterboxed or pillarboxed with black); with effect kenburns each image is center-cropped to fill the canvas and slowly zoomed from 1.0x to 1.5x. Encode quality is fixed (CRF 23) and cannot be tuned. On the gpu tier container webm is rejected before billing (the gpu tier has no webm encoder) - use the cpu tier for webm. An image that cannot be decoded is rejected before billing.",
+            "description": "Turn N still images into one SILENT video - no audio track is produced. With effect none each image is fitted onto the width x height canvas preserving its aspect ratio (letterboxed or pillarboxed with black); with effect kenburns each image is center-cropped to fill the canvas and slowly zoomed from 1.0x to 1.5x. Encode quality is fixed (CRF 23) and cannot be tuned. An image that cannot be decoded is rejected before billing.",
             "type": "object",
             "properties": {
               "images": {
@@ -3353,21 +3353,21 @@
                   "mkv"
                 ],
                 "default": "mp4",
-                "description": "Output container with a pinned video codec: mp4 (default) and mkv encode h264, webm encodes vp9; mp4 is written with +faststart so it progressive-plays, and webm is rejected before billing on the gpu tier (no NVENC vp9 encoder) - submit webm on the cpu tier."
+                "description": "Output container with a pinned video codec: mp4 (default) and mkv encode h264, webm encodes vp9; mp4 is written with +faststart so it progressive-plays."
               },
               "width": {
                 "type": "integer",
                 "minimum": 16,
                 "maximum": 8192,
                 "default": 1280,
-                "description": "Canvas width in pixels - together with height it is the output resolution every image is normalized to; on the gpu tier an mp4 or mkv output wider or taller than 4096 pixels is rejected before billing (the GPU h264 encoder ceiling, with no software fallback on that tier) - use the cpu tier for larger canvases."
+                "description": "Canvas width in pixels - together with height it is the output resolution every image is normalized to."
               },
               "height": {
                 "type": "integer",
                 "minimum": 16,
                 "maximum": 8192,
                 "default": 720,
-                "description": "Canvas height in pixels - together with width it is the output resolution every image is normalized to; the same gpu-tier pre-billing rejection applies to an output wider or taller than 4096 pixels."
+                "description": "Canvas height in pixels - together with width it is the output resolution every image is normalized to."
               }
             },
             "additionalProperties": false
@@ -3434,7 +3434,7 @@
                   "mkv"
                 ],
                 "default": "mp4",
-                "description": "Output container. On the gpu tier webm is rejected before billing (the gpu tier has no webm encoder), and a source wider or taller than 4096 pixels is rejected before billing (GPU H.264 encoder ceiling); resubmit on the cpu tier. The resolution check is skipped when the input could not be probed."
+                "description": "Output container."
               }
             },
             "additionalProperties": false
@@ -3483,7 +3483,7 @@
           "params": {
             "$schema": "https://json-schema.org/draft/2020-12/schema",
             "title": "sticker_overlay",
-            "description": "Composite the second input (input1, typically a still image: a sticker, logo, or watermark) over the base video (input0), visible only inside a timed window: from start until end, or until the end of the source when end is omitted. Placement uses the same anchors as overlay: a named corner/center position inset by margin. The sticker is composited at native size unless scale resizes it (bicubic, aspect preserved); there is no opacity control - the sticker's own alpha channel (e.g. a transparent PNG) is honored, and fully opaque pixels stay fully opaque. A sticker larger than the frame (natively or after scaling) is composited with the out-of-frame overflow cropped; the output always keeps the base's resolution and duration. An animated sticker plays on the base's timeline from t=0, not from start - the window only shows or hides it, so an animation shorter than start shows only its frozen last frame inside the window; one that ends earlier stays frozen on its last frame for the remainder, and one that runs longer has its extra tail dropped. A still image is unaffected. Only the base's audio is kept (a silent base still succeeds); the sticker input's audio is discarded. Both inputs must contain a video stream (a still image counts) - an input without one is rejected before billing. When the source can be probed, a start at or after the source duration and a supplied end past it are rejected before billing (never silently clamped - omit end to run to the source end); the checks compare against the source's video stream duration when it disagrees with the container duration; when it cannot be probed the window is range-checked only. Video and audio are always re-encoded (audio becomes AAC for mp4/mkv or Opus for webm); nothing is stream-copied. Runs on the cpu tier only: a request on the gpu tier is rejected before billing.",
+            "description": "Composite the second input (input1, typically a still image: a sticker, logo, or watermark) over the base video (input0), visible only inside a timed window: from start until end, or until the end of the source when end is omitted. Placement uses the same anchors as overlay: a named corner/center position inset by margin. The sticker is composited at native size unless scale resizes it (bicubic, aspect preserved); there is no opacity control - the sticker's own alpha channel (e.g. a transparent PNG) is honored, and fully opaque pixels stay fully opaque. A sticker larger than the frame (natively or after scaling) is composited with the out-of-frame overflow cropped; the output always keeps the base's resolution and duration. An animated sticker plays on the base's timeline from t=0, not from start - the window only shows or hides it, so an animation shorter than start shows only its frozen last frame inside the window; one that ends earlier stays frozen on its last frame for the remainder, and one that runs longer has its extra tail dropped. A still image is unaffected. Only the base's audio is kept (a silent base still succeeds); the sticker input's audio is discarded. Both inputs must contain a video stream (a still image counts) - an input without one is rejected before billing. When the source can be probed, a start at or after the source duration and a supplied end past it are rejected before billing (never silently clamped - omit end to run to the source end); the checks compare against the source's video stream duration when it disagrees with the container duration; when it cannot be probed the window is range-checked only. Video and audio are always re-encoded (audio becomes AAC for mp4/mkv or Opus for webm); nothing is stream-copied. Runs on the cpu tier.",
             "type": "object",
             "properties": {
               "start": {
@@ -3584,7 +3584,7 @@
           "params": {
             "$schema": "https://json-schema.org/draft/2020-12/schema",
             "title": "stills",
-            "description": "Extract exactly one frame from the clip as a jpg (default) or png image: position selects the first frame, the last frame, or the frame at an exact timestamp. The frame is always decoded and encoded to the chosen image format - nothing is stream-copied - and audio is discarded, since the output is a single image file. The only encode is the software mjpeg/png image encoder - no video-stream encoder and no GPU is needed - so the capability runs on every tier.",
+            "description": "Extract exactly one frame from the clip as a jpg (default) or png image: position selects the first frame, the last frame, or the frame at an exact timestamp. The frame is always decoded and encoded to the chosen image format - nothing is stream-copied - and audio is discarded, since the output is a single image file. The only encode is the software mjpeg/png image encoder - no video-stream encoder is needed - so the capability runs on the cpu tier.",
             "type": "object",
             "properties": {
               "position": {
@@ -3775,7 +3775,7 @@
           "params": {
             "$schema": "https://json-schema.org/draft/2020-12/schema",
             "title": "subtitle_compose",
-            "description": "Author animated word-timed captions from the transcript and burn them into the single input video (the whole video is re-encoded; the subtitle document is generated server-side, no subtitle file is supplied). Words must be listed in non-decreasing start_ms order with 0 <= start_ms <= end_ms for each - out-of-order or inverted spans are rejected before billing. Backslashes and curly braces are stripped from word and hook text; newlines and tabs become spaces. Runs on the cpu tier only: a request on the gpu tier is rejected before billing.",
+            "description": "Author animated word-timed captions from the transcript and burn them into the single input video (the whole video is re-encoded; the subtitle document is generated server-side, no subtitle file is supplied). Words must be listed in non-decreasing start_ms order with 0 <= start_ms <= end_ms for each - out-of-order or inverted spans are rejected before billing. Backslashes and curly braces are stripped from word and hook text; newlines and tabs become spaces. Runs on the cpu tier.",
             "type": "object",
             "properties": {
               "words": {
@@ -4110,7 +4110,7 @@
           "params": {
             "$schema": "https://json-schema.org/draft/2020-12/schema",
             "title": "title_card",
-            "description": "Draw a text title over the single input video with the drawtext filter. The text is staged as a server-generated text file and rendered with expansion disabled, so it is drawn verbatim: quotes, colons, backslashes, and ffmpeg %{...} expansion sequences have no effect on the command. Normalization before rendering: CRLF and CR become LF and newlines render as line breaks (multi-line titles are supported); tabs become single spaces; other control characters are removed; leading and trailing whitespace is trimmed. After normalization the text must be non-empty and at most 200 characters or the request is rejected before billing. Show window: omit start and end to show the title for the whole video; start alone shows it from start to the end of the video; end alone shows it from the beginning until end; when both are given, start must be less than end. When the source duration is probed, a start at or after it, or an end past it, is rejected before billing; when the duration is unknown the window is range-checked only. The input must contain a video stream or it is rejected before billing. Video and audio are always re-encoded (audio becomes AAC for mp4/mkv or Opus for webm); nothing is stream-copied. Runs on the cpu tier only: a request on the gpu tier is rejected before billing.",
+            "description": "Draw a text title over the single input video with the drawtext filter. The text is staged as a server-generated text file and rendered with expansion disabled, so it is drawn verbatim: quotes, colons, backslashes, and ffmpeg %{...} expansion sequences have no effect on the command. Normalization before rendering: CRLF and CR become LF and newlines render as line breaks (multi-line titles are supported); tabs become single spaces; other control characters are removed; leading and trailing whitespace is trimmed. After normalization the text must be non-empty and at most 200 characters or the request is rejected before billing. Show window: omit start and end to show the title for the whole video; start alone shows it from start to the end of the video; end alone shows it from the beginning until end; when both are given, start must be less than end. When the source duration is probed, a start at or after it, or an end past it, is rejected before billing; when the duration is unknown the window is range-checked only. The input must contain a video stream or it is rejected before billing. Video and audio are always re-encoded (audio becomes AAC for mp4/mkv or Opus for webm); nothing is stream-copied. Runs on the cpu tier.",
             "type": "object",
             "properties": {
               "text": {
@@ -4244,7 +4244,7 @@
           "params": {
             "$schema": "https://json-schema.org/draft/2020-12/schema",
             "title": "transcode",
-            "description": "Re-encode the source into the chosen container and codecs. Video and audio are ALWAYS re-encoded, never stream-copied - even when the source already matches the target codec. On the gpu tier the output resolution is capped by the hardware encoder (up to 4096 pixels per axis for h264, 8192 for hevc): a larger source is rejected before billing - resubmit on the cpu tier. The resolution check is skipped when the input could not be probed.",
+            "description": "Re-encode the source into the chosen container and codecs. Video and audio are ALWAYS re-encoded, never stream-copied - even when the source already matches the target codec.",
             "type": "object",
             "properties": {
               "container": {
@@ -4266,7 +4266,7 @@
                   "av1"
                 ],
                 "default": "h264",
-                "description": "Video codec to re-encode to. h264 and hevc are invalid in webm (which carries only vp8/vp9/av1) — pair webm with vp9 or av1. vp9/av1 are CPU-only (rejected on the gpu tier, which is NVENC-only)."
+                "description": "Video codec to re-encode to. h264 and hevc are invalid in webm (which carries only vp8/vp9/av1) — pair webm with vp9 or av1."
               },
               "acodec": {
                 "type": "string",
@@ -4274,14 +4274,14 @@
                   "aac",
                   "opus"
                 ],
-                "description": "Audio codec to re-encode to. Omitting it still RE-ENCODES audio - to the container's default codec - and never stream-copies the source audio. aac is invalid in webm (use opus); opus is CPU-only (rejected on the gpu tier, which has no libopus)."
+                "description": "Audio codec to re-encode to. Omitting it still RE-ENCODES audio - to the container's default codec - and never stream-copies the source audio. aac is invalid in webm (use opus)."
               },
               "crf": {
                 "type": "integer",
                 "minimum": 0,
                 "maximum": 51,
                 "default": 23,
-                "description": "Quality: 0 (best) to 51 (worst), default 23. Applied as -crf to the software encoders; on the gpu tier it is passed to the hardware encoder as -cq (similar scale, not bit-identical quality per value). With vcodec vp9 the value acts only as a quality cap constrained by the encoder's default bitrate, so vp9 output is markedly lower quality than the same value in h264, hevc, or av1."
+                "description": "Quality: 0 (best) to 51 (worst), default 23. Applied as -crf to the software encoders. With vcodec vp9 the value acts only as a quality cap constrained by the encoder's default bitrate, so vp9 output is markedly lower quality than the same value in h264, hevc, or av1."
               },
               "pix_fmt": {
                 "type": "string",
@@ -4290,7 +4290,7 @@
                   "yuv444p"
                 ],
                 "default": "yuv420p",
-                "description": "Output pixel format. yuv444p is CPU-only: on the gpu tier it is rejected before billing (the GPU encoder accepts only yuv420p)."
+                "description": "Output pixel format."
               }
             },
             "additionalProperties": false
@@ -4490,7 +4490,7 @@
                   "mkv"
                 ],
                 "default": "mp4",
-                "description": "Output container. On the gpu tier webm is rejected before billing (the gpu tier has no webm encoder), and a base wider or taller than 4096 pixels is rejected before billing (GPU H.264 encoder ceiling) - resubmit on the cpu tier. The resolution check is skipped when the input could not be probed, in which case an oversized run fails at execution."
+                "description": "Output container."
               }
             },
             "additionalProperties": false
