@@ -1,13 +1,13 @@
 ---
 title: "Capabilities Reference (Beta)"
-description: "Every capability the eachlabs Video API accepts — parameters, bounds, tiers, copy-pasteable request bodies, and response shapes."
+description: "Every capability the eachlabs Video API accepts — parameters, bounds, copy-pasteable request bodies, and response shapes."
 ---
 
 <Note>
 **Private beta.** These pages are shared by direct link only and are not listed in the public navigation. The surface below is validated server-side with `additionalProperties: false` — a request is either exactly this shape or it is rejected before any compute runs, at $0. Contracts here are stable for the beta; additions may land, removals will not without notice.
 </Note>
 
-Every capability job is submitted the same way: `POST https://api.eachlabs.ai/v1/prediction` with header `Authorization: Bearer YOUR_API_KEY`, body `{"model": "eachlabs-video-api", "input": {"capability": "<name>", "tier": "cpu", "input_url": "...", "params": {...}}}`, then poll `GET /v1/prediction/{id}` until a terminal status. `tier` is **required** and its only accepted value is `"cpu"`. Analysis capabilities (`probe`, `scene_detect`, `silence_detect`, `audio_analysis`) return structured JSON in `output`; everything else returns hosted artifact URL(s) — the exact JSON per output class is in [Response shapes](#response-shapes). See [Quickstart](/video/quickstart) for the input URL requirements and [Billing & Limits](/video/billing-limits) for pricing mechanics and the error catalog. For long-tail cases the named capabilities don't cover, a raw-ffmpeg mode with a different top-level contract is documented at [run_ffmpeg](#run_ffmpeg), and multi-step patterns are collected under [Recipes](#recipes).
+Every capability job is submitted the same way: `POST https://api.eachlabs.ai/v1/prediction` with header `Authorization: Bearer YOUR_API_KEY`, body `{"model": "eachlabs-video-api", "input": {"capability": "<name>", "input_url": "...", "params": {...}}}`, then poll `GET /v1/prediction/{id}` until a terminal status. A request needs only `capability`, `input_url` (or `input_urls`), and `params`. Analysis capabilities (`probe`, `scene_detect`, `silence_detect`, `audio_analysis`) return structured JSON in `output`; everything else returns hosted artifact URL(s) — the exact JSON per output class is in [Response shapes](#response-shapes). See [Quickstart](/video/quickstart) for the input URL requirements and [Billing & Limits](/video/billing-limits) for pricing mechanics and the error catalog. For long-tail cases the named capabilities don't cover, a raw-ffmpeg mode with a different top-level contract is documented at [run_ffmpeg](#run_ffmpeg), and multi-step patterns are collected under [Recipes](#recipes).
 
 The 44 capabilities by category (sections below are alphabetical; `keep_ranges` and `silence_remove` are one capability under two accepted names, so the API accepts 45 capability names):
 
@@ -21,10 +21,6 @@ The 44 capabilities by category (sections below are alphabetical; `keep_ranges` 
 | Packaging | `hls_ladder`, `package_abr`, `package_abr_ladder` |
 | Stills & sprites | `poster`, `stills`, `storyboard_sprites`, `thumbnails` |
 | Analysis | `audio_analysis`, `probe`, `scene_detect`, `silence_detect` |
-
-<Warning>
-`cpu` is the only tier available. A `gpu` tier is not currently offered — a request carrying `tier: "gpu"` is rejected at $0 before any compute runs. Every capability below runs on `cpu`.
-</Warning>
 
 ## Encode defaults
 
@@ -68,7 +64,7 @@ Before compute starts, staged inputs pass through an ffprobe gate. The gate's ch
 
    (An image counts as a video stream — still-image watermarks and overlays pass.)
 3. **Empty-output parameters** — the per-capability zero-bill rejects noted in the tables below (`trim` start at/past EOF, `fade_out_start` at/past EOF, `stills`/`poster` timestamps at/past EOF, `keep_ranges` windows entirely past EOF or under one frame, `title_card`/`sticker_overlay` show windows outside the probed duration, `crossfade` `offset`/`duration` exceeding the first input's probed duration).
-4. **Tier and encoder constraints** — `cpu` is the only accepted tier, so a `tier: "gpu"` request is rejected at $0 before the gate runs. Encoder constraints that hold on `cpu` — a codec the requested container cannot mux, such as `segment`/`silence_split` with `reencode: true` targeting `webm` — are checked at submit. Each is noted per capability.
+4. **Encoder constraints** — a codec the requested container cannot mux, such as `segment`/`silence_split` with `reencode: true` targeting `webm`, is checked at submit. Each is noted per capability.
 
 **Geometry is not probed.** A `crop` window larger than the source frame, or a `pad` `x`/`y` offset that pushes the picture outside the canvas, passes the gate and fails at execution as `exec_error` (verified against production) — probe the source first when its dimensions are uncertain. If the probe itself cannot read the source, the gates that need probe data fail open and the job proceeds.
 
@@ -76,7 +72,7 @@ Before compute starts, staged inputs pass through an ffprobe gate. The gate's ch
 
 Measure the audio track — integrated loudness, loudness range, true peak, sample peak, and clipping indicators — returned as structured JSON via astats+ebur128. A metadata analysis, not a media artifact.
 
-**Inputs:** `input_url` (1) · **Tiers:** `cpu` · **Output:** analysis JSON — `{"audio_analysis": {...}}` in `output`; no uploaded artifact, zero egress
+**Inputs:** `input_url` (1) · **Output:** analysis JSON — `{"audio_analysis": {...}}` in `output`; no uploaded artifact, zero egress
 
 No parameters — an empty `params` object is valid.
 
@@ -99,7 +95,6 @@ No parameters — an empty `params` object is valid.
   "model": "eachlabs-video-api",
   "input": {
     "capability": "audio_analysis",
-    "tier": "cpu",
     "input_url": "YOUR_INPUT_URL",
     "params": {}
   }
@@ -125,7 +120,7 @@ A real production result:
 
 Duck a music/program bed under a voice track: the voice drives a sidechain compressor that lowers the music while the voice is above threshold, and the same voice is then mixed on top — output carries the voice over the ducked bed, audio-only.
 
-**Inputs:** `input_urls` (2) — `input_urls[0]` is the music/program bed, `input_urls[1]` is the voice · **Tiers:** `cpu` · **Output:** media — single audio file (mp3/wav/m4a)
+**Inputs:** `input_urls` (2) — `input_urls[0]` is the music/program bed, `input_urls[1]` is the voice · **Output:** media — single audio file (mp3/wav/m4a)
 
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
@@ -140,7 +135,6 @@ Duck a music/program bed under a voice track: the voice drives a sidechain compr
   "model": "eachlabs-video-api",
   "input": {
     "capability": "audio_duck",
-    "tier": "cpu",
     "input_urls": [
       "YOUR_INPUT_URL_1",
       "YOUR_INPUT_URL_2"
@@ -165,7 +159,7 @@ Duck a music/program bed under a voice track: the voice drives a sidechain compr
 
 Master the audio track to a distribution loudness target — compressor → EBU R128 loudness normalization (single-pass) → true-peak limiter — written audio-only as MP3, WAV, or M4A. The first-class path for audio-in/audio-out mastering (e.g. MP3 → −14 LUFS MP3).
 
-**Inputs:** `input_url` (1) · **Tiers:** `cpu` · **Output:** media — single audio file (mp3/wav/m4a)
+**Inputs:** `input_url` (1) · **Output:** media — single audio file (mp3/wav/m4a)
 
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
@@ -187,7 +181,6 @@ Master the audio track to a distribution loudness target — compressor → EBU 
   "model": "eachlabs-video-api",
   "input": {
     "capability": "audio_master",
-    "tier": "cpu",
     "input_url": "YOUR_INPUT_URL",
     "params": {
       "target_lufs": -14,
@@ -202,7 +195,7 @@ Master the audio track to a distribution loudness target — compressor → EBU 
 
 Swap or mix a video's audio track using a second input as the audio source; video always stream-copied.
 
-**Inputs:** `input_urls` (2) — `input_urls[0]` is the base video, `input_urls[1]` is the audio source · **Tiers:** `cpu` · **Output:** media — single file
+**Inputs:** `input_urls` (2) — `input_urls[0]` is the base video, `input_urls[1]` is the audio source · **Output:** media — single file
 
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
@@ -216,7 +209,6 @@ Swap or mix a video's audio track using a second input as the audio source; vide
   "model": "eachlabs-video-api",
   "input": {
     "capability": "audio_replace",
-    "tier": "cpu",
     "input_urls": [
       "YOUR_INPUT_URL_1",
       "YOUR_INPUT_URL_2"
@@ -238,7 +230,7 @@ Swap or mix a video's audio track using a second input as the audio source; vide
 
 Burn a subtitle track (SRT/VTT/ASS) into the video via libass, with optional style overrides.
 
-**Inputs:** `input_urls` (2) — `input_urls[0]` is the video, `input_urls[1]` is the subtitle file (SRT/VTT/ASS) · **Tiers:** `cpu` · **Output:** media — single file
+**Inputs:** `input_urls` (2) — `input_urls[0]` is the video, `input_urls[1]` is the subtitle file (SRT/VTT/ASS) · **Output:** media — single file
 
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
@@ -252,7 +244,6 @@ Burn a subtitle track (SRT/VTT/ASS) into the video via libass, with optional sty
   "model": "eachlabs-video-api",
   "input": {
     "capability": "captions",
-    "tier": "cpu",
     "input_urls": [
       "YOUR_INPUT_URL_1",
       "YOUR_INPUT_URL_2"
@@ -268,7 +259,7 @@ Burn a subtitle track (SRT/VTT/ASS) into the video via libass, with optional sty
 
 Color-grade via ffmpeg eq: brightness/contrast/saturation/gamma. All-defaults is the identity grade (still re-encodes).
 
-**Inputs:** `input_url` (1) · **Tiers:** `cpu` · **Output:** media — single file
+**Inputs:** `input_url` (1) · **Output:** media — single file
 
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
@@ -283,7 +274,6 @@ Color-grade via ffmpeg eq: brightness/contrast/saturation/gamma. All-defaults is
   "model": "eachlabs-video-api",
   "input": {
     "capability": "color",
-    "tier": "cpu",
     "input_url": "YOUR_INPUT_URL",
     "params": {
       "brightness": 0,
@@ -298,7 +288,7 @@ Color-grade via ffmpeg eq: brightness/contrast/saturation/gamma. All-defaults is
 
 Join 2-10 inputs end-to-end, normalizing each to a common WxH canvas and 44.1kHz stereo (accepts mixed resolutions/formats).
 
-**Inputs:** `input_urls` (2-10, must equal the `inputs` param; joined in array order) · **Tiers:** `cpu` · **Output:** media — single file
+**Inputs:** `input_urls` (2-10, must equal the `inputs` param; joined in array order) · **Output:** media — single file
 
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
@@ -312,7 +302,6 @@ Join 2-10 inputs end-to-end, normalizing each to a common WxH canvas and 44.1kHz
   "model": "eachlabs-video-api",
   "input": {
     "capability": "concat",
-    "tier": "cpu",
     "input_urls": [
       "YOUR_INPUT_URL_1",
       "YOUR_INPUT_URL_2"
@@ -330,7 +319,7 @@ Join 2-10 inputs end-to-end, normalizing each to a common WxH canvas and 44.1kHz
 
 Losslessly rejoin 2-50 already-encoded, **same-codec** chunks via the concat demuxer with -c copy (no re-encode).
 
-**Inputs:** `input_urls` (2-50, must equal the `inputs` param; joined in array order) · **Tiers:** `cpu` · **Output:** media — single file
+**Inputs:** `input_urls` (2-50, must equal the `inputs` param; joined in array order) · **Output:** media — single file
 
 <Warning>
 Chunks produced by stream-copy `trim` carry discard-flagged pre-roll back to the previous keyframe, which becomes **visible** after `concat_copy` (measured +1.35s on a 30s target) — use [keep_ranges](#keep_ranges) for frame-accurate multi-range editing.
@@ -346,7 +335,6 @@ Chunks produced by stream-copy `trim` carry discard-flagged pre-roll back to the
   "model": "eachlabs-video-api",
   "input": {
     "capability": "concat_copy",
-    "tier": "cpu",
     "input_urls": [
       "YOUR_INPUT_URL_1",
       "YOUR_INPUT_URL_2"
@@ -363,7 +351,7 @@ Chunks produced by stream-copy `trim` carry discard-flagged pre-roll back to the
 
 Cut a width x height rectangle out of the frame (centered unless x/y given).
 
-**Inputs:** `input_url` (1) · **Tiers:** `cpu` · **Output:** media — single file
+**Inputs:** `input_url` (1) · **Output:** media — single file
 
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
@@ -382,7 +370,6 @@ The window is **not checked against the source frame**: a `width`/`height` (or `
   "model": "eachlabs-video-api",
   "input": {
     "capability": "crop",
-    "tier": "cpu",
     "input_url": "YOUR_INPUT_URL",
     "params": {
       "width": 640,
@@ -397,7 +384,7 @@ The window is **not checked against the source frame**: a `width`/`height` (or `
 
 Crossfade two clips into one: the video transition starts `offset` seconds into the first clip and blends into the second over `duration` seconds (xfade); the audio is always crossfaded at the junction of the two audio tracks over the same `duration` (acrossfade ignores `offset`).
 
-**Inputs:** `input_urls` (2) — joined in order, first into second · **Tiers:** `cpu` · **Output:** media — single file
+**Inputs:** `input_urls` (2) — joined in order, first into second · **Output:** media — single file
 
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
@@ -411,7 +398,6 @@ Crossfade two clips into one: the video transition starts `offset` seconds into 
   "model": "eachlabs-video-api",
   "input": {
     "capability": "crossfade",
-    "tier": "cpu",
     "input_urls": [
       "YOUR_INPUT_URL_1",
       "YOUR_INPUT_URL_2"
@@ -435,7 +421,7 @@ Crossfade two clips into one: the video transition starts `offset` seconds into 
 
 Drop the video stream and write the audio track in the requested format (STT-ready via sample_rate/mono).
 
-**Inputs:** `input_url` (1) · **Tiers:** `cpu` · **Output:** media — single audio file (mp3/wav/m4a)
+**Inputs:** `input_url` (1) · **Output:** media — single audio file (mp3/wav/m4a)
 
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
@@ -448,7 +434,6 @@ Drop the video stream and write the audio track in the requested format (STT-rea
   "model": "eachlabs-video-api",
   "input": {
     "capability": "extract_audio",
-    "tier": "cpu",
     "input_url": "YOUR_INPUT_URL",
     "params": {
       "format": "mp3",
@@ -462,7 +447,7 @@ Drop the video stream and write the audio track in the requested format (STT-rea
 
 Video fade-in and/or fade-out with matching audio afade.
 
-**Inputs:** `input_url` (1) · **Tiers:** `cpu` · **Output:** media — single file
+**Inputs:** `input_url` (1) · **Output:** media — single file
 
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
@@ -477,7 +462,6 @@ Video fade-in and/or fade-out with matching audio afade.
   "model": "eachlabs-video-api",
   "input": {
     "capability": "fade",
-    "tier": "cpu",
     "input_url": "YOUR_INPUT_URL",
     "params": {
       "type": "both",
@@ -493,7 +477,7 @@ Video fade-in and/or fade-out with matching audio afade.
 
 Convert a clip to an animated GIF at a given fps and width (lanczos, single pass).
 
-**Inputs:** `input_url` (1) · **Tiers:** `cpu` · **Output:** media — single output.gif
+**Inputs:** `input_url` (1) · **Output:** media — single output.gif
 
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
@@ -505,7 +489,6 @@ Convert a clip to an animated GIF at a given fps and width (lanczos, single pass
   "model": "eachlabs-video-api",
   "input": {
     "capability": "gif",
-    "tier": "cpu",
     "input_url": "YOUR_INPUT_URL",
     "params": {
       "fps": 10,
@@ -519,7 +502,7 @@ Convert a clip to an animated GIF at a given fps and width (lanczos, single pass
 
 Encode a multi-rendition adaptive-bitrate HLS ladder (master.m3u8 + N variant playlists/segments) in one pass. Re-encodes each rung; upscaling is **not** rejected.
 
-**Inputs:** `input_url` (1) · **Tiers:** `cpu` · **Output:** bundle `{"primary": master.m3u8, "artifacts": [...]}` in `output` — master.m3u8 + stream_N.m3u8 variants + shared TS segments — see [Response shapes](#response-shapes)
+**Inputs:** `input_url` (1) · **Output:** bundle `{"primary": master.m3u8, "artifacts": [...]}` in `output` — master.m3u8 + stream_N.m3u8 variants + shared TS segments — see [Response shapes](#response-shapes)
 
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
@@ -536,7 +519,6 @@ Omitting both `renditions` and `ladder` applies the default `720p` preset (720@3
   "model": "eachlabs-video-api",
   "input": {
     "capability": "hls_ladder",
-    "tier": "cpu",
     "input_url": "YOUR_INPUT_URL",
     "params": {
       "renditions": [
@@ -555,7 +537,7 @@ Keep only the supplied time ranges and close the gaps into one continuous, frame
 
 **Two accepted names, one capability.** `keep_ranges` and `silence_remove` are the same capability under two wire names with byte-identical contracts — submit either. `silence_remove` is the original name (the 'act' half of the silence_detect → act chain); `keep_ranges` says what it does. Everything below applies to both.
 
-**Inputs:** `input_url` (1) · **Tiers:** `cpu` · **Output:** media — single file
+**Inputs:** `input_url` (1) · **Output:** media — single file
 
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
@@ -567,7 +549,6 @@ Keep only the supplied time ranges and close the gaps into one continuous, frame
   "model": "eachlabs-video-api",
   "input": {
     "capability": "keep_ranges",
-    "tier": "cpu",
     "input_url": "YOUR_INPUT_URL",
     "params": {
       "ranges": [
@@ -584,7 +565,7 @@ Keep only the supplied time ranges and close the gaps into one continuous, frame
 
 Normalize audio loudness to an EBU R128 target (single-pass); video stream-copied.
 
-**Inputs:** `input_url` (1) · **Tiers:** `cpu` · **Output:** media — single file
+**Inputs:** `input_url` (1) · **Output:** media — single file
 
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
@@ -605,7 +586,6 @@ Normalize audio loudness to an EBU R128 target (single-pass); video stream-copie
   "model": "eachlabs-video-api",
   "input": {
     "capability": "loudnorm",
-    "tier": "cpu",
     "input_url": "YOUR_INPUT_URL",
     "params": {
       "target_i": -14,
@@ -620,7 +600,7 @@ Normalize audio loudness to an EBU R128 target (single-pass); video stream-copie
 
 Color-grade through a caller-supplied .cube 3D LUT (lut3d filter).
 
-**Inputs:** `input_urls` (2) — `input_urls[0]` is the video, `input_urls[1]` is the `.cube` LUT file · **Tiers:** `cpu` · **Output:** media — single file
+**Inputs:** `input_urls` (2) — `input_urls[0]` is the video, `input_urls[1]` is the `.cube` LUT file · **Output:** media — single file
 
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
@@ -632,7 +612,6 @@ Color-grade through a caller-supplied .cube 3D LUT (lut3d filter).
   "model": "eachlabs-video-api",
   "input": {
     "capability": "lut3d",
-    "tier": "cpu",
     "input_urls": [
       "YOUR_INPUT_URL_1",
       "YOUR_INPUT_URL_2"
@@ -648,7 +627,7 @@ Color-grade through a caller-supplied .cube 3D LUT (lut3d filter).
 
 Composite a second video/image over a base at a named corner/center anchor, with optional margin and pre-scale.
 
-**Inputs:** `input_urls` (2) — `input_urls[0]` is the base video, `input_urls[1]` is the overlay (video or image) · **Tiers:** `cpu` · **Output:** media — single file
+**Inputs:** `input_urls` (2) — `input_urls[0]` is the base video, `input_urls[1]` is the overlay (video or image) · **Output:** media — single file
 
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
@@ -662,7 +641,6 @@ Composite a second video/image over a base at a named corner/center anchor, with
   "model": "eachlabs-video-api",
   "input": {
     "capability": "overlay",
-    "tier": "cpu",
     "input_urls": [
       "YOUR_INPUT_URL_1",
       "YOUR_INPUT_URL_2"
@@ -680,7 +658,7 @@ Composite a second video/image over a base at a named corner/center anchor, with
 
 Package an input into a single-rendition CMAF HLS + DASH adaptive-bitrate bundle (clear, no DRM). Stream-copies — never re-encodes.
 
-**Inputs:** `input_url` (1) · **Tiers:** `cpu` · **Output:** bundle `{"primary": master.m3u8, "artifacts": [...]}` in `output` — manifest.mpd + master.m3u8 + fmp4 segments — see [Response shapes](#response-shapes)
+**Inputs:** `input_url` (1) · **Output:** bundle `{"primary": master.m3u8, "artifacts": [...]}` in `output` — manifest.mpd + master.m3u8 + fmp4 segments — see [Response shapes](#response-shapes)
 
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
@@ -691,7 +669,6 @@ Package an input into a single-rendition CMAF HLS + DASH adaptive-bitrate bundle
   "model": "eachlabs-video-api",
   "input": {
     "capability": "package_abr",
-    "tier": "cpu",
     "input_url": "YOUR_INPUT_URL",
     "params": {
       "segment_duration": 4
@@ -704,7 +681,7 @@ Package an input into a single-rendition CMAF HLS + DASH adaptive-bitrate bundle
 
 Encode a **true** multi-rendition CMAF HLS + DASH ladder (re-encodes every rung, any source codec). When the source height is probeable, upscaling is rejected and the default ladder is clipped to source height; when the source cannot be probed, the ladder is **not** clipped (fail-open, may upscale).
 
-**Inputs:** `input_url` (1) · **Tiers:** `cpu` · **Output:** bundle `{"primary": master.m3u8, "artifacts": [...]}` in `output` — master.m3u8 + manifest.mpd over shared fmp4 segments — see [Response shapes](#response-shapes)
+**Inputs:** `input_url` (1) · **Output:** bundle `{"primary": master.m3u8, "artifacts": [...]}` in `output` — master.m3u8 + manifest.mpd over shared fmp4 segments — see [Response shapes](#response-shapes)
 
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
@@ -721,7 +698,6 @@ Omitting both `renditions` and `ladder` applies the default ladder — 1080@5000
   "model": "eachlabs-video-api",
   "input": {
     "capability": "package_abr_ladder",
-    "tier": "cpu",
     "input_url": "YOUR_INPUT_URL",
     "params": {
       "renditions": [
@@ -738,7 +714,7 @@ Omitting both `renditions` and `ladder` applies the default ladder — 1080@5000
 
 Frame the picture inside a width x height canvas filled with a background color.
 
-**Inputs:** `input_url` (1) · **Tiers:** `cpu` · **Output:** media — single file
+**Inputs:** `input_url` (1) · **Output:** media — single file
 
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
@@ -758,7 +734,6 @@ Frame the picture inside a width x height canvas filled with a background color.
   "model": "eachlabs-video-api",
   "input": {
     "capability": "pad",
-    "tier": "cpu",
     "input_url": "YOUR_INPUT_URL",
     "params": {
       "width": 1280,
@@ -773,7 +748,7 @@ Frame the picture inside a width x height canvas filled with a background color.
 
 One input -> two named outputs in one pass: a transcoded H.264 MP4 ('video') and a still-frame JPEG ('thumbnail').
 
-**Inputs:** `input_url` (1) · **Tiers:** `cpu` · **Output:** named-outputs object `{"video": ..., "thumbnail": ...}` in `output` — see [Response shapes](#response-shapes)
+**Inputs:** `input_url` (1) · **Output:** named-outputs object `{"video": ..., "thumbnail": ...}` in `output` — see [Response shapes](#response-shapes)
 
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
@@ -785,7 +760,6 @@ One input -> two named outputs in one pass: a transcoded H.264 MP4 ('video') and
   "model": "eachlabs-video-api",
   "input": {
     "capability": "poster",
-    "tier": "cpu",
     "input_url": "YOUR_INPUT_URL",
     "params": {
       "crf": 23,
@@ -799,7 +773,7 @@ One input -> two named outputs in one pass: a transcoded H.264 MP4 ('video') and
 
 Inspect an input with ffprobe and return the JSON metadata (format + streams) as the structured result — no media artifact, no egress.
 
-**Inputs:** `input_url` (1) · **Tiers:** `cpu` · **Output:** analysis JSON — the ffprobe document (`format` + `streams`) returned directly in `output`; no uploaded artifact
+**Inputs:** `input_url` (1) · **Output:** analysis JSON — the ffprobe document (`format` + `streams`) returned directly in `output`; no uploaded artifact
 
 No parameters — an empty `params` object is valid.
 
@@ -808,7 +782,6 @@ No parameters — an empty `params` object is valid.
   "model": "eachlabs-video-api",
   "input": {
     "capability": "probe",
-    "tier": "cpu",
     "input_url": "YOUR_INPUT_URL",
     "params": {}
   }
@@ -819,7 +792,7 @@ No parameters — an empty `params` object is valid.
 
 Convert a clip to a social aspect ratio via scale+crop (fill) or scale+pad (fit).
 
-**Inputs:** `input_url` (1) · **Tiers:** `cpu` · **Output:** media — single file at the preset resolution
+**Inputs:** `input_url` (1) · **Output:** media — single file at the preset resolution
 
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
@@ -833,7 +806,6 @@ Convert a clip to a social aspect ratio via scale+crop (fill) or scale+pad (fit)
   "model": "eachlabs-video-api",
   "input": {
     "capability": "reframe",
-    "tier": "cpu",
     "input_url": "YOUR_INPUT_URL",
     "params": {
       "aspect": "9:16",
@@ -848,7 +820,7 @@ Convert a clip to a social aspect ratio via scale+crop (fill) or scale+pad (fit)
 
 Pan a fixed-size crop window across the frame following a subject, driven by a crop-track sidecar (sendcmd script).
 
-**Inputs:** `input_urls` (2) — `input_urls[0]` is the source video, `input_urls[1]` is the crop-track sidecar (sendcmd script) · **Tiers:** `cpu` · **Output:** media — single file
+**Inputs:** `input_urls` (2) — `input_urls[0]` is the source video, `input_urls[1]` is the crop-track sidecar (sendcmd script) · **Output:** media — single file
 
 <Warning>**Experimental.** `reframe_track` ships only the execution leg today: the auto-tracking model that would generate crop tracks for you is not yet available, so you must supply your own sendcmd tracking sidecar as `input_urls[1]` (format below). If you cannot produce a crop track yourself, use `reframe` (static crop/pad) instead. The sidecar contract on this page is stable and will not change when auto-tracking lands.</Warning>
 
@@ -875,7 +847,6 @@ Pan a fixed-size crop window across the frame following a subject, driven by a c
   "model": "eachlabs-video-api",
   "input": {
     "capability": "reframe_track",
-    "tier": "cpu",
     "input_urls": [
       "YOUR_INPUT_URL_1",
       "YOUR_INPUT_URL_2"
@@ -893,7 +864,7 @@ Pan a fixed-size crop window across the frame following a subject, driven by a c
 
 Play the clip backwards (video reverse + audio areverse). Buffers the whole clip — suits short inputs.
 
-**Inputs:** `input_url` (1) · **Tiers:** `cpu` · **Output:** media — single file
+**Inputs:** `input_url` (1) · **Output:** media — single file
 
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
@@ -904,7 +875,6 @@ Play the clip backwards (video reverse + audio areverse). Buffers the whole clip
   "model": "eachlabs-video-api",
   "input": {
     "capability": "reverse",
-    "tier": "cpu",
     "input_url": "YOUR_INPUT_URL",
     "params": {
       "container": "mp4"
@@ -917,7 +887,7 @@ Play the clip backwards (video reverse + audio areverse). Buffers the whole clip
 
 Rotate the picture in fixed 90-degree clockwise steps (transpose, no interpolation).
 
-**Inputs:** `input_url` (1) · **Tiers:** `cpu` · **Output:** media — single file
+**Inputs:** `input_url` (1) · **Output:** media — single file
 
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
@@ -929,7 +899,6 @@ Rotate the picture in fixed 90-degree clockwise steps (transpose, no interpolati
   "model": "eachlabs-video-api",
   "input": {
     "capability": "rotate",
-    "tier": "cpu",
     "input_url": "YOUR_INPUT_URL",
     "params": {
       "degrees": 90,
@@ -943,7 +912,7 @@ Rotate the picture in fixed 90-degree clockwise steps (transpose, no interpolati
 
 Resize video to a target width/height, keeping audio.
 
-**Inputs:** `input_url` (1) · **Tiers:** `cpu` · **Output:** media — single file
+**Inputs:** `input_url` (1) · **Output:** media — single file
 
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
@@ -956,7 +925,6 @@ Resize video to a target width/height, keeping audio.
   "model": "eachlabs-video-api",
   "input": {
     "capability": "scale",
-    "tier": "cpu",
     "input_url": "YOUR_INPUT_URL",
     "params": {
       "width": 1280,
@@ -971,7 +939,7 @@ Resize video to a target width/height, keeping audio.
 
 Detect hard cuts and return the structured scene list as the result — a metadata analysis, not a media artifact.
 
-**Inputs:** `input_url` (1) · **Tiers:** `cpu` · **Output:** analysis JSON — `{"scenes": [{time, score}]}` in `output` (`time` in seconds, `score` in 0-1); no uploaded artifact, zero egress
+**Inputs:** `input_url` (1) · **Output:** analysis JSON — `{"scenes": [{time, score}]}` in `output` (`time` in seconds, `score` in 0-1); no uploaded artifact, zero egress
 
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
@@ -982,7 +950,6 @@ Detect hard cuts and return the structured scene list as the result — a metada
   "model": "eachlabs-video-api",
   "input": {
     "capability": "scene_detect",
-    "tier": "cpu",
     "input_url": "YOUR_INPUT_URL",
     "params": {
       "threshold": 0.3
@@ -995,7 +962,7 @@ Detect hard cuts and return the structured scene list as the result — a metada
 
 Split input into fixed-duration chunks (seg_000, seg_001, ...) — multi-output. With `first_frame: true` it also delivers each clip's first frame as a companion still in the same call.
 
-**Inputs:** `input_url` (1) · **Tiers:** `cpu` · **Output:** media — URL array in `output`, one entry per chunk, index-ordered (`seg_000`, `seg_001`, …); with `first_frame: true` the stills are interleaved with their clips (clip, still, clip, still, … in index order) — see [Response shapes](#response-shapes)
+**Inputs:** `input_url` (1) · **Output:** media — URL array in `output`, one entry per chunk, index-ordered (`seg_000`, `seg_001`, …); with `first_frame: true` the stills are interleaved with their clips (clip, still, clip, still, … in index order) — see [Response shapes](#response-shapes)
 
 <Note>`reencode: true` with `container: "webm"` is rejected — H.264 cannot mux into webm.</Note>
 
@@ -1017,7 +984,6 @@ A `first_frame` split that produces **more than 999 clips** fails the whole job 
   "model": "eachlabs-video-api",
   "input": {
     "capability": "segment",
-    "tier": "cpu",
     "input_url": "YOUR_INPUT_URL",
     "params": {
       "segment_seconds": 30,
@@ -1033,7 +999,7 @@ A `first_frame` split that produces **more than 999 clips** fails the whole job 
 
 Detect silent spans in the audio and return the structured list as the result. No silence found = valid empty result.
 
-**Inputs:** `input_url` (1) · **Tiers:** `cpu` · **Output:** analysis JSON — `{"silences": [{start, end, duration}]}` in `output` (all fields in seconds); no artifact, zero egress
+**Inputs:** `input_url` (1) · **Output:** analysis JSON — `{"silences": [{start, end, duration}]}` in `output` (all fields in seconds); no artifact, zero egress
 
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
@@ -1045,7 +1011,6 @@ Detect silent spans in the audio and return the structured list as the result. N
   "model": "eachlabs-video-api",
   "input": {
     "capability": "silence_detect",
-    "tier": "cpu",
     "input_url": "YOUR_INPUT_URL",
     "params": {
       "noise_db": -30,
@@ -1059,7 +1024,7 @@ Detect silent spans in the audio and return the structured list as the result. N
 
 Detect silences and split the file at them in **one job** — `silence_detect` plus the split, with hard caps, replacing the detect → compute-cuts-client-side → one-trim-per-segment chain (see [Recipes](#recipes)).
 
-**Inputs:** `input_url` (1) · **Tiers:** `cpu` · **Output:** media — URL array in `output`, one entry per segment, index-ordered (`seg_000`, `seg_001`, …) — see [Response shapes](#response-shapes)
+**Inputs:** `input_url` (1) · **Output:** media — URL array in `output`, one entry per segment, index-ordered (`seg_000`, `seg_001`, …) — see [Response shapes](#response-shapes)
 
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
@@ -1083,7 +1048,6 @@ Detect silences and split the file at them in **one job** — `silence_detect` p
   "model": "eachlabs-video-api",
   "input": {
     "capability": "silence_split",
-    "tier": "cpu",
     "input_url": "YOUR_INPUT_URL",
     "params": {
       "max_segment_seconds": 30,
@@ -1097,7 +1061,7 @@ Detect silences and split the file at them in **one job** — `silence_detect` p
 
 Turn 2-50 still images into one silent video (each looped image_duration, normalized to a common canvas, optional Ken Burns zoom, concatenated).
 
-**Inputs:** `input_urls` (2-50, must equal the `images` param; shown in array order) · **Tiers:** `cpu` · **Output:** media — single silent video
+**Inputs:** `input_urls` (2-50, must equal the `images` param; shown in array order) · **Output:** media — single silent video
 
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
@@ -1114,7 +1078,6 @@ Turn 2-50 still images into one silent video (each looped image_duration, normal
   "model": "eachlabs-video-api",
   "input": {
     "capability": "slideshow",
-    "tier": "cpu",
     "input_urls": [
       "YOUR_INPUT_URL_1",
       "YOUR_INPUT_URL_2"
@@ -1132,7 +1095,7 @@ Turn 2-50 still images into one silent video (each looped image_duration, normal
 
 Change playback speed by a factor (video setpts + pitch-preserving atempo chain).
 
-**Inputs:** `input_url` (1) · **Tiers:** `cpu` · **Output:** media — single file
+**Inputs:** `input_url` (1) · **Output:** media — single file
 
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
@@ -1144,7 +1107,6 @@ Change playback speed by a factor (video setpts + pitch-preserving atempo chain)
   "model": "eachlabs-video-api",
   "input": {
     "capability": "speed",
-    "tier": "cpu",
     "input_url": "YOUR_INPUT_URL",
     "params": {
       "factor": 2.0,
@@ -1158,7 +1120,7 @@ Change playback speed by a factor (video setpts + pitch-preserving atempo chain)
 
 Composite the second input (typically a still image: a sticker, logo, or watermark) over the base video, visible only inside a timed window — [overlay](#overlay)'s anchors plus `start`/`end` visibility.
 
-**Inputs:** `input_urls` (2) — `input_urls[0]` is the base video, `input_urls[1]` is the sticker (image or video) · **Tiers:** `cpu` · **Output:** media — single file
+**Inputs:** `input_urls` (2) — `input_urls[0]` is the base video, `input_urls[1]` is the sticker (image or video) · **Output:** media — single file
 
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
@@ -1174,7 +1136,6 @@ Composite the second input (typically a still image: a sticker, logo, or waterma
   "model": "eachlabs-video-api",
   "input": {
     "capability": "sticker_overlay",
-    "tier": "cpu",
     "input_urls": [
       "YOUR_INPUT_URL_1",
       "YOUR_INPUT_URL_2"
@@ -1201,7 +1162,7 @@ Composite the second input (typically a still image: a sticker, logo, or waterma
 
 Extract a single frame as JPEG or PNG (first, last, or at an exact timestamp).
 
-**Inputs:** `input_url` (1) · **Tiers:** `cpu` · **Output:** media — single image
+**Inputs:** `input_url` (1) · **Output:** media — single image
 
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
@@ -1215,7 +1176,6 @@ Extract a single frame as JPEG or PNG (first, last, or at an exact timestamp).
   "model": "eachlabs-video-api",
   "input": {
     "capability": "stills",
-    "tier": "cpu",
     "input_url": "YOUR_INPUT_URL",
     "params": {
       "position": "at",
@@ -1230,7 +1190,7 @@ Extract a single frame as JPEG or PNG (first, last, or at an exact timestamp).
 
 Sample one frame per interval, pack into **one** tiled sprite sheet plus a server-computed WebVTT thumbnail index.
 
-**Inputs:** `input_url` (1) · **Tiers:** `cpu` · **Output:** named-outputs object `{"sheet": ..., "vtt": ...}` in `output` — see [Response shapes](#response-shapes)
+**Inputs:** `input_url` (1) · **Output:** named-outputs object `{"sheet": ..., "vtt": ...}` in `output` — see [Response shapes](#response-shapes)
 
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
@@ -1250,7 +1210,6 @@ Sample one frame per interval, pack into **one** tiled sprite sheet plus a serve
   "model": "eachlabs-video-api",
   "input": {
     "capability": "storyboard_sprites",
-    "tier": "cpu",
     "input_url": "YOUR_INPUT_URL",
     "params": {
       "interval_seconds": 2,
@@ -1267,7 +1226,7 @@ Word-timed, animated captions in the style popularized by TikTok and Shorts edit
 
 Word timings typically come from a speech-to-text model with word-level timestamps (for example `elevenlabs-speech-to-text-scribe-v2` on this platform); feed its word list straight into `words`.
 
-**Inputs:** `input_url` (1) · **Tiers:** `cpu` · **Output:** media — single file
+**Inputs:** `input_url` (1) · **Output:** media — single file
 
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
@@ -1296,7 +1255,6 @@ Word timings typically come from a speech-to-text model with word-level timestam
   "model": "eachlabs-video-api",
   "input": {
     "capability": "subtitle_compose",
-    "tier": "cpu",
     "input_url": "YOUR_INPUT_URL",
     "params": {
       "words": [
@@ -1386,7 +1344,7 @@ Ready-to-paste `style` objects for the three most-requested caption looks. Every
 
 Extract one image frame every interval_seconds — multi-output.
 
-**Inputs:** `input_url` (1) · **Tiers:** `cpu` · **Output:** media — URL array in `output`, one entry per frame, index-ordered (`thumb_001`, `thumb_002`, …) — see [Response shapes](#response-shapes)
+**Inputs:** `input_url` (1) · **Output:** media — URL array in `output`, one entry per frame, index-ordered (`thumb_001`, `thumb_002`, …) — see [Response shapes](#response-shapes)
 
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
@@ -1398,7 +1356,6 @@ Extract one image frame every interval_seconds — multi-output.
   "model": "eachlabs-video-api",
   "input": {
     "capability": "thumbnails",
-    "tier": "cpu",
     "input_url": "YOUR_INPUT_URL",
     "params": {
       "interval_seconds": 2,
@@ -1412,7 +1369,7 @@ Extract one image frame every interval_seconds — multi-output.
 
 Draw a text title over the single input video (drawtext) with an optional show window — the text is rendered from a staged file, never interpreted.
 
-**Inputs:** `input_url` (1) · **Tiers:** `cpu` · **Output:** media — single file
+**Inputs:** `input_url` (1) · **Output:** media — single file
 
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
@@ -1430,7 +1387,6 @@ Draw a text title over the single input video (drawtext) with an optional show w
   "model": "eachlabs-video-api",
   "input": {
     "capability": "title_card",
-    "tier": "cpu",
     "input_url": "YOUR_INPUT_URL",
     "params": {
       "text": "Chapter One",
@@ -1453,7 +1409,7 @@ Draw a text title over the single input video (drawtext) with an optional show w
 
 Container/codec transcode with server-side normalization and defaults.
 
-**Inputs:** `input_url` (1) · **Tiers:** `cpu` · **Output:** media — single file, container-chosen extension
+**Inputs:** `input_url` (1) · **Output:** media — single file, container-chosen extension
 
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
@@ -1468,7 +1424,6 @@ Container/codec transcode with server-side normalization and defaults.
   "model": "eachlabs-video-api",
   "input": {
     "capability": "transcode",
-    "tier": "cpu",
     "input_url": "YOUR_INPUT_URL",
     "params": {
       "container": "mp4",
@@ -1483,7 +1438,7 @@ Container/codec transcode with server-side normalization and defaults.
 
 Cut a clip of roughly `duration` seconds via stream copy — no re-encode. The cut snaps to the keyframe at or before `start` (playback start is trimmed via an edit list); the end can drift by up to packet granularity. For frame-accurate cuts use [keep_ranges](#keep_ranges) with a single `ranges` entry.
 
-**Inputs:** `input_url` (1) · **Tiers:** `cpu` · **Output:** media — single file
+**Inputs:** `input_url` (1) · **Output:** media — single file
 
 <Warning>
 Stream-copy trim outputs carry discard-flagged pre-roll back to the previous keyframe — players skip it, but it becomes **visible** after `concat_copy` (measured +1.35s on a 30s target). Use [keep_ranges](#keep_ranges) for frame-accurate multi-range editing.
@@ -1499,7 +1454,6 @@ Stream-copy trim outputs carry discard-flagged pre-roll back to the previous key
   "model": "eachlabs-video-api",
   "input": {
     "capability": "trim",
-    "tier": "cpu",
     "input_url": "YOUR_INPUT_URL",
     "params": {
       "start": 0,
@@ -1513,7 +1467,7 @@ Stream-copy trim outputs carry discard-flagged pre-roll back to the previous key
 
 Scale audio loudness by a linear factor; video is stream-copied untouched.
 
-**Inputs:** `input_url` (1) · **Tiers:** `cpu` · **Output:** media — single file
+**Inputs:** `input_url` (1) · **Output:** media — single file
 
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
@@ -1525,7 +1479,6 @@ Scale audio loudness by a linear factor; video is stream-copied untouched.
   "model": "eachlabs-video-api",
   "input": {
     "capability": "volume",
-    "tier": "cpu",
     "input_url": "YOUR_INPUT_URL",
     "params": {
       "factor": 2.0,
@@ -1539,7 +1492,7 @@ Scale audio loudness by a linear factor; video is stream-copied untouched.
 
 Overlay a second input (image or video) onto the primary video at a pixel offset.
 
-**Inputs:** `input_urls` (2) — `input_urls[0]` is the base video, `input_urls[1]` is the watermark (image or video) · **Tiers:** `cpu` · **Output:** media — single file
+**Inputs:** `input_urls` (2) — `input_urls[0]` is the base video, `input_urls[1]` is the watermark (image or video) · **Output:** media — single file
 
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
@@ -1552,7 +1505,6 @@ Overlay a second input (image or video) onto the primary video at a pixel offset
   "model": "eachlabs-video-api",
   "input": {
     "capability": "watermark",
-    "tier": "cpu",
     "input_urls": [
       "YOUR_INPUT_URL_1",
       "YOUR_INPUT_URL_2"
@@ -1690,7 +1642,7 @@ A plain multi-output job (no stills) is the same array without the interleave:
 
 Raw ffmpeg/ffprobe for long-tail cases the named capabilities don't cover. **Available to beta organizations today**; access may move to per-key grants later in the beta. This section is the canonical statement of the `run_ffmpeg` contract — other pages link here.
 
-**Different contract.** `run_ffmpeg` is a top-level `mode`, not a capability — the input carries `mode`, `argv`, `input_url` (or `input_urls`), `output_format`, and `tier` (no `capability`, no `params`):
+**Different contract.** `run_ffmpeg` is a top-level `mode`, not a capability — the input carries `mode`, `argv`, `input_url` (or `input_urls`), and `output_format` (no `capability`, no `params`):
 
 | Field | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
@@ -1699,14 +1651,12 @@ Raw ffmpeg/ffprobe for long-tail cases the named capabilities don't cover. **Ava
 | `input_url` | string | https media URL or `s3://` URI | — | one of `input_url` / `input_urls` | binds `{input}` |
 | `input_urls` | array of strings | ordered | — | one of `input_url` / `input_urls` | one URL binds `{input}`; N URLs bind `{input0}`, `{input1}`, … in array order |
 | `output_format` | string | `mp4` \| `webm` \| `mkv` \| `mov` \| `gif` \| `mp3` \| `wav` \| `m4a` \| `jpg` \| `png` \| `vtt` \| `hls` \| `dash` | `mp4` | no | sets `{output}`'s extension; `hls` → `.m3u8`, `dash` → `.mpd`; unknown or empty values fall back to `mp4` |
-| `tier` | string | `cpu` | — | yes |  |
 
 ```json
 {
   "model": "eachlabs-video-api",
   "input": {
     "mode": "run_ffmpeg",
-    "tier": "cpu",
     "input_url": "YOUR_INPUT_URL",
     "output_format": "mp3",
     "argv": ["ffmpeg", "-hide_banner", "-nostats", "-i", "{input}", "-af", "acompressor=threshold=-18dB:ratio=2:attack=30,loudnorm=I=-14:TP=-1.0:LRA=11,alimiter=limit=0.891:level=false", "-ar", "44100", "-c:a", "libmp3lame", "-b:a", "320k", "{output}"]
@@ -1728,7 +1678,6 @@ The example above is a working audio-mastering command (compress → normalize t
   "model": "eachlabs-video-api",
   "input": {
     "mode": "run_ffmpeg",
-    "tier": "cpu",
     "input_urls": ["YOUR_INPUT_URL_1", "YOUR_INPUT_URL_2"],
     "output_format": "mp4",
     "argv": ["ffmpeg", "-i", "{input0}", "-i", "{input1}", "-map", "0:v", "-map", "1:a", "-c", "copy", "-shortest", "{output}"]
@@ -1754,7 +1703,6 @@ The example above is a working audio-mastering command (compress → normalize t
   "model": "eachlabs-video-api",
   "input": {
     "mode": "run_ffmpeg",
-    "tier": "cpu",
     "input_url": "YOUR_INPUT_URL",
     "output_format": "vtt",
     "argv": ["ffmpeg", "-i", "{input}", "-af", "ametadata=mode=print:file={output}", "-f", "null", "/dev/null"]
