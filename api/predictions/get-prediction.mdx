@@ -45,7 +45,11 @@ while True:
 if data["status"] == "success":
     print(f"Output: {data['output']}")
 else:
-    print(f"Failed: {data.get('logs')}")
+    error = data.get("output")
+    if isinstance(error, dict):
+        print(f"Failed [{error.get('error_code', 'UNKNOWN')}]: {error.get('error_message')}")
+    else:
+        print(f"Failed: {error}")
 ```
 
 ```javascript JavaScript
@@ -67,7 +71,16 @@ async function waitForPrediction(predictionId) {
 }
 
 const result = await waitForPrediction("abc123-def456-ghi789");
-console.log(`Output: ${result.output}`);
+if (result.status === "success") {
+  console.log(`Output: ${JSON.stringify(result.output)}`);
+} else {
+  const error = result.output;
+  console.log(
+    typeof error === "object" && error !== null
+      ? `Failed [${error.error_code ?? "UNKNOWN"}]: ${error.error_message ?? ""}`
+      : `Failed: ${error}`
+  );
+}
 ```
 </CodeGroup>
 
@@ -101,7 +114,7 @@ console.log(`Output: ${result.output}`);
 | `id` | string | Prediction ID |
 | `input` | object | Input parameters used |
 | `status` | string | `created`, `starting`, `processing`, `success`, `error`, or `cancelled` |
-| `output` | string \| array \| object | Prediction output (type depends on model) |
+| `output` | string \| array \| object | Prediction result. For a classified failure, this is an error object containing `error_code` and `error_message` |
 | `logs` | string \| null | Execution logs |
 | `metrics.predict_time` | number | Processing time in seconds |
 | `metrics.cost` | number | Cost in USD |
@@ -125,6 +138,27 @@ The `metrics.tier`, `metrics.billed_seconds`, and `metrics.output_gb` fields app
 | `success` | Prediction completed successfully |
 | `error` | Prediction failed |
 | `cancelled` | Prediction was cancelled |
+
+### Failed Prediction
+
+For prediction failures, branch on the machine-readable `output.error_code`.
+Display `output.error_message` to users, but do not parse its wording or depend
+on provider-specific text.
+
+```json
+{
+  "id": "abc123-def456-ghi789",
+  "status": "error",
+  "output": {
+    "error_code": "PROVIDER_RATE_LIMIT",
+    "error_message": "This model is temporarily rate limited. Retry shortly."
+  }
+}
+```
+
+See [Error Reference](/errors) for common codes and retry guidance. Some legacy
+or unclassified failures can still use an older output shape; do not derive an
+error code by parsing free-form text.
 
 ## Error Responses
 
