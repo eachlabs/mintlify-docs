@@ -132,6 +132,7 @@ above. Predictions that fail after being accepted use these common
 |------------|---------|----------------------|
 | `INPUT_VALIDATION_ERROR` | Input does not match the model schema | Correct the input before retrying |
 | `INPUT_DOWNLOAD_ERROR` | An input file could not be downloaded | Use a publicly accessible URL before retrying |
+| `PROVIDER_AUTH_ERROR` | An internal model-service configuration error occurred | Retry later; contact support if it persists |
 | `PROVIDER_BAD_REQUEST` | The model rejected the input as invalid | Review the model's input requirements |
 | `PROVIDER_REJECTED` | The request could not be processed, including content-safety rejection | Adjust the input before retrying |
 | `PROVIDER_RATE_LIMIT` | The model is temporarily rate limited | Retry with backoff |
