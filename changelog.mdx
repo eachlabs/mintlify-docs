@@ -4,21 +4,6 @@ description: "Product updates and releases from each::labs"
 rss: true
 ---
 
-<Update label="August 3, 2026" description="API" rss={{ title: "List Executions total_count is now capped — page by offset", description: "API" }}>
-  ## List Executions `total_count` is now capped — page by offset
-
-  - `GET /v1/executions` now bounds the cost of computing `total_count`. When
-    a filter matches more executions than the server-side count cap, the
-    response reports a capped `total_count` and sets `total_capped: true`.
-  - `total_capped: true` means `total_count` is a lower bound. Every matching
-    execution is still retrievable: keep requesting pages (increasing `offset`
-    by `limit`) until a page returns fewer than `limit` rows. On the last
-    page that returns rows, the exact total is reported and `total_capped`
-    becomes `false`.
-  - Integrations that stop paginating when `offset` reaches `total_count`
-    should switch to the short-page stop condition above.
-</Update>
-
 <Update label="July 27, 2026" description="LLM Router" rss={{ title: "See the requested LLM in Run History", description: "LLM Router" }}>
   ## See the requested LLM in Run History
 
