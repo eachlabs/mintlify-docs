@@ -9,11 +9,12 @@ rss: true
 
   - `GET /v1/executions` now bounds the cost of computing `total_count`. When
     a filter matches more executions than the server-side count cap, the
-    response reports the cap as `total_count` and sets `total_capped: true`.
+    response reports a capped `total_count` and sets `total_capped: true`.
   - `total_capped: true` means `total_count` is a lower bound. Every matching
     execution is still retrievable: keep requesting pages (increasing `offset`
-    by `limit`) until a page returns fewer than `limit` rows. On the final
-    page the exact total is reported and `total_capped` becomes `false`.
+    by `limit`) until a page returns fewer than `limit` rows. On the last
+    page that returns rows, the exact total is reported and `total_capped`
+    becomes `false`.
   - Integrations that stop paginating when `offset` reaches `total_count`
     should switch to the short-page stop condition above.
 </Update>

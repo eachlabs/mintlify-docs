@@ -2743,12 +2743,12 @@
           },
           "total_count": {
             "type": "integer",
-            "description": "Number of matching executions. When `total_capped` is `true` this is a lower bound, not the exact total — do not use it as a pagination stop condition; keep increasing `offset` until a page returns fewer than `limit` rows. On the final page the exact total is reported and `total_capped` becomes `false`.",
+            "description": "Number of matching executions. When `total_capped` is `true` this is a lower bound, not the exact total — do not use it as a pagination stop condition; keep increasing `offset` until a page returns fewer than `limit` rows. On the last page that returns rows, the exact total is reported and `total_capped` becomes `false`.",
             "example": 123
           },
           "total_capped": {
             "type": "boolean",
-            "description": "`true` when `total_count` was clamped to the server-side count cap and more matching executions may exist beyond it.",
+            "description": "`true` when the server did not compute the exact count (the count is capped, or its time budget elapsed) and `total_count` is a lower bound — more matching executions may exist beyond it.",
             "example": false
           },
           "offset": {
