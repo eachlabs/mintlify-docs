@@ -553,7 +553,7 @@
           "Executions"
         ],
         "summary": "List executions",
-        "description": "Retrieve execution history for the authenticated API key with optional filters.\nModel prediction terminal statuses include `success`, `error`, and `cancelled`;\nworkflow executions can surface `running`, `completed`, `failed`, or `cancelled`\ndepending on the originating backend. The `status` filter accepts the\nfour tokens listed on the parameter; unrecognized tokens return 400.\n",
+        "description": "Retrieve execution history for the authenticated API key with optional filters.\nModel prediction terminal statuses include `success`, `error`, and `cancelled`;\nworkflow executions can surface `running`, `completed`, `failed`, or `cancelled`\ndepending on the originating backend. The `status` filter accepts the\nfour tokens listed on the parameter; unrecognized tokens return 400.\n\nPagination: computing an exact total over a large execution history is\nexpensive, so `total_count` is capped. When the response sets\n`total_capped: true`, `total_count` is a lower bound, not the exact total.\nTo retrieve every matching execution, keep requesting pages (increasing\n`offset` by `limit`) until a page returns fewer than `limit` rows — do not\nstop paging when `offset` reaches `total_count`. When `from` is omitted,\nthe window defaults to the 90 days ending at `to` (or now).\n",
         "operationId": "listExecutions",
         "security": [
           {
@@ -648,7 +648,7 @@
               "type": "string",
               "format": "date-time"
             },
-            "description": "Start of creation time window, as RFC 3339",
+            "description": "Start of creation time window, as RFC 3339. When omitted, defaults to 90 days before `to` (or before now when `to` is also omitted).",
             "example": "2026-01-01T00:00:00Z"
           },
           {
@@ -2743,8 +2743,13 @@
           },
           "total_count": {
             "type": "integer",
-            "description": "Total number of matching executions",
+            "description": "Number of matching executions. When `total_capped` is `true` this is a lower bound, not the exact total — do not use it as a pagination stop condition; keep increasing `offset` until a page returns fewer than `limit` rows. On the last page that returns rows, the exact total is reported and `total_capped` becomes `false`.",
             "example": 123
+          },
+          "total_capped": {
+            "type": "boolean",
+            "description": "`true` when the server did not compute the exact count (the count is capped, or its time budget elapsed) and `total_count` is a lower bound — more matching executions may exist beyond it.",
+            "example": false
           },
           "offset": {
             "type": "integer",
@@ -2760,6 +2765,7 @@
         "required": [
           "executions",
           "total_count",
+          "total_capped",
           "offset",
           "limit"
         ]
