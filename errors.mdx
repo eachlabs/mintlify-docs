@@ -27,9 +27,15 @@ running. In that case, the polling request still succeeds, the prediction has
 }
 ```
 
-Use `output.error_code` for program logic. `output.error_message` is
-customer-readable guidance and its wording may improve over time; do not parse
-it or depend on provider names or provider-specific messages.
+In V1, `output.error_code` is an uppercase compatibility value from the current
+implementation. `output.error_message` is customer-readable guidance and its
+wording may improve over time; do not parse it or depend on provider names or
+provider-specific messages.
+
+The V2 public taxonomy is a separate lower-snake-case vocabulary. Do not convert
+V1 codes by changing their casing: for example, V1
+`INPUT_VALIDATION_ERROR` maps to V2 `invalid_input`, not
+`input_validation_error`.
 
 ## HTTP Status Codes
 
@@ -125,8 +131,8 @@ it or depend on provider names or provider-specific messages.
 ### each::api: Prediction Errors
 
 Errors that prevent a request from being accepted use the HTTP error format
-above. Predictions that fail after being accepted use these common
-`output.error_code` values:
+above. Predictions that fail after being accepted can use these V1
+compatibility values in `output.error_code`:
 
 | Error code | Meaning | Recommended handling |
 |------------|---------|----------------------|
@@ -145,9 +151,11 @@ above. Predictions that fail after being accepted use these common
 | `WORKER_LOST` | The execution worker stopped unexpectedly | Retry |
 | `ITERATION_ERROR` | One or more iterations in a partial execution failed | Inspect the iteration errors and decide whether to retry the failed work |
 
-Some legacy or unclassified failures can still return a string or an object
-without `error_code`. Do not infer a code by parsing that text. Log the
-prediction ID and contact support if the failure persists.
+These uppercase values describe the current V1 response; they are not the V2
+public error-code contract. Some legacy or unclassified failures can still
+return a string or an object without `error_code`. Do not infer a code by
+parsing that text. Log the prediction ID and contact support if the failure
+persists.
 
 ### each::workflows: Execution Errors
 

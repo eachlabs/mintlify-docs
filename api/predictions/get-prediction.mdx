@@ -141,9 +141,14 @@ The `metrics.tier`, `metrics.billed_seconds`, and `metrics.output_gb` fields app
 
 ### Failed Prediction
 
-For prediction failures, branch on the machine-readable `output.error_code`.
-Display `output.error_message` to users, but do not parse its wording or depend
-on provider-specific text.
+For V1 prediction failures, use `output.error_code` when it is present and
+display `output.error_message` to users. Do not parse the message wording or
+depend on provider-specific text.
+
+V1 error codes are uppercase compatibility values from the current
+implementation. They are not the lower-snake-case public error taxonomy defined
+for V2. For example, V1 `INPUT_VALIDATION_ERROR` maps to V2 `invalid_input`;
+lowercasing the V1 value would produce the wrong V2 code.
 
 ```json
 {
@@ -156,9 +161,9 @@ on provider-specific text.
 }
 ```
 
-See [Error Reference](/errors) for common codes and retry guidance. Some legacy
-or unclassified failures can still use an older output shape; do not derive an
-error code by parsing free-form text.
+See [Error Reference](/errors) for V1 compatibility codes and retry guidance.
+Some legacy or unclassified failures can still use an older output shape; do
+not derive an error code by parsing free-form text.
 
 ## Error Responses
 

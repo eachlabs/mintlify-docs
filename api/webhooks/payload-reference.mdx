@@ -56,10 +56,12 @@ Webhook payloads use a compact two-value status vocabulary: `succeeded` or `fail
 ```
 
 On failure, `output` is an array wrapping the error detail. When
-`output[0].error` is an object, use its `error_code` for program logic and
-display `error_message` to users. Legacy or unclassified failures may provide a
-string instead; do not infer an error code by parsing that text. The top-level
-`error` field is always an empty string.
+`output[0].error` is an object, its `error_code` is the uppercase V1
+compatibility value and `error_message` is customer-readable. These codes are
+not the lower-snake-case V2 public taxonomy; for example, V1
+`INPUT_VALIDATION_ERROR` maps to V2 `invalid_input`. Legacy or unclassified
+failures may provide a string instead; do not infer an error code by parsing
+that text. The top-level `error` field is always an empty string.
 
 ## Webhook Handler Examples
 
