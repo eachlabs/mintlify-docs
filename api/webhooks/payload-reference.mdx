@@ -45,23 +45,18 @@ Webhook payloads use a compact two-value status vocabulary: `succeeded` or `fail
       "id": "",
       "status": "",
       "output": "",
-      "error": {
-        "error_code": "EXECUTION_TIMEOUT",
-        "error_message": "The execution exceeded its time limit. Retry, or use a smaller input if it persists."
-      }
+      "error": "The execution exceeded its time limit. Retry, or use a smaller input if it persists."
     }
   ],
   "error": ""
 }
 ```
 
-On failure, `output` is an array wrapping the error detail. When
-`output[0].error` is an object, its `error_code` is the uppercase V1
-compatibility value and `error_message` is customer-readable. These codes are
-not the lower-snake-case V2 public taxonomy; for example, V1
-`INPUT_VALIDATION_ERROR` maps to V2 `invalid_input`. Legacy or unclassified
-failures may provide a string instead; do not infer an error code by parsing
-that text. The top-level `error` field is always an empty string.
+On failure, `output` is an array wrapping the error detail. In V1,
+`output[0].error` is usually a customer-readable string, but some legacy model
+integrations preserve another JSON shape. Do not infer an error code by parsing
+the text or undocumented object fields. The top-level `error` field is always
+an empty string.
 
 ## Webhook Handler Examples
 
@@ -81,10 +76,7 @@ async def handle_webhook(request: Request):
         # Process the output...
     elif payload["status"] == "failed":
         detail = payload["output"][0]["error"] if payload["output"] else "unknown"
-        if isinstance(detail, dict):
-            print(f"Prediction failed [{detail.get('error_code', 'UNKNOWN')}]: {detail.get('error_message')}")
-        else:
-            print(f"Prediction failed: {detail}")
+        print(f"Prediction failed: {detail}")
 
     return {"received": True}
 ```
@@ -98,13 +90,7 @@ app.post("/webhooks/prediction", (req, res) => {
     // Process the output...
   } else if (payload.status === "failed") {
     const detail = payload.output?.[0]?.error ?? "unknown";
-    if (typeof detail === "object" && detail !== null) {
-      console.log(
-        `Prediction failed [${detail.error_code ?? "UNKNOWN"}]: ${detail.error_message ?? ""}`
-      );
-    } else {
-      console.log(`Prediction failed: ${detail}`);
-    }
+    console.log(`Prediction failed: ${JSON.stringify(detail)}`);
   }
 
   res.json({ received: true });

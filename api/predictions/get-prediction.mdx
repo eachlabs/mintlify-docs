@@ -45,11 +45,7 @@ while True:
 if data["status"] == "success":
     print(f"Output: {data['output']}")
 else:
-    error = data.get("output")
-    if isinstance(error, dict):
-        print(f"Failed [{error.get('error_code', 'UNKNOWN')}]: {error.get('error_message')}")
-    else:
-        print(f"Failed: {error}")
+    print(f"Failed: {data.get('output')}")
 ```
 
 ```javascript JavaScript
@@ -74,12 +70,7 @@ const result = await waitForPrediction("abc123-def456-ghi789");
 if (result.status === "success") {
   console.log(`Output: ${JSON.stringify(result.output)}`);
 } else {
-  const error = result.output;
-  console.log(
-    typeof error === "object" && error !== null
-      ? `Failed [${error.error_code ?? "UNKNOWN"}]: ${error.error_message ?? ""}`
-      : `Failed: ${error}`
-  );
+  console.log(`Failed: ${JSON.stringify(result.output)}`);
 }
 ```
 </CodeGroup>
@@ -114,7 +105,7 @@ if (result.status === "success") {
 | `id` | string | Prediction ID |
 | `input` | object | Input parameters used |
 | `status` | string | `created`, `starting`, `processing`, `success`, `error`, or `cancelled` |
-| `output` | string \| array \| object | Prediction result. For a classified failure, this is an error object containing `error_code` and `error_message` |
+| `output` | string \| array \| object | Model-specific prediction result or failure detail. V1 does not guarantee one failure shape |
 | `logs` | string \| null | Execution logs |
 | `metrics.predict_time` | number | Processing time in seconds |
 | `metrics.cost` | number | Cost in USD |
@@ -141,29 +132,21 @@ The `metrics.tier`, `metrics.billed_seconds`, and `metrics.output_gb` fields app
 
 ### Failed Prediction
 
-For V1 prediction failures, use `output.error_code` when it is present and
-display `output.error_message` to users. Do not parse the message wording or
-depend on provider-specific text.
-
-V1 error codes are uppercase compatibility values from the current
-implementation. They are not the lower-snake-case public error taxonomy defined
-for V2. For example, V1 `INPUT_VALIDATION_ERROR` maps to V2 `invalid_input`;
-lowercasing the V1 value would produce the wrong V2 code.
+V1 does not define a structured failure contract inside `output`. Most models
+return a customer-readable string, while some legacy integrations preserve an
+object or array. Treat the value as model-specific display/debug information;
+do not parse its wording or branch on undocumented object fields.
 
 ```json
 {
   "id": "abc123-def456-ghi789",
   "status": "error",
-  "output": {
-    "error_code": "PROVIDER_RATE_LIMIT",
-    "error_message": "This model is temporarily rate limited. Retry shortly."
-  }
+  "output": "This model is temporarily rate limited. Retry shortly."
 }
 ```
 
-See [Error Reference](/errors) for V1 compatibility codes and retry guidance.
-Some legacy or unclassified failures can still use an older output shape; do
-not derive an error code by parsing free-form text.
+See [Error Reference](/errors) for retry guidance. Log the prediction ID when a
+failure needs investigation.
 
 ## Error Responses
 

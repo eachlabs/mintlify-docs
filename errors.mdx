@@ -20,22 +20,14 @@ running. In that case, the polling request still succeeds, the prediction has
 ```json
 {
   "status": "error",
-  "output": {
-    "error_code": "PROVIDER_RATE_LIMIT",
-    "error_message": "This model is temporarily rate limited. Retry shortly."
-  }
+  "output": "This model is temporarily rate limited. Retry shortly."
 }
 ```
 
-In V1, `output.error_code` is an uppercase compatibility value from the current
-implementation. `output.error_message` is customer-readable guidance and its
-wording may improve over time; do not parse it or depend on provider names or
-provider-specific messages.
-
-The V2 public taxonomy is a separate lower-snake-case vocabulary. Do not convert
-V1 codes by changing their casing: for example, V1
-`INPUT_VALIDATION_ERROR` maps to V2 `invalid_input`, not
-`input_validation_error`.
+In V1, prediction failure `output` is model-specific. Most models return a
+customer-readable string, while some legacy integrations preserve an object or
+array. V1 does not guarantee a machine-readable error code in this field. Do
+not parse message wording or depend on undocumented object keys.
 
 ## HTTP Status Codes
 
@@ -131,31 +123,10 @@ V1 codes by changing their casing: for example, V1
 ### each::api: Prediction Errors
 
 Errors that prevent a request from being accepted use the HTTP error format
-above. Predictions that fail after being accepted can use these V1
-compatibility values in `output.error_code`:
-
-| Error code | Meaning | Recommended handling |
-|------------|---------|----------------------|
-| `INPUT_VALIDATION_ERROR` | Input does not match the model schema | Correct the input before retrying |
-| `INPUT_DOWNLOAD_ERROR` | An input file could not be downloaded | Use a publicly accessible URL before retrying |
-| `PROVIDER_AUTH_ERROR` | An internal model-service configuration error occurred | Retry later; contact support if it persists |
-| `PROVIDER_BAD_REQUEST` | The model rejected the input as invalid | Review the model's input requirements |
-| `PROVIDER_REJECTED` | The request could not be processed, including content-safety rejection | Adjust the input before retrying |
-| `PROVIDER_RATE_LIMIT` | The model is temporarily rate limited | Retry with backoff |
-| `PROVIDER_SERVER_ERROR` | The model service is temporarily unavailable | Retry with backoff |
-| `NETWORK_ERROR` | The model service could not be reached | Retry with backoff |
-| `PROVIDER_FAILED` | The model did not produce an output | Adjust the input or retry |
-| `EXECUTION_TIMEOUT` | The execution exceeded its time limit | Retry, or reduce the input size if it persists |
-| `PIPELINE_CONFIG_ERROR` | An internal model configuration error occurred | Retry later; contact support if it persists |
-| `PUBLISH_FAILED` | The completed result could not be published | Retry; contact support if it persists |
-| `WORKER_LOST` | The execution worker stopped unexpectedly | Retry |
-| `ITERATION_ERROR` | One or more iterations in a partial execution failed | Inspect the iteration errors and decide whether to retry the failed work |
-
-These uppercase values describe the current V1 response; they are not the V2
-public error-code contract. Some legacy or unclassified failures can still
-return a string or an object without `error_code`. Do not infer a code by
-parsing that text. Log the prediction ID and contact support if the failure
-persists.
+above. When an accepted prediction later fails, display its `output` as failure
+detail and log the prediction ID. Retry transient failures with bounded
+exponential backoff; correct invalid input before retrying. Contact support with
+the prediction ID when the cause is unclear or persists.
 
 ### each::workflows: Execution Errors
 
