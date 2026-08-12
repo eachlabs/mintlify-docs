@@ -63,7 +63,7 @@ One OAuth login — approve access in the browser and your agent is ready. No AP
 
 ## Headless & CI (API key)
 
-Environments without a browser (CI runners, servers) run the same MCP server locally over stdio, authenticated with an API key from **Settings → API Keys** in your [eachlabs dashboard](https://eachlabs.ai); jobs bill to the key's account. The local server is named `video` so it can coexist with the hosted `eachlabs-video`. One config for any stdio-capable client — `.mcp.json` (Claude Code), `.cursor/mcp.json` (Cursor), `claude_desktop_config.json` (Claude Desktop), `~/.kimi-code/mcp.json` (Kimi Code):
+Environments without a browser (CI runners, servers) run the same MCP server locally over stdio, authenticated with an API key from **Settings → API Keys** in your [eachlabs dashboard](https://eachlabs.ai); jobs bill to the key's account. The local server is named `video` so it can coexist with the hosted `eachlabs-video`. Add the `mcpServers` entry to your client's stdio config — for Claude Code, `.mcp.json` in the project root:
 
 ```json
 {
