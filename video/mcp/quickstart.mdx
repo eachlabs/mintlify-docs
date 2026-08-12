@@ -4,35 +4,91 @@ description: "Drive the Video API from Claude, Cursor, or any MCP-capable agent 
 ---
 
 <Note>
-**Private beta.** These pages are shared by direct link only and are not listed in the public navigation. The MCP server package (`@eachlabs/video-api-mcp`) is published publicly on npm — install it with the commands below.
+**Private beta.** These pages are shared by direct link only and are not listed in the public navigation.
 </Note>
 
 ## What you get
 
-An MCP server that exposes the Video API as native agent tools — 37 of the 44 capabilities in the [capabilities reference](/video/capabilities) today, with client-side schema validation, automatic submit-and-poll, and results returned as artifact URLs or structured analysis JSON. Your agent edits video by calling tools; billing and auth ride your existing eachlabs API key. The remaining capabilities (`audio_analysis`, `audio_duck`, `audio_master`, `crossfade`, `silence_split`, `sticker_overlay`, `title_card`) are reachable through the [HTTP API](/video/quickstart) and will be wrapped as tools in a later release.
+An MCP server that exposes the Video API as native agent tools — 37 of the 44 capabilities in the [capabilities reference](/video/capabilities) today, with client-side schema validation, automatic submit-and-poll, and results returned as artifact URLs or structured analysis JSON. Your agent edits video by calling tools; you connect with one OAuth login (or an API key in [headless environments](#headless-and-ci-api-key)). The remaining capabilities (`audio_analysis`, `audio_duck`, `audio_master`, `crossfade`, `silence_split`, `sticker_overlay`, `title_card`) are reachable through the [HTTP API](/video/quickstart) and will be wrapped as tools in a later release.
 
-## Add it to your MCP client
+## Connect your agent
+
+One OAuth login — approve access in the browser and your agent is ready. No API key to create or paste. Jobs bill to the organization you approve on the consent page.
 
 <Tabs>
   <Tab title="Claude Code">
     ```bash
-    claude mcp add video --env EACHLABS_API_KEY=YOUR_API_KEY -- npx -y @eachlabs/video-api-mcp
+    claude mcp add --transport http eachlabs-video https://mcp.eachlabs.ai/mcp
+    ```
+
+    Then run `/mcp` inside Claude Code and log in when prompted.
+  </Tab>
+  <Tab title="Codex">
+    ```bash
+    codex mcp add eachlabs-video --url https://mcp.eachlabs.ai/mcp --oauth-resource https://mcp.eachlabs.ai/mcp
+    ```
+
+    The `add` command opens the OAuth flow in your browser. If you need to re-authenticate later:
+
+    ```bash
+    codex mcp login eachlabs-video --scopes predictions:create,predictions:read
     ```
   </Tab>
-  <Tab title="Claude Desktop / Cursor">
+  <Tab title="Cursor">
+    Add to `.cursor/mcp.json` in your project (or `~/.cursor/mcp.json` for all projects), then approve the login prompt in Cursor's MCP settings:
+
     ```json
     {
       "mcpServers": {
-        "video": {
-          "command": "npx",
-          "args": ["-y", "@eachlabs/video-api-mcp"],
-          "env": { "EACHLABS_API_KEY": "YOUR_API_KEY" }
-        }
+        "eachlabs-video": { "url": "https://mcp.eachlabs.ai/mcp" }
+      }
+    }
+    ```
+  </Tab>
+  <Tab title="Claude Desktop">
+    **Settings → Connectors → Add custom connector**, set the URL to `https://mcp.eachlabs.ai/mcp`, then connect and approve with your eachlabs account.
+  </Tab>
+  <Tab title="Kimi Code">
+    Add to `~/.kimi-code/mcp.json`, then log in when prompted:
+
+    ```json
+    {
+      "mcpServers": {
+        "eachlabs-video": { "url": "https://mcp.eachlabs.ai/mcp" }
       }
     }
     ```
   </Tab>
 </Tabs>
+
+## Headless and CI (API key)
+
+Environments without a browser (CI runners, servers) run the same MCP server locally over stdio, authenticated with an API key from **Settings → API Keys** in your [eachlabs dashboard](https://eachlabs.ai); jobs bill to the key's account. The local server is named `video` so it can coexist with the hosted `eachlabs-video`. Add the `mcpServers` entry to your client's stdio config — for Claude Code, `.mcp.json` in the project root:
+
+```json
+{
+  "mcpServers": {
+    "video": {
+      "command": "npx",
+      "args": ["-y", "@eachlabs/video-api-mcp"],
+      "env": { "EACHLABS_API_KEY": "YOUR_API_KEY" }
+    }
+  }
+}
+```
+
+Codex uses the TOML equivalent in `~/.codex/config.toml`:
+
+```toml
+[mcp_servers.video]
+command = "npx"
+args = ["-y", "@eachlabs/video-api-mcp"]
+env = { EACHLABS_API_KEY = "YOUR_API_KEY" }
+```
+
+<Note>
+**npm rollout:** the `@eachlabs/video-api-mcp` package is rolling out during the beta. If `npx` cannot find the package yet, use the hosted connection above.
+</Note>
 
 <Note>
 The server targets the `eachlabs-video-api` model slug by default — no extra configuration is needed. `EACHLABS_VIDEO_MODEL` exists only to override that default.
