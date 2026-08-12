@@ -18,7 +18,7 @@ There are two ways to connect:
 - **Hosted (recommended):** point your client at `https://mcp.eachlabs.ai/mcp` and approve access in the browser. Nothing to install, no API key to manage; jobs bill to the organization you approve on the consent page.
 - **Local (stdio):** run the server yourself with `npx` and your API key; jobs bill to the key's account.
 
-The examples register the hosted server as `eachlabs-video` and the local one as `video` — distinct on purpose, so both can coexist. Hosted setup for Claude Desktop, Cursor, and Kimi Code is pending verification; use Local there for now.
+The examples register the hosted server as `eachlabs-video` and the local one as `video` — distinct on purpose, so both can coexist. Hosted setup is available for Claude Code and Codex today; Claude Desktop, Cursor, and Kimi Code connect via the local server.
 
 <Tabs>
   <Tab title="Claude Code">
@@ -59,7 +59,7 @@ The examples register the hosted server as `eachlabs-video` and the local one as
     ```
   </Tab>
   <Tab title="Claude Desktop / Cursor">
-    Add to `claude_desktop_config.json` (Claude Desktop) or `.cursor/mcp.json` (Cursor — project, or `~/.cursor/mcp.json` for all projects):
+    Local — add to `claude_desktop_config.json` (Claude Desktop: **Settings → Developer → Edit Config**) or `.cursor/mcp.json` (Cursor — project, or `~/.cursor/mcp.json` for all projects):
 
     ```json
     {
@@ -74,7 +74,7 @@ The examples register the hosted server as `eachlabs-video` and the local one as
     ```
   </Tab>
   <Tab title="Kimi Code">
-    Add to `~/.kimi-code/mcp.json`:
+    Local — add to `~/.kimi-code/mcp.json`:
 
     ```json
     {
@@ -91,7 +91,11 @@ The examples register the hosted server as `eachlabs-video` and the local one as
 </Tabs>
 
 <Note>
-The `@eachlabs/video-api-mcp` npm package is rolling out during the beta — if the `npx` install cannot find it yet, connect through the hosted endpoint above. The server targets the `eachlabs-video-api` model slug by default — no extra configuration is needed. `EACHLABS_VIDEO_MODEL` exists only to override that default.
+**npm rollout:** the `@eachlabs/video-api-mcp` package is rolling out during the beta. Until your `npx` install finds it, the local path is not yet available — connect from Claude Code or Codex through the hosted endpoint in the meantime.
+</Note>
+
+<Note>
+The server targets the `eachlabs-video-api` model slug by default — no extra configuration is needed. `EACHLABS_VIDEO_MODEL` exists only to override that default.
 </Note>
 
 ## Use it
