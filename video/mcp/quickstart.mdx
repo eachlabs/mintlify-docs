@@ -102,11 +102,11 @@ Ask your agent to do video work with any publicly downloadable media URL — inp
 
 > "Trim the first 12 seconds of `YOUR_INPUT_URL`, burn the captions from this SRT, and give me the result URL."
 
-The agent chains the `trim` and `captions` tools; each tool call returns the hosted artifact URL (or JSON for the [analysis capabilities](/video/capabilities#response-shapes)) plus the billed cost. Local files: [upload them to eachlabs storage](/storage/upload-file) first and give the agent the returned `public_url`.
+The agent chains the `trim` and `captions` tools; each tool call returns the hosted artifact URL (or JSON for the [analysis capabilities](/video/capabilities#response-shapes)) plus the billed cost. Local files: ask the agent to call `upload_file` with the file's path — it uploads the file to eachlabs storage and returns the `public_url` to pass as input (the underlying REST endpoint is [upload-file](/storage/upload-file)).
 
 ## Tool inventory
 
-One tool per wrapped capability — same names and parameters as the [capabilities reference](/video/capabilities) (the `keep_ranges`/`silence_remove` pair is exposed under its original wire name, `silence_remove`) — plus `run_ffmpeg` (raw ffmpeg for beta organizations; contract and safety boundary in [run_ffmpeg](/video/capabilities#run_ffmpeg)) and `get_job` for checking a long-running job later. Parameters are validated client-side before submit and again by the engine. The MCP tool layer drops any parameter a tool's schema does not declare, so it never reaches the engine — an over-specified call still submits and bills, silently running without that parameter. (Sent straight to the REST API the same unknown key is rejected by the engine at $0, but the tool layer strips it first.)
+One tool per wrapped capability — same names and parameters as the [capabilities reference](/video/capabilities) (the `keep_ranges`/`silence_remove` pair is exposed under its original wire name, `silence_remove`) — plus `run_ffmpeg` (raw ffmpeg for beta organizations; contract and safety boundary in [run_ffmpeg](/video/capabilities#run_ffmpeg)), `get_job` for checking a long-running job later, and `upload_file` for uploading a local file to eachlabs storage and returning the `public_url` to pass as input. Parameters are validated client-side before submit and again by the engine. A call that doesn't match the tool's schema — including a parameter the tool doesn't declare — is rejected before anything is submitted: nothing reaches the engine and nothing bills.
 
 ## Notes for agent builders
 
