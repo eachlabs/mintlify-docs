@@ -8,7 +8,7 @@ description: "Every capability the eachlabs Video API accepts — parameters, bo
 </Note>
 
 <Note>
-Using these from an AI agent? The [MCP server](/video/mcp/quickstart) exposes most capabilities as native tools — its page lists the current tool surface.
+Using these from an AI agent? The [MCP server](/video/mcp/quickstart) exposes every capability as a native tool — its page has the install and connect steps.
 </Note>
 
 Every capability job is submitted the same way: `POST https://api.eachlabs.ai/v1/prediction` with header `Authorization: Bearer YOUR_API_KEY`, body `{"model": "eachlabs-video-api", "input": {"capability": "<name>", "input_url": "...", "params": {...}}}`, then poll `GET /v1/prediction/{id}` until a terminal status. A request needs only `capability`, `input_url` (or `input_urls`), and `params`. Analysis capabilities (`probe`, `scene_detect`, `silence_detect`, `audio_analysis`) return structured JSON in `output`; everything else returns hosted artifact URL(s) — the exact JSON per output class is in [Response shapes](#response-shapes). See [Quickstart](/video/quickstart) for the input URL requirements and [Billing & Limits](/video/billing-limits) for pricing mechanics and the error catalog. For long-tail cases the named capabilities don't cover, a raw-ffmpeg mode with a different top-level contract is documented at [run_ffmpeg](#run_ffmpeg), and multi-step patterns are collected under [Recipes](#recipes).
