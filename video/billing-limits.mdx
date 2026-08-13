@@ -191,7 +191,7 @@ The engine validates every submit synchronously. The platform submits on your be
 | `exec_error` | `PROVIDER_FAILED`, `error_message: "exec_error"` | Engine meters elapsed ffmpeg wall (`ceil`, 5 s floor) — settles $0 today | Customer | No |
 | `billed_seconds_cap` | `PROVIDER_FAILED`, `error_message: "billed_seconds_cap"` | Engine meters exactly 3600 s — settles $0 today | Customer | No |
 | `platform_fault` | `PROVIDER_FAILED`; `error_message` is `platform_fault`, or the engine's own reason where it has one (`execution_deadline_exceeded`) | $0 | Platform | **Yes** — but no envelope field isolates it, and `retryable` reads `false` even here. See [Retries](#retries--read-before-automating) |
-| `platform_drift` | `PROVIDER_FAILED`, `error_message: "platform_drift"` | $0 | Platform | No — deterministic (below) |
+| `platform_drift` | `PROVIDER_FAILED`; `error_message` is `platform_drift`, or the engine's own reason where it has one (the clip-count limit reports its own) | $0 | Platform | No — deterministic (below) |
 | — (job cancelled) | Prediction status `cancelled` | $0 — a cancelled prediction never bills | — | — |
 
 The engine emits `retryable` on every terminal failure. It is `true` only for `platform_fault` — the one class where retrying the same request can succeed. Every other failure class is deterministic for the same request; the load-dependent throttling codes (`PROVIDER_RATE_LIMIT`, `rate_limited`) are the carve-out — see [Retries](#retries--read-before-automating).
