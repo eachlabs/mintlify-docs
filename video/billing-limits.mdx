@@ -4,7 +4,7 @@ description: "The exact billing formula, the $0-reject guarantees, the full erro
 ---
 
 <Note>
-**Beta.** The Video API is in private beta: these pages are shared by direct link and are not listed in the public navigation. Rates below are the current beta rate card and may be adjusted during the beta [with notice](/video/versioning); the *mechanics* (integer seconds, no multipliers, $0 rejects) are the contract.
+**Beta.** The Video API is in beta. Rates below are the current beta rate card and may be adjusted during the beta [with notice](/video/versioning); the *mechanics* (integer seconds, no multipliers, $0 rejects) are the contract.
 </Note>
 
 ## The formula
@@ -32,7 +32,7 @@ Jobs run on shared `cpu` infrastructure; a legacy `tier` field is still accepted
 - **200 MB of output delivery included.** Every job includes the first 0.2 GB of delivered output free; only the excess bills, at $0.30/GB. An output of exactly 0.2 GB is inside the allowance. Most capabilities emit far less than 200 MB and never pay a delivery cent, and the analysis capabilities (`probe`, `scene_detect`, `silence_detect`, `audio_analysis`) produce no artifact at all — the delivery term only bites on genuinely large outputs.
 - **No multipliers.** Resolution, codec, container, and input duration never multiply the price — you pay for execution seconds, plus delivery only beyond the included 200 MB.
 - **Integer seconds, floored and capped.** Wall time is rounded up to whole seconds, floored at 5 seconds (a 1.2 s job bills 5 s), and hard-capped at 3600.
-- **Reproduce your bill from the response.** On video-api predictions, `metrics` carries the meter fields — `tier`, `billed_seconds`, and `output_gb` — alongside `cost` and `predict_time`. `metrics.cost` is the authoritative charge, and it always equals the formula applied to those two meter fields. Predictions that fail before metering carry only `cost` and `predict_time`.
+- **Reproduce your bill from the response.** On video-api predictions, `metrics` carries the meter fields — `tier`, `billed_seconds`, and `output_gb` — alongside `cost` and `predict_time`. `metrics.cost` is the authoritative charge, and on a success it always equals the formula applied to those two meter fields. Failed predictions carry only `cost` and `predict_time` — the meter fields are absent even on the classes the engine meters (`exec_error`, `billed_seconds_cap`), so reproduce a bill from a `success` only.
 - **Worked example.** A cpu job whose ffmpeg run takes 190.3 s bills `ceil(190.3) = 191` seconds; say it delivers a 1.404 GB output. Cost = `191 × 0.0015 + (1.404 - 0.2) × 0.30` = `0.2865 + 0.3612` = **$0.6477** — reproducible from `metrics.billed_seconds: 191` and `metrics.output_gb: 1.404` on the polled prediction. Had the same job delivered 50 MB, the delivery term would be $0 and it would bill $0.2865 flat. (`predict_time` might read `194.86` — the extra ~4 s is queueing and poll quantization on top of the metered 191 s.)
 
 ## When you pay nothing — guaranteed $0
@@ -72,7 +72,7 @@ On `status: "error"`, `output` is an object with these fields (captured from pro
 | `error_code` | The public error code — the codes in the table below, plus `PROVIDER_AUTH_ERROR` (engine 401/403), `PROVIDER_SERVER_ERROR` (engine 5xx), `NETWORK_ERROR`, `EXECUTION_TIMEOUT`, and `INPUT_DOWNLOAD_ERROR`. Treat an unknown code as terminal unless `retryable` is `true` |
 | `error_message` | The specific reason: the engine's failure reason when it provides one (validation rejects carry the full gate reason), otherwise the `failure_class` |
 | `classification.category` | One of `VALIDATION` (your request/input — fix before resubmitting), `PROVIDER`, `AUTH`, `RATE_LIMIT`, `NETWORK`, `TIMEOUT`, `INTERNAL`, or `UNKNOWN` for a code outside this set |
-| `retryable` | `false` for every deterministic failure; `true` only where retrying the same request can succeed |
+| `retryable` | Whether resubmitting the identical request could plausibly succeed. Do not read `false` as *your fault* or as *never retry* — a post-accept `platform_fault` is transient, bills $0, and still reads `false`. It is not a complete signal for transience: read the failure class from `error_message` and follow [Retries](#retries--read-before-automating) |
 | `error` | The constant string `Execution failed` — except in the dispatch-failure envelope above, where it carries the dispatch error text |
 | `error_step` | The pipeline step that surfaced it — validation rejects show a reject step, post-accept failures show `poll` |
 | `success` | `false` |
@@ -194,7 +194,7 @@ The engine validates every submit synchronously. The platform submits on your be
 | `platform_drift` | `PROVIDER_FAILED`; `error_message` is `platform_drift`, or the engine's own reason where it has one (the clip-count limit reports its own) | $0 | Platform | No — deterministic (below) |
 | — (job cancelled) | Prediction status `cancelled` | $0 — a cancelled prediction never bills | — | — |
 
-The engine emits `retryable` on every terminal failure. It is `true` only for `platform_fault` — the one class where retrying the same request can succeed. Every other failure class is deterministic for the same request; the load-dependent throttling codes (`PROVIDER_RATE_LIMIT`, `rate_limited`) are the carve-out — see [Retries](#retries--read-before-automating).
+`platform_fault` is the one class where retrying the same request can succeed, but nothing in the envelope tells you that: the engine marks the class retryable internally and that flag is not carried through, so every failure class in this table reaches you with `retryable: false`. Read the class from `error_message`. Every other failure class is deterministic for the same request; the load-dependent throttling codes (`PROVIDER_RATE_LIMIT`, `rate_limited`) are the carve-out — see [Retries](#retries--read-before-automating).
 
 ### `platform_drift`, defined
 
@@ -237,7 +237,7 @@ A retried submit creates a **second, separately billed job** — the prediction 
 For a *failed* prediction, three rules cover every class. Apply them in order: the `retryable` field alone is not sufficient, because the engine's one transient class arrives marked `retryable: false`.
 
 - **Retry the same request once** for any post-accept `PROVIDER_FAILED`. Platform faults — $0, and the only transient class after accept — hide inside this code, and no envelope field isolates them: `retryable` reads `false`, and the failure class reaches you only through `error_message`, which carries the engine's own reason where it has one (`execution_deadline_exceeded` for a job its runtime deadline cut off) and the class name (`platform_fault`) otherwise. Do not test for a fixed string. One retry settles it — a platform fault usually clears, anything else fails the same way — and it is free today, because every post-accept failure settles at `metrics.cost: 0` during the beta. A submit-time `platform_fault` is different: it is an engine 502 and reaches you as `PROVIDER_SERVER_ERROR`, under the next rule.
-- **Resubmit after backoff** for anything the envelope marks `retryable: true` — typically throttling, engine 5xx, and transport failures, which are load-dependent rather than request defects, so a later resubmit can succeed. Branch on the `retryable` field, not on the code: the same code can carry either value depending on where the failure arose.
+- **Resubmit after backoff** for anything the envelope marks `retryable: true` — a `true` marks a load-dependent failure rather than a request defect, so a later resubmit can succeed. Branch on the field itself, never on a set of codes you maintain: the value is not a lookup on `error_code`, and which codes carry `true` is not part of the contract.
 - **Everything else** — every code left after the two rules above, plus any `PROVIDER_FAILED` that failed identically on its one retry — is deterministic and will fail again: fix the request or the input instead of retrying. `platform_drift` always ends here.
 
 ## Raw ffmpeg (`run_ffmpeg`)
