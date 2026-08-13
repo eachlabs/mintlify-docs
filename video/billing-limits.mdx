@@ -4,7 +4,7 @@ description: "The exact billing formula, the $0-reject guarantees, the full erro
 ---
 
 <Note>
-**Beta.** The Video API is in private beta: these pages are shared by direct link and are not listed in the public navigation. Rates below are the current beta rate card and may be adjusted during the beta with notice; the *mechanics* (integer seconds, no multipliers, $0 rejects) are the contract.
+**Beta.** The Video API is in private beta: these pages are shared by direct link and are not listed in the public navigation. Rates below are the current beta rate card and may be adjusted during the beta [with notice](/video/versioning); the *mechanics* (integer seconds, no multipliers, $0 rejects) are the contract.
 </Note>
 
 ## The formula
@@ -46,7 +46,7 @@ Jobs run on shared `cpu` infrastructure; a legacy `tier` field is still accepted
 
 ## Failed compute
 
-A failure caused by your input **after compute starts** is metered by the engine. Two failure cases work this way:
+A failure caused by your input **after compute starts** is metered by the engine. Metering records what the engine measured; settlement is what you are charged — during the beta, failed compute meters normally but settles at `metrics.cost: 0`. Two failure cases work this way:
 
 | Event | Delivered | Engine meters | `failure_class` | Retryable |
 |-|-|-|-|-|
@@ -54,7 +54,7 @@ A failure caused by your input **after compute starts** is metered by the engine
 | ffmpeg fails mid-run after N seconds, on input content that passed the pre-compute probe gate (corrupt media, an impossible mux, an out-of-bounds crop/pad window) | Nothing | `ceil(N)` seconds, 5 s floor applies | `exec_error` | No |
 
 <Note>
-**Beta settlement.** Today, every prediction that ends in any status other than `success` settles with `metrics.cost: 0` — including `exec_error`, `billed_seconds_cap`, and `cancelled` (verified against production; see the captured `exec_error` example below). The **Engine meters** column is what the engine records for these outcomes and the reserved charge basis for them; if charging failed compute activates during the beta it will be announced with notice, per the note at the top of this page. Do not design flows that rely on failed compute staying free — the cap kill in particular is designed to bill exactly 3600 s.
+**Beta settlement.** Today, every prediction that ends in any status other than `success` settles with `metrics.cost: 0` — including `exec_error`, `billed_seconds_cap`, and `cancelled` (verified against production; see the captured `exec_error` example below). The **Engine meters** column is what the engine records for these outcomes and the reserved charge basis for them; if charging failed compute activates during the beta it will be announced [with notice](/video/versioning), per the note at the top of this page. Do not design flows that rely on failed compute staying free — the cap kill in particular is designed to bill exactly 3600 s.
 </Note>
 
 There is no other execution kill: the 3600 s billed-seconds cap is the only ceiling that terminates a running job. Total job wall clock (staging + queueing + upload) is unmetered and can exceed 3600 s without a kill. A platform fault at any point — before, during, or after compute — always bills $0.
@@ -243,3 +243,5 @@ For a *failed* prediction, three rules cover every class:
 ## Raw ffmpeg (`run_ffmpeg`)
 
 Beyond the named capabilities there is a raw-ffmpeg mode for long-tail cases, **available to beta organizations today**. The full contract — parameter table, `output_format` allowlist, placeholder binding, and the enforced safety boundary — lives in the [capabilities reference](/video/capabilities#run_ffmpeg). Every `run_ffmpeg` job bills under the same formula as any capability. Access may move to per-key grants later in the beta.
+
+Policies: [Acceptable Use](/video/acceptable-use) · [Abuse & Takedown](/video/abuse-and-takedown) · [Versioning & Deprecation](/video/versioning)

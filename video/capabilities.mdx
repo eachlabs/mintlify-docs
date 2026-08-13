@@ -7,6 +7,10 @@ description: "Every capability the eachlabs Video API accepts — parameters, bo
 **Beta.** The Video API is in private beta: these pages are shared by direct link and are not listed in the public navigation. The surface below is validated server-side with `additionalProperties: false` — a request is either exactly this shape or it is rejected before any compute runs, at $0. Contracts here are stable for the beta (additions may land; nothing is removed without notice).
 </Note>
 
+<Note>
+Using these from an AI agent? The [MCP server](/video/mcp/quickstart) exposes most capabilities as native tools — its page lists the current tool surface.
+</Note>
+
 Every capability job is submitted the same way: `POST https://api.eachlabs.ai/v1/prediction` with header `Authorization: Bearer YOUR_API_KEY`, body `{"model": "eachlabs-video-api", "input": {"capability": "<name>", "input_url": "...", "params": {...}}}`, then poll `GET /v1/prediction/{id}` until a terminal status. A request needs only `capability`, `input_url` (or `input_urls`), and `params`. Analysis capabilities (`probe`, `scene_detect`, `silence_detect`, `audio_analysis`) return structured JSON in `output`; everything else returns hosted artifact URL(s) — the exact JSON per output class is in [Response shapes](#response-shapes). See [Quickstart](/video/quickstart) for the input URL requirements and [Billing & Limits](/video/billing-limits) for pricing mechanics and the error catalog. For long-tail cases the named capabilities don't cover, a raw-ffmpeg mode with a different top-level contract is documented at [run_ffmpeg](#run_ffmpeg), and multi-step patterns are collected under [Recipes](#recipes).
 
 The 44 capabilities by category (sections below are alphabetical; `keep_ranges` and `silence_remove` are one capability under two accepted names, so the API accepts 45 capability names):
@@ -228,7 +232,7 @@ Swap or mix a video's audio track using a second input as the audio source; vide
 
 ## captions
 
-Burn a subtitle track (SRT/VTT/ASS) into the video via libass, with optional style overrides.
+Burn a subtitle track (SRT/VTT/ASS) into the video via libass, with optional style overrides. No subtitle file yet? Generate one with a speech-to-text model first (e.g. `elevenlabs-speech-to-text-scribe-v2`), or use [subtitle_compose](#subtitle_compose) to author animated captions directly from word timings.
 
 **Inputs:** `input_urls` (2) — `input_urls[0]` is the video, `input_urls[1]` is the subtitle file (SRT/VTT/ASS) · **Output:** media — single file
 
