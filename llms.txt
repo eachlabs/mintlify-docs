@@ -303,7 +303,7 @@ Response: the full workflow object, including `versions: [{"version_id": "v1", .
 
 `PUT https://api.eachlabs.ai/v1/workflows/{workflowID}/versions/{versionID}`
 
-Patch semantics — omitted body fields keep their stored values. `definition` is required to create a new version; omit it (or send `null`) to keep the stored one. `output_mapping` maps final output keys to step refs (e.g. `{"image": "$.generate.output"}`): omit = unchanged, `{}` = clear, entries = replace the whole map. Boolean flags: `published`, `locked`, `production`, `allowed_to_share`. Errors: `403` locked version, `409` version pinned by a public curation.
+Patch semantics — omitted body fields keep their stored values. `definition` is required to create a new version; omit it (or send `null`) to keep the stored one. `output_mapping` maps final output keys to step refs (e.g. `{"image": "$.generate.output"}`): omit = unchanged, `{}` = clear, entries = replace the whole map. Boolean flags: `published`, `locked`, `production`, `allowed_to_share`. Errors: `403` locked version.
 
 ### Step Types
 

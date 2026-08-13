@@ -187,9 +187,6 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFound"
-          },
-          "409": {
-            "$ref": "#/components/responses/Conflict"
           }
         },
         "servers": [
@@ -878,16 +875,6 @@
       },
       "NotFound": {
         "description": "Not found - Resource does not exist",
-        "content": {
-          "application/json": {
-            "schema": {
-              "$ref": "#/components/schemas/Error"
-            }
-          }
-        }
-      },
-      "Conflict": {
-        "description": "Conflict - Version is pinned by a public curation",
         "content": {
           "application/json": {
             "schema": {
