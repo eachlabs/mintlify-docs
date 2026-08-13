@@ -69,9 +69,9 @@ On `status: "error"`, `output` is an object with these fields (captured from pro
 
 | Field | Carries |
 |-|-|
-| `error_code` | The public error code — one of the table below |
+| `error_code` | The public error code — the codes in the table below, plus `PROVIDER_AUTH_ERROR` (engine 401/403), `NETWORK_ERROR`, `EXECUTION_TIMEOUT`, and `INPUT_DOWNLOAD_ERROR`. Treat an unknown code as terminal unless `retryable` is `true` |
 | `error_message` | The specific reason: the engine's failure reason when it provides one (validation rejects carry the full gate reason), otherwise the `failure_class` |
-| `classification.category` | `VALIDATION` (your request/input — fix before resubmitting) or `PROVIDER` |
+| `classification.category` | One of `VALIDATION` (your request/input — fix before resubmitting), `PROVIDER`, `AUTH`, `RATE_LIMIT`, `NETWORK`, `TIMEOUT`, `INTERNAL` |
 | `retryable` | `false` for every deterministic failure; `true` only where retrying the same request can succeed |
 | `error` | The constant string `Execution failed` |
 | `error_step` | The pipeline step that surfaced it — validation rejects show a reject step, post-accept failures show `poll` |
@@ -157,11 +157,11 @@ A real execution failure (`exec_error` — a crop window larger than the source 
 | `INPUT_VALIDATION_ERROR` | The engine rejected the job before compute — invalid command/params (`invalid_command`) or input rejected at the probe gate (`input_rejected`) | `error_message` carries the specific gate reason (first example above) | $0 |
 | `PROVIDER_BAD_REQUEST` | The engine refused the submit itself — synchronous validation, `error_step: "Submit Job"` | `error_message` carries the engine's JSON body `{code, message, retryable, stage}`; codes in the table below | $0 |
 | `PROVIDER_FAILED` — post-accept (`error_step: "poll"`) | The job failed after the engine accepted it | `error_message` carries the `failure_class` — `exec_error`, `billed_seconds_cap`, `platform_fault`, or `platform_drift` (second example above) | Per the failure-class table below |
-| `PROVIDER_RATE_LIMIT` | The platform gave up re-enqueuing a job held back by an in-flight concurrency cap | — | $0 |
+| `PROVIDER_RATE_LIMIT` | Throttling the platform could not absorb — either the engine submit bucket after the platform's retries, or a job held back by an in-flight concurrency cap past the re-enqueue budget | `error_step` distinguishes the two | $0 |
 
 ### Engine submit rejects — synchronous, all $0
 
-The engine validates every submit synchronously. The platform submits on your behalf, so you see these as `PROVIDER_BAD_REQUEST` with `error_step: "Submit Job"`, `http_status: 400`, and the engine's body `{code, message, retryable, stage}` returned verbatim as a JSON string in `error_message` (verified against production — e.g. a `tier: "gpu"` request polls with `error_message: {"code":"invalid_command","message":"tier: must be one of cpu","retryable":false,"stage":"validate"}`). Submit-stage rejects additionally carry diagnostic fields (`http_status`, `root_cause`, `causes`, `timing`) not present on post-accept failures.
+The engine validates every submit synchronously. The platform submits on your behalf, so you see these with `error_step: "Submit Job"` and the engine's body `{code, message, retryable, stage}` returned verbatim as a JSON string in `error_message` (verified against production — e.g. a `tier: "gpu"` request polls with `error_message: {"code":"invalid_command","message":"tier: must be one of cpu","retryable":false,"stage":"validate"}`). An engine 400 or 409 surfaces as `PROVIDER_BAD_REQUEST`; an engine 401 or 403 surfaces as `PROVIDER_AUTH_ERROR`. Submit-stage rejects additionally carry diagnostic fields (`http_status`, `root_cause`, `causes`, `timing`) not present on post-accept failures.
 
 | Code | HTTP | Meaning | Retryable |
 |-|-|-|-|
@@ -217,7 +217,7 @@ Cancellation is **record-only**: it finalizes your prediction immediately, but i
 ## Rate limits & concurrency
 
 - **No per-organization rate limit on submits today** (beta). `POST /v1/prediction` is not throttled per key or per org.
-- **One global engine submit bucket** — 50 requests/s, burst 100, shared across all organizations — protects the engine. You never see it as an HTTP 429: the platform absorbs it and retries the submit internally (3 attempts, 2 s base backoff). A persistently throttled submit surfaces as the prediction erroring with `PROVIDER_FAILED` (`rate_limited` in the message) at $0.
+- **One global engine submit bucket** — 50 requests/s, burst 100, shared across all organizations — protects the engine. You never see it as an HTTP 429: the platform absorbs it and retries the submit internally (3 attempts, 2 s base backoff). A persistently throttled submit surfaces as the prediction erroring with `PROVIDER_RATE_LIMIT` at $0.
 - **In-flight execution caps** exist per provider on the platform side. A job held back by a cap is re-enqueued with backoff — you observe a prolonged `starting` status, not an error. If the platform exhausts its re-enqueue budget, the prediction errors with `PROVIDER_RATE_LIMIT` at $0.
 - **Worker concurrency is bounded platform-wide** (32 concurrent job actions per worker); bursts queue rather than fail — a 100-job burst of short transcodes drains in ~15-30 s.
 
@@ -237,7 +237,7 @@ A retried submit creates a **second, separately billed job** — the prediction 
 For a *failed* prediction, three rules cover every class:
 
 - **Retry the same request** only when the error is retryable — that is `platform_fault`, the one transient class.
-- **Resubmit after backoff** is safe for the throttling codes even though they are not marked retryable: `PROVIDER_RATE_LIMIT`, and `PROVIDER_FAILED` whose message reads `rate_limited`. These are load-dependent, not request defects — a later resubmit can succeed.
+- **Resubmit after backoff** for `PROVIDER_RATE_LIMIT`, which is marked `retryable: true`. Throttling is load-dependent, not a request defect — a later resubmit can succeed.
 - **Everything else is deterministic** — including `platform_drift` — and will fail again: fix the request or the input instead of retrying.
 
 ## Raw ffmpeg (`run_ffmpeg`)

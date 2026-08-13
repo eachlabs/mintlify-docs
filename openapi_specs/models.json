@@ -2566,6 +2566,21 @@
                 "type": "number",
                 "description": "Cost of the prediction in USD",
                 "example": 0.05
+              },
+              "tier": {
+                "type": "string",
+                "description": "Compute tier the job was metered on. Present on metered video predictions; omitted for other models",
+                "example": "cpu"
+              },
+              "billed_seconds": {
+                "type": "integer",
+                "description": "Execution seconds the engine metered and billed. Present on metered video predictions; omitted for other models",
+                "example": 191
+              },
+              "output_gb": {
+                "type": "number",
+                "description": "Delivered output size in GB, the basis for the delivery charge. Present on metered video predictions; omitted for other models",
+                "example": 0.0024
               }
             }
           },

@@ -13,7 +13,7 @@ One API for programmatic video work: **44 ready-made capabilities** — transcod
 
 It runs behind the same [eachlabs prediction API](/api/overview) you may already use for AI models: the same API key, the same submit-and-poll flow, the same billing. Model slug: **`eachlabs-video-api`**.
 
-**Terminology.** A **job** is the unit of video work the engine executes; it is tracked as a **prediction** — the API object you submit and poll. On the prediction, `metrics.predict_time` measures the full wall time of the run, while billing is metered separately from the job's ffmpeg execution wall — the two differ by design (see [Billing & Limits](/video/billing-limits)).
+**Terminology.** A **job** is the unit of video work the engine executes; it is tracked as a **prediction** — the API object you submit and poll. On the prediction, `metrics.predict_time` measures the full wall time of the run, while billing is metered from the job's ffmpeg execution wall alone — the two differ by design (see [Billing & Limits](/video/billing-limits)).
 
 ```json
 {
@@ -31,7 +31,7 @@ It runs behind the same [eachlabs prediction API](/api/overview) you may already
 - **Strict validation, $0 rejects.** Every capability validates its parameters server-side with `additionalProperties: false`. A malformed request — wrong enum, out-of-range value, unknown key, structurally incompatible input — is rejected *before any compute runs* and costs nothing.
 - **Per-second integer billing, no multipliers.** You pay `billed_seconds × $0.0015`, plus output delivery only beyond a 200 MB free allowance per job ($0.30/GB on the excess). No resolution, codec, or duration multipliers. Details in [Billing & Limits](/video/billing-limits).
 - **Deliver-or-don't-bill for platform faults.** If a failure on our side — including an upload failure — prevents delivering your output, you are not billed; `platform_fault` is the one error class where retrying the same request can succeed (`platform_drift`, also $0, is deterministic — see the [error catalog](/video/billing-limits#error-catalog)). Failures caused by your input after compute starts are metered by the engine — a mid-run ffmpeg failure meters the elapsed execution wall, a job killed at the 3600 s execution cap meters exactly 3600 seconds — and settle at `metrics.cost: 0` during the beta. The full matrix is in [Billing & Limits](/video/billing-limits#failed-compute).
-- **You never pay for an empty output.** Requests whose parameters would produce nothing (a trim starting past the end of the clip, a fade beyond the video's duration) are rejected at $0 by a probe gate before execution.
+- **Empty outputs are rejected at $0 when the source can be probed.** Requests whose parameters would produce nothing (a trim starting past the end of the clip, a fade beyond the video's duration) are rejected by a probe gate before execution. On a source the probe cannot read, that gate fails open: the job runs and bills its execution seconds even if the output is near-empty.
 
 ## How results come back
 

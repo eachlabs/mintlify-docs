@@ -16,13 +16,13 @@ Create a key in the [dashboard](https://www.eachlabs.ai/api-keys) under **Settin
 `input_url` (and `input_urls`) accept a **publicly downloadable `https` URL** to a media file — we stage your media into eachlabs storage automatically before processing. Private footage: a presigned URL from your own storage works — any `https` URL the engine can fetch is staged the same way (see [Acceptable Use](/video/acceptable-use)). `s3://` input URIs from your onboarding keep working unchanged, and you can chain jobs by passing a previous job's `output` URL as the next job's input.
 
 <Note>
-The URL must point directly at a media file, identified by its file extension. The staged extensions are: video `.mp4` `.webm` `.mov` `.avi` `.mkv` `.flv`; audio `.mp3` `.wav` `.ogg` `.flac` `.m4a` `.aac` `.opus` `.wma`; image `.png` `.jpg` `.jpeg` `.gif` `.webp` `.bmp` `.tiff`; subtitle `.vtt`. A URL we cannot stage (unreachable, not public, or not identifiable as media) is rejected at $0 with `PROVIDER_REJECTED` and the offending URL in the message.
+The URL must point directly at a media file, identified by its file extension. The staged extensions are: video `.mp4` `.webm` `.mov` `.avi` `.mkv` `.flv`; audio `.mp3` `.wav` `.ogg` `.flac` `.m4a` `.aac` `.opus` `.wma`; image `.png` `.jpg` `.jpeg` `.gif` `.webp` `.bmp` `.tiff`; subtitle `.vtt` `.srt` `.ass`; color LUT `.cube`. A URL we cannot stage (unreachable, not public, or not identifiable as media) is rejected at $0 with `PROVIDER_REJECTED` and the offending URL in the message.
 
 A URL with **no path extension at all** can declare its type with a `mime_type=` query parameter (the parameter is only consulted when the URL path carries no extension — it cannot override an unrecognized extension). The value is the MIME type with the separators encoded as underscores — the first `_` becomes `/`, any later `_` becomes `-`: `mime_type=video_mp4` → `video/mp4`, `video_quicktime` → `video/quicktime`, `audio_x_wav` → `audio/x-wav`. Any `video/*`, `audio/*`, or `image/*` type is accepted (the subtype is not checked against a list); non-media types are rejected. Note `.ts` artifacts (`hls_ladder` segments, `concat_copy` `container: "ts"`) are terminal today: `.ts` is not a staged extension and the extension blocks the `mime_type=` fallback, so they cannot be chained as inputs.
 </Note>
 
 <Warning>
-Text sidecar files outside that list (`.srt`/`.ass` subtitles, `.cube` LUTs, sendcmd scripts) are not staged from arbitrary public URLs. Host them on eachlabs storage instead — an `s3://` URI from your onboarding or a `cdn-us.eachlabs.ai` URL — or use `.vtt` for subtitles, which stages like any media file.
+`.cube` LUTs stage only when the URL path carries the `.cube` extension — the `mime_type=` fallback accepts media types only, so an extensionless LUT URL is not staged. sendcmd scripts are not staged from public URLs at all: host them on eachlabs storage instead — an `s3://` URI from your onboarding or a `cdn-us.eachlabs.ai` URL.
 </Warning>
 
 ## 3. Submit a job
@@ -97,7 +97,7 @@ curl "https://api.eachlabs.ai/v1/prediction/PREDICTION_ID" \
   -H "Authorization: Bearer YOUR_API_KEY"
 ```
 
-The typical flow is `starting` → `processing` → **`success`**. The complete status set is `starting`, `created`, `processing`, `success`, `error`, `cancelled` — a failed prediction reports `error`, never `"failed"`. `created` is the record's initial state before the platform picks the job up: pickup is normally immediate, so a poll loop usually first observes `starting` or `processing` and may never see it. Poll every 3-5 seconds: the platform's own status checks are quantized to ~5 s, so tighter loops buy nothing. Most short jobs finish in well under a minute (a 100-job burst of short transcodes drains in ~15-30 seconds). A prediction sitting in `starting` unusually long is queued behind a concurrency cap — keep polling; see [Rate limits & concurrency](/video/billing-limits#rate-limits--concurrency).
+The typical flow is `starting` → `processing` → **`success`**. The complete status set is `starting`, `created`, `processing`, `success`, `error`, `cancelled` — a failed prediction reports `error`, never `"failed"`. The video surface writes `starting` as the initial state; `created` appears only on legacy paths, so a poll loop may never see it. Poll every 3-5 seconds: the platform's own status checks are quantized to ~5 s, so tighter loops buy nothing. Most short jobs finish in well under a minute (a 100-job burst of short transcodes drains in ~15-30 seconds). A prediction sitting in `starting` unusually long is queued behind a concurrency cap — keep polling; see [Rate limits & concurrency](/video/billing-limits#rate-limits--concurrency).
 
 ```json
 {
@@ -124,7 +124,7 @@ The typical flow is `starting` → `processing` → **`success`**. The complete 
 - `metrics.predict_time` — the prediction's **full wall time** in seconds, from processing start to completion detection, including internal queueing and poll quantization. It is **not** the billed quantity: cost comes from `metrics.billed_seconds` × $0.0015. In the example above `billed_seconds` reads 191 → `191 × $0.0015 = $0.2865`, while `predict_time` reads 194.86 — see [the formula](/video/billing-limits#the-formula).
 - `input` — your submitted input, echoed back. `logs` is present on every poll and is `null` today.
 - `urls.get` — this prediction's poll URL. `urls.cancel` — its cancel endpoint (`POST`, same `Authorization` header); cancellation is record-only and a cancelled prediction never bills — see [Cancelling a prediction](/video/billing-limits#cancelling-a-prediction).
-- On `status: "error"` the `output` object carries `error_code` and `error_message`; the field-by-field envelope with two real captured examples, and the billing impact per class, are in the [error catalog](/video/billing-limits#error-catalog).
+- On `status: "error"` the `output` object carries `error_code` and `error_message` — except on a dispatch failure at submit, which writes a minimal envelope carrying only `error`, so guard for their absence before reading them. The field-by-field envelope with two real captured examples, and the billing impact per class, are in the [error catalog](/video/billing-limits#error-catalog).
 - Download or persist artifacts promptly; treat artifact URLs as valid for at least 24 hours.
 
 ## 5. Optional: completion webhooks
