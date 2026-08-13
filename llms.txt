@@ -33,7 +33,7 @@ Auth error response: `{"error": "Invalid or missing API key"}` (HTTP 401)
 | each::workflows | `https://api.eachlabs.ai` | REST |
 | each::sense | `https://eachsense-agent.core.eachlabs.run` | REST + SSE |
 
-Workflow endpoints with no `api.eachlabs.ai` equivalent (get/update workflow, versions, categories, public workflows) are served from `https://workflows.eachlabs.run/api/v1`, a fully supported host for those endpoints.
+Workflow endpoints with no `api.eachlabs.ai` equivalent (get/update workflow, categories, public workflows) are served from `https://workflows.eachlabs.run/api/v1`, a fully supported host for those endpoints.
 
 ---
 
