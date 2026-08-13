@@ -191,7 +191,7 @@
           },
           {
             "group": "MCP",
-            "pages": ["video/mcp/quickstart"]
+            "pages": ["video/mcp/quickstart", "video/mcp/tools"]
           },
           {
             "group": "Policies",

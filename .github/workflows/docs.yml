@@ -79,3 +79,15 @@ jobs:
             "https://api.github.com/repos/eachlabs/be-monorepo/contents/video-api/scripts/check-docs-mirror.sh?ref=main" \
             -o /tmp/check-docs-mirror.sh
           bash /tmp/check-docs-mirror.sh openapi_specs/video_api.json
+
+  # TODO(mcp-tools-mirror): video/mcp/tools.mdx is generated output from
+  # eachlabs/video-api-mcp scripts/generate-tool-docs.mjs — it should get a
+  # drift check mirroring the video-api-mirror job above. Blocked today:
+  # the generator lives in the private video-api-mcp repo (no read-token
+  # secret configured here, e.g. VIDEO_API_MCP_READ_TOKEN) and the published
+  # npm tarball ships only dist/ — no generator script — so docs CI cannot
+  # regenerate the page from the pinned @eachlabs/video-api-mcp version.
+  # Enable once a read token exists AND the generator verifiably runs against
+  # the installed npm package (not repo source), following the token-gated
+  # skip-with-warning pattern of video-api-mirror. Until then the page header
+  # comment marks it generated; update it only via the generator.
