@@ -4,12 +4,12 @@ description: "Drive the Video API from Claude, Cursor, or any MCP-capable agent 
 ---
 
 <Note>
-**Beta.** The Video API MCP server is in private beta: these pages are shared by direct link and are not listed in the public navigation. Tool names and schemas are stable for the beta (additions may land; nothing is removed without notice). Jobs are billed to the account you connect: see [Billing & Limits](/video/billing-limits).
+**Beta.** The Video API MCP server is in private beta: these pages are shared by direct link and are not listed in the public navigation. Tool names and schemas are stable for the beta (additions may land; nothing is removed without notice). Jobs are billed to the organization you approve (hosted) or your API key's account (headless): see [Billing & Limits](/video/billing-limits).
 </Note>
 
 ## What you get
 
-An MCP server that exposes the Video API as native agent tools — 37 of the 45 capabilities in the [capabilities reference](/video/capabilities) today, with client-side schema validation, automatic submit-and-poll, and results returned as artifact URLs or structured analysis JSON. Your agent edits video by calling tools; you connect with one OAuth login (or an API key in [headless environments](#headless-and-ci-api-key)). The remaining capabilities (`audio_analysis`, `audio_duck`, `audio_master`, `crossfade`, `silence_split`, `sticker_overlay`, `title_card`) are reachable through the [HTTP API](/video/quickstart) and will be wrapped as tools in a later release.
+An MCP server that exposes the Video API as native agent tools — 37 of the 44 capabilities in the [capabilities reference](/video/capabilities) today, with client-side schema validation, automatic submit-and-poll, and results returned as artifact URLs or structured analysis JSON. Your agent edits video by calling tools; you connect with one OAuth login (or an API key in [headless environments](#headless-and-ci-api-key)). The remaining capabilities (`audio_analysis`, `audio_duck`, `audio_master`, `crossfade`, `silence_split`, `sticker_overlay`, `title_card`) are reachable through the [HTTP API](/video/quickstart) and will be wrapped as tools in a later release.
 
 ## Connect your agent
 
