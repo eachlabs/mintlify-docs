@@ -97,7 +97,7 @@ curl "https://api.eachlabs.ai/v1/prediction/PREDICTION_ID" \
   -H "Authorization: Bearer YOUR_API_KEY"
 ```
 
-The typical flow is `starting` → `processing` → **`success`**. The complete status set is `starting`, `created`, `processing`, `success`, `error`, `cancelled` — a failed prediction reports `error`, never `"failed"`. The video surface writes `starting` as the initial state; `created` appears only on legacy paths, so a poll loop may never see it. Poll every 3-5 seconds: the platform's own status checks are quantized to ~5 s, so tighter loops buy nothing. Most short jobs finish in well under a minute (a 100-job burst of short transcodes drains in ~15-30 seconds). A prediction sitting in `starting` unusually long is queued behind a concurrency cap — keep polling; see [Rate limits & concurrency](/video/billing-limits#rate-limits--concurrency).
+The typical flow is `created` → `processing` → **`success`**. The complete status set is `created`, `processing`, `success`, `error`, `cancelled` — a failed prediction reports `error`, never `"failed"`. `created` is the first status you see; the API never returns `starting`, so do not branch on it. Poll every 3-5 seconds: the platform's own status checks are quantized to ~5 s, so tighter loops buy nothing. Most short jobs finish in well under a minute (a 100-job burst of short transcodes drains in ~15-30 seconds). A prediction sitting in `created` unusually long is queued behind a concurrency cap — keep polling; see [Rate limits & concurrency](/video/billing-limits#rate-limits--concurrency).
 
 ```json
 {
