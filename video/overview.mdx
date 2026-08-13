@@ -13,7 +13,7 @@ One API for programmatic video work: **44 ready-made capabilities** — transcod
 
 It runs behind the same [eachlabs prediction API](/api/overview) you may already use for AI models: the same API key, the same submit-and-poll flow, the same billing. Model slug: **`eachlabs-video-api`**.
 
-**Terminology.** A **job** is the unit of video work the engine executes; it is tracked as a **prediction** — the API object you submit and poll. On the prediction, `metrics.predict_time` measures the full wall time of the run, while billing is metered from the job's ffmpeg execution wall alone — the two differ by design (see [Billing & Limits](/video/billing-limits)).
+**Terminology.** A **job** is the unit of video work the engine executes; it is tracked as a **prediction** — the API object you submit and poll. On the prediction, `metrics.predict_time` measures the full wall time of the run, while compute is metered only from the job's ffmpeg execution wall — the two differ by design (delivery beyond the 200 MB allowance bills separately; see [Billing & Limits](/video/billing-limits)).
 
 ```json
 {
