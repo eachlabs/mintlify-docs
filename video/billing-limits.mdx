@@ -41,7 +41,7 @@ Jobs run on shared `cpu` infrastructure; a legacy `tier` field is still accepted
 |-|-|
 | Invalid request | Unknown capability, wrong enum, out-of-range value, unknown parameter key, wrong input count |
 | Input rejected pre-compute | Input over the size budget, input duration over 3600s, unsupported input URL, an input missing a stream the capability declares it needs — the closed per-capability list is in [What the probe gate checks](/video/capabilities#what-the-probe-gate-checks) |
-| Parameters that would produce an empty output | `trim` starting at/past the end of the clip, `fade` scheduled beyond the video's duration, sub-frame output windows |
+| Parameters that would produce an empty output — when the source can be probed | `trim` starting at/past the end of the clip, `fade` scheduled beyond the video's duration, sub-frame output windows. On a source the probe cannot read the gate fails open: the job runs and bills its execution seconds |
 | Platform faults | Any failure on our side — including output-upload failure. **Deliver-or-don't-bill:** if the failure is ours, you were not billed. `platform_fault` is retryable; `platform_drift` is deterministic (see [the drift class](#platform_drift-defined)) |
 
 ## Failed compute
@@ -65,15 +65,15 @@ Every failure surfaces on the polled prediction as `status: "error"` — never `
 
 ### The error envelope
 
-On `status: "error"`, `output` is an object with these fields (captured from production below):
+On `status: "error"`, `output` is an object with these fields (captured from production below) — except on a dispatch failure at submit, which writes a minimal envelope carrying only `error`, set to the dispatch error text:
 
 | Field | Carries |
 |-|-|
-| `error_code` | The public error code — one of the table below |
+| `error_code` | The public error code — the codes in the table below, plus `PROVIDER_AUTH_ERROR` (engine 401/403), `PROVIDER_SERVER_ERROR` (engine 5xx), `NETWORK_ERROR`, `EXECUTION_TIMEOUT`, and `INPUT_DOWNLOAD_ERROR`. Treat an unknown code as terminal unless `retryable` is `true` |
 | `error_message` | The specific reason: the engine's failure reason when it provides one (validation rejects carry the full gate reason), otherwise the `failure_class` |
-| `classification.category` | `VALIDATION` (your request/input — fix before resubmitting) or `PROVIDER` |
+| `classification.category` | One of `VALIDATION` (your request/input — fix before resubmitting), `PROVIDER`, `AUTH`, `RATE_LIMIT`, `NETWORK`, `TIMEOUT`, `INTERNAL`, or `UNKNOWN` for a code outside this set |
 | `retryable` | `false` for every deterministic failure; `true` only where retrying the same request can succeed |
-| `error` | The constant string `Execution failed` |
+| `error` | The constant string `Execution failed` — except in the dispatch-failure envelope above, where it carries the dispatch error text |
 | `error_step` | The pipeline step that surfaced it — validation rejects show a reject step, post-accept failures show `poll` |
 | `success` | `false` |
 | `execution_id`, `model_id`, `model_slug`, `provider` | Identifiers; `provider_error_code` additionally appears on post-accept failures |
@@ -157,11 +157,11 @@ A real execution failure (`exec_error` — a crop window larger than the source 
 | `INPUT_VALIDATION_ERROR` | The engine rejected the job before compute — invalid command/params (`invalid_command`) or input rejected at the probe gate (`input_rejected`) | `error_message` carries the specific gate reason (first example above) | $0 |
 | `PROVIDER_BAD_REQUEST` | The engine refused the submit itself — synchronous validation, `error_step: "Submit Job"` | `error_message` carries the engine's JSON body `{code, message, retryable, stage}`; codes in the table below | $0 |
 | `PROVIDER_FAILED` — post-accept (`error_step: "poll"`) | The job failed after the engine accepted it | `error_message` carries the `failure_class` — `exec_error`, `billed_seconds_cap`, `platform_fault`, or `platform_drift` (second example above) | Per the failure-class table below |
-| `PROVIDER_RATE_LIMIT` | The platform gave up re-enqueuing a job held back by an in-flight concurrency cap | — | $0 |
+| `PROVIDER_RATE_LIMIT` | Throttling the platform could not absorb — either the engine submit bucket after the platform's retries, or a job held back by an in-flight concurrency cap past the re-enqueue budget | `error_step` distinguishes the two | $0 |
 
 ### Engine submit rejects — synchronous, all $0
 
-The engine validates every submit synchronously. The platform submits on your behalf, so you see these as `PROVIDER_BAD_REQUEST` with `error_step: "Submit Job"`, `http_status: 400`, and the engine's body `{code, message, retryable, stage}` returned verbatim as a JSON string in `error_message` (verified against production — e.g. a `tier: "gpu"` request polls with `error_message: {"code":"invalid_command","message":"tier: must be one of cpu","retryable":false,"stage":"validate"}`). Submit-stage rejects additionally carry diagnostic fields (`http_status`, `root_cause`, `causes`, `timing`) not present on post-accept failures.
+The engine validates every submit synchronously. The platform submits on your behalf, so you see these with `error_step: "Submit Job"` and the engine's body `{code, message, retryable, stage}` returned verbatim as a JSON string in `error_message` (verified against production — e.g. a `tier: "gpu"` request polls with `error_message: {"code":"invalid_command","message":"tier: must be one of cpu","retryable":false,"stage":"validate"}`). An engine 401 or 403 surfaces as `PROVIDER_AUTH_ERROR`, a 429 as `PROVIDER_RATE_LIMIT`, a 502 as `PROVIDER_SERVER_ERROR`, and every other 4xx (400, 404, 409) as `PROVIDER_BAD_REQUEST`. Submit-stage rejects additionally carry diagnostic fields (`http_status`, `root_cause`, `causes`, `timing`) not present on post-accept failures.
 
 | Code | HTTP | Meaning | Retryable |
 |-|-|-|-|
@@ -190,8 +190,8 @@ The engine validates every submit synchronously. The platform submits on your be
 | `input_rejected` | `INPUT_VALIDATION_ERROR`, `error_message` carries the gate reason (e.g. `duration_over_cap`) | $0 | Customer | No |
 | `exec_error` | `PROVIDER_FAILED`, `error_message: "exec_error"` | Engine meters elapsed ffmpeg wall (`ceil`, 5 s floor) — settles $0 today | Customer | No |
 | `billed_seconds_cap` | `PROVIDER_FAILED`, `error_message: "billed_seconds_cap"` | Engine meters exactly 3600 s — settles $0 today | Customer | No |
-| `platform_fault` | `PROVIDER_FAILED`, `error_message: "platform_fault"` | $0 | Platform | **Yes** — retry the same request. Identify it by `error_message`, not the envelope `retryable` field, which reads `false` even here. |
-| `platform_drift` | `PROVIDER_FAILED`, `error_message: "platform_drift"` | $0 | Platform | No — deterministic (below) |
+| `platform_fault` | `PROVIDER_FAILED`; `error_message` is `platform_fault`, or the engine's own reason where it has one (`execution_deadline_exceeded`) | $0 | Platform | **Yes** — but no envelope field isolates it, and `retryable` reads `false` even here. See [Retries](#retries--read-before-automating) |
+| `platform_drift` | `PROVIDER_FAILED`; `error_message` is `platform_drift`, or the engine's own reason where it has one (the clip-count limit reports its own) | $0 | Platform | No — deterministic (below) |
 | — (job cancelled) | Prediction status `cancelled` | $0 — a cancelled prediction never bills | — | — |
 
 The engine emits `retryable` on every terminal failure. It is `true` only for `platform_fault` — the one class where retrying the same request can succeed. Every other failure class is deterministic for the same request; the load-dependent throttling codes (`PROVIDER_RATE_LIMIT`, `rate_limited`) are the carve-out — see [Retries](#retries--read-before-automating).
@@ -217,8 +217,8 @@ Cancellation is **record-only**: it finalizes your prediction immediately, but i
 ## Rate limits & concurrency
 
 - **No per-organization rate limit on submits today** (beta). `POST /v1/prediction` is not throttled per key or per org.
-- **One global engine submit bucket** — 50 requests/s, burst 100, shared across all organizations — protects the engine. You never see it as an HTTP 429: the platform absorbs it and retries the submit internally (3 attempts, 2 s base backoff). A persistently throttled submit surfaces as the prediction erroring with `PROVIDER_FAILED` (`rate_limited` in the message) at $0.
-- **In-flight execution caps** exist per provider on the platform side. A job held back by a cap is re-enqueued with backoff — you observe a prolonged `starting` status, not an error. If the platform exhausts its re-enqueue budget, the prediction errors with `PROVIDER_RATE_LIMIT` at $0.
+- **One global engine submit bucket** — 50 requests/s, burst 100, shared across all organizations — protects the engine. You never see it as an HTTP 429: the platform absorbs it and retries the submit internally (3 attempts, 2 s base backoff). A persistently throttled submit surfaces as the prediction erroring with `PROVIDER_RATE_LIMIT` at $0.
+- **In-flight execution caps** exist per provider on the platform side. A job held back by a cap is re-enqueued with backoff — you observe a prolonged `created` status, not an error. If the platform exhausts its re-enqueue budget, the prediction errors with `PROVIDER_RATE_LIMIT` at $0.
 - **Worker concurrency is bounded platform-wide** (32 concurrent job actions per worker); bursts queue rather than fail — a 100-job burst of short transcodes drains in ~15-30 s.
 
 ## Limits
@@ -234,11 +234,11 @@ Cancellation is **record-only**: it finalizes your prediction immediately, but i
 
 A retried submit creates a **second, separately billed job** — the prediction API does not deduplicate submits today. Submit once, persist the returned `predictionID`, and drive all retry logic through polling that ID. Gateway-level idempotency keys are on the beta roadmap.
 
-For a *failed* prediction, three rules cover every class:
+For a *failed* prediction, three rules cover every class. Apply them in order: the `retryable` field alone is not sufficient, because the engine's one transient class arrives marked `retryable: false`.
 
-- **Retry the same request** only when the error is retryable — that is `platform_fault`, the one transient class.
-- **Resubmit after backoff** is safe for the throttling codes even though they are not marked retryable: `PROVIDER_RATE_LIMIT`, and `PROVIDER_FAILED` whose message reads `rate_limited`. These are load-dependent, not request defects — a later resubmit can succeed.
-- **Everything else is deterministic** — including `platform_drift` — and will fail again: fix the request or the input instead of retrying.
+- **Retry the same request once** for any post-accept `PROVIDER_FAILED`. Platform faults — $0, and the only transient class after accept — hide inside this code, and no envelope field isolates them: `retryable` reads `false`, and the failure class reaches you only through `error_message`, which carries the engine's own reason where it has one (`execution_deadline_exceeded` for a job its runtime deadline cut off) and the class name (`platform_fault`) otherwise. Do not test for a fixed string. One retry settles it — a platform fault usually clears, anything else fails the same way — and it is free today, because every post-accept failure settles at `metrics.cost: 0` during the beta. A submit-time `platform_fault` is different: it is an engine 502 and reaches you as `PROVIDER_SERVER_ERROR`, under the next rule.
+- **Resubmit after backoff** for anything the envelope marks `retryable: true` — typically throttling, engine 5xx, and transport failures, which are load-dependent rather than request defects, so a later resubmit can succeed. Branch on the `retryable` field, not on the code: the same code can carry either value depending on where the failure arose.
+- **Everything else** — every code left after the two rules above, plus any `PROVIDER_FAILED` that failed identically on its one retry — is deterministic and will fail again: fix the request or the input instead of retrying. `platform_drift` always ends here.
 
 ## Raw ffmpeg (`run_ffmpeg`)
 

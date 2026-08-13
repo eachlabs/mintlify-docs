@@ -430,7 +430,7 @@ Drop the video stream and write the audio track in the requested format (STT-rea
 | Parameter | Type | Constraints | Default | Required | Notes |
 |-|-|-|-|-|-|
 | `format` | string | `mp3` \| `wav` \| `m4a` | `"mp3"` | no |  |
-| `sample_rate` | integer | min 8000, max 48000 | — | no | resample in Hz (e.g. 16000 for STT); omit keeps source rate for wav/m4a — mp3 output is always downsampled to 48 kHz |
+| `sample_rate` | integer | min 8000, max 48000 | — | no | resample in Hz (e.g. 16000 for STT); omit keeps the source rate — mp3 caps at 48 kHz, so a source above that is resampled down even when omitted |
 | `mono` | boolean |  | `false` | no | downmix to one channel |
 
 ```json
