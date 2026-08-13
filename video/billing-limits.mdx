@@ -71,7 +71,7 @@ On `status: "error"`, `output` is an object with these fields (captured from pro
 |-|-|
 | `error_code` | The public error code — the codes in the table below, plus `PROVIDER_AUTH_ERROR` (engine 401/403), `PROVIDER_SERVER_ERROR` (engine 5xx), `NETWORK_ERROR`, `EXECUTION_TIMEOUT`, and `INPUT_DOWNLOAD_ERROR`. Treat an unknown code as terminal unless `retryable` is `true` |
 | `error_message` | The specific reason: the engine's failure reason when it provides one (validation rejects carry the full gate reason), otherwise the `failure_class` |
-| `classification.category` | One of `VALIDATION` (your request/input — fix before resubmitting), `PROVIDER`, `AUTH`, `RATE_LIMIT`, `NETWORK`, `TIMEOUT`, `INTERNAL` |
+| `classification.category` | One of `VALIDATION` (your request/input — fix before resubmitting), `PROVIDER`, `AUTH`, `RATE_LIMIT`, `NETWORK`, `TIMEOUT`, `INTERNAL`, or `UNKNOWN` for a code outside this set |
 | `retryable` | `false` for every deterministic failure; `true` only where retrying the same request can succeed |
 | `error` | The constant string `Execution failed` — except in the dispatch-failure envelope above, where it carries the dispatch error text |
 | `error_step` | The pipeline step that surfaced it — validation rejects show a reject step, post-accept failures show `poll` |
@@ -236,9 +236,9 @@ A retried submit creates a **second, separately billed job** — the prediction 
 
 For a *failed* prediction, three rules cover every class:
 
-- **Retry the same request** only for `platform_fault`, the one transient failure class — identify it by `error_message`, because the envelope's `retryable` field reads `false` for it.
-- **Resubmit after backoff** for `PROVIDER_RATE_LIMIT`, which the envelope's `retryable` field does mark `true`. Throttling is load-dependent, not a request defect — a later resubmit can succeed.
-- **Everything else not marked `retryable: true`** — including `platform_drift` — is deterministic and will fail again: fix the request or the input instead of retrying.
+- **Retry the same request** for a post-accept `platform_fault` — `PROVIDER_FAILED` with `error_message: "platform_fault"`. It is the one transient class the envelope still marks `retryable: false`, so identify it by `error_message`. A submit-time `platform_fault` is different: it is an engine 502 and reaches you as `PROVIDER_SERVER_ERROR`, under the next rule.
+- **Resubmit after backoff** for anything the envelope marks `retryable: true` — typically throttling, engine 5xx, and transport failures, which are load-dependent rather than request defects, so a later resubmit can succeed. Branch on the `retryable` field, not on the code: the same code can carry either value depending on where the failure arose.
+- **Everything else** — every code left, all marked `retryable: false`, including `platform_drift` — is deterministic and will fail again: fix the request or the input instead of retrying.
 
 ## Raw ffmpeg (`run_ffmpeg`)
 
