@@ -13,7 +13,7 @@ Create a key in the [dashboard](https://www.eachlabs.ai/api-keys) under **Settin
 
 ## 2. Provide your input video
 
-`input_url` (and `input_urls`) accept a **publicly downloadable `https` URL** to a media file — we stage your media into eachlabs storage automatically before processing. Private footage: a presigned URL from your own storage works — any `https` URL the engine can fetch; media is downloaded into eachlabs storage for processing (see [Acceptable Use](/video/acceptable-use)). `s3://` input URIs from your onboarding keep working unchanged, and you can chain jobs by passing a previous job's `output` URL as the next job's input.
+`input_url` (and `input_urls`) accept a **publicly downloadable `https` URL** to a media file — we stage your media into eachlabs storage automatically before processing. Private footage: a presigned URL from your own storage works — any `https` URL the engine can fetch is staged the same way (see [Acceptable Use](/video/acceptable-use)). `s3://` input URIs from your onboarding keep working unchanged, and you can chain jobs by passing a previous job's `output` URL as the next job's input.
 
 <Note>
 The URL must point directly at a media file, identified by its file extension. The staged extensions are: video `.mp4` `.webm` `.mov` `.avi` `.mkv` `.flv`; audio `.mp3` `.wav` `.ogg` `.flac` `.m4a` `.aac` `.opus` `.wma`; image `.png` `.jpg` `.jpeg` `.gif` `.webp` `.bmp` `.tiff`; subtitle `.vtt`. A URL we cannot stage (unreachable, not public, or not identifiable as media) is rejected at $0 with `PROVIDER_REJECTED` and the offending URL in the message.

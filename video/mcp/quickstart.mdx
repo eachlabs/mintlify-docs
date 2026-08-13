@@ -110,7 +110,7 @@ One tool per wrapped capability — same names and parameters as the [capabiliti
 
 ## Notes for agent builders
 
-- Long jobs: the server polls with backoff; if a job outlives the polling budget — the hosted server holds up to ~4 minutes, the local stdio server defaults to 5 (configurable via `EACHLABS_POLL_TIMEOUT_MS`) — the tool returns the prediction ID and your agent resumes with `get_job`.
+- Long jobs: the server polls with backoff; if a job outlives the polling budget — the hosted server holds up to ~4 minutes, the local stdio server defaults to 5 minutes (configurable via `EACHLABS_POLL_TIMEOUT_MS`) — the tool returns the prediction ID and your agent resumes with `get_job`.
 - Billing semantics are identical to the REST surface: [Billing & Limits](/video/billing-limits).
 
 Policies: [Acceptable Use](/video/acceptable-use) · [Abuse & Takedown](/video/abuse-and-takedown) · [Versioning & Deprecation](/video/versioning)
