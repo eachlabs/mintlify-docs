@@ -153,7 +153,7 @@
           "Workflows"
         ],
         "summary": "Create or update workflow version",
-        "description": "Create a new workflow version or update an existing one.\n\nThis operation will:\n- Create/update the version in the database\n- Generate or update the AWS Step Functions state machine\n- Set this version as the latest version for the workflow\n\n**Important**: Once a version is locked, it cannot be modified.\n",
+        "description": "Create a new workflow version or update an existing one.\n\nPatch semantics: omitted body fields keep their stored values. `definition` is required to create a new version; omit it (or send `null`) to keep the stored one.\n\nThis operation will:\n- Create the version if it doesn't exist, or patch the stored one\n- Set this version as the latest version for the workflow\n\n**Important**: Once a version is locked, it cannot be modified.\n",
         "operationId": "upsertWorkflowVersion",
         "requestBody": {
           "required": true,
@@ -187,8 +187,17 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
           }
-        }
+        },
+        "servers": [
+          {
+            "url": "https://api.eachlabs.ai/v1",
+            "description": "Production server"
+          }
+        ]
       }
     },
     "/public/@{nickname}/workflows/{slug}/versions/{versionID}": {
@@ -447,19 +456,15 @@
       },
       "UpsertVersionRequest": {
         "type": "object",
-        "required": [
-          "version_id",
-          "definition"
-        ],
         "properties": {
           "version_id": {
             "type": "string",
-            "description": "Version identifier (e.g., \"v1\", \"v2\", \"v1.1\")",
+            "description": "Optional; overrides the version in the path when present",
             "example": "v2"
           },
           "definition": {
             "type": "object",
-            "description": "The complete workflow definition for this version.\nThis follows the workflow DSL format and must include all steps.\n",
+            "description": "The complete workflow definition for this version.\nRequired when creating a new version; omit (or send null) to keep the stored definition when updating.\n",
             "properties": {
               "version": {
                 "type": "string",
@@ -511,20 +516,31 @@
               }
             }
           },
+          "output_mapping": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Final output keys mapped to step output refs. Omit to leave unchanged, send {} to clear, send entries to replace the whole map.",
+            "example": {
+              "image": "$.generate_image.output"
+            }
+          },
+          "published": {
+            "type": "boolean",
+            "description": "Publish state for this version. Omitted keeps the stored value."
+          },
           "locked": {
             "type": "boolean",
-            "description": "Whether to lock this version from further modifications",
-            "default": false
+            "description": "Lock this version against further edits. Omitted keeps the stored value."
           },
           "production": {
             "type": "boolean",
-            "description": "Whether this is a production version",
-            "default": false
+            "description": "Mark as the production version. Omitted keeps the stored value."
           },
           "allowed_to_share": {
             "type": "boolean",
-            "description": "Toggle unlisted sharing for this version.\n\n- `true` → Makes version \"unlisted\" (accessible via link, hidden from public listings)\n- `false` → Makes version \"private\" (organization only)\n- No effect on public versions\n- New versions default to private when omitted\n",
-            "default": false
+            "description": "Toggle unlisted sharing for this version.\n\n- `true` → makes the version \"unlisted\" (accessible via link, hidden from public listings)\n- `false` → makes the version \"private\" (organization only)\n- No effect on public versions\n- Omitted keeps the stored value (new versions default to private)\n"
           }
         }
       },
@@ -638,6 +654,11 @@
             "description": "Workflow slug (inherited from parent workflow)",
             "example": "text-to-image-generator"
           },
+          "published": {
+            "type": "boolean",
+            "description": "Whether this version is published",
+            "example": false
+          },
           "locked": {
             "type": "boolean",
             "description": "Whether this version is locked from modifications",
@@ -679,6 +700,26 @@
             ],
             "description": "Version lifecycle status",
             "example": "active"
+          },
+          "visibility": {
+            "type": "string",
+            "enum": [
+              "private",
+              "unlisted",
+              "public"
+            ],
+            "description": "Version visibility",
+            "example": "private"
+          },
+          "is_popular": {
+            "type": "boolean",
+            "description": "Whether the version is featured as popular in public listings",
+            "example": false
+          },
+          "updated_by": {
+            "type": "string",
+            "description": "Identifier of the user who last updated the version",
+            "example": "user@example.com"
           },
           "definition": {
             "type": "object",
@@ -837,6 +878,16 @@
       },
       "NotFound": {
         "description": "Not found - Resource does not exist",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Conflict": {
+        "description": "Conflict - Version is pinned by a public curation",
         "content": {
           "application/json": {
             "schema": {
