@@ -7,6 +7,11 @@
           "href": "https://docs.eachlabs.ai/api/overview",
           "type": "text/html",
           "title": "each::api documentation"
+        },
+        {
+          "href": "https://docs.eachlabs.ai/workflows/overview",
+          "type": "text/html",
+          "title": "each::workflows documentation"
         }
       ],
       "service-desc": [
@@ -14,16 +19,6 @@
           "href": "https://api.eachlabs.ai/v1/docs",
           "type": "application/json",
           "title": "each::api OpenAPI specification"
-        }
-      ]
-    },
-    {
-      "anchor": "https://workflows.eachlabs.run/api/v1",
-      "service-doc": [
-        {
-          "href": "https://docs.eachlabs.ai/workflows/overview",
-          "type": "text/html",
-          "title": "each::workflows documentation"
         }
       ]
     },

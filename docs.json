@@ -141,7 +141,6 @@
           {
             "group": "API Reference",
             "pages": [
-              "workflows/endpoints/categories",
               "workflows/endpoints/create-workflow",
               "workflows/endpoints/get-workflow",
               "workflows/endpoints/update-workflow",
@@ -160,7 +159,6 @@
               "directory": "workflows-api-reference"
             },
             "pages": [
-              "GET /categories",
               "GET /workflows/{workflowID}",
               "PUT /workflows/{workflowID}",
               "PUT /workflows/{workflowID}/versions/{versionID}",

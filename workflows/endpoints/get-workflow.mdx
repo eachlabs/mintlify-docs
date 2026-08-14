@@ -6,12 +6,8 @@ description: "Retrieve detailed information about a workflow including all versi
 ## Endpoint
 
 ```
-GET https://workflows.eachlabs.run/api/v1/workflows/{workflowID}
+GET https://api.eachlabs.ai/v1/workflows/{workflowID}
 ```
-
-<Note>
-  This endpoint is served at `https://workflows.eachlabs.run` and is fully supported.
-</Note>
 
 You can use either the workflow UUID or slug as the `workflowID`.
 
@@ -25,7 +21,7 @@ You can use either the workflow UUID or slug as the `workflowID`.
 
 <CodeGroup>
 ```bash cURL
-curl https://workflows.eachlabs.run/api/v1/workflows/50741f40-8621-4d46-8a91-dff4d873be98 \
+curl https://api.eachlabs.ai/v1/workflows/50741f40-8621-4d46-8a91-dff4d873be98 \
   -H "Authorization: Bearer YOUR_API_KEY"
 ```
 
@@ -33,20 +29,22 @@ curl https://workflows.eachlabs.run/api/v1/workflows/50741f40-8621-4d46-8a91-dff
 import requests
 
 response = requests.get(
-    "https://workflows.eachlabs.run/api/v1/workflows/text-to-image-generator",
+    "https://api.eachlabs.ai/v1/workflows/text-to-image-generator",
     headers={"Authorization": "Bearer YOUR_API_KEY"}
 )
 workflow = response.json()
-print(f"{workflow['name']} | v{workflow['latest_version_id']}")
+versions = ", ".join(v["version_id"] for v in workflow["versions"])
+print(f"{workflow['name']} | versions: {versions}")
 ```
 
 ```javascript JavaScript
 const response = await fetch(
-  "https://workflows.eachlabs.run/api/v1/workflows/text-to-image-generator",
+  "https://api.eachlabs.ai/v1/workflows/text-to-image-generator",
   { headers: { "Authorization": "Bearer YOUR_API_KEY" } }
 );
 const workflow = await response.json();
-console.log(`${workflow.name} | v${workflow.latest_version_id}`);
+const versions = workflow.versions.map((v) => v.version_id).join(", ");
+console.log(`${workflow.name} | versions: ${versions}`);
 ```
 </CodeGroup>
 
@@ -57,39 +55,90 @@ console.log(`${workflow.name} | v${workflow.latest_version_id}`);
   "workflow_id": "50741f40-8621-4d46-8a91-dff4d873be98",
   "slug": "text-to-image-generator",
   "name": "Text to Image Generator",
-  "description": "Generates images from text prompts",
   "categories": ["image-generation"],
-  "locked": false,
-  "production": false,
-  "latest_version_id": "v2",
+  "tags": ["demo"],
   "status": "active",
   "trigger_count": 42,
+  "clone_count": 3,
+  "is_public": false,
+  "production": false,
   "created_at": "2025-12-01T10:00:00Z",
   "updated_at": "2025-12-07T15:30:00Z",
   "versions": [
     {
       "version_id": "v1",
       "slug": "text-to-image-generator",
+      "published": true,
       "locked": true,
       "production": false,
+      "allowed_to_share": false,
       "trigger_count": 27,
       "status": "active",
+      "visibility": "private",
+      "is_popular": false,
+      "updated_by": "user@example.com",
       "created_at": "2025-12-01T10:00:00Z",
       "updated_at": "2025-12-05T14:20:00Z"
     },
     {
       "version_id": "v2",
       "slug": "text-to-image-generator",
+      "published": false,
       "locked": false,
       "production": true,
+      "allowed_to_share": false,
       "trigger_count": 15,
       "status": "active",
+      "visibility": "private",
+      "is_popular": false,
+      "updated_by": "user@example.com",
       "created_at": "2025-12-05T14:20:00Z",
       "updated_at": "2025-12-07T15:30:00Z"
     }
   ]
 }
 ```
+
+### Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `workflow_id` | string | Workflow UUID |
+| `slug` | string | URL-friendly workflow identifier |
+| `name` | string | Human-readable workflow name |
+| `categories` | string[] | Category slugs |
+| `tags` | string[] | Free-form workflow tags |
+| `status` | string | `active`, `archived`, or `deleted` |
+| `trigger_count` | integer | Total executions triggered across all versions |
+| `clone_count` | integer | Number of times the workflow has been cloned |
+| `is_public` | boolean | Whether the workflow appears in public listings |
+| `production` | boolean | Whether this is a production workflow |
+| `created_at` | string | RFC3339 creation timestamp |
+| `updated_at` | string | RFC3339 update timestamp |
+| `versions` | object[] | Every version of the workflow |
+
+### Version Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `version_id` | string | Version identifier (e.g., `v1`) |
+| `slug` | string | Workflow slug, inherited from the parent workflow |
+| `published` | boolean | Whether the version is published |
+| `locked` | boolean | Whether the version is locked against edits |
+| `production` | boolean | Whether this is the production version |
+| `allowed_to_share` | boolean | `true` when the version is unlisted |
+| `trigger_count` | integer | Executions triggered on this version |
+| `status` | string | `active`, `archived`, or `deleted` |
+| `visibility` | string | `private`, `unlisted`, or `public` |
+| `is_popular` | boolean | Whether the version is featured in public listings |
+| `updated_by` | string | Who last updated the version |
+| `definition` | object | Workflow definition — omitted when the version has none stored |
+| `created_at` | string | RFC3339 creation timestamp |
+| `updated_at` | string | RFC3339 update timestamp |
+
+<Note>
+  Public listing fields (`public_description`, `public_thumbnail`, `public_popular_sort_order`, `public_example_output`) appear on a version only when they are set.
+</Note>
 
 ## Error Responses
 
