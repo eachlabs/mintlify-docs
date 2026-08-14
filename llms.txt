@@ -33,8 +33,6 @@ Auth error response: `{"error": "Invalid or missing API key"}` (HTTP 401)
 | each::workflows | `https://api.eachlabs.ai` | REST |
 | each::sense | `https://eachsense-agent.core.eachlabs.run` | REST + SSE |
 
-Workflow endpoints with no `api.eachlabs.ai` equivalent (get/update workflow, categories, public workflows) are served from `https://workflows.eachlabs.run/api/v1`, a fully supported host for those endpoints.
-
 ---
 
 ## Quick Start
@@ -239,21 +237,15 @@ On `https://api.eachlabs.ai`:
 | Method | Path | Description |
 |-|-|-|
 | `POST` | `/v1/workflows` | Create a workflow |
+| `GET` | `/v1/workflows/{workflowID}` | Get workflow (accepts UUID or slug) |
+| `PUT` | `/v1/workflows/{workflowID}` | Rename a workflow (`name` is the only honored field) |
 | `PUT` | `/v1/workflows/{workflowID}/versions/{versionID}` | Create or update a version |
 | `POST` | `/v1/workflows/trigger/{workflowID}/{versionID}` | Trigger execution |
 | `POST` | `/v1/workflows/bulk-trigger/{workflowID}/{versionID}` | Bulk trigger (1–10 parallel) |
 | `GET` | `/v1/workflows/{workflowID}/executions` | List executions |
 | `GET` | `/v1/workflows/executions/{executionID}` | Get execution details |
-
-On `https://workflows.eachlabs.run/api/v1` (supported host for workflow-management endpoints without an api-service equivalent):
-
-| Method | Path | Description |
-|-|-|-|
-| `GET` | `/categories` | List workflow categories |
-| `GET` | `/workflows/{id}` | Get workflow (accepts UUID or slug) |
-| `PUT` | `/workflows/{id}` | Update workflow metadata |
-| `GET` | `/public/@{nickname}/workflows/{slug}/versions/{versionID}` | Get public workflow (no auth) |
-| `POST` | `/public/@{nickname}/workflows/{slug}/versions/{versionID}/trigger` | Trigger public workflow (`api_key` in JSON body) |
+| `GET` | `/v1/public/@{nickname}/workflows/{slug}/versions/{versionID}` | Get public workflow (no auth required) |
+| `POST` | `/v1/public/@{nickname}/workflows/{slug}/versions/{versionID}/trigger` | Trigger public workflow (`api_key` in JSON body, or `X-API-Key` header) |
 
 ### Create Workflow
 
@@ -1273,10 +1265,9 @@ Rate limit headers: `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-R
 - [Versioning](/workflows/concepts/versioning)
 - [Parameter References](/workflows/concepts/parameter-references)
 - [Fallback Configuration](/workflows/concepts/fallback-configuration)
-- [Categories](/workflows/endpoints/categories): `GET /categories`
 - [Create Workflow](/workflows/endpoints/create-workflow): `POST /v1/workflows`
-- [Get Workflow](/workflows/endpoints/get-workflow): `GET /workflows/{id}`
-- [Update Workflow](/workflows/endpoints/update-workflow): `PUT /workflows/{id}`
+- [Get Workflow](/workflows/endpoints/get-workflow): `GET /v1/workflows/{workflowID}`
+- [Update Workflow](/workflows/endpoints/update-workflow): `PUT /v1/workflows/{workflowID}`
 - [Create Version](/workflows/endpoints/create-version): `PUT /v1/workflows/{workflowID}/versions/{versionID}`
 - [Trigger Workflow](/workflows/endpoints/trigger-workflow): `POST /v1/workflows/trigger/{workflowID}/{versionID}`
 - [Bulk Trigger](/workflows/endpoints/bulk-trigger): `POST /v1/workflows/bulk-trigger/{workflowID}/{versionID}`

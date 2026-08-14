@@ -6,14 +6,10 @@ description: "Access and trigger public or unlisted workflows by organization ni
 ## Get Public Workflow Version
 
 ```
-GET https://workflows.eachlabs.run/api/v1/public/@{nickname}/workflows/{slug}/versions/{versionID}
+GET https://api.eachlabs.ai/v1/public/@{nickname}/workflows/{slug}/versions/{versionID}
 ```
 
-<Note>
-  These endpoints are served at `https://workflows.eachlabs.run` and are fully supported.
-</Note>
-
-Retrieve a public or unlisted workflow version. **No authentication required** for reading.
+Retrieve a public or unlisted workflow version. **No authentication required** for reading — send no `Authorization` header.
 
 ### Path Parameters
 
@@ -27,14 +23,14 @@ Retrieve a public or unlisted workflow version. **No authentication required** f
 
 <CodeGroup>
 ```bash cURL
-curl https://workflows.eachlabs.run/api/v1/public/@acme-corp/workflows/my-generator/versions/v1
+curl https://api.eachlabs.ai/v1/public/@acme-corp/workflows/my-generator/versions/v1
 ```
 
 ```python Python
 import requests
 
 response = requests.get(
-    "https://workflows.eachlabs.run/api/v1/public/@acme-corp/workflows/my-generator/versions/v1"
+    "https://api.eachlabs.ai/v1/public/@acme-corp/workflows/my-generator/versions/v1"
 )
 version = response.json()
 print(f"Version: {version['version_id']}")
@@ -43,17 +39,38 @@ print(f"Version: {version['version_id']}")
 
 ### Response
 
-Returns a [WorkflowVersionSummary](/workflows/endpoints/create-version) object including the workflow definition.
+```json
+{
+  "workflow_id": "50741f40-8621-4d46-8a91-dff4d873be98",
+  "version_id": "v1",
+  "slug": "my-generator",
+  "name": "My Generator",
+  "description": "Generates images from text prompts",
+  "thumbnail": "https://storage.googleapis.com/uploads/thumb.png",
+  "categories": ["image-generation"],
+  "definition": { ... },
+  "status": "active",
+  "example_output": "https://storage.googleapis.com/uploads/example.png",
+  "created_at": "2025-12-01T10:00:00Z",
+  "updated_at": "2025-12-05T14:20:00Z"
+}
+```
+
+<Note>
+  `thumbnail`, `categories`, `definition`, and `example_output` are omitted from the response entirely when unset — they are never returned as `null` or `[]`.
+</Note>
 
 ---
 
 ## Trigger Public Workflow Version
 
 ```
-POST https://workflows.eachlabs.run/api/v1/public/@{nickname}/workflows/{slug}/versions/{versionID}/trigger
+POST https://api.eachlabs.ai/v1/public/@{nickname}/workflows/{slug}/versions/{versionID}/trigger
 ```
 
-Trigger a public or unlisted workflow. **Authentication required** via `api_key` in the request body.
+Trigger a public or unlisted workflow. **Authentication required** via `api_key` in the request body — this route does not read `Authorization: Bearer`. An `X-API-Key` header is accepted as a fallback when `api_key` is absent from the body.
+
+The organization that owns the key is billed for the run, not the organization that published the workflow. The version comes from the path.
 
 ### Path Parameters
 
@@ -66,11 +83,12 @@ Same as Get Public Workflow Version above.
 | `api_key` | string | Yes | Your API key — this endpoint authenticates via the request body |
 | `inputs` | object | No | Input parameters matching the workflow's input schema |
 | `webhook_url` | string | No | URL to receive completion notification |
+| `webhook_secret` | string | No | Shared secret used to verify webhook deliveries |
 
 ### Example
 
 ```bash cURL
-curl -X POST "https://workflows.eachlabs.run/api/v1/public/@acme-corp/workflows/my-generator/versions/v1/trigger" \
+curl -X POST "https://api.eachlabs.ai/v1/public/@acme-corp/workflows/my-generator/versions/v1/trigger" \
   -H "Content-Type: application/json" \
   -d '{
     "api_key": "YOUR_API_KEY",
@@ -85,14 +103,23 @@ curl -X POST "https://workflows.eachlabs.run/api/v1/public/@acme-corp/workflows/
 ```json
 {
   "execution_id": "e2dba2bb-bc1d-4651-b6bf-fbbbebdee104",
-  "status": "queued",
-  "started_at": "2025-12-03T10:21:09Z"
+  "status": "queued"
 }
 ```
 
 ## Error Responses
 
+Reading a version:
+
+| Status | Body | Description |
+|--------|------|-------------|
+| `404` | `{"error": "workflow version not found"}` | Invalid nickname, slug, or version — or the version isn't shared |
+
+Triggering a version:
+
 | Status | Body | Description |
 |--------|------|-------------|
 | `401` | `{"error": "Invalid or missing API key"}` | Auth required for triggering |
-| `404` | `{"error": "workflow not found"}` | Invalid nickname, slug, or version |
+| `402` | `{"error": "payment required"}` | Insufficient balance on the calling organization |
+| `403` | `{"error": "forbidden"}` | The key is not allowed to trigger this workflow |
+| `404` | `{"error": "workflow version not found or not publicly available"}` | Invalid nickname, slug, or version — or the version isn't shared |

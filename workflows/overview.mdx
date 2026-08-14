@@ -33,7 +33,7 @@ Input Image → ├─ Branch 2: Edit   ─┤→ Conditional → Upscale (video
 https://api.eachlabs.ai
 ```
 
-Workflow creation, triggering, and execution endpoints are served at `https://api.eachlabs.ai`. Management endpoints without an api-service equivalent are served at `https://workflows.eachlabs.run/api/v1` (fully supported).
+Every workflow endpoint — creation, management, triggering, and execution — is served at `https://api.eachlabs.ai`.
 
 ## How It Works
 
@@ -55,26 +55,20 @@ Workflow creation, triggering, and execution endpoints are served at `https://ap
 
 ## Endpoints
 
-### Served at `https://api.eachlabs.ai`
+All paths below are relative to `https://api.eachlabs.ai`.
 
 | Method | Path | Description |
 |--------|------|-------------|
 | `POST` | `/v1/workflows` | Create a workflow |
+| `GET` | `/v1/workflows/{workflowID}` | Get workflow details |
+| `PUT` | `/v1/workflows/{workflowID}` | Rename a workflow |
 | `PUT` | `/v1/workflows/{workflowID}/versions/{versionID}` | Create/update a version |
 | `POST` | `/v1/workflows/trigger/{workflowID}/{versionID}` | Trigger execution |
 | `POST` | `/v1/workflows/bulk-trigger/{workflowID}/{versionID}` | Bulk trigger (up to 10) |
 | `GET` | `/v1/workflows/{workflowID}/executions` | List executions |
 | `GET` | `/v1/workflows/executions/{executionID}` | Get execution details |
-
-### Served at `https://workflows.eachlabs.run/api/v1`
-
-| Method | Path | Description |
-|--------|------|-------------|
-| `GET` | `/categories` | List workflow categories |
-| `GET` | `/workflows/{id}` | Get workflow details |
-| `PUT` | `/workflows/{id}` | Update workflow metadata |
-| `GET` | `/public/@{nickname}/workflows/{slug}/versions/{versionID}` | Get public workflow |
-| `POST` | `/public/@{nickname}/workflows/{slug}/versions/{versionID}/trigger` | Trigger public workflow |
+| `GET` | `/v1/public/@{nickname}/workflows/{slug}/versions/{versionID}` | Get public workflow (no auth) |
+| `POST` | `/v1/public/@{nickname}/workflows/{slug}/versions/{versionID}/trigger` | Trigger public workflow (`api_key` in JSON body) |
 
 ## Pricing
 

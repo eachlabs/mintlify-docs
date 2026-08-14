@@ -4,6 +4,24 @@ description: "Product updates and releases from each::labs"
 rss: true
 ---
 
+<Update label="August 14, 2026" description="each::workflows" rss={{ title: "All workflow endpoints are documented on api.eachlabs.ai", description: "each::workflows" }}>
+  ## All workflow endpoints are documented on api.eachlabs.ai
+
+  - Every documented workflow REST endpoint now lives on
+    `https://api.eachlabs.ai/v1`, including get workflow, update workflow, and
+    the public workflow read and trigger routes.
+  - Update Workflow accepts `name` only. The previously documented
+    `description`, `locked`, `production`, and `categories` fields were never
+    honored and have been removed from the docs. A rename regenerates the
+    workflow slug.
+  - The public workflow trigger returns `{"execution_id": "...", "status":
+    "queued"}` on `202`. The `started_at` field the docs claimed was never
+    returned.
+  - The categories endpoint is no longer documented.
+  - `workflows.eachlabs.run` keeps serving existing callers unchanged — this is
+    a documentation move, not a breaking change.
+</Update>
+
 <Update label="August 13, 2026" description="each::video" rss={{ title: "Video API documentation is now public", description: "each::video" }}>
   ## Video API documentation is now public
 

@@ -11,7 +11,7 @@
   },
   "servers": [
     {
-      "url": "https://workflows.eachlabs.run/api/v1",
+      "url": "https://api.eachlabs.ai/v1",
       "description": "Production server"
     }
   ],
@@ -22,10 +22,6 @@
   ],
   "tags": [
     {
-      "name": "Categories",
-      "description": "Workflow categories for organization"
-    },
-    {
       "name": "Workflows",
       "description": "Workflow and version management"
     },
@@ -35,28 +31,6 @@
     }
   ],
   "paths": {
-    "/categories": {
-      "get": {
-        "tags": [
-          "Categories"
-        ],
-        "summary": "List categories",
-        "description": "Retrieve all available workflow categories.\n\nCategories help organize workflows into logical collections.\nUse the category slugs when creating or updating workflows.\n",
-        "operationId": "listCategories",
-        "responses": {
-          "200": {
-            "description": "Categories retrieved successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CategoriesResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/workflows/{workflowID}": {
       "parameters": [
         {
@@ -94,7 +68,7 @@
           "Workflows"
         ],
         "summary": "Update workflow",
-        "description": "Update workflow metadata such as name, description, categories, and visibility.\n\nNote: To update the workflow definition (steps), use the version endpoints instead.\nLocked workflows cannot be modified unless you're unlocking them.\n",
+        "description": "Rename a workflow. `name` is the only body field this endpoint honors, and unknown keys are ignored.\n\nA real rename regenerates the workflow slug, so any URL that pins the old slug stops resolving.\n\nNote: To update the workflow definition (steps), use the version endpoints instead.\n",
         "operationId": "updateWorkflow",
         "requestBody": {
           "required": true,
@@ -128,6 +102,9 @@
           },
           "404": {
             "$ref": "#/components/responses/NotFound"
+          },
+          "409": {
+            "$ref": "#/components/responses/Conflict"
           }
         }
       }
@@ -188,13 +165,7 @@
           "404": {
             "$ref": "#/components/responses/NotFound"
           }
-        },
-        "servers": [
-          {
-            "url": "https://api.eachlabs.ai/v1",
-            "description": "Production server"
-          }
-        ]
+        }
       }
     },
     "/public/@{nickname}/workflows/{slug}/versions/{versionID}": {
@@ -214,7 +185,7 @@
           "Public Workflows"
         ],
         "summary": "Get public workflow version",
-        "description": "Retrieve a specific version of a public or unlisted workflow by organization nickname.\n\n**No authentication required** for unlisted workflows.\n\nExample:\n```\nGET /api/v1/public/@acme-corp/workflows/my-generator/versions/v1\n```\n",
+        "description": "Retrieve a specific version of a public or unlisted workflow by organization nickname.\n\n**No authentication required** — send no `Authorization` header.\n\nExample:\n```\nGET /v1/public/@acme-corp/workflows/my-generator/versions/v1\n```\n",
         "operationId": "getPublicWorkflowVersionByNickname",
         "responses": {
           "200": {
@@ -222,7 +193,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/WorkflowVersionSummary"
+                  "$ref": "#/components/schemas/PublicWorkflowVersion"
                 }
               }
             }
@@ -251,7 +222,7 @@
           "Public Workflows"
         ],
         "summary": "Trigger public workflow version",
-        "description": "Trigger a public or unlisted workflow using the organization nickname, workflow slug, and version.\n\n**Authentication required** - provide your API key as `api_key` in the request body.\n\nExample:\n```\nPOST /api/v1/public/@acme-corp/workflows/my-generator/versions/v1/trigger\nBody: { \"api_key\": \"your-api-key\", \"inputs\": { \"prompt\": \"...\" } }\n```\n",
+        "description": "Trigger a public or unlisted workflow using the organization nickname, workflow slug, and version.\n\n**Authentication required** - provide your API key as `api_key` in the request body. An `X-API-Key` header works as a fallback when `api_key` is absent; `Authorization: Bearer` is not read on this route.\n\nThe organization owning the key is billed for the run, not the organization that published the workflow. The version is pinned by the path.\n\nExample:\n```\nPOST /v1/public/@acme-corp/workflows/my-generator/versions/v1/trigger\nBody: { \"api_key\": \"your-api-key\", \"inputs\": { \"prompt\": \"...\" } }\n```\n",
         "operationId": "triggerPublicWorkflowVersionByNickname",
         "security": [],
         "requestBody": {
@@ -281,8 +252,24 @@
           "401": {
             "$ref": "#/components/responses/Unauthorized"
           },
+          "402": {
+            "$ref": "#/components/responses/PaymentRequired"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
           "404": {
-            "$ref": "#/components/responses/NotFound"
+            "description": "Not found - the workflow version does not exist or is not publicly available",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "workflow version not found or not publicly available"
+                }
+              }
+            }
           }
         }
       }
@@ -339,115 +326,14 @@
       }
     },
     "schemas": {
-      "CategoriesResponse": {
-        "type": "object",
-        "required": [
-          "categories"
-        ],
-        "properties": {
-          "categories": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Category"
-            },
-            "description": "List of available workflow categories"
-          }
-        },
-        "example": {
-          "categories": [
-            {
-              "slug": "image-generation",
-              "label": "Image Generation",
-              "description": "Workflows for generating images",
-              "is_default": true,
-              "created_at": "2025-12-01T10:00:00Z",
-              "updated_at": "2025-12-01T10:00:00Z"
-            },
-            {
-              "slug": "text-processing",
-              "label": "Text Processing",
-              "description": "Workflows for processing text",
-              "is_default": true,
-              "created_at": "2025-12-01T10:00:00Z",
-              "updated_at": "2025-12-01T10:00:00Z"
-            }
-          ]
-        }
-      },
-      "Category": {
-        "type": "object",
-        "required": [
-          "slug",
-          "label"
-        ],
-        "properties": {
-          "slug": {
-            "type": "string",
-            "description": "Unique category identifier (used in API requests)",
-            "example": "image-generation"
-          },
-          "label": {
-            "type": "string",
-            "description": "Human-readable category name",
-            "example": "Image Generation"
-          },
-          "description": {
-            "type": "string",
-            "description": "Category description",
-            "example": "Workflows for generating images"
-          },
-          "is_default": {
-            "type": "boolean",
-            "description": "Whether this is a default system category",
-            "example": true
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "description": "RFC3339 timestamp when category was created",
-            "example": "2025-12-01T10:00:00Z"
-          },
-          "updated_at": {
-            "type": "string",
-            "format": "date-time",
-            "description": "RFC3339 timestamp when category was last updated",
-            "example": "2025-12-01T10:00:00Z"
-          }
-        }
-      },
       "UpdateWorkflowRequest": {
         "type": "object",
-        "description": "Update workflow metadata. All fields are optional - only provided fields will be updated.\n\nNote: To update the workflow definition (steps), use the version endpoints instead.\n",
+        "description": "Rename a workflow. `name` is the only honored field; unknown keys are ignored.\n\nNote: To update the workflow definition (steps), use the version endpoints instead.\n",
         "properties": {
           "name": {
             "type": "string",
-            "description": "Human-readable workflow name",
+            "description": "Human-readable workflow name. A real rename regenerates the workflow slug.",
             "example": "Text to Image Generator v2"
-          },
-          "description": {
-            "type": "string",
-            "description": "Detailed description of what the workflow does",
-            "example": "Enhanced image generation with multiple models"
-          },
-          "categories": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "List of category slugs",
-            "example": [
-              "image-generation",
-              "ai",
-              "production"
-            ]
-          },
-          "locked": {
-            "type": "boolean",
-            "description": "Lock/unlock the workflow from modifications"
-          },
-          "production": {
-            "type": "boolean",
-            "description": "Mark as production workflow"
           }
         }
       },
@@ -546,8 +432,7 @@
         "description": "Complete workflow information including all versions",
         "required": [
           "workflow_id",
-          "name",
-          "description"
+          "name"
         ],
         "properties": {
           "workflow_id": {
@@ -566,11 +451,6 @@
             "description": "Human-readable workflow name",
             "example": "Text to Image Generator"
           },
-          "description": {
-            "type": "string",
-            "description": "Workflow description",
-            "example": "Generates images from text prompts"
-          },
           "categories": {
             "type": "array",
             "items": {
@@ -582,20 +462,30 @@
               "ai"
             ]
           },
-          "locked": {
-            "type": "boolean",
-            "description": "Whether workflow is locked",
-            "example": false
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Free-form workflow tags",
+            "example": [
+              "demo"
+            ]
           },
           "production": {
             "type": "boolean",
             "description": "Whether this is a production workflow",
             "example": false
           },
-          "latest_version_id": {
-            "type": "string",
-            "description": "Most recently updated version ID",
-            "example": "v2"
+          "is_public": {
+            "type": "boolean",
+            "description": "Whether the workflow appears in public listings",
+            "example": false
+          },
+          "clone_count": {
+            "type": "integer",
+            "description": "Number of times this workflow has been cloned",
+            "example": 3
           },
           "status": {
             "type": "string",
@@ -720,7 +610,115 @@
           },
           "definition": {
             "type": "object",
-            "description": "The complete workflow definition (only included in detail responses).\nContains steps, input schema, and metadata.\n"
+            "description": "The complete workflow definition — steps, input schema, and metadata.\nOmitted from the response when the version has no stored definition.\n"
+          },
+          "public_description": {
+            "type": "string",
+            "description": "Public listing description. Omitted when unset.",
+            "example": "Generates images from text prompts"
+          },
+          "public_thumbnail": {
+            "type": "string",
+            "description": "Public listing thumbnail URL. Omitted when unset.",
+            "example": "https://storage.googleapis.com/uploads/thumb.png"
+          },
+          "public_popular_sort_order": {
+            "type": "integer",
+            "description": "Sort position within the popular public listing. Omitted when unset.",
+            "example": 1
+          },
+          "public_example_output": {
+            "type": "string",
+            "description": "Public listing example output URL. Omitted when unset.",
+            "example": "https://storage.googleapis.com/uploads/example.png"
+          }
+        }
+      },
+      "PublicWorkflowVersion": {
+        "type": "object",
+        "description": "Flat public view of one workflow version. Empty optional fields are omitted from the JSON entirely.",
+        "required": [
+          "workflow_id",
+          "version_id",
+          "slug",
+          "name",
+          "description",
+          "status",
+          "created_at",
+          "updated_at"
+        ],
+        "properties": {
+          "workflow_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique workflow identifier",
+            "example": "50741f40-8621-4d46-8a91-dff4d873be98"
+          },
+          "version_id": {
+            "type": "string",
+            "description": "Version identifier",
+            "example": "v1"
+          },
+          "slug": {
+            "type": "string",
+            "description": "Workflow slug",
+            "example": "my-generator"
+          },
+          "name": {
+            "type": "string",
+            "description": "Public workflow name",
+            "example": "My Generator"
+          },
+          "description": {
+            "type": "string",
+            "description": "Public workflow description",
+            "example": "Generates images from text prompts"
+          },
+          "thumbnail": {
+            "type": "string",
+            "description": "Thumbnail URL. Omitted when unset.",
+            "example": "https://storage.googleapis.com/uploads/thumb.png"
+          },
+          "categories": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Category slugs. Omitted when empty.",
+            "example": [
+              "image-generation"
+            ]
+          },
+          "definition": {
+            "type": "object",
+            "description": "The complete workflow definition. Omitted when the version has no stored definition."
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "archived",
+              "deleted"
+            ],
+            "description": "Version lifecycle status",
+            "example": "active"
+          },
+          "example_output": {
+            "type": "string",
+            "description": "Example output URL. Omitted when unset.",
+            "example": "https://storage.googleapis.com/uploads/example.png"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "RFC3339 timestamp when version was created",
+            "example": "2025-12-01T10:00:00Z"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "RFC3339 timestamp when version was last updated",
+            "example": "2025-12-05T14:20:00Z"
           }
         }
       },
@@ -729,13 +727,8 @@
         "properties": {
           "api_key": {
             "type": "string",
-            "description": "Your eachlabs API key. The public trigger authenticates via this body field instead of an `Authorization` header.",
+            "description": "Your eachlabs API key. The public trigger authenticates via this body field instead of an `Authorization` header; an `X-API-Key` header is read as a fallback. The organization owning the key is billed for the run.",
             "example": "your-api-key"
-          },
-          "version_id": {
-            "type": "string",
-            "description": "**Optional**: Specific version to trigger.\n\nIf not provided, triggers the latest version of the workflow.\nThis allows you to execute specific versions for testing or comparison.\n",
-            "example": "v1"
           },
           "inputs": {
             "type": "object",
@@ -749,6 +742,11 @@
             "format": "uri",
             "description": "**Optional webhook URL for execution completion notifications.**\n\nWhen provided, the engine will POST an `ExecutionDetails` payload to this URL\nwhen the workflow finishes (either successfully or with an error).\n\nSee the **Webhooks** section for detailed information about webhook behavior and payload structure.\n",
             "example": "https://your-api.com/webhooks/workflow-completed"
+          },
+          "webhook_secret": {
+            "type": "string",
+            "description": "**Optional**: shared secret used to verify webhook deliveries.",
+            "example": "whsec_example"
           }
         },
         "required": [
@@ -757,37 +755,29 @@
       },
       "ExecutionResponse": {
         "type": "object",
-        "description": "Response from triggering a workflow execution",
+        "description": "Response from triggering a workflow execution. Failures return an error status with an `{\"error\": \"...\"}` body instead.",
+        "required": [
+          "execution_id",
+          "status"
+        ],
         "properties": {
           "execution_id": {
             "type": "string",
-            "description": "Unique execution identifier (only present for successful triggers)",
-            "example": "exec_xyz789"
+            "description": "Unique execution identifier",
+            "example": "e2dba2bb-bc1d-4651-b6bf-fbbbebdee104"
           },
           "status": {
             "type": "string",
             "enum": [
-              "queued",
-              "failed"
+              "queued"
             ],
-            "description": "Execution status immediately after triggering.\n- `queued`: Workflow execution has been queued and will start shortly\n- `failed`: Trigger failed due to validation or system error\n",
+            "description": "Execution status immediately after triggering: the execution has been queued and will start shortly.",
             "example": "queued"
-          },
-          "started_at": {
-            "type": "string",
-            "format": "date-time",
-            "description": "RFC3339 timestamp when the execution was queued (only present for successful triggers)"
-          },
-          "message": {
-            "type": "string",
-            "description": "Error message (only present when status is \"failed\")",
-            "example": "invalid input: missing required field"
           }
         },
         "example": {
           "execution_id": "e2dba2bb-bc1d-4651-b6bf-fbbbebdee104",
-          "status": "queued",
-          "started_at": "2025-12-03T10:21:09Z"
+          "status": "queued"
         }
       },
       "FallbackConfig": {
@@ -865,6 +855,26 @@
       },
       "Forbidden": {
         "description": "Forbidden - Operation not allowed (e.g., workflow is locked)",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "PaymentRequired": {
+        "description": "Payment required - the calling organization has insufficient balance",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Conflict": {
+        "description": "Conflict - the requested name resolves to a slug already taken by another workflow",
         "content": {
           "application/json": {
             "schema": {
