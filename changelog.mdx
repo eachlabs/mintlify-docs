@@ -11,9 +11,10 @@ rss: true
     `https://api.eachlabs.ai/v1`, including get workflow, update workflow, and
     the public workflow read and trigger routes.
   - Update Workflow accepts `name` only. The previously documented
-    `description`, `locked`, `production`, and `categories` fields were never
-    honored and have been removed from the docs. A rename regenerates the
-    workflow slug.
+    `description`, `locked`, and `production` fields were never honored;
+    `categories` worked on the legacy host but is no longer updatable through
+    this endpoint and is ignored if sent. A rename regenerates the workflow
+    slug.
   - The public workflow trigger returns `{"execution_id": "...", "status":
     "queued"}` on `202`. The `started_at` field the docs claimed was never
     returned.
