@@ -33,7 +33,7 @@ Auth error response: `{"error": "Invalid or missing API key"}` (HTTP 401)
 | each::workflows | `https://api.eachlabs.ai` | REST |
 | each::sense | `https://eachsense-agent.core.eachlabs.run` | REST + SSE |
 
-Workflow endpoints with no `api.eachlabs.ai` equivalent (get/update workflow, versions, categories, public workflows) are served from `https://workflows.eachlabs.run/api/v1`, a fully supported host for those endpoints.
+Workflow endpoints with no `api.eachlabs.ai` equivalent (get/update workflow, categories, public workflows) are served from `https://workflows.eachlabs.run/api/v1`, a fully supported host for those endpoints.
 
 ---
 
@@ -239,6 +239,7 @@ On `https://api.eachlabs.ai`:
 | Method | Path | Description |
 |-|-|-|
 | `POST` | `/v1/workflows` | Create a workflow |
+| `PUT` | `/v1/workflows/{workflowID}/versions/{versionID}` | Create or update a version |
 | `POST` | `/v1/workflows/trigger/{workflowID}/{versionID}` | Trigger execution |
 | `POST` | `/v1/workflows/bulk-trigger/{workflowID}/{versionID}` | Bulk trigger (1–10 parallel) |
 | `GET` | `/v1/workflows/{workflowID}/executions` | List executions |
@@ -251,7 +252,6 @@ On `https://workflows.eachlabs.run/api/v1` (supported host for workflow-manageme
 | `GET` | `/categories` | List workflow categories |
 | `GET` | `/workflows/{id}` | Get workflow (accepts UUID or slug) |
 | `PUT` | `/workflows/{id}` | Update workflow metadata |
-| `PUT` | `/workflows/{id}/versions/{versionID}` | Create or update a version |
 | `GET` | `/public/@{nickname}/workflows/{slug}/versions/{versionID}` | Get public workflow (no auth) |
 | `POST` | `/public/@{nickname}/workflows/{slug}/versions/{versionID}/trigger` | Trigger public workflow (`api_key` in JSON body) |
 
@@ -298,6 +298,12 @@ Body accepts `name` (required) and `definition` (optional).
 ```
 
 Response: the full workflow object, including `versions: [{"version_id": "v1", ...}]`.
+
+### Create/Update Version
+
+`PUT https://api.eachlabs.ai/v1/workflows/{workflowID}/versions/{versionID}`
+
+Patch semantics — omitted body fields keep their stored values. `definition` is required to create a new version; omit it (or send `null`) to keep the stored one. `output_mapping` maps final output keys to step refs (e.g. `{"image": "$.generate.output"}`): omit = unchanged, `{}` = clear, entries = replace the whole map. Boolean flags: `published`, `locked`, `production`, `allowed_to_share`. Errors: `403` locked version.
 
 ### Step Types
 
@@ -1271,7 +1277,7 @@ Rate limit headers: `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-R
 - [Create Workflow](/workflows/endpoints/create-workflow): `POST /v1/workflows`
 - [Get Workflow](/workflows/endpoints/get-workflow): `GET /workflows/{id}`
 - [Update Workflow](/workflows/endpoints/update-workflow): `PUT /workflows/{id}`
-- [Create Version](/workflows/endpoints/create-version): `PUT /workflows/{id}/versions/{versionID}`
+- [Create Version](/workflows/endpoints/create-version): `PUT /v1/workflows/{workflowID}/versions/{versionID}`
 - [Trigger Workflow](/workflows/endpoints/trigger-workflow): `POST /v1/workflows/trigger/{workflowID}/{versionID}`
 - [Bulk Trigger](/workflows/endpoints/bulk-trigger): `POST /v1/workflows/bulk-trigger/{workflowID}/{versionID}`
 - [List Executions](/workflows/endpoints/list-executions): `GET /v1/workflows/{workflowID}/executions`

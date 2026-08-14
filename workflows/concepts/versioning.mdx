@@ -3,10 +3,6 @@ title: "Versioning"
 description: "Manage workflow versions for safe iteration and deployment."
 ---
 
-<Note>
-  Version management endpoints are served at `https://workflows.eachlabs.run` and are fully supported.
-</Note>
-
 ## Version Lifecycle
 
 Each workflow can have multiple versions. The version to run is selected by the `{versionID}` path segment when triggering.
@@ -44,13 +40,11 @@ Versions have three visibility levels:
 ### Making a Version Unlisted
 
 ```bash
-curl -X PUT https://workflows.eachlabs.run/api/v1/workflows/WF_ID/versions/v1 \
+curl -X PUT https://api.eachlabs.ai/v1/workflows/WF_ID/versions/v1 \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
-    "version_id": "v1",
-    "allowed_to_share": true,
-    "definition": { ... }
+    "allowed_to_share": true
   }'
 ```
 
@@ -63,11 +57,10 @@ curl -X PUT https://workflows.eachlabs.run/api/v1/workflows/WF_ID/versions/v1 \
 Use the [Create Version](/workflows/endpoints/create-version) endpoint:
 
 ```bash
-curl -X PUT https://workflows.eachlabs.run/api/v1/workflows/WF_ID/versions/v2 \
+curl -X PUT https://api.eachlabs.ai/v1/workflows/WF_ID/versions/v2 \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
-    "version_id": "v2",
     "definition": {
       "version": "v2",
       "steps": [ ... ],

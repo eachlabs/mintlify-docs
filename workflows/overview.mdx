@@ -60,6 +60,7 @@ Workflow creation, triggering, and execution endpoints are served at `https://ap
 | Method | Path | Description |
 |--------|------|-------------|
 | `POST` | `/v1/workflows` | Create a workflow |
+| `PUT` | `/v1/workflows/{workflowID}/versions/{versionID}` | Create/update a version |
 | `POST` | `/v1/workflows/trigger/{workflowID}/{versionID}` | Trigger execution |
 | `POST` | `/v1/workflows/bulk-trigger/{workflowID}/{versionID}` | Bulk trigger (up to 10) |
 | `GET` | `/v1/workflows/{workflowID}/executions` | List executions |
@@ -72,7 +73,6 @@ Workflow creation, triggering, and execution endpoints are served at `https://ap
 | `GET` | `/categories` | List workflow categories |
 | `GET` | `/workflows/{id}` | Get workflow details |
 | `PUT` | `/workflows/{id}` | Update workflow metadata |
-| `PUT` | `/workflows/{id}/versions/{versionID}` | Create/update a version |
 | `GET` | `/public/@{nickname}/workflows/{slug}/versions/{versionID}` | Get public workflow |
 | `POST` | `/public/@{nickname}/workflows/{slug}/versions/{versionID}/trigger` | Trigger public workflow |
 
