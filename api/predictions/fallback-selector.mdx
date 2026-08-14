@@ -1,0 +1,56 @@
+---
+title: "Direct-Model Fallbacks (Private Beta)"
+description: "Run an organization-configured fallback chain when a direct-model prediction fails at the provider."
+---
+
+<Note>
+  **Private beta.** Direct-model fallbacks are enabled per organization by Eachlabs. [Contact us](https://www.eachlabs.ai/contact) to enable them for your organization.
+</Note>
+
+Use the optional `fallback_selector` string with asynchronous direct-model predictions created through `POST /v1/prediction`.
+
+If you are looking for workflow step fallbacks, see [Fallback Configuration](/workflows/concepts/fallback-configuration).
+
+## Create a prediction with a fallback selector
+
+```bash cURL
+curl -X POST https://api.eachlabs.ai/v1/prediction \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -d '{
+    "model": "flux-1-1-pro",
+    "version": "1.0.0",
+    "fallback_selector": "production-image-chain",
+    "input": {
+      "prompt": "A beautiful sunset over the ocean"
+    }
+  }'
+```
+
+The selector names an organization-owned fallback chain configured for the primary model. If the primary model's execution fails at the provider, Eachlabs runs the chain's fallback models in order using the field mapping confirmed by your organization. The first successful attempt serves the request.
+
+## Configure a chain
+
+In the [dashboard](https://www.eachlabs.ai), open the primary model's page and select the **Fallbacks** tab. Configure the fallback order and confirm the field mapping there. A selector is valid only for the organization and primary model where its chain is configured.
+
+## Prediction identity and cost
+
+The prediction keeps the ID returned by the original request. Continue polling that same prediction ID; the root prediction resolves to the final executed attempt's terminal state and output. Individual attempts do not appear as separate entries in execution lists.
+
+`metrics.cost` is the summed cost of every executed attempt in the chain. You are billed that summed cost.
+
+## GraphQL
+
+On the GraphQL prediction create input, the same parameter is named `fallbackSelector`.
+
+## Failure modes
+
+Fallback selection fails closed. Invalid or unsupported requests do not begin fallback execution.
+
+| Request | Status | Message or result |
+| --- | --- | --- |
+| `fallback_selector` on `POST /v1/prediction/run` | `400` | `fallback_selector is not supported by synchronous prediction runs` |
+| `fallback_selector` with the `eachlabs-llm-router` model | `400` | `fallback_selector is supported only for direct-model predictions` |
+| Selector is not 1–50 lowercase letters and digits separated by hyphens | `400` | No prediction is created |
+| Selector names no chain for the organization and primary model | `400` | No prediction is created |
+| Organization is not enabled for direct-model fallbacks | `403` | `fallback execution is not enabled for this organization` |
