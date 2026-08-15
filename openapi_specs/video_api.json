@@ -8,6 +8,10 @@
       "name": "eachlabs",
       "url": "https://docs.eachlabs.ai/video/overview"
     },
+    "license": {
+      "name": "Apache-2.0",
+      "identifier": "Apache-2.0"
+    },
     "x-generator": "be-monorepo/video-api cmd/openapigen"
   },
   "jsonSchemaDialect": "https://json-schema.org/draft/2020-12/schema",
@@ -286,7 +290,7 @@
                     }
                   },
                   "processing": {
-                    "summary": "Non-terminal poll: output and metrics fields are null",
+                    "summary": "Non-terminal poll: output is null; predict_time and cost read 0, no meter fields yet",
                     "value": {
                       "id": "1f0fdf4d-7b3c-4e9a-8d25-c61f90ab4e73",
                       "input": {
@@ -300,8 +304,8 @@
                       },
                       "logs": null,
                       "metrics": {
-                        "cost": null,
-                        "predict_time": null
+                        "cost": 0,
+                        "predict_time": 0
                       },
                       "output": null,
                       "status": "processing",
@@ -326,8 +330,11 @@
                       },
                       "logs": null,
                       "metrics": {
+                        "billed_seconds": 191,
                         "cost": 0.2865,
-                        "predict_time": 194.86
+                        "output_gb": 0.73,
+                        "predict_time": 194.86,
+                        "tier": "cpu"
                       },
                       "output": [
                         "https://cdn-us.eachlabs.ai/uploads/9b967c93-6e1d-4a5f-b2c8-40d7e93a51f6.mp4"
@@ -689,11 +696,13 @@
             "type": "string"
           },
           "input_urls": {
-            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order.",
+            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order. This capability consumes exactly 1 input: supply input_url or a one-element input_urls — any other count is rejected at submit (invalid_command, $0).",
             "items": {
               "format": "uri",
               "type": "string"
             },
+            "maxItems": 1,
+            "minItems": 1,
             "type": "array"
           },
           "mode": {
@@ -738,11 +747,13 @@
             "type": "string"
           },
           "input_urls": {
-            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order.",
+            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order. This capability consumes exactly 2 inputs — any other count is rejected at submit (invalid_command, $0).",
             "items": {
               "format": "uri",
               "type": "string"
             },
+            "maxItems": 2,
+            "minItems": 2,
             "type": "array"
           },
           "mode": {
@@ -826,11 +837,13 @@
             "type": "string"
           },
           "input_urls": {
-            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order.",
+            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order. This capability consumes exactly 1 input: supply input_url or a one-element input_urls — any other count is rejected at submit (invalid_command, $0).",
             "items": {
               "format": "uri",
               "type": "string"
             },
+            "maxItems": 1,
+            "minItems": 1,
             "type": "array"
           },
           "mode": {
@@ -920,11 +933,13 @@
             "type": "string"
           },
           "input_urls": {
-            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order.",
+            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order. This capability consumes exactly 2 inputs — any other count is rejected at submit (invalid_command, $0).",
             "items": {
               "format": "uri",
               "type": "string"
             },
+            "maxItems": 2,
+            "minItems": 2,
             "type": "array"
           },
           "mode": {
@@ -1000,11 +1015,13 @@
             "type": "string"
           },
           "input_urls": {
-            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order.",
+            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order. This capability consumes exactly 2 inputs — any other count is rejected at submit (invalid_command, $0).",
             "items": {
               "format": "uri",
               "type": "string"
             },
+            "maxItems": 2,
+            "minItems": 2,
             "type": "array"
           },
           "mode": {
@@ -1078,11 +1095,13 @@
             "type": "string"
           },
           "input_urls": {
-            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order.",
+            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order. This capability consumes exactly 1 input: supply input_url or a one-element input_urls — any other count is rejected at submit (invalid_command, $0).",
             "items": {
               "format": "uri",
               "type": "string"
             },
+            "maxItems": 1,
+            "minItems": 1,
             "type": "array"
           },
           "mode": {
@@ -1166,11 +1185,13 @@
             "type": "string"
           },
           "input_urls": {
-            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order.",
+            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order. This capability consumes 2-10 inputs, sized by its params: supply exactly as many input_urls as the params declare, or the submit is rejected (invalid_command, $0).",
             "items": {
               "format": "uri",
               "type": "string"
             },
+            "maxItems": 10,
+            "minItems": 2,
             "type": "array"
           },
           "mode": {
@@ -1245,11 +1266,13 @@
             "type": "string"
           },
           "input_urls": {
-            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order.",
+            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order. This capability consumes 2-50 inputs, sized by its params: supply exactly as many input_urls as the params declare, or the submit is rejected (invalid_command, $0).",
             "items": {
               "format": "uri",
               "type": "string"
             },
+            "maxItems": 50,
+            "minItems": 2,
             "type": "array"
           },
           "mode": {
@@ -1312,11 +1335,13 @@
             "type": "string"
           },
           "input_urls": {
-            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order.",
+            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order. This capability consumes exactly 1 input: supply input_url or a one-element input_urls — any other count is rejected at submit (invalid_command, $0).",
             "items": {
               "format": "uri",
               "type": "string"
             },
+            "maxItems": 1,
+            "minItems": 1,
             "type": "array"
           },
           "mode": {
@@ -1398,11 +1423,13 @@
             "type": "string"
           },
           "input_urls": {
-            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order.",
+            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order. This capability consumes exactly 2 inputs — any other count is rejected at submit (invalid_command, $0).",
             "items": {
               "format": "uri",
               "type": "string"
             },
+            "maxItems": 2,
+            "minItems": 2,
             "type": "array"
           },
           "mode": {
@@ -1494,11 +1521,13 @@
             "type": "string"
           },
           "input_urls": {
-            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order.",
+            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order. This capability consumes exactly 1 input: supply input_url or a one-element input_urls — any other count is rejected at submit (invalid_command, $0).",
             "items": {
               "format": "uri",
               "type": "string"
             },
+            "maxItems": 1,
+            "minItems": 1,
             "type": "array"
           },
           "mode": {
@@ -1565,11 +1594,13 @@
             "type": "string"
           },
           "input_urls": {
-            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order.",
+            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order. This capability consumes exactly 1 input: supply input_url or a one-element input_urls — any other count is rejected at submit (invalid_command, $0).",
             "items": {
               "format": "uri",
               "type": "string"
             },
+            "maxItems": 1,
+            "minItems": 1,
             "type": "array"
           },
           "mode": {
@@ -1673,11 +1704,13 @@
             "type": "string"
           },
           "input_urls": {
-            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order.",
+            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order. This capability consumes exactly 1 input: supply input_url or a one-element input_urls — any other count is rejected at submit (invalid_command, $0).",
             "items": {
               "format": "uri",
               "type": "string"
             },
+            "maxItems": 1,
+            "minItems": 1,
             "type": "array"
           },
           "mode": {
@@ -1736,11 +1769,13 @@
             "type": "string"
           },
           "input_urls": {
-            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order.",
+            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order. This capability consumes exactly 1 input: supply input_url or a one-element input_urls — any other count is rejected at submit (invalid_command, $0).",
             "items": {
               "format": "uri",
               "type": "string"
             },
+            "maxItems": 1,
+            "minItems": 1,
             "type": "array"
           },
           "mode": {
@@ -1840,11 +1875,13 @@
             "type": "string"
           },
           "input_urls": {
-            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order.",
+            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order. This capability consumes exactly 1 input: supply input_url or a one-element input_urls — any other count is rejected at submit (invalid_command, $0).",
             "items": {
               "format": "uri",
               "type": "string"
             },
+            "maxItems": 1,
+            "minItems": 1,
             "type": "array"
           },
           "mode": {
@@ -1929,11 +1966,13 @@
             "type": "string"
           },
           "input_urls": {
-            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order.",
+            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order. This capability consumes exactly 1 input: supply input_url or a one-element input_urls — any other count is rejected at submit (invalid_command, $0).",
             "items": {
               "format": "uri",
               "type": "string"
             },
+            "maxItems": 1,
+            "minItems": 1,
             "type": "array"
           },
           "mode": {
@@ -2009,11 +2048,13 @@
             "type": "string"
           },
           "input_urls": {
-            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order.",
+            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order. This capability consumes exactly 2 inputs — any other count is rejected at submit (invalid_command, $0).",
             "items": {
               "format": "uri",
               "type": "string"
             },
+            "maxItems": 2,
+            "minItems": 2,
             "type": "array"
           },
           "mode": {
@@ -2078,11 +2119,13 @@
             "type": "string"
           },
           "input_urls": {
-            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order.",
+            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order. This capability consumes exactly 2 inputs — any other count is rejected at submit (invalid_command, $0).",
             "items": {
               "format": "uri",
               "type": "string"
             },
+            "maxItems": 2,
+            "minItems": 2,
             "type": "array"
           },
           "mode": {
@@ -2163,11 +2206,13 @@
             "type": "string"
           },
           "input_urls": {
-            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order.",
+            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order. This capability consumes exactly 1 input: supply input_url or a one-element input_urls — any other count is rejected at submit (invalid_command, $0).",
             "items": {
               "format": "uri",
               "type": "string"
             },
+            "maxItems": 1,
+            "minItems": 1,
             "type": "array"
           },
           "mode": {
@@ -2220,11 +2265,13 @@
             "type": "string"
           },
           "input_urls": {
-            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order.",
+            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order. This capability consumes exactly 1 input: supply input_url or a one-element input_urls — any other count is rejected at submit (invalid_command, $0).",
             "items": {
               "format": "uri",
               "type": "string"
             },
+            "maxItems": 1,
+            "minItems": 1,
             "type": "array"
           },
           "mode": {
@@ -2323,11 +2370,13 @@
             "type": "string"
           },
           "input_urls": {
-            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order.",
+            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order. This capability consumes exactly 1 input: supply input_url or a one-element input_urls — any other count is rejected at submit (invalid_command, $0).",
             "items": {
               "format": "uri",
               "type": "string"
             },
+            "maxItems": 1,
+            "minItems": 1,
             "type": "array"
           },
           "mode": {
@@ -2414,11 +2463,13 @@
             "type": "string"
           },
           "input_urls": {
-            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order.",
+            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order. This capability consumes exactly 1 input: supply input_url or a one-element input_urls — any other count is rejected at submit (invalid_command, $0).",
             "items": {
               "format": "uri",
               "type": "string"
             },
+            "maxItems": 1,
+            "minItems": 1,
             "type": "array"
           },
           "mode": {
@@ -2478,11 +2529,13 @@
             "type": "string"
           },
           "input_urls": {
-            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order.",
+            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order. This capability consumes exactly 1 input: supply input_url or a one-element input_urls — any other count is rejected at submit (invalid_command, $0).",
             "items": {
               "format": "uri",
               "type": "string"
             },
+            "maxItems": 1,
+            "minItems": 1,
             "type": "array"
           },
           "mode": {
@@ -2527,11 +2580,13 @@
             "type": "string"
           },
           "input_urls": {
-            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order.",
+            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order. This capability consumes exactly 1 input: supply input_url or a one-element input_urls — any other count is rejected at submit (invalid_command, $0).",
             "items": {
               "format": "uri",
               "type": "string"
             },
+            "maxItems": 1,
+            "minItems": 1,
             "type": "array"
           },
           "mode": {
@@ -2616,11 +2671,13 @@
             "type": "string"
           },
           "input_urls": {
-            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order.",
+            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order. This capability consumes exactly 2 inputs — any other count is rejected at submit (invalid_command, $0).",
             "items": {
               "format": "uri",
               "type": "string"
             },
+            "maxItems": 2,
+            "minItems": 2,
             "type": "array"
           },
           "mode": {
@@ -2691,11 +2748,13 @@
             "type": "string"
           },
           "input_urls": {
-            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order.",
+            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order. This capability consumes exactly 1 input: supply input_url or a one-element input_urls — any other count is rejected at submit (invalid_command, $0).",
             "items": {
               "format": "uri",
               "type": "string"
             },
+            "maxItems": 1,
+            "minItems": 1,
             "type": "array"
           },
           "mode": {
@@ -2751,11 +2810,13 @@
             "type": "string"
           },
           "input_urls": {
-            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order.",
+            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order. This capability consumes exactly 1 input: supply input_url or a one-element input_urls — any other count is rejected at submit (invalid_command, $0).",
             "items": {
               "format": "uri",
               "type": "string"
             },
+            "maxItems": 1,
+            "minItems": 1,
             "type": "array"
           },
           "mode": {
@@ -2821,11 +2882,13 @@
             "type": "string"
           },
           "input_urls": {
-            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order.",
+            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order. This capability consumes exactly 1 input: supply input_url or a one-element input_urls — any other count is rejected at submit (invalid_command, $0).",
             "items": {
               "format": "uri",
               "type": "string"
             },
+            "maxItems": 1,
+            "minItems": 1,
             "type": "array"
           },
           "mode": {
@@ -2893,11 +2956,13 @@
             "type": "string"
           },
           "input_urls": {
-            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order.",
+            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order. This capability consumes exactly 1 input: supply input_url or a one-element input_urls — any other count is rejected at submit (invalid_command, $0).",
             "items": {
               "format": "uri",
               "type": "string"
             },
+            "maxItems": 1,
+            "minItems": 1,
             "type": "array"
           },
           "mode": {
@@ -2950,11 +3015,13 @@
             "type": "string"
           },
           "input_urls": {
-            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order.",
+            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order. This capability consumes exactly 1 input: supply input_url or a one-element input_urls — any other count is rejected at submit (invalid_command, $0).",
             "items": {
               "format": "uri",
               "type": "string"
             },
+            "maxItems": 1,
+            "minItems": 1,
             "type": "array"
           },
           "mode": {
@@ -3042,11 +3109,13 @@
             "type": "string"
           },
           "input_urls": {
-            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order.",
+            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order. This capability consumes exactly 1 input: supply input_url or a one-element input_urls — any other count is rejected at submit (invalid_command, $0).",
             "items": {
               "format": "uri",
               "type": "string"
             },
+            "maxItems": 1,
+            "minItems": 1,
             "type": "array"
           },
           "mode": {
@@ -3106,11 +3175,13 @@
             "type": "string"
           },
           "input_urls": {
-            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order.",
+            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order. This capability consumes exactly 1 input: supply input_url or a one-element input_urls — any other count is rejected at submit (invalid_command, $0).",
             "items": {
               "format": "uri",
               "type": "string"
             },
+            "maxItems": 1,
+            "minItems": 1,
             "type": "array"
           },
           "mode": {
@@ -3195,11 +3266,13 @@
             "type": "string"
           },
           "input_urls": {
-            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order.",
+            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order. This capability consumes exactly 1 input: supply input_url or a one-element input_urls — any other count is rejected at submit (invalid_command, $0).",
             "items": {
               "format": "uri",
               "type": "string"
             },
+            "maxItems": 1,
+            "minItems": 1,
             "type": "array"
           },
           "mode": {
@@ -3296,11 +3369,13 @@
             "type": "string"
           },
           "input_urls": {
-            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order.",
+            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order. This capability consumes 2-50 inputs, sized by its params: supply exactly as many input_urls as the params declare, or the submit is rejected (invalid_command, $0).",
             "items": {
               "format": "uri",
               "type": "string"
             },
+            "maxItems": 50,
+            "minItems": 2,
             "type": "array"
           },
           "mode": {
@@ -3400,11 +3475,13 @@
             "type": "string"
           },
           "input_urls": {
-            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order.",
+            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order. This capability consumes exactly 1 input: supply input_url or a one-element input_urls — any other count is rejected at submit (invalid_command, $0).",
             "items": {
               "format": "uri",
               "type": "string"
             },
+            "maxItems": 1,
+            "minItems": 1,
             "type": "array"
           },
           "mode": {
@@ -3467,11 +3544,13 @@
             "type": "string"
           },
           "input_urls": {
-            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order.",
+            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order. This capability consumes exactly 2 inputs — any other count is rejected at submit (invalid_command, $0).",
             "items": {
               "format": "uri",
               "type": "string"
             },
+            "maxItems": 2,
+            "minItems": 2,
             "type": "array"
           },
           "mode": {
@@ -3568,11 +3647,13 @@
             "type": "string"
           },
           "input_urls": {
-            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order.",
+            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order. This capability consumes exactly 1 input: supply input_url or a one-element input_urls — any other count is rejected at submit (invalid_command, $0).",
             "items": {
               "format": "uri",
               "type": "string"
             },
+            "maxItems": 1,
+            "minItems": 1,
             "type": "array"
           },
           "mode": {
@@ -3666,11 +3747,13 @@
             "type": "string"
           },
           "input_urls": {
-            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order.",
+            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order. This capability consumes exactly 1 input: supply input_url or a one-element input_urls — any other count is rejected at submit (invalid_command, $0).",
             "items": {
               "format": "uri",
               "type": "string"
             },
+            "maxItems": 1,
+            "minItems": 1,
             "type": "array"
           },
           "mode": {
@@ -3759,11 +3842,13 @@
             "type": "string"
           },
           "input_urls": {
-            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order.",
+            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order. This capability consumes exactly 1 input: supply input_url or a one-element input_urls — any other count is rejected at submit (invalid_command, $0).",
             "items": {
               "format": "uri",
               "type": "string"
             },
+            "maxItems": 1,
+            "minItems": 1,
             "type": "array"
           },
           "mode": {
@@ -4029,11 +4114,13 @@
             "type": "string"
           },
           "input_urls": {
-            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order.",
+            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order. This capability consumes exactly 1 input: supply input_url or a one-element input_urls — any other count is rejected at submit (invalid_command, $0).",
             "items": {
               "format": "uri",
               "type": "string"
             },
+            "maxItems": 1,
+            "minItems": 1,
             "type": "array"
           },
           "mode": {
@@ -4094,11 +4181,13 @@
             "type": "string"
           },
           "input_urls": {
-            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order.",
+            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order. This capability consumes exactly 1 input: supply input_url or a one-element input_urls — any other count is rejected at submit (invalid_command, $0).",
             "items": {
               "format": "uri",
               "type": "string"
             },
+            "maxItems": 1,
+            "minItems": 1,
             "type": "array"
           },
           "mode": {
@@ -4228,11 +4317,13 @@
             "type": "string"
           },
           "input_urls": {
-            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order.",
+            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order. This capability consumes exactly 1 input: supply input_url or a one-element input_urls — any other count is rejected at submit (invalid_command, $0).",
             "items": {
               "format": "uri",
               "type": "string"
             },
+            "maxItems": 1,
+            "minItems": 1,
             "type": "array"
           },
           "mode": {
@@ -4323,11 +4414,13 @@
             "type": "string"
           },
           "input_urls": {
-            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order.",
+            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order. This capability consumes exactly 1 input: supply input_url or a one-element input_urls — any other count is rejected at submit (invalid_command, $0).",
             "items": {
               "format": "uri",
               "type": "string"
             },
+            "maxItems": 1,
+            "minItems": 1,
             "type": "array"
           },
           "mode": {
@@ -4385,11 +4478,13 @@
             "type": "string"
           },
           "input_urls": {
-            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order.",
+            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order. This capability consumes exactly 1 input: supply input_url or a one-element input_urls — any other count is rejected at submit (invalid_command, $0).",
             "items": {
               "format": "uri",
               "type": "string"
             },
+            "maxItems": 1,
+            "minItems": 1,
             "type": "array"
           },
           "mode": {
@@ -4451,11 +4546,13 @@
             "type": "string"
           },
           "input_urls": {
-            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order.",
+            "description": "Ordered list of input media URLs for multi-input jobs; same staging rules as input_url. Capabilities consume them in order; run_ffmpeg binds one URL as {input} and N URLs as {input0}, {input1}, … in array order. This capability consumes exactly 2 inputs — any other count is rejected at submit (invalid_command, $0).",
             "items": {
               "format": "uri",
               "type": "string"
             },
+            "maxItems": 2,
+            "minItems": 2,
             "type": "array"
           },
           "mode": {
@@ -4609,7 +4706,23 @@
             "type": "string"
           },
           "error_message": {
-            "description": "Specific failure detail. Engine submit rejects carry the EngineRejectError fields; input-gate rejects carry the typed reject reason (e.g. duration_over_cap); execution failures carry the engine FailureClass.",
+            "anyOf": [
+              {
+                "contentMediaType": "application/json",
+                "contentSchema": {
+                  "$ref": "#/components/schemas/EngineRejectError"
+                },
+                "description": "Engine submit reject: the EngineRejectError body as a JSON string."
+              },
+              {
+                "$ref": "#/components/schemas/FailureClass",
+                "description": "Execution failure: the engine failure class."
+              },
+              {
+                "description": "Typed input-gate reject reason or free-text detail."
+              }
+            ],
+            "description": "Specific failure detail. Engine submit rejects carry the EngineRejectError body serialized into this string; input-gate rejects carry the typed reject reason (e.g. duration_over_cap); execution failures carry the engine FailureClass.",
             "type": "string"
           },
           "error_step": {
@@ -4695,20 +4808,33 @@
             ]
           },
           "metrics": {
+            "description": "Timing and billing meter: predict_time and cost are present on every poll (reading 0, not null, while non-terminal); tier, billed_seconds, and output_gb appear once the engine's terminal meter has settled and are absent before then.",
             "properties": {
+              "billed_seconds": {
+                "description": "Engine-metered billed compute seconds — the billed quantity behind cost. Present only with the settled meter; absent on non-terminal polls.",
+                "type": "integer"
+              },
               "cost": {
-                "description": "What the job actually billed, in USD. Rejected, failed, and cancelled predictions settle 0 in beta — the engine still meters customer-fault seconds, so do not design flows that rely on failed compute staying free.",
+                "description": "What the job actually billed, in USD: billed_seconds × the tier rate. Reads 0 while the prediction is non-terminal. Rejected, failed, and cancelled predictions settle 0 in beta — the engine still meters customer-fault seconds, so do not design flows that rely on failed compute staying free.",
                 "type": [
                   "number",
                   "null"
                 ]
               },
+              "output_gb": {
+                "description": "Uploaded output size in decimal gigabytes (1 GB = 1e9 bytes), the egress-metering quantity. Present only with the settled meter; absent on non-terminal polls.",
+                "type": "number"
+              },
               "predict_time": {
-                "description": "The prediction's full wall time in seconds, from processing start to completion detection, including internal queueing and ~5 s poll quantization. NOT the billed quantity — cost comes from engine-metered billed execution seconds × the tier rate.",
+                "description": "The prediction's full wall time in seconds, from processing start to completion detection, including internal queueing and ~5 s poll quantization. NOT the billed quantity — that is billed_seconds. Reads 0 while the prediction is non-terminal.",
                 "type": [
                   "number",
                   "null"
                 ]
+              },
+              "tier": {
+                "description": "Pricing tier the job was metered on (e.g. \"cpu\"). Present only once the engine's terminal meter has settled; absent on non-terminal polls and on records the engine never metered.",
+                "type": "string"
               }
             },
             "type": "object"
@@ -4717,7 +4843,7 @@
             "$ref": "#/components/schemas/PredictionOutput"
           },
           "status": {
-            "description": "Typical flow: starting → processing → success. Terminal states: success, error, cancelled. The video surface writes \"starting\" as the initial state; \"created\" appears only on legacy paths, so a poll loop may never observe it. A failed prediction reports \"error\", never \"failed\". Poll every 3-5 seconds — platform status checks are quantized to ~5 s, tighter loops buy nothing. No queue-time bound is enforced: a prediction can wait in \"starting\" behind the per-tier concurrency cap; keep polling.",
+            "description": "Typical flow: created → processing → success. Terminal states: success, error, cancelled. The REST create path writes \"created\" as the initial state; \"starting\" is written only by the GraphQL V2 submission path, so a poll loop on this surface may never observe it. A failed prediction reports \"error\", never \"failed\". Poll every 3-5 seconds — platform status checks are quantized to ~5 s, tighter loops buy nothing. No queue-time bound is enforced: a prediction can wait in \"created\" behind the per-tier concurrency cap; keep polling.",
             "enum": [
               "created",
               "starting",
