@@ -13,7 +13,7 @@ An MCP server that exposes the full Video API as native agent tools — all 44 c
 
 ## Connect your agent
 
-One OAuth login — approve access in the browser and your agent is ready. No API key to create or paste. Jobs bill to the organization you approve on the consent page.
+One OAuth login — approve access in the browser and your agent is ready. No API key to create or paste. Jobs bill to the organization you approve on the consent page. Approving requires an active dashboard session — if you're signed out, the consent page routes you through [sign-in](https://www.eachlabs.ai/sign-in) and back to the approval automatically.
 
 <Tabs>
   <Tab title="Claude Code">
@@ -21,7 +21,7 @@ One OAuth login — approve access in the browser and your agent is ready. No AP
     claude mcp add --transport http eachlabs-video https://mcp.eachlabs.ai/mcp
     ```
 
-    Then run `/mcp` inside Claude Code and log in when prompted.
+    Adding registers the server but does not connect it — it waits as pending approval. Run `/mcp` inside Claude Code, approve `eachlabs-video`, and log in when prompted; the video tools appear once the login completes.
   </Tab>
   <Tab title="Codex">
     ```bash
@@ -98,11 +98,11 @@ The server targets the `eachlabs-video-api` model slug by default — no extra c
 
 ## Use it
 
-Ask your agent to do video work with any publicly downloadable media URL — inputs are staged automatically (see [Quickstart — inputs](/video/quickstart#2-provide-your-input-video)); `s3://` URIs from onboarding also work:
+Ask your agent to do video work with any publicly downloadable media URL — inputs are staged automatically (see [Quickstart — inputs](/video/quickstart#2-provide-your-input-video)); `s3://` URIs from onboarding also work. No public URL at hand? Make one from any local video: ask the agent to call `upload_file` with the file's path — it uploads the file to eachlabs storage and returns a `public_url` (the underlying REST endpoint is [upload-file](/storage/upload-file)). Use that URL as the input:
 
 > "Trim the first 12 seconds of `YOUR_INPUT_URL`, burn the captions from this SRT, and give me the result URL."
 
-The agent chains the `trim` and `captions` tools; each tool call returns the hosted artifact URL (or JSON for the [analysis capabilities](/video/capabilities#response-shapes)) plus the billed cost. Local files: ask the agent to call `upload_file` with the file's path — it uploads the file to eachlabs storage and returns the `public_url` to pass as input (the underlying REST endpoint is [upload-file](/storage/upload-file)).
+The agent chains the `trim` and `captions` tools; each tool call returns the hosted artifact URL (or JSON for the [analysis capabilities](/video/capabilities#response-shapes)) plus the billed cost.
 
 ## Tool inventory
 
