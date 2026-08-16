@@ -45,14 +45,18 @@ Webhook payloads use a compact two-value status vocabulary: `succeeded` or `fail
       "id": "",
       "status": "",
       "output": "",
-      "error": "Error: Model timeout after 30s"
+      "error": "The execution exceeded its time limit. Retry, or use a smaller input if it persists."
     }
   ],
   "error": ""
 }
 ```
 
-On failure, `output` is an array wrapping the error detail: read `output[0].error` for the failure reason. The top-level `error` field is always an empty string.
+On failure, `output` is an array wrapping the error detail. In V1,
+`output[0].error` is usually a customer-readable string, but some legacy model
+integrations preserve another JSON shape. Do not infer an error code by parsing
+the text or undocumented object fields. The top-level `error` field is always
+an empty string.
 
 ## Webhook Handler Examples
 
@@ -86,7 +90,7 @@ app.post("/webhooks/prediction", (req, res) => {
     // Process the output...
   } else if (payload.status === "failed") {
     const detail = payload.output?.[0]?.error ?? "unknown";
-    console.log(`Prediction failed: ${detail}`);
+    console.log(`Prediction failed: ${JSON.stringify(detail)}`);
   }
 
   res.json({ received: true });

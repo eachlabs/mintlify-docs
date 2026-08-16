@@ -5,13 +5,29 @@ description: "A handy guide to HTTP status codes and error responses across all 
 
 ## Error Response Format
 
-All each::labs APIs return errors in a clean, consistent JSON format:
+Errors returned directly by an API request use this format:
 
 ```json
 {
   "error": "Human-readable error message"
 }
 ```
+
+This is different from a prediction that was accepted and later failed while
+running. In that case, the polling request still succeeds, the prediction has
+`status: "error"`, and the failure detail is in `output`:
+
+```json
+{
+  "status": "error",
+  "output": "This model is temporarily rate limited. Retry shortly."
+}
+```
+
+In V1, prediction failure `output` is model-specific. Most models return a
+customer-readable string, while some legacy integrations preserve an object or
+array. V1 does not guarantee a machine-readable error code in this field. Do
+not parse message wording or depend on undocumented object keys.
 
 ## HTTP Status Codes
 
@@ -106,11 +122,11 @@ All each::labs APIs return errors in a clean, consistent JSON format:
 
 ### each::api: Prediction Errors
 
-| Error | Description |
-|-------|-------------|
-| `"Prediction not found"` | Invalid prediction ID |
-| `"Model not found"` | Invalid model slug |
-| `"Invalid input"` | Input doesn't match model's request schema |
+Errors that prevent a request from being accepted use the HTTP error format
+above. When an accepted prediction later fails, display its `output` as failure
+detail and log the prediction ID. Retry transient failures with bounded
+exponential backoff; correct invalid input before retrying. Contact support with
+the prediction ID when the cause is unclear or persists.
 
 ### each::workflows: Execution Errors
 

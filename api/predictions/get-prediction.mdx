@@ -45,7 +45,7 @@ while True:
 if data["status"] == "success":
     print(f"Output: {data['output']}")
 else:
-    print(f"Failed: {data.get('logs')}")
+    print(f"Failed: {data.get('output')}")
 ```
 
 ```javascript JavaScript
@@ -67,7 +67,11 @@ async function waitForPrediction(predictionId) {
 }
 
 const result = await waitForPrediction("abc123-def456-ghi789");
-console.log(`Output: ${result.output}`);
+if (result.status === "success") {
+  console.log(`Output: ${JSON.stringify(result.output)}`);
+} else {
+  console.log(`Failed: ${JSON.stringify(result.output)}`);
+}
 ```
 </CodeGroup>
 
@@ -101,7 +105,7 @@ console.log(`Output: ${result.output}`);
 | `id` | string | Prediction ID |
 | `input` | object | Input parameters used |
 | `status` | string | `created`, `starting`, `processing`, `success`, `error`, or `cancelled` |
-| `output` | string \| array \| object | Prediction output (type depends on model) |
+| `output` | string \| array \| object | Model-specific prediction result or failure detail. V1 does not guarantee one failure shape |
 | `logs` | string \| null | Execution logs |
 | `metrics.predict_time` | number | Processing time in seconds |
 | `metrics.cost` | number | Cost in USD |
@@ -125,6 +129,24 @@ The `metrics.tier`, `metrics.billed_seconds`, and `metrics.output_gb` fields app
 | `success` | Prediction completed successfully |
 | `error` | Prediction failed |
 | `cancelled` | Prediction was cancelled |
+
+### Failed Prediction
+
+V1 does not define a structured failure contract inside `output`. Most models
+return a customer-readable string, while some legacy integrations preserve an
+object or array. Treat the value as model-specific display/debug information;
+do not parse its wording or branch on undocumented object fields.
+
+```json
+{
+  "id": "abc123-def456-ghi789",
+  "status": "error",
+  "output": "This model is temporarily rate limited. Retry shortly."
+}
+```
+
+See [Error Reference](/errors) for retry guidance. Log the prediction ID when a
+failure needs investigation.
 
 ## Error Responses
 
