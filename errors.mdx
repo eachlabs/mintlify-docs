@@ -23,9 +23,10 @@ Prediction-based products (including the Video API) report failures asynchronous
 |--------|---------|-------------|
 | `400` | Bad Request | Invalid request parameters or body |
 | `401` | Unauthorized | Missing or invalid API key |
+| `402` | Payment Required | Balance too low to cover the request |
 | `403` | Forbidden | Operation not allowed (e.g., locked resource) |
 | `404` | Not Found | Resource does not exist |
-| `429` | Too Many Requests | Rate limit exceeded |
+| `429` | Too Many Requests | Concurrency cap reached |
 | `500` | Internal Server Error | Unexpected server error |
 
 ## Common Errors
@@ -56,6 +57,23 @@ Prediction-based products (including the Video API) report failures asynchronous
 - `Authorization: Bearer YOUR_API_KEY` header not included
 - API key is invalid or expired
 
+### 402: Payment Required
+
+```json
+{
+  "status": 402,
+  "error": "payment required",
+  "details": "the estimated cost of your in-flight executions exceeds your current balance ($1.00). please wait for an active execution to finish or top up your balance"
+}
+```
+
+**Causes:**
+- The requested model costs more than your current balance
+- The combined estimated cost of your in-flight predictions would exceed your balance — each running prediction reserves its estimated cost until it settles
+
+**Handling:**
+- Top up your balance, or wait for an in-flight prediction to finish. A settled prediction releases the difference between its estimate and its real cost.
+
 ### 403: Forbidden
 
 ```json
@@ -81,18 +99,22 @@ Prediction-based products (including the Video API) report failures asynchronous
 - Non-existent prediction ID, workflow ID, or execution ID
 - Resource was deleted
 
-### 429: Rate Limited
+### 429: Too Many Requests
 
 ```json
 {
-  "error": "Rate limit exceeded. Please retry after 60 seconds."
+  "status": 429,
+  "error": "too many requests",
+  "details": "Account rate limited: accounts with a balance of $10.00 or less are limited to 10 concurrent executions. Keep your balance above $10.00 for higher concurrency, or wait for an active execution to finish."
 }
 ```
 
+There is no per-second request limit on predictions. A 429 means an **account concurrency cap**: while your balance is **$10.00 or less**, at most **10 predictions may be in flight at once** — **2** while the price of the requested model is not yet known. A rejected request creates no prediction and is never billed. Read `details` for the cap that was hit.
+
 **Handling:**
-- Implement exponential backoff
-- Check the `Retry-After` header when available
-- Consider reducing request frequency
+- Keep your balance above $10.00 — the cap does not apply above that threshold
+- Otherwise, wait for an in-flight prediction to reach a terminal status and resubmit; the slot frees when it settles
+- Retry with exponential backoff when `details` reports that too many executions were started at once — that variant is transient
 
 ### 500: Internal Server Error
 
@@ -137,6 +159,10 @@ Prediction-based products (including the Video API) report failures asynchronous
 ## Retry Strategy
 
 We recommend exponential backoff for transient errors (429, 500). Here's how to set that up:
+
+<Note>
+Backoff alone does not clear a [429 concurrency cap](#429-too-many-requests): the slot frees when an in-flight prediction settles, so retry a bounded number of times and surface the `details` text rather than looping.
+</Note>
 
 <CodeGroup>
 ```python Python

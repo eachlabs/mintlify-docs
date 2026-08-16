@@ -1188,25 +1188,30 @@ console.log(result.output);
 |------|---------|--------|
 | 400 | Bad Request — invalid parameters | Fix request body |
 | 401 | Unauthorized — missing/invalid API key | Check API key |
+| 402 | Payment Required — balance too low | Top up, or wait for in-flight predictions to settle |
 | 403 | Forbidden — locked resource | Check resource permissions |
 | 404 | Not Found — invalid ID or slug | Verify resource exists |
 | 422 | Unprocessable — missing required fields | Check required fields |
-| 429 | Rate Limited | Implement exponential backoff |
+| 429 | Too Many Requests — account concurrency cap | Wait for an in-flight prediction to settle, or raise the balance above $10 |
 | 500 | Internal Server Error | Retry with backoff |
 
-**Retry strategy:** Exponential backoff for 429 and 500 errors. Wait `2^attempt` seconds.
+**Retry strategy:** Exponential backoff for 500 errors. Wait `2^attempt` seconds. A 429 clears when a prediction settles or the balance rises, so bound the retries and surface `details`.
 
 ---
 
 ## Rate Limits
 
-| Plan | Requests/min | Concurrent |
-|------|-------------|------------|
-| Free | 10 | 2 |
-| Pro | 60 | 10 |
-| Enterprise | 300 | 50 |
+Predictions are not throttled by requests per second, and the API sends no `X-RateLimit-*` headers.
 
-Rate limit headers: `X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`
+The one account limit is a **low-balance concurrency cap**: while the organization balance is $10.00 or less, at most 10 predictions may be in flight at once — 2 while the price of the requested model is not yet known. Submits past the cap answer HTTP 429 with the cap named in `details`, create no prediction, and are never billed. A balance above $10.00 removes the cap.
+
+```json
+{
+  "status": 429,
+  "error": "too many requests",
+  "details": "Account rate limited: accounts with a balance of $10.00 or less are limited to 10 concurrent executions. Keep your balance above $10.00 for higher concurrency, or wait for an active execution to finish."
+}
+```
 
 ---
 

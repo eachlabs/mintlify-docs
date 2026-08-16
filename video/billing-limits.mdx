@@ -216,7 +216,8 @@ Cancellation is **record-only**: it finalizes your prediction immediately, but i
 
 ## Rate limits & concurrency
 
-- **No per-organization rate limit on submits today** (beta). `POST /v1/prediction` is not throttled per key or per org.
+- **No per-organization request-rate limit on submits today** (beta). `POST /v1/prediction` is not throttled per key or per org by requests per second.
+- **A low-balance concurrency cap is the one per-organization limit.** While the organization balance is **$10.00 or less**, at most **10 predictions may be in flight at once** — **2** while the price of the requested model is not yet known. A submit past the cap answers HTTP `429` with the cap named in `details`; it creates no prediction and is never billed. Keeping the balance above $10.00 removes the cap entirely. See the [Error Reference](/errors#429-too-many-requests).
 - **One global engine submit bucket** — 50 requests/s, burst 100, shared across all organizations — protects the engine. You never see it as an HTTP 429: the platform absorbs it and retries the submit internally (3 attempts, 2 s base backoff). A persistently throttled submit surfaces as the prediction erroring with `PROVIDER_RATE_LIMIT` at $0.
 - **In-flight execution caps** exist per provider on the platform side. A job held back by a cap is re-enqueued with backoff — you observe a prolonged `created` status, not an error. If the platform exhausts its re-enqueue budget, the prediction errors with `PROVIDER_RATE_LIMIT` at $0.
 - **Worker concurrency is bounded platform-wide** (32 concurrent job actions per worker); bursts queue rather than fail — a 100-job burst of short transcodes drains in ~15-30 s.
