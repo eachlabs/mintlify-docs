@@ -62,7 +62,7 @@
           },
           {
             "group": "Predictions",
-            "pages": ["api/predictions/create-prediction", "api/predictions/get-prediction"]
+            "pages": ["api/predictions/create-prediction", "api/predictions/fallback-selector", "api/predictions/get-prediction"]
           },
           {
             "group": "Content Safety",
