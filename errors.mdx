@@ -13,6 +13,10 @@ All each::labs APIs return errors in a clean, consistent JSON format:
 }
 ```
 
+## Prediction-Envelope Errors
+
+Prediction-based products (including the Video API) report failures asynchronously. The submit call succeeds with a prediction ID, and the failure arrives when you poll: the prediction returns `status: "error"` and its `output` carries an error envelope with `error_code` and `error_message` fields — not the HTTP `{"error": ...}` shape above. For the full envelope and the catalog of error codes, see the [Video API error catalog](/video/billing-limits#error-catalog).
+
 ## HTTP Status Codes
 
 | Status | Meaning | Description |
