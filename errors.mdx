@@ -109,7 +109,7 @@ Prediction-based products (including the Video API) report failures asynchronous
 }
 ```
 
-There is no per-second request limit on predictions. A 429 means an **account concurrency cap**: while your balance is **$10.00 or less**, at most **10 predictions may be in flight at once** — **2** while the price of the requested model is not yet known. A rejected request creates no prediction and is never billed. Read `details` for the cap that was hit.
+There is no per-second request limit on predictions. A 429 means an **account concurrency cap**: while your balance is **$10.00 or less**, you may have **10 predictions in flight at once** for a model with a fixed list price, and **2** for a model the platform cannot price before it runs (metered models, billed from the run itself). A rejected request creates no prediction and is never billed. Read `details` for the cap that was hit — it always names the number that applied.
 
 **Handling:**
 - Keep your balance above $10.00 — the cap does not apply above that threshold

@@ -1203,7 +1203,7 @@ console.log(result.output);
 
 Predictions are not throttled by requests per second, and the API sends no `X-RateLimit-*` headers.
 
-The one account limit is a **low-balance concurrency cap**: while the organization balance is $10.00 or less, at most 10 predictions may be in flight at once — 2 while the price of the requested model is not yet known. Submits past the cap answer HTTP 429 with the cap named in `details`, create no prediction, and are never billed. A balance above $10.00 removes the cap.
+The one account limit is a **low-balance concurrency cap**: while the organization balance is $10.00 or less, you may have 10 predictions in flight at once for a model with a fixed list price, and 2 for a model the platform cannot price before it runs (metered models, billed from the run itself). Submits past the cap answer HTTP 429 with the cap named in `details`, create no prediction, and are never billed. A balance above $10.00 removes the cap.
 
 ```json
 {
