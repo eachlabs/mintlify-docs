@@ -31,6 +31,114 @@
     }
   ],
   "paths": {
+    "/workflows": {
+      "get": {
+        "tags": [
+          "Workflows"
+        ],
+        "summary": "List workflows",
+        "description": "List the workflows visible to your organization, newest first.\n\n`offset` in the response is the **next** page's start and is omitted on the last page — it is not an echo of the offset you sent. Paging deeper than 1000 rows (`offset` + `limit`) is rejected with 400.\n",
+        "operationId": "listWorkflows",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Page size. Defaults to 50, capped at 100.",
+            "schema": {
+              "type": "integer",
+              "default": 50,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "description": "Page start.",
+            "schema": {
+              "type": "integer",
+              "default": 0
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "description": "Keep only workflows carrying this category slug.",
+            "schema": {
+              "type": "string",
+              "example": "image-generation"
+            }
+          },
+          {
+            "name": "keyword",
+            "in": "query",
+            "required": false,
+            "description": "Free-text match on the workflow name.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort_key",
+            "in": "query",
+            "required": false,
+            "description": "Sort column. Ignored unless `sort_direction` is also given.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "name",
+                "created_at",
+                "updated_at",
+                "trigger_count",
+                "status"
+              ]
+            }
+          },
+          {
+            "name": "sort_direction",
+            "in": "query",
+            "required": false,
+            "description": "Sort direction. Ignored unless `sort_key` is also given.",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          },
+          {
+            "name": "node_based",
+            "in": "query",
+            "required": false,
+            "description": "Keep only workflows whose `node_based` flag matches. Omit for all.",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of workflows",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowList"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
     "/workflows/{workflowID}": {
       "parameters": [
         {
@@ -424,6 +532,117 @@
           "allowed_to_share": {
             "type": "boolean",
             "description": "Toggle unlisted sharing for this version.\n\n- `true` → makes the version \"unlisted\" (accessible via link, hidden from public listings)\n- `false` → makes the version \"private\" (organization only)\n- No effect on public versions\n- Omitted keeps the stored value (new versions default to private)\n"
+          }
+        }
+      },
+      "WorkflowList": {
+        "type": "object",
+        "description": "A page of workflows",
+        "properties": {
+          "workflows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkflowSummary"
+            }
+          },
+          "offset": {
+            "type": "integer",
+            "description": "Start of the next page; omitted when there are no further results",
+            "example": 50
+          },
+          "total_count": {
+            "type": "integer",
+            "description": "Full result-set size for the applied filters",
+            "example": 231
+          }
+        }
+      },
+      "WorkflowSummary": {
+        "type": "object",
+        "description": "The list view of a workflow — summary fields only, without its versions",
+        "properties": {
+          "workflow_id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique workflow identifier",
+            "example": "50741f40-8621-4d46-8a91-dff4d873be98"
+          },
+          "slug": {
+            "type": "string",
+            "description": "URL-friendly workflow identifier",
+            "example": "text-to-image-generator"
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable workflow name",
+            "example": "Text to Image Generator"
+          },
+          "categories": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Category slugs",
+            "example": [
+              "image-generation"
+            ]
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Free-form workflow tags",
+            "example": [
+              "demo"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "archived",
+              "deleted"
+            ],
+            "description": "Workflow lifecycle status",
+            "example": "active"
+          },
+          "trigger_count": {
+            "type": "integer",
+            "description": "Total number of times this workflow has been triggered",
+            "example": 42
+          },
+          "clone_count": {
+            "type": "integer",
+            "description": "Number of times this workflow has been cloned",
+            "example": 3
+          },
+          "is_public": {
+            "type": "boolean",
+            "description": "Whether the workflow appears in public listings",
+            "example": false
+          },
+          "production": {
+            "type": "boolean",
+            "description": "Whether this is a production workflow",
+            "example": false
+          },
+          "node_based": {
+            "type": "boolean",
+            "description": "Whether the workflow's latest active version runs as a node graph",
+            "example": false
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "RFC3339 timestamp when workflow was created",
+            "example": "2025-12-01T10:00:00Z"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "RFC3339 timestamp when workflow was last updated",
+            "example": "2025-12-07T15:30:00Z"
           }
         }
       },
