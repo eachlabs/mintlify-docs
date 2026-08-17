@@ -142,6 +142,7 @@
             "group": "API Reference",
             "pages": [
               "workflows/endpoints/create-workflow",
+              "workflows/endpoints/list-workflows",
               "workflows/endpoints/get-workflow",
               "workflows/endpoints/update-workflow",
               "workflows/endpoints/create-version",
@@ -159,6 +160,7 @@
               "directory": "workflows-api-reference"
             },
             "pages": [
+              "GET /workflows",
               "GET /workflows/{workflowID}",
               "PUT /workflows/{workflowID}",
               "PUT /workflows/{workflowID}/versions/{versionID}",
