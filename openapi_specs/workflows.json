@@ -37,7 +37,7 @@
           "Workflows"
         ],
         "summary": "List workflows",
-        "description": "List the workflows visible to your organization, newest first.\n\n`offset` in the response is the **next** page's start and is omitted on the last page — it is not an echo of the offset you sent. Paging deeper than 1000 rows (`offset` + `limit`) is rejected with 400.\n",
+        "description": "List the workflows visible to your organization, newest first.\n\n`offset` in the response is the **next** page's start, not an echo of the one you sent. It is present whenever the page came back full, so page until a page returns fewer than `limit` rows.\n",
         "operationId": "listWorkflows",
         "parameters": [
           {
@@ -129,9 +129,6 @@
                 }
               }
             }
-          },
-          "400": {
-            "$ref": "#/components/responses/BadRequest"
           },
           "401": {
             "$ref": "#/components/responses/Unauthorized"
@@ -547,7 +544,7 @@
           },
           "offset": {
             "type": "integer",
-            "description": "Start of the next page; omitted when there are no further results",
+            "description": "Start of the next page; present while pages come back full",
             "example": 50
           },
           "total_count": {

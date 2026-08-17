@@ -92,7 +92,7 @@ console.log(`${page.total_count} workflows total`);
 | Field | Type | Description |
 |-------|------|-------------|
 | `workflows` | object[] | The page of workflows |
-| `offset` | integer | Start of the **next** page; omitted once the last page has been served |
+| `offset` | integer | Start of the **next** page; present while pages come back full |
 | `total_count` | integer | Full result-set size for the applied filters |
 
 ### Workflow Fields
@@ -119,23 +119,25 @@ console.log(`${page.total_count} workflows total`);
 
 ## Pagination
 
-`offset` in the response is the start of the next page, not an echo of the offset you sent. Page until it is absent:
+`offset` in the response is the start of the next page, not an echo of the offset you sent. It is present whenever the page came back full, so a full final page still carries one — page until a page returns fewer than `limit` rows:
 
 ```python
+LIMIT = 100
 offset, workflows = 0, []
-while offset is not None:
+while True:
     page = requests.get(
         "https://api.eachlabs.ai/v1/workflows",
-        params={"limit": 100, "offset": offset},
+        params={"limit": LIMIT, "offset": offset},
         headers={"Authorization": "Bearer YOUR_API_KEY"}
     ).json()
     workflows.extend(page["workflows"])
-    offset = page.get("offset")
+    if len(page["workflows"]) < LIMIT:
+        break
+    offset = page["offset"]
 ```
 
 ## Error Responses
 
 | Status | Body | Description |
 |--------|------|-------------|
-| `400` | `{"error": "invalid argument"}` | Paging deeper than 1000 rows (`offset` + `limit`) |
 | `401` | `{"error": "Invalid or missing API key"}` | Authentication failure |
