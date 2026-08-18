@@ -168,14 +168,31 @@ function loadLocalCatalog(path) {
   }));
 }
 
+async function fetchJson(url, init, label) {
+  let response;
+  try {
+    response = await fetch(url, { ...init, signal: AbortSignal.timeout(60_000) });
+  } catch (error) {
+    fail(`${label} fetch failed: ${error?.cause?.message ?? error?.message ?? error}`);
+  }
+  if (!response.ok) fail(`${label} returned status ${response.status}`);
+  try {
+    return await response.json();
+  } catch (error) {
+    fail(`${label} returned unparseable JSON: ${error?.message ?? error}`);
+  }
+}
+
 async function fetchRemoteCatalog(baseUrl) {
-  const response = await fetch(`${baseUrl.replace(/\/$/, "")}/graphql`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
-    body: JSON.stringify({ query: GRAPHQL_QUERY }),
-  });
-  if (!response.ok) fail(`GraphQL returned status ${response.status}`);
-  const body = await response.json();
+  const body = await fetchJson(
+    `${baseUrl.replace(/\/$/, "")}/graphql`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({ query: GRAPHQL_QUERY }),
+    },
+    "GraphQL"
+  );
   if (body.errors) fail(`GraphQL returned errors: ${JSON.stringify(body.errors)}`);
   const catalog = body.data?.llmRouterModelCatalog;
   if (!Array.isArray(catalog?.models)) fail("GraphQL response missing llmRouterModelCatalog.models");
@@ -189,9 +206,7 @@ async function fetchRemoteCatalog(baseUrl) {
 }
 
 async function fetchOpenRouterPricing(url) {
-  const response = await fetch(url, { headers: { Accept: "application/json" } });
-  if (!response.ok) fail(`OpenRouter returned status ${response.status}`);
-  const body = await response.json();
+  const body = await fetchJson(url, { headers: { Accept: "application/json" } }, "OpenRouter");
   if (!Array.isArray(body.data)) fail("OpenRouter response missing data array");
   const byId = new Map();
   for (const model of body.data) {
@@ -200,6 +215,7 @@ async function fetchOpenRouterPricing(url) {
       inputPerMillion: perMillion(model.pricing?.prompt),
       outputPerMillion: perMillion(model.pricing?.completion),
       contextLength: Number.isFinite(model.context_length) ? model.context_length : null,
+      created: Number.isFinite(model.created) ? model.created : null,
     });
   }
   return byId;
@@ -227,7 +243,7 @@ function loadOverrides() {
 }
 
 function numberOrNull(value) {
-  return Number.isFinite(value) ? value : null;
+  return Number.isFinite(value) && value >= 0 ? value : null;
 }
 
 function formatPrice(perM) {
@@ -279,8 +295,18 @@ function renderSections(models, pricingById, overrides) {
   let fromOverrides = 0;
   let knownUnpriced = 0;
   const sections = [];
+  // Newest release first within each family; undated rows (no OpenRouter match) trail, id-ascending.
+  const createdOf = (model) =>
+    (pricingById.get(model.targetModel) ?? pricingById.get(model.id))?.created ?? null;
   for (const family of orderedFamilies(new Set(byFamily.keys()))) {
-    const rows = [...byFamily.get(family)].sort((a, b) => (a.id < b.id ? -1 : 1));
+    const rows = [...byFamily.get(family)].sort((a, b) => {
+      const createdA = createdOf(a);
+      const createdB = createdOf(b);
+      if (createdA !== null && createdB !== null && createdA !== createdB) return createdB - createdA;
+      if (createdA !== null && createdB === null) return -1;
+      if (createdA === null && createdB !== null) return 1;
+      return a.id < b.id ? -1 : 1;
+    });
     const lines = [
       `## ${familyTitle(family)}`,
       "",
@@ -297,7 +323,7 @@ function renderSections(models, pricingById, overrides) {
       else if (ov && (ov.inputPerMillion !== null || ov.outputPerMillion !== null)) fromOverrides++;
       else if (or || ov) knownUnpriced++;
       else missingData.push(model.id);
-      const name = escapeCell(model.title || model.id);
+      const name = escapeCell((model.title || model.id).trim());
       lines.push(
         `| \`${model.id}\` | ${name} | ${formatPrice(inputPerMillion)} | ${formatPrice(outputPerMillion)} | ${formatContext(contextLength)} |`
       );
