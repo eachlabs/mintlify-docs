@@ -7,7 +7,7 @@ Grab any model ID from the tables below and pass it as the `model` parameter. Fo
 
 ```python
 response = client.chat.completions.create(
-    model="openai/gpt-4o",  # any model ID from the tables below
+    model="openai/gpt-5.1",  # any model ID from the tables below
     messages=[{"role": "user", "content": "Hello!"}]
 )
 ```
@@ -507,10 +507,10 @@ response = client.chat.completions.create(
 
 | Model ID | Name | Input | Output | Context |
 |-|-|-|-|-|
-| `openrouter/bodybuilder` | Body Builder (beta) | $-1000000. | $-1000000. | 128,000 |
+| `openrouter/bodybuilder` | Body Builder (beta) | — | — | 128,000 |
 | `openrouter/free` | Free Models Router | $0.00 | $0.00 | 200,000 |
-| `openrouter/fusion` | Fusion | $-1000000. | $-1000000. | 1,000,000 |
-| `openrouter/pareto-code` | Pareto Code Router | $-1000000. | $-1000000. | 2,000,000 |
+| `openrouter/fusion` | Fusion | — | — | 1,000,000 |
+| `openrouter/pareto-code` | Pareto Code Router | — | — | 2,000,000 |
 
 ## Perceptron
 
