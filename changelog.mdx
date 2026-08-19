@@ -9,6 +9,8 @@ rss: true
 
   - [My Workflows](https://www.eachlabs.ai/my-workflows) now supports workflow tags, so you can label workflows and scan larger libraries more quickly.
   - Filter the workflow list by tags from the toolbar, with searchable checkbox filters for narrowing the view.
+  - A workflow carries up to three tags. The picker locks the rows there is no room for and says why, and the limit is enforced on the workflow service as well, so it holds for every caller. Filtering by tags is not limited.
+  - Tagging a workflow no longer reloads the list, so the tag picker stays open, the scroll position holds, and the chips update on the click.
 </Update>
 
 <Update label="August 19, 2026" description="Canvas" rss={{ title: "Run independent canvas branches together", description: "Canvas" }}>
@@ -17,6 +19,13 @@ rss: true
   - Partial runs now dispatch independent branches in the same slice together, so `Run from here` follows the graph's dependencies instead of making unrelated branches wait on each other.
   - A no-op canvas write no longer creates an undo step, so deleting selected cards can be undone with one `⌘Z`.
   - Icon-only run status badges now have accessible names, so screen readers can announce each step's status.
+</Update>
+
+<Update label="August 19, 2026" description="Canvas" rss={{ title: "Sequential workflows keep every mapped output wire", description: "Canvas" }}>
+  ## Sequential workflows keep every mapped output wire
+
+  - A sequential workflow whose output is mapped from more than one step now opens with every mapped wire drawn on the canvas, instead of only the wire from the last step.
+  - Because the canvas no longer reopens with wires missing, saving after reopening keeps the full output mapping rather than trimming it down to a single key.
 </Update>
 
 <Update label="August 19, 2026" description="API" rss={{ title: "List executions across all organization API keys", description: "API" }}>
@@ -31,6 +40,7 @@ rss: true
     result, so a caller that depended on it now receives its whole organization.
   - Scope never widens past your own organization. The query parameters and the
     response shape are unchanged.
+</Update>
 
 <Update label="August 18, 2026" description="Canvas" rss={{ title: "Run, review, and clear canvas results more naturally", description: "Canvas" }}>
   ## Run, review, and clear canvas results more naturally
