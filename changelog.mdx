@@ -12,13 +12,10 @@ rss: true
     longer needs one request per key, and a newly created key is included
     automatically instead of silently dropping out of reporting.
   - **Behavior change:** this endpoint previously returned only the executions
-    created with the authenticated key. If you rely on that narrower result,
-    pass that key's ID in `api_key_ids`.
-  - `api_key_ids=123,456` narrows the result to specific keys in your
-    organization; omit it to include them all. Key IDs come from the API keys
-    page in the dashboard, and IDs outside your organization match nothing.
-  - Scope never widens past your own organization, and the response shape is
-    unchanged.
+    created with the authenticated key. There is no way to ask for that narrower
+    result, so a caller that depended on it now receives its whole organization.
+  - Scope never widens past your own organization. The query parameters and the
+    response shape are unchanged.
 </Update>
 
 <Update label="August 17, 2026" description="each::workflows" rss={{ title: "List your workflows over REST", description: "each::workflows" }}>
