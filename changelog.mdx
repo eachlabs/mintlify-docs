@@ -4,6 +4,20 @@ description: "Product updates and releases from each::labs"
 rss: true
 ---
 
+<Update label="August 19, 2026" description="API" rss={{ title: "List executions across all organization API keys", description: "API" }}>
+  ## List executions across all organization API keys
+
+  - `GET /v1/executions` now returns execution history for every API key in the
+    organization that owns the authenticated key. A cost or usage pipeline no
+    longer needs one request per key, and a newly created key is included
+    automatically instead of silently dropping out of reporting.
+  - **Behavior change:** this endpoint previously returned only the executions
+    created with the authenticated key. There is no way to ask for that narrower
+    result, so a caller that depended on it now receives its whole organization.
+  - Scope never widens past your own organization. The query parameters and the
+    response shape are unchanged.
+</Update>
+
 <Update label="August 17, 2026" description="each::workflows" rss={{ title: "List your workflows over REST", description: "each::workflows" }}>
   ## List your workflows over REST
 
