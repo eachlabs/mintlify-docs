@@ -7,12 +7,18 @@ rss: true
 <Update label="August 19, 2026" description="API" rss={{ title: "List executions across all organization API keys", description: "API" }}>
   ## List executions across all organization API keys
 
-  - `GET /v1/executions` can now return organization-wide execution history for
-    cost and usage reporting from a single authenticated API key.
-  - Omit `api_key_ids` to keep the previous behavior and list only executions
-    created with the authenticated key.
-  - Send `api_key_ids=` with an empty value to include all API keys in the
-    organization, or pass comma-separated API key IDs to narrow the result.
+  - `GET /v1/executions` now returns execution history for every API key in the
+    organization that owns the authenticated key. A cost or usage pipeline no
+    longer needs one request per key, and a newly created key is included
+    automatically instead of silently dropping out of reporting.
+  - **Behavior change:** this endpoint previously returned only the executions
+    created with the authenticated key. If you rely on that narrower result,
+    pass that key's ID in `api_key_ids`.
+  - `api_key_ids=123,456` narrows the result to specific keys in your
+    organization; omit it to include them all. Key IDs come from the API keys
+    page in the dashboard, and IDs outside your organization match nothing.
+  - Scope never widens past your own organization, and the response shape is
+    unchanged.
 </Update>
 
 <Update label="August 17, 2026" description="each::workflows" rss={{ title: "List your workflows over REST", description: "each::workflows" }}>
