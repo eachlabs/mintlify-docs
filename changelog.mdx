@@ -4,6 +4,17 @@ description: "Product updates and releases from each::labs"
 rss: true
 ---
 
+<Update label="August 19, 2026" description="API" rss={{ title: "List executions across all organization API keys", description: "API" }}>
+  ## List executions across all organization API keys
+
+  - `GET /v1/executions` can now return organization-wide execution history for
+    cost and usage reporting from a single authenticated API key.
+  - Omit `api_key_ids` to keep the previous behavior and list only executions
+    created with the authenticated key.
+  - Send `api_key_ids=` with an empty value to include all API keys in the
+    organization, or pass comma-separated API key IDs to narrow the result.
+</Update>
+
 <Update label="August 17, 2026" description="each::workflows" rss={{ title: "List your workflows over REST", description: "each::workflows" }}>
   ## List your workflows over REST
 

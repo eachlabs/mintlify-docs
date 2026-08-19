@@ -553,7 +553,7 @@
           "Executions"
         ],
         "summary": "List executions",
-        "description": "Retrieve execution history for the authenticated API key with optional filters.\nModel prediction terminal statuses include `success`, `error`, and `cancelled`;\nworkflow executions can surface `running`, `completed`, `failed`, or `cancelled`\ndepending on the originating backend. The `status` filter accepts the\nfour tokens listed on the parameter; unrecognized tokens return 400.\n\nPagination: computing an exact total over a large execution history is\nexpensive, so `total_count` is capped. When the response sets\n`total_capped: true`, `total_count` is a lower bound, not the exact total.\nTo retrieve every matching execution, keep requesting pages (increasing\n`offset` by `limit`) until a page returns fewer than `limit` rows — do not\nstop paging when `offset` reaches `total_count`. When `from` is omitted,\nthe window defaults to the 90 days ending at `to` (or now).\n",
+        "description": "Retrieve execution history for the authenticated API key with optional filters.\nModel prediction terminal statuses include `success`, `error`, and `cancelled`;\nworkflow executions can surface `running`, `completed`, `failed`, or `cancelled`\ndepending on the originating backend. The `status` filter accepts the\nfour tokens listed on the parameter; unrecognized tokens return 400.\n\nBy default, results are scoped to the authenticated API key. Include\n`api_key_ids` to switch to organization scope: an empty value returns\nexecutions for all API keys in the authenticated key's organization,\nwhile comma-separated IDs narrow the org-scoped result to those keys.\n\nPagination: computing an exact total over a large execution history is\nexpensive, so `total_count` is capped. When the response sets\n`total_capped: true`, `total_count` is a lower bound, not the exact total.\nTo retrieve every matching execution, keep requesting pages (increasing\n`offset` by `limit`) until a page returns fewer than `limit` rows — do not\nstop paging when `offset` reaches `total_count`. When `from` is omitted,\nthe window defaults to the 90 days ending at `to` (or now).\n",
         "operationId": "listExecutions",
         "security": [
           {
@@ -601,6 +601,15 @@
             },
             "description": "Comma-separated status filter. Each token must be one of `created`,\n`starting`, `success`, or `error` (lowercase); any other token\nreturns 400 naming the allowed set. An empty or absent parameter\napplies no status filter.\n",
             "example": "success,error"
+          },
+          {
+            "name": "api_key_ids",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Switches the request from authenticated-key scope to organization\nscope. Omit this parameter to list only executions created with the\nauthenticated API key. Send `api_key_ids=` with an empty value to\nlist executions for all API keys in the authenticated key's\norganization, or send comma-separated positive API key IDs to narrow\nthe org-scoped result.\n",
+            "example": "123,456"
           },
           {
             "name": "workflow_id",
