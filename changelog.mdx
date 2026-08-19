@@ -4,6 +4,21 @@ description: "Product updates and releases from each::labs"
 rss: true
 ---
 
+<Update label="August 19, 2026" description="each::workflows" rss={{ title: "Organize workflows with tags", description: "each::workflows" }}>
+  ## Organize workflows with tags
+
+  - [My Workflows](https://www.eachlabs.ai/my-workflows) now supports workflow tags, so you can label workflows and scan larger libraries more quickly.
+  - Filter the workflow list by tags from the toolbar, with searchable checkbox filters for narrowing the view.
+</Update>
+
+<Update label="August 19, 2026" description="Canvas" rss={{ title: "Run independent canvas branches together", description: "Canvas" }}>
+  ## Run independent canvas branches together
+
+  - Partial runs now dispatch independent branches in the same slice together, so `Run from here` follows the graph's dependencies instead of making unrelated branches wait on each other.
+  - A no-op canvas write no longer creates an undo step, so deleting selected cards can be undone with one `⌘Z`.
+  - Icon-only run status badges now have accessible names, so screen readers can announce each step's status.
+</Update>
+
 <Update label="August 19, 2026" description="API" rss={{ title: "List executions across all organization API keys", description: "API" }}>
   ## List executions across all organization API keys
 
@@ -16,6 +31,112 @@ rss: true
     result, so a caller that depended on it now receives its whole organization.
   - Scope never widens past your own organization. The query parameters and the
     response shape are unchanged.
+
+<Update label="August 18, 2026" description="Canvas" rss={{ title: "Run, review, and clear canvas results more naturally", description: "Canvas" }}>
+  ## Run, review, and clear canvas results more naturally
+
+  - Canvas runs now have their own identity and cancel state, so starting a card or group run no longer makes the whole editor feel locked.
+  - Group runs and partial runs can execute each dependency layer together, so unrelated cards in the same run do not have to run one after another.
+  - The Runs rail keeps the latest finished runs, lets you dismiss rows from the panel, and stacks result output vertically so you can review results without horizontal scrolling.
+</Update>
+
+<Update label="August 18, 2026" description="Canvas" rss={{ title: "Build branch flows directly on the canvas", description: "Canvas" }}>
+  ## Build branch flows directly on the canvas
+
+  - Choice cards now compile into workflow branch steps, so rewiring a branch on the canvas changes what the workflow actually runs.
+  - Dropping a Choice branch exit on a card body now makes that branch run the card, so conditions can control whole steps instead of only filling parameters.
+  - Disconnecting or deleting cards now removes the refs they wrote through gates, so stale hidden bindings do not break the next run.
+</Update>
+
+<Update label="August 18, 2026" description="Canvas" rss={{ title: "Map grouped and array outputs without losing structure", description: "Canvas" }}>
+  ## Map grouped and array outputs without losing structure
+
+  - Output cards now display grouped mappings as grouped values instead of `[object Object]`, so the canvas reflects the workflow definition you are editing.
+  - You can create grouped `output_mapping` rows by dragging mapping rows into groups, so nested outputs can be authored from the canvas.
+  - Array output pickers now show every item once at its real count, so selecting an array value does not hide or duplicate choices.
+</Update>
+
+<Update label="August 18, 2026" description="Canvas" rss={{ title: "Wire files, arrays, HTTP steps, and choices with fewer dead ends", description: "Canvas" }}>
+  ## Wire files, arrays, HTTP steps, and choices with fewer dead ends
+
+  - Multi-file inputs can bind to a whole array parameter, so a model receives the selected files as one array instead of a nested array.
+  - HTTP card output can flow through a Choice into a model parameter, so valid gated paths are accepted.
+  - Ports that would be refused now dim during drag, including loop-making drops and unset-model cards, so invalid wires are visible before you drop them.
+</Update>
+
+<Update label="August 18, 2026" description="Canvas" rss={{ title: "Canvas dialogs and notes stay usable at real sizes", description: "Canvas" }}>
+  ## Canvas dialogs and notes stay usable at real sizes
+
+  - The add-input dialog now caps its height and scrolls its body, so Save and Cancel stay reachable when multiple file defaults are configured.
+  - Dropping a file into the add-input dialog's upload field no longer also creates a duplicate Input node on the canvas.
+  - Sticky notes grow with their text and use a note-style surface, so longer notes remain readable while you resize them.
+</Update>
+
+<Update label="August 18, 2026" description="Canvas" rss={{ title: "Canvas chrome adapts as you zoom", description: "Canvas" }}>
+  ## Canvas chrome adapts as you zoom
+
+  - Group frames can be dragged from their visible border, so moving a group no longer depends on finding a small hidden handle.
+  - Card chrome reconciles with zoom level, so zoomed-out canvases stay easier to scan.
+</Update>
+
+<Update label="August 18, 2026" description="each::workflows" rss={{ title: "Import fal workflows into Each", description: "each::workflows" }}>
+  ## Import fal workflows into Each
+
+  - Drop a fal workflow JSON into the dashboard to import it into Each, with model matching handled through the API service.
+  - Import tracking now lives with the workflow import endpoint, so the browser no longer has to own the model-matching flow.
+</Update>
+
+<Update label="August 18, 2026" description="each::workflows" rss={{ title: "Workflow listings stay clean during the v2 migration", description: "each::workflows" }}>
+  ## Workflow listings stay clean during the v2 migration
+
+  - Workflow list, public workflow list, and popular workflow list responses now deduplicate workflows that exist in both engines during migration, so customers do not see the same workflow twice.
+  - Legacy workflow trigger routes resolve the latest version through the routed engine, so existing trigger URLs keep following the current workflow version.
+  - Large workflow step outputs are rehydrated at the organization scope, so API keys in the same organization can read workflow outputs that were stored out of row.
+</Update>
+
+<Update label="August 18, 2026" description="API" rss={{ title: "Legacy workflow errors keep their machine-readable codes", description: "API" }}>
+  ## Legacy workflow errors keep their machine-readable codes
+
+  - Forwarded legacy workflow REST errors now preserve the `code` field, so API clients can keep handling errors such as `NOT_FOUND` consistently.
+  - Forwarded upstream failures use the engine's existing internal error code instead of a new invented code, so error handling stays compatible.
+</Update>
+
+<Update label="August 17, 2026" description="Canvas" rss={{ title: "Move faster on the canvas with keyboard shortcuts", description: "Canvas" }}>
+  ## Move faster on the canvas with keyboard shortcuts
+
+  - Press `/` to open the add palette, `⌘⇧G` to ungroup, and `⌘S` to acknowledge saving from the canvas.
+  - Canvas toolbar actions now have keyboard shortcuts, including select, pan, fit view, tidy up, Playground, Run history, Run from here, and Run to here.
+  - `⌘Enter` now finishes the edit you are in and can only bill one run, so typing in dialogs or fields does not unexpectedly start a paid workflow run.
+</Update>
+
+<Update label="August 17, 2026" description="Canvas" rss={{ title: "Run canvas flows as dependency graphs", description: "Canvas" }}>
+  ## Run canvas flows as dependency graphs
+
+  - Canvas-authored workflows now run as DAG flows automatically, so the run bar no longer asks you to choose a Parallel mode that could drop card results.
+  - Playground can start multiple runs for canvas flows, with Cancel and Run available side by side while earlier runs continue.
+  - Partial-run actions are available from the canvas toolbar and card actions, so you can run a slice of the graph without leaving the editor.
+</Update>
+
+<Update label="August 17, 2026" description="Canvas" rss={{ title: "Canvas parameters use their declared types", description: "Canvas" }}>
+  ## Canvas parameters use their declared types
+
+  - Number and boolean parameters now keep their declared type even when their names contain words like `image`, so canvas ports connect according to schema instead of name matches.
+  - Union-typed parameters now render with the right editor, so multi-image inputs such as image URL arrays can be filled in from the canvas.
+  - Workflow catalog cards no longer move their own hover hit box, so card descriptions follow the visible card boundaries.
+</Update>
+
+<Update label="August 17, 2026" description="LLM Router" rss={{ title: "Gemini 3.7 Flash is available through the LLM Router", description: "LLM Router" }}>
+  ## Gemini 3.7 Flash is available through the LLM Router
+
+  - `google/gemini-3.7-flash` is now visible in the model catalog and routable through the LLM Router.
+  - The model is routed through OpenRouter, so you can call it from the same LLM Router integration as other supported chat models.
+</Update>
+
+<Update label="August 17, 2026" description="API" rss={{ title: "Low-balance throttling errors explain when to retry", description: "API" }}>
+  ## Low-balance throttling errors explain when to retry
+
+  - Low-balance concurrency throttles now return a clearer `429` response for prediction requests, so callers know to wait for an active execution to finish before retrying.
+  - The API docs now describe the low-balance `429` and `402` cases, including that rejected submissions create no execution and are not billed.
 </Update>
 
 <Update label="August 17, 2026" description="each::workflows" rss={{ title: "List your workflows over REST", description: "each::workflows" }}>
