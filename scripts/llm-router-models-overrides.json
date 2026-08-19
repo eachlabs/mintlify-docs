@@ -1,0 +1,208 @@
+{
+  "_note": "Pricing/context fallback for router models whose canonical_target_model is absent from the public OpenRouter catalog (requesty/byteplus-ark targets, unlisted variants). Values are USD per million tokens; null renders as \u2014 in llm-router/models.mdx. Consumed by scripts/generate-llm-router-models.mjs.",
+  "anthropic/claude-mythos-5": {
+    "input_per_million": null,
+    "output_per_million": null,
+    "context_length": null
+  },
+  "anthropic/claude-opus-4-6": {
+    "input_per_million": null,
+    "output_per_million": null,
+    "context_length": null
+  },
+  "arcee-ai/trinity-mini": {
+    "input_per_million": null,
+    "output_per_million": null,
+    "context_length": null
+  },
+  "byteplus/seed-2-0-mini": {
+    "input_per_million": null,
+    "output_per_million": null,
+    "context_length": null
+  },
+  "google/gemini-2.5-flash-lite-preview-09-2025": {
+    "input_per_million": null,
+    "output_per_million": null,
+    "context_length": null
+  },
+  "inflection/inflection-3-pi": {
+    "input_per_million": null,
+    "output_per_million": null,
+    "context_length": null
+  },
+  "inflection/inflection-3-productivity": {
+    "input_per_million": null,
+    "output_per_million": null,
+    "context_length": null
+  },
+  "liquid/lfm-2-24b-a2b": {
+    "input_per_million": null,
+    "output_per_million": null,
+    "context_length": null
+  },
+  "meta-llama/llama-3-8b-instruct": {
+    "input_per_million": null,
+    "output_per_million": null,
+    "context_length": null
+  },
+  "mistralai/devstral-2512": {
+    "input_per_million": null,
+    "output_per_million": null,
+    "context_length": null
+  },
+  "nvidia/llama-3.3-nemotron-super-49b-v1.5": {
+    "input_per_million": null,
+    "output_per_million": null,
+    "context_length": null
+  },
+  "openai-responses/gpt-5-codex": {
+    "input_per_million": null,
+    "output_per_million": null,
+    "context_length": null
+  },
+  "openai/gpt-4o-mini-search-preview": {
+    "input_per_million": null,
+    "output_per_million": null,
+    "context_length": null
+  },
+  "openai/gpt-4o-search-preview": {
+    "input_per_million": null,
+    "output_per_million": null,
+    "context_length": null
+  },
+  "openai/gpt-5-chat": {
+    "input_per_million": null,
+    "output_per_million": null,
+    "context_length": null
+  },
+  "openai/gpt-5-codex": {
+    "input_per_million": null,
+    "output_per_million": null,
+    "context_length": null
+  },
+  "openai/gpt-5-mini:priority": {
+    "input_per_million": null,
+    "output_per_million": null,
+    "context_length": null
+  },
+  "openai/gpt-5-nano:flex": {
+    "input_per_million": null,
+    "output_per_million": null,
+    "context_length": null
+  },
+  "openai/gpt-5.1-chat": {
+    "input_per_million": null,
+    "output_per_million": null,
+    "context_length": null
+  },
+  "openai/gpt-5.3-chat": {
+    "input_per_million": null,
+    "output_per_million": null,
+    "context_length": null
+  },
+  "openai/gpt-5:flex": {
+    "input_per_million": null,
+    "output_per_million": null,
+    "context_length": null
+  },
+  "openai/gpt-5:priority": {
+    "input_per_million": null,
+    "output_per_million": null,
+    "context_length": null
+  },
+  "openai/o1:high": {
+    "input_per_million": null,
+    "output_per_million": null,
+    "context_length": null
+  },
+  "openai/o1:low": {
+    "input_per_million": null,
+    "output_per_million": null,
+    "context_length": null
+  },
+  "openai/o1:medium": {
+    "input_per_million": null,
+    "output_per_million": null,
+    "context_length": null
+  },
+  "openai/o3-deep-research": {
+    "input_per_million": null,
+    "output_per_million": null,
+    "context_length": null
+  },
+  "openai/o3-mini:high": {
+    "input_per_million": null,
+    "output_per_million": null,
+    "context_length": null
+  },
+  "openai/o3-mini:low": {
+    "input_per_million": null,
+    "output_per_million": null,
+    "context_length": null
+  },
+  "openai/o3-mini:medium": {
+    "input_per_million": null,
+    "output_per_million": null,
+    "context_length": null
+  },
+  "openai/o3:flex": {
+    "input_per_million": null,
+    "output_per_million": null,
+    "context_length": null
+  },
+  "openai/o4-mini-deep-research": {
+    "input_per_million": null,
+    "output_per_million": null,
+    "context_length": null
+  },
+  "openai/o4-mini:flex": {
+    "input_per_million": null,
+    "output_per_million": null,
+    "context_length": null
+  },
+  "openai/o4-mini:high": {
+    "input_per_million": null,
+    "output_per_million": null,
+    "context_length": null
+  },
+  "openai/o4-mini:low": {
+    "input_per_million": null,
+    "output_per_million": null,
+    "context_length": null
+  },
+  "openai/o4-mini:medium": {
+    "input_per_million": null,
+    "output_per_million": null,
+    "context_length": null
+  },
+  "poolside/laguna-m.1": {
+    "input_per_million": null,
+    "output_per_million": null,
+    "context_length": null
+  },
+  "poolside/laguna-xs.2": {
+    "input_per_million": null,
+    "output_per_million": null,
+    "context_length": null
+  },
+  "sao10k/l3.1-70b-hanami-x1": {
+    "input_per_million": null,
+    "output_per_million": null,
+    "context_length": null
+  },
+  "switchpoint/router": {
+    "input_per_million": null,
+    "output_per_million": null,
+    "context_length": null
+  },
+  "tencent/hy3:free": {
+    "input_per_million": null,
+    "output_per_million": null,
+    "context_length": null
+  },
+  "vertex/gemini-2.5-flash": {
+    "input_per_million": null,
+    "output_per_million": null,
+    "context_length": null
+  }
+}
