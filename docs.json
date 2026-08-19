@@ -212,7 +212,7 @@
         ]
       },
       {
-        "tab": "LLM Router",
+        "tab": "each::router",
         "groups": [
           {
             "group": "Overview",
