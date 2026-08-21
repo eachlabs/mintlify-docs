@@ -62,7 +62,6 @@ rss: true
 
   - A sequential workflow whose output is mapped from more than one step now opens with every mapped wire drawn on the canvas, instead of only the wire from the last step.
   - Because the canvas no longer reopens with wires missing, saving after reopening keeps the full output mapping rather than trimming it down to a single key.
-  - Output wires that end at an HTTP request card are drawn too — a mapping that reads from an HTTP step now survives reopening the canvas.
 </Update>
 
 <Update label="August 19, 2026" description="each::video" rss={{ title: "Video API: 38 video models behind one API", description: "each::video" }}>
@@ -99,7 +98,6 @@ rss: true
   - Canvas runs now have their own identity and cancel state, so starting a card or group run no longer makes the whole editor feel locked.
   - Group runs and partial runs can execute each dependency layer together, so unrelated cards in the same run do not have to run one after another.
   - The Runs rail keeps the latest finished runs, lets you dismiss rows from the panel, and stacks result output vertically so you can review results without horizontal scrolling.
-  - An input card keeps showing its value while a run is active, and a locked media input shows its preview instead of a raw URL.
 </Update>
 
 <Update label="August 18, 2026" description="Canvas" rss={{ title: "Build branch flows directly on the canvas", description: "Canvas" }}>
