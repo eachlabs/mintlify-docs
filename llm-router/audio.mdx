@@ -23,7 +23,7 @@ https://api.eachlabs.ai/v1
 | Capability | Endpoint | Current preview models | Behavior |
 | --- | --- | --- | --- |
 | File transcription | `POST /v1/audio/transcriptions` | `openai/whisper-large-v3`, `openai/whisper-large-v3-turbo` | Synchronous JSON response; no prediction polling |
-| Text-to-speech | `POST /v1/audio/speech` | `deepgram/aura-2` | Progressive raw MP3 or PCM bytes |
+| Text-to-speech | `POST /v1/audio/speech` | `deepgram/aura-2`, `google/gemini-3.1-flash-tts-preview` | Progressive raw MP3 or PCM bytes |
 
 Realtime WebSocket transcription is not part of this preview. File
 transcription waits for the complete upload and returns one response. Speech
@@ -86,6 +86,10 @@ The current preview profile supports:
 | Model | Voice | Formats | Maximum input |
 | --- | --- | --- | --- |
 | `deepgram/aura-2` | `aura-2-thalia-en` | `mp3`, `pcm` | 2,000 characters |
+| `google/gemini-3.1-flash-tts-preview` | `Zephyr`, `Puck`, `Kore`, `Charon`, `Aoede` | `pcm` | 5,000 characters |
+
+`google/gemini-3.1-flash-tts-preview` returns `pcm` only — requesting `mp3`
+for it is rejected with a `400`. It does not accept `speed` or `instructions`.
 
 <CodeGroup>
 ```python Python
