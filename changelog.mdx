@@ -4,6 +4,67 @@ description: "Product updates and releases from each::labs"
 rss: true
 ---
 
+<Update label="August 20, 2026" description="each::workflows" rss={{ title: "Build an HTTP step from a cURL command, and decide when it fails", description: "each::workflows" }}>
+  ## Build an HTTP step from a cURL command, and decide when it fails
+
+  - Paste a cURL command from a provider's docs into an HTTP request step and it fills itself in — method, URL, headers, query parameters, and body. An import now replaces the form rather than merging into it, so fields the command does not mention stop carrying values from the import before it.
+  - Pick a field out of the response instead of guessing at it. An HTTP step offers its response body and its `status_code` wherever you choose a reference, so you can feed one field into the next step or branch on a `200` against a `429`. The picker learns the shape of a response from the last run, from **Send test request**, or from a sample response you paste into the step's settings, and pins any media it finds to the top.
+  - A **Fail when** rule decides what counts as a failure: connection errors only, any non-2xx response, or a list of status codes you name. A `503` from your endpoint no longer reads as a successful step.
+  - An HTTP step can name a **second request as its fallback**, not just a model. When a response matches the failure rule, the backup request runs instead of the workflow carrying a bad response forward.
+  - A failure raised by the rule names the status it saw and the rule that rejected it, instead of a generic service error.
+  - The step timeout has a five-second floor, so a mistyped value cannot fail every request.
+  - Both editors get all of it: the HTTP card on the canvas and the HTTP step in the step editor.
+</Update>
+
+<Update label="August 20, 2026" description="Canvas Workflows" rss={{ title: "Copy cards into another tab, or another workflow", description: "Canvas Workflows" }}>
+  ## Copy cards into another tab, or another workflow
+
+  - `⌘C` on the canvas now copies to your system clipboard, so a copy outlives the tab that made it. Paste those cards into a second tab, or into an entirely different workflow.
+  - Cards pasted into a different workflow arrive with credential parameters stripped. Paste back into the workflow you copied from and they come through untouched.
+</Update>
+
+<Update label="August 19, 2026" description="Canvas Workflows" rss={{ title: "Canvas Workflows is in open beta", description: "Canvas Workflows" }}>
+  ## Canvas Workflows is in open beta
+
+  - Canvas Workflows builds a workflow as a graph you draw: drop model, input, HTTP request, choice, and output cards onto a canvas and wire them together, instead of filling in an ordered list of steps. Start one with **Create Canvas** on your workflow list, and find them under [Canvas Workflows](https://www.eachlabs.ai/canvas-workflows) in the sidebar.
+  - The wires are the workflow. Connecting two cards is what binds one step's output to the next step's input, so what you draw is what runs — there is no separate mapping screen to keep in sync.
+  - A canvas workflow runs as a dependency graph, so independent branches run at the same time. Run the whole flow, a single card, a group, or everything from one card onward, and open the Playground without leaving the editor.
+  - [Canvas Workflows](https://www.eachlabs.ai/canvas-workflows) and [My Workflows](https://www.eachlabs.ai/my-workflows) are one library split by editor: workflows you build on the canvas appear in the new list, the ones you already have keep the editor they have today, and both trigger through the same workflow API. The canvas needs a desktop browser; on a phone a workflow opens in the step editor.
+  - It is an open beta, available to every account. Breaking changes may still land as we build. Tell us what you hit: `support@eachlabs.ai`.
+</Update>
+
+<Update label="August 19, 2026" description="each::workflows" rss={{ title: "Organize workflows with tags", description: "each::workflows" }}>
+  ## Organize workflows with tags
+
+  - [My Workflows](https://www.eachlabs.ai/my-workflows) now has tags, so you can label your workflows and find your way around a large library.
+  - Filter the list by tag from the toolbar, with a searchable set of checkboxes for narrowing down.
+  - Every tag shows how many workflows carry it — an exact count up to 999, then `999+`.
+  - A workflow carries up to three tags. Once you reach the limit the picker shows which rows are locked and why, and the same limit applies over the API. Filtering by tag is not limited.
+  - Tagging a workflow no longer reloads the list: the picker stays open, your scroll position holds, and the counts update on the click.
+</Update>
+
+<Update label="August 19, 2026" description="Canvas Workflows" rss={{ title: "Partial runs follow the graph, and every output wire comes back", description: "Canvas Workflows" }}>
+  ## Partial runs follow the graph, and every output wire comes back
+
+  - **Run from here** now starts independent branches at the same time, instead of making unrelated work queue behind whatever is in front of it.
+  - A workflow whose output is mapped from more than one step now opens with every one of those wires drawn. Saving after you reopen keeps the whole output mapping rather than trimming it down to a single key.
+  - Deleting a selection undoes in one `⌘Z` instead of several.
+  - Run status badges announce each step's status to screen readers.
+</Update>
+
+<Update label="August 19, 2026" description="each::video" rss={{ title: "Video API: the video catalog behind one API", description: "each::video" }}>
+  ## Video API: the video catalog behind one API
+
+  - The [Video API page](https://www.eachlabs.ai/platform/video-api) is live under Platform, presenting the video model catalog — generation, editing, lipsync, upscaling and more — behind one API.
+  - [Explore](https://www.eachlabs.ai/explore/video-editing) gains a **Video Editing** tab for browsing the video editing models on their own.
+</Update>
+
+<Update label="August 19, 2026" description="LLM Router" rss={{ title: "20 flagship models join the LLM Router", description: "LLM Router" }}>
+  ## 20 flagship models join the LLM Router
+
+  - Twenty new flagship models are listed in the catalog and callable through the LLM Router — among them Kimi K3, Grok 4.6 and 4.5, the Qwen 3.8 family, Meta's Muse models, and ByteDance Seed 2.1 Turbo — bringing a current vision-capable model to nearly every family.
+</Update>
+
 <Update label="August 19, 2026" description="API" rss={{ title: "List executions across all organization API keys", description: "API" }}>
   ## List executions across all organization API keys
 
@@ -16,6 +77,86 @@ rss: true
     result, so a caller that depended on it now receives its whole organization.
   - Scope never widens past your own organization. The query parameters and the
     response shape are unchanged.
+</Update>
+
+<Update label="August 18, 2026" description="Canvas Workflows" rss={{ title: "Run part of a canvas, and read the results", description: "Canvas Workflows" }}>
+  ## Run part of a canvas, and read the results
+
+  - Running one card or a group no longer locks the rest of the editor: each run carries its own progress and its own cancel.
+  - A group or partial run starts every card that is ready at the same time, so unrelated cards in the same run do not queue behind each other.
+  - The Runs rail keeps your recent runs, lets you dismiss the ones you are done with, and stacks results down the panel so you can read them without scrolling sideways.
+</Update>
+
+<Update label="August 18, 2026" description="Canvas Workflows" rss={{ title: "Branches, grouped outputs, and wiring that shows you where it can go", description: "Canvas Workflows" }}>
+  ## Branches, grouped outputs, and wiring that shows you where it can go
+
+  - A Choice card is now a real branch in the workflow, so rewiring one on the canvas changes what actually runs.
+  - Drop a Choice branch onto a card body and that branch runs the card, so a condition can control a whole step and not only fill in a parameter.
+  - Disconnecting or deleting a card clears everything it had wired, including connections made through a Choice, so nothing stale is left behind to break the next run.
+  - Output cards show a grouped mapping as grouped values instead of `[object Object]`, and you can build a group by dragging mapping rows into one.
+  - An array output lists each item once, at its real count, so picking a value no longer hides or duplicates your choices.
+  - A multi-file input binds to a whole array parameter, so a model receives your files as one list.
+  - An HTTP card's output can pass through a Choice and into a model parameter.
+  - Ports that would refuse a connection dim while you drag — including drops that would create a loop, and cards with no model chosen — so you can see a dead end before you let go.
+</Update>
+
+<Update label="August 18, 2026" description="Canvas Workflows" rss={{ title: "Notes, dialogs, and groups hold their shape", description: "Canvas Workflows" }}>
+  ## Notes, dialogs, and groups hold their shape
+
+  - The add-input dialog caps its height and scrolls its body, so Save and Cancel stay reachable however many file defaults you configure.
+  - Dropping a file onto that dialog's upload field no longer also drops a duplicate Input card on the canvas behind it.
+  - Sticky notes grow with what you type, and read like paper rather than another card.
+  - Drag a group by its visible border instead of hunting for a small handle.
+  - Cards simplify as you zoom out, so a large canvas stays readable at a glance.
+</Update>
+
+<Update label="August 18, 2026" description="each::workflows" rss={{ title: "Import a fal workflow into Each", description: "each::workflows" }}>
+  ## Import a fal workflow into Each
+
+  - Drop a fal workflow JSON into the dashboard and it imports into Each, matching each fal model to its closest Each equivalent as it goes.
+</Update>
+
+<Update label="August 18, 2026" description="each::workflows" rss={{ title: "Workflow outputs and history read across your whole organization", description: "each::workflows" }}>
+  ## Workflow outputs and history read across your whole organization
+
+  - A large workflow step output can be read by any API key in the organization that owns it, not only by the key that produced the run.
+  - Execution history for a workflow comes back as one list with one total, so no runs go missing from it.
+</Update>
+
+<Update label="August 18, 2026" description="API" rss={{ title: "Workflow API errors keep their machine-readable codes", description: "API" }}>
+  ## Workflow API errors keep their machine-readable codes
+
+  - Errors from the workflow REST endpoints keep their `code` field, so a client can go on handling `NOT_FOUND` and its siblings without having to read the message text.
+</Update>
+
+<Update label="August 17, 2026" description="Canvas Workflows" rss={{ title: "Keyboard shortcuts, and canvas flows that run as graphs", description: "Canvas Workflows" }}>
+  ## Keyboard shortcuts, and canvas flows that run as graphs
+
+  - Press `/` to open the add palette, `⌘⇧G` to ungroup, `⌘S` to save, and reach the toolbar from the keyboard: select, pan, fit view, tidy up, Playground, run history, run from here, and run to here.
+  - `⌘Enter` finishes the edit you are in and can only start one run, so typing in a dialog cannot kick off a paid run by accident.
+  - A workflow you build on the canvas runs as a dependency graph automatically. The run bar no longer asks you to pick a Parallel mode that could drop results.
+  - The Playground can hold several canvas runs at once, with Cancel and Run side by side while earlier runs keep going.
+  - Partial runs are available from the toolbar and from a card's own actions, so you can run a slice without leaving the editor.
+</Update>
+
+<Update label="August 17, 2026" description="Canvas Workflows" rss={{ title: "Parameters use the type they declare", description: "Canvas Workflows" }}>
+  ## Parameters use the type they declare
+
+  - A number or a boolean parameter keeps its declared type even when its name contains a word like `image`, so ports connect on what a parameter actually is.
+  - A parameter that accepts more than one type opens the right editor, so inputs such as a list of image URLs can be filled in from the canvas.
+</Update>
+
+<Update label="August 17, 2026" description="LLM Router" rss={{ title: "Gemini 3.7 Flash is available through the LLM Router", description: "LLM Router" }}>
+  ## Gemini 3.7 Flash is available through the LLM Router
+
+  - `google/gemini-3.7-flash` is listed in the model catalog and callable through the LLM Router, from the same integration as every other chat model.
+</Update>
+
+<Update label="August 17, 2026" description="API" rss={{ title: "Low-balance throttling errors explain when to retry", description: "API" }}>
+  ## Low-balance throttling errors explain when to retry
+
+  - A prediction request throttled because of a low balance now comes back as a `429` that says so, so you know to wait for a running execution to finish rather than retrying blind.
+  - The API reference now documents the low-balance `429` and `402`, including that a rejected submission creates no execution and is not billed.
 </Update>
 
 <Update label="August 17, 2026" description="each::workflows" rss={{ title: "List your workflows over REST", description: "each::workflows" }}>
