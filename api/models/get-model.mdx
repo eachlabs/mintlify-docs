@@ -109,9 +109,9 @@ When `cost` is non-null, it contains exactly these fields:
 | `estimate` | string | `$<formatted> per execution` for fixed pricing, or `Usage-based pricing` |
 | `description` | string | `Pricing is an estimate and may change as rates are updated.` |
 
-Runtime-independent and valid static pricing returns a fixed per-execution
-amount. Other recognized dynamic pricing returns `type: usage_based` with null
-`amount` and `unit`. Unsupported or unusable pricing returns `cost: null`.
+Runtime-independent dynamic pricing returns a fixed per-execution amount. Other
+recognized dynamic pricing returns `type: usage_based` with null `amount` and
+`unit`. Static, unsupported, or unusable pricing returns `cost: null`.
 Pricing rules, formulas, variables, and other pricing internals are not exposed.
 
 For the final settled value, use `metrics.cost` in the resulting prediction or
