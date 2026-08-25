@@ -120,8 +120,9 @@
         "tags": [
           "AI Models"
         ],
-        "summary": "Get model details",
-        "description": "Retrieve detailed information about a specific model by slug",
+        "summary": "Get model details (deprecated)",
+        "description": "Deprecated: use `GET /v1/models/{slug}` instead. Retained for backwards compatibility; returns the same payload, including the nullable rule-backed `cost` estimate.\n",
+        "deprecated": true,
         "operationId": "getModel",
         "parameters": [
           {
@@ -1806,6 +1807,9 @@
       },
       "ModelDetail": {
         "type": "object",
+        "required": [
+          "cost"
+        ],
         "properties": {
           "title": {
             "type": "string",
@@ -1838,6 +1842,60 @@
                   "type": "string",
                   "minLength": 10,
                   "maxLength": 500
+                }
+              }
+            }
+          },
+          "cost": {
+            "type": "object",
+            "nullable": true,
+            "required": [
+              "currency",
+              "type",
+              "billing_model",
+              "rules"
+            ],
+            "description": "Rule-backed estimated pricing for this model, or `null` when production pricing rules are absent or unusable. This object does not predict a scalar amount; final settled cost is returned as `metrics.cost` after execution.\n",
+            "properties": {
+              "currency": {
+                "type": "string",
+                "enum": [
+                  "USD"
+                ],
+                "example": "USD"
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "estimated"
+                ],
+                "example": "estimated"
+              },
+              "billing_model": {
+                "type": "string",
+                "enum": [
+                  "dynamic"
+                ],
+                "example": "dynamic"
+              },
+              "rules": {
+                "type": "object",
+                "additionalProperties": true,
+                "description": "The parsed production pricing-rules object, preserved structurally.",
+                "example": {
+                  "type": "dynamic",
+                  "variables": {
+                    "duration": "output.duration"
+                  },
+                  "rules": [
+                    {
+                      "when": [],
+                      "formula": {
+                        "expr": "duration * 0.05",
+                        "params": {}
+                      }
+                    }
+                  ]
                 }
               }
             }

@@ -9,6 +9,12 @@ description: "Retrieve detailed information about a specific AI model."
 GET https://api.eachlabs.ai/v1/model
 ```
 
+<Note>
+  The preferred `GET /v1/models/{slug}` path returns the identical response,
+  including `cost`. The query-parameter route remains available for backwards
+  compatibility.
+</Note>
+
 ## Query Parameters
 
 | Parameter | Type | Required | Description |
@@ -67,6 +73,26 @@ console.log(`Model: ${model.title}`);
         "maxLength": 500
       }
     }
+  },
+  "cost": {
+    "currency": "USD",
+    "type": "estimated",
+    "billing_model": "dynamic",
+    "rules": {
+      "type": "dynamic",
+      "variables": {
+        "duration": "output.duration"
+      },
+      "rules": [
+        {
+          "when": [],
+          "formula": {
+            "expr": "duration * 0.05",
+            "params": {}
+          }
+        }
+      ]
+    }
   }
 }
 ```
@@ -80,6 +106,22 @@ console.log(`Model: ${model.title}`);
 | `version` | string | Model version |
 | `output_type` | string | Output type (`string`, `array`, `object`) |
 | `request_schema` | object | JSON Schema defining valid input parameters |
+| `cost` | object \| null | Always-present rule-backed estimate, or `null` when production pricing rules are unavailable or unusable |
+
+### Cost Estimate
+
+When `cost` is non-null, it contains exactly these fields:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `currency` | string | Always `USD` |
+| `type` | string | Always `estimated` |
+| `billing_model` | string | Always `dynamic` |
+| `rules` | object | Parsed production pricing rules, preserved structurally |
+
+The estimate does not calculate a scalar amount before execution. For the final
+settled value, use `metrics.cost` in the resulting prediction or workflow
+execution.
 
 ## Error Responses
 

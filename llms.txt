@@ -103,7 +103,7 @@ Direct model execution. Async predictions with polling or webhook delivery.
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
 | `GET` | `/v1/models` | No | List available models |
-| `GET` | `/v1/model?slug={slug}` | Yes | Get model details and input schema |
+| `GET` | `/v1/model?slug={slug}` | Yes | Get model details, input schema, and nullable rule-backed cost estimate |
 | `POST` | `/v1/prediction` | Yes | Create a prediction |
 | `GET` | `/v1/prediction/{id}` | Yes | Get prediction status and results |
 | `GET` | `/v1/webhooks` | Yes | List webhook deliveries |
@@ -127,7 +127,9 @@ Response: Array of `{title, slug, version, output_type, request_schema}`.
 
 `GET https://api.eachlabs.ai/v1/model?slug={slug}`
 
-Response: `{title, slug, version, output_type, request_schema}` where `request_schema` is a JSON Schema describing the model's input parameters.
+Response: `{title, slug, version, output_type, request_schema, cost}` where `request_schema` is a JSON Schema describing the model's input parameters. `cost` is always present and is either `null` or `{currency: "USD", type: "estimated", billing_model: "dynamic", rules: {...}}`; `rules` preserves the parsed production pricing object. The estimate does not calculate a scalar amount before execution. Use `metrics.cost` in the resulting prediction or workflow execution for the final settled value.
+
+The preferred `GET /v1/models/{slug}` path returns the identical response, including `cost`; the query-parameter route remains available for backwards compatibility.
 
 ### Create Prediction
 
