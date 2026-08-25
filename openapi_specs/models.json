@@ -121,7 +121,7 @@
           "AI Models"
         ],
         "summary": "Get model details (deprecated)",
-        "description": "Deprecated: use `GET /v1/models/{slug}` instead. Retained for backwards compatibility; returns the same payload, including the nullable rule-backed `cost` estimate.\n",
+        "description": "Deprecated: use `GET /v1/models/{slug}` instead. Retained for backwards compatibility; returns the same payload, including the nullable compact `cost` estimate.\n",
         "deprecated": true,
         "operationId": "getModel",
         "parameters": [
@@ -1852,10 +1852,12 @@
             "required": [
               "currency",
               "type",
-              "billing_model",
-              "rules"
+              "amount",
+              "unit",
+              "estimate",
+              "description"
             ],
-            "description": "Rule-backed estimated pricing for this model, or `null` when production pricing rules are absent or unusable. This object does not predict a scalar amount; final settled cost is returned as `metrics.cost` after execution.\n",
+            "description": "Compact estimated pricing for recognized production pricing. Returns `null` when pricing data is absent, unusable, or uses an unsupported family. Final settled cost is returned as `metrics.cost` after execution.\n",
             "properties": {
               "currency": {
                 "type": "string",
@@ -1867,36 +1869,39 @@
               "type": {
                 "type": "string",
                 "enum": [
-                  "estimated"
+                  "fixed",
+                  "usage_based"
                 ],
-                "example": "estimated"
+                "description": "Whether the estimate is fixed per execution or usage-based.",
+                "example": "fixed"
               },
-              "billing_model": {
+              "amount": {
+                "type": "number",
+                "format": "double",
+                "nullable": true,
+                "description": "Estimated USD amount for fixed pricing; otherwise `null`.",
+                "example": 0.04
+              },
+              "unit": {
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "execution"
+                ],
+                "description": "Billing unit for fixed pricing; otherwise `null`.",
+                "example": "execution"
+              },
+              "estimate": {
+                "type": "string",
+                "description": "Presentation-ready price guidance.",
+                "example": "$0.04 per execution"
+              },
+              "description": {
                 "type": "string",
                 "enum": [
-                  "dynamic"
+                  "Pricing is an estimate and may change as rates are updated."
                 ],
-                "example": "dynamic"
-              },
-              "rules": {
-                "type": "object",
-                "additionalProperties": true,
-                "description": "The parsed production pricing-rules object, preserved structurally.",
-                "example": {
-                  "type": "dynamic",
-                  "variables": {
-                    "duration": "output.duration"
-                  },
-                  "rules": [
-                    {
-                      "when": [],
-                      "formula": {
-                        "expr": "duration * 0.05",
-                        "params": {}
-                      }
-                    }
-                  ]
-                }
+                "example": "Pricing is an estimate and may change as rates are updated."
               }
             }
           }

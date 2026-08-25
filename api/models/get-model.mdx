@@ -76,23 +76,11 @@ console.log(`Model: ${model.title}`);
   },
   "cost": {
     "currency": "USD",
-    "type": "estimated",
-    "billing_model": "dynamic",
-    "rules": {
-      "type": "dynamic",
-      "variables": {
-        "duration": "output.duration"
-      },
-      "rules": [
-        {
-          "when": [],
-          "formula": {
-            "expr": "duration * 0.05",
-            "params": {}
-          }
-        }
-      ]
-    }
+    "type": "fixed",
+    "amount": 0.04,
+    "unit": "execution",
+    "estimate": "$0.04 per execution",
+    "description": "Pricing is an estimate and may change as rates are updated."
   }
 }
 ```
@@ -106,7 +94,7 @@ console.log(`Model: ${model.title}`);
 | `version` | string | Model version |
 | `output_type` | string | Output type (`string`, `array`, `object`) |
 | `request_schema` | object | JSON Schema defining valid input parameters |
-| `cost` | object \| null | Always-present rule-backed estimate, or `null` when production pricing rules are unavailable or unusable |
+| `cost` | object \| null | Always-present compact estimate for recognized pricing, or `null` when pricing data is unavailable, unusable, or unsupported |
 
 ### Cost Estimate
 
@@ -115,13 +103,19 @@ When `cost` is non-null, it contains exactly these fields:
 | Field | Type | Description |
 |-------|------|-------------|
 | `currency` | string | Always `USD` |
-| `type` | string | Always `estimated` |
-| `billing_model` | string | Always `dynamic` |
-| `rules` | object | Parsed production pricing rules, preserved structurally |
+| `type` | string | `fixed` or `usage_based` |
+| `amount` | number \| null | Estimated USD amount for fixed pricing; otherwise `null` |
+| `unit` | string \| null | `execution` for fixed pricing; otherwise `null` |
+| `estimate` | string | `$<formatted> per execution` for fixed pricing, or `Usage-based pricing` |
+| `description` | string | `Pricing is an estimate and may change as rates are updated.` |
 
-The estimate does not calculate a scalar amount before execution. For the final
-settled value, use `metrics.cost` in the resulting prediction or workflow
-execution.
+Runtime-independent and valid static pricing returns a fixed per-execution
+amount. Other recognized dynamic pricing returns `type: usage_based` with null
+`amount` and `unit`. Unsupported or unusable pricing returns `cost: null`.
+Pricing rules, formulas, variables, and other pricing internals are not exposed.
+
+For the final settled value, use `metrics.cost` in the resulting prediction or
+workflow execution.
 
 ## Error Responses
 
