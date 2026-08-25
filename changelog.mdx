@@ -4,6 +4,21 @@ description: "Product updates and releases from each::labs"
 rss: true
 ---
 
+<Update label="August 24, 2026" description="each::workflows" rss={{ title: "Retry HTTP requests with backoff", description: "each::workflows" }}>
+  ## Retry HTTP requests with backoff
+
+  - HTTP request steps can retry inside the request itself with `retry_max_attempts`, `retry_initial_delay_seconds`, `retry_backoff_multiplier`, and `retry_max_delay_seconds`, so a temporary upstream failure can recover before the workflow moves on.
+  - The **Retry on fail** setting now writes those HTTP retry parameters, so waits and backoff apply to the request instead of rerunning the step without delay.
+  - HTTP request polling survives `continue_on_error`, so a handled failure can still return the response details the next step needs.
+</Update>
+
+<Update label="August 24, 2026" description="Account" rss={{ title: "Sign up without a referral-code step", description: "Account" }}>
+  ## Sign up without a referral-code step
+
+  - The sign-up form no longer asks for a referral code, so new users can finish account setup without stopping on an optional field.
+  - Referral links still carry their code through automatically, so invited users do not need to paste anything by hand.
+</Update>
+
 <Update label="August 20, 2026" description="each::workflows" rss={{ title: "Build an HTTP step from a cURL command, and decide when it fails", description: "each::workflows" }}>
   ## Build an HTTP step from a cURL command, and decide when it fails
 
