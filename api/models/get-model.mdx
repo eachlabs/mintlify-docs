@@ -106,13 +106,17 @@ When `cost` is non-null, it contains exactly these fields:
 | `type` | string | `fixed` or `usage_based` |
 | `amount` | number \| null | Estimated USD amount for fixed pricing; otherwise `null` |
 | `unit` | string \| null | `execution` for fixed pricing; otherwise `null` |
-| `estimate` | string | `$<formatted> per execution` for fixed pricing, or `Usage-based pricing` |
+| `estimate` | string | Presentation-ready guidance: a fixed amount, a safely recognized usage rate/range or billing driver, or the `Usage-based pricing` fallback |
 | `description` | string | `Pricing is an estimate and may change as rates are updated.` |
 
 Runtime-independent dynamic pricing returns a fixed per-execution amount. Other
 recognized dynamic pricing returns `type: usage_based` with null `amount` and
-`unit`. Static, unsupported, or unusable pricing returns `cost: null`.
-Pricing rules, formulas, variables, and other pricing internals are not exposed.
+`unit`. When the billing signature is safely recognized, `estimate` gives a
+concise summary such as `$0.068–$0.28 per second, depending on resolution`,
+`$0.00108 per processing second`, or `Varies by the operations used`. Unknown
+usage signatures fall back to `Usage-based pricing`. Static, unsupported, or
+unusable pricing returns `cost: null`. Pricing rules, formulas, variables, and
+other pricing internals are not exposed.
 
 For the final settled value, use `metrics.cost` in the resulting prediction or
 workflow execution.

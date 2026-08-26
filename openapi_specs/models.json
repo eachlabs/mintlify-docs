@@ -1893,8 +1893,8 @@
               },
               "estimate": {
                 "type": "string",
-                "description": "Presentation-ready price guidance.",
-                "example": "$0.04 per execution"
+                "description": "Presentation-ready price guidance. Usage-based pricing may\ninclude a safely recognized unit rate, range, or billing\ndriver; otherwise it falls back to `Usage-based pricing`.\n",
+                "example": "$0.068–$0.28 per second, depending on resolution"
               },
               "description": {
                 "type": "string",
