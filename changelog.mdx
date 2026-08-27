@@ -4,6 +4,13 @@ description: "Product updates and releases from each::labs"
 rss: true
 ---
 
+<Update label="August 27, 2026" description="API" rss={{ title: "See model cost guidance before execution", description: "API" }}>
+  ## See model cost guidance before execution
+
+  - `GET /v1/models/{slug}` and `GET /v1/model?slug={slug}` include a nullable `cost` field with a fixed estimate or concise usage-based guidance when a reliable public estimate is available.
+  - Estimates may change with provider rates, promotions, or model configuration. Use `metrics.cost` on the completed prediction or workflow execution for the settled value.
+</Update>
+
 <Update label="August 27, 2026" description="API" rss={{ title: "Read your organization balance with an API key", description: "API" }}>
   ## Read your organization balance with an API key
 
