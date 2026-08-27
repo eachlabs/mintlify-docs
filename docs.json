@@ -65,6 +65,10 @@
             "pages": ["api/predictions/create-prediction", "api/predictions/get-prediction"]
           },
           {
+            "group": "Billing",
+            "pages": ["api/billing/get-balance"]
+          },
+          {
             "group": "Content Safety",
             "pages": ["api/nsfw-content"]
           },

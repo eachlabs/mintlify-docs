@@ -1,0 +1,121 @@
+---
+title: "Get Organization Balance"
+sidebarTitle: "Get Balance"
+description: "Read the authenticated organization's USD balance with a standard API key."
+---
+
+## Endpoint
+
+```
+GET https://api.eachlabs.ai/v1/billing/balance
+```
+
+The organization comes from the API key. The request has no organization ID,
+path parameter, query parameter, or body selector, so a key can read only its
+own organization's balance.
+
+## Authentication
+
+Pass a standard API key as a Bearer token:
+
+```http
+Authorization: Bearer YOUR_API_KEY
+```
+
+<Warning>
+Use this public endpoint for integrations. Do not call or scrape billing routes
+under `www.eachlabs.ai/api/`; those are unsupported dashboard internals for
+browser sessions. A dashboard cookie is neither required nor part of this API
+contract.
+</Warning>
+
+## Code Examples
+
+<CodeGroup>
+```bash cURL
+curl https://api.eachlabs.ai/v1/billing/balance \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+```python Python
+import requests
+
+response = requests.get(
+    "https://api.eachlabs.ai/v1/billing/balance",
+    headers={"Authorization": "Bearer YOUR_API_KEY"},
+    timeout=10,
+)
+response.raise_for_status()
+
+balance_usd = response.json()["balance_usd"]
+print(balance_usd)
+```
+
+```javascript JavaScript
+const response = await fetch(
+  "https://api.eachlabs.ai/v1/billing/balance",
+  { headers: { Authorization: "Bearer YOUR_API_KEY" } }
+);
+
+if (!response.ok) throw new Error(`Balance request failed: ${response.status}`);
+const { balance_usd } = await response.json();
+console.log(balance_usd);
+```
+</CodeGroup>
+
+## Response
+
+```json
+{
+  "balance_usd": 53.475
+}
+```
+
+### Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `balance_usd` | number | Balance in USD. Zero and negative values are valid, and fractional-cent source precision is preserved rather than forced to two decimal places. |
+
+No organization metadata, wallet rows, credit buckets, API-key details, or
+internal balance units are returned.
+
+## Freshness
+
+Balance reads are eventually consistent with top-ups. The existing organization
+projection is cached, and ledger synchronization may add more delay. There is
+no fixed refresh-time guarantee, and this endpoint adds no additional cache.
+
+If a recent top-up is not visible yet, retry with bounded backoff while staying
+within the endpoint limit below. Do not treat a `503` as a zero balance.
+
+## Rate Limit
+
+The endpoint allows **3 requests per second with burst 3**, keyed by the
+authenticated organization in each api-service process. This is a process-local
+load guard, not a fleet-wide organizational quota. Its state can reset when a
+process is replaced.
+
+A rejected request does not read the balance and returns:
+
+```http
+HTTP/1.1 429 Too Many Requests
+Retry-After: 1
+```
+
+```json
+{
+  "status": 429,
+  "error": "too many requests"
+}
+```
+
+## Error Responses
+
+| Status | Response | Description |
+|--------|----------|-------------|
+| `401` | Authentication error | The API key is missing or invalid, or its authenticated organization context is unavailable. |
+| `429` | `{"status":429,"error":"too many requests"}` with `Retry-After: 1` | The process-local organization limit was exceeded. The balance was not read. |
+| `503` | `{"status":503,"error":"service unavailable"}` | Balance data is temporarily unavailable. Retry with bounded backoff; the API never fabricates a zero balance for this failure. |
+
+There is no separate `403` billing-permission response for this endpoint.
