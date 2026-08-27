@@ -1857,7 +1857,7 @@
               "estimate",
               "description"
             ],
-            "description": "Compact estimated pricing for recognized production pricing. Returns `null` when pricing data is absent, unusable, or uses an unsupported family. Final settled cost is returned as `metrics.cost` after execution.\n",
+            "description": "Nullable pricing guidance for planning. Returns `null` when no reliable public estimate is available. Estimates may change with provider rates, promotions, or model configuration; use `metrics.cost` after execution for the settled value.\n",
             "properties": {
               "currency": {
                 "type": "string",

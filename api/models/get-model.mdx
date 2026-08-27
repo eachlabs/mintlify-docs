@@ -94,7 +94,7 @@ console.log(`Model: ${model.title}`);
 | `version` | string | Model version |
 | `output_type` | string | Output type (`string`, `array`, `object`) |
 | `request_schema` | object | JSON Schema defining valid input parameters |
-| `cost` | object \| null | Always-present compact estimate for recognized pricing, or `null` when pricing data is unavailable, unusable, or unsupported |
+| `cost` | object \| null | Nullable pricing guidance; `null` means no reliable public estimate is available |
 
 ### Cost Estimate
 
@@ -109,17 +109,13 @@ When `cost` is non-null, it contains exactly these fields:
 | `estimate` | string | Presentation-ready guidance: a fixed amount, a safely recognized usage rate/range or billing driver, or the `Usage-based pricing` fallback |
 | `description` | string | `Pricing is an estimate and may change as rates are updated.` |
 
-Runtime-independent dynamic pricing returns a fixed per-execution amount. Other
-recognized dynamic pricing returns `type: usage_based` with null `amount` and
-`unit`. When the billing signature is safely recognized, `estimate` gives a
-concise summary such as `$0.068–$0.28 per second, depending on resolution`,
-`$0.00108 per processing second`, or `Varies by the operations used`. Unknown
-usage signatures fall back to `Usage-based pricing`. Static, unsupported, or
-unusable pricing returns `cost: null`. Pricing rules, formulas, variables, and
-other pricing internals are not exposed.
-
-For the final settled value, use `metrics.cost` in the resulting prediction or
-workflow execution.
+`cost` is planning guidance, not the final charge. It may be `null` when no
+reliable public estimate is available, and estimates may change with provider
+rates, promotions, or model configuration. When available, fixed pricing
+includes an amount; usage-based pricing provides a concise rate, range, billing
+driver, or `Usage-based pricing` fallback. Pricing internals are not exposed.
+Use `metrics.cost` on the resulting prediction or workflow execution for the
+settled value.
 
 ## Error Responses
 
