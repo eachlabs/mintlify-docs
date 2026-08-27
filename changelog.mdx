@@ -4,6 +4,14 @@ description: "Product updates and releases from each::labs"
 rss: true
 ---
 
+<Update label="August 27, 2026" description="API" rss={{ title: "Read your organization balance with an API key", description: "API" }}>
+  ## Read your organization balance with an API key
+
+  - `GET /v1/billing/balance` returns your authenticated organization's USD balance as a number, using the same Bearer API key as the rest of each::api.
+  - The route has no organization selector and returns no wallet, credit, organization, or credential details.
+  - Balance reads are eventually consistent after a top-up. Retry with bounded backoff under the process-local 3 requests-per-second, burst-3 limit; a limited request returns `429` with `Retry-After: 1`, and an unavailable balance returns `503` instead of a fabricated zero.
+</Update>
+
 <Update label="August 20, 2026" description="each::workflows" rss={{ title: "Build an HTTP step from a cURL command, and decide when it fails", description: "each::workflows" }}>
   ## Build an HTTP step from a cURL command, and decide when it fails
 

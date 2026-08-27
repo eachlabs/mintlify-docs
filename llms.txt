@@ -106,6 +106,7 @@ Direct model execution. Async predictions with polling or webhook delivery.
 | `GET` | `/v1/model?slug={slug}` | Yes | Get model details and input schema |
 | `POST` | `/v1/prediction` | Yes | Create a prediction |
 | `GET` | `/v1/prediction/{id}` | Yes | Get prediction status and results |
+| `GET` | `/v1/billing/balance` | Yes | Get the authenticated organization's numeric USD balance |
 | `GET` | `/v1/webhooks` | Yes | List webhook deliveries |
 | `GET` | `/v1/webhooks/{execution_id}` | Yes | Get webhook delivery details |
 
@@ -155,6 +156,19 @@ Response: `{title, slug, version, output_type, request_schema}` where `request_s
 | `webhook_secret` | string | No | Secret for HMAC-SHA256 webhook signature verification |
 
 Response (201): `{"status": "success", "message": "Prediction created successfully", "predictionID": "..."}`
+
+### Get Organization Balance
+
+`GET https://api.eachlabs.ai/v1/billing/balance`
+
+Authenticate with `Authorization: Bearer YOUR_API_KEY`. The response contains
+only `{"balance_usd": <number>}`. Zero, negative, and fractional-cent values are
+valid. Reads are eventually consistent with top-ups; there is no fixed refresh
+bound and api-service adds no cache. Retry with bounded backoff under the
+process-local per-organization limit of 3 requests per second with burst 3.
+Limit rejection returns HTTP 429 with `Retry-After: 1` and does not read the
+balance. Balance unavailability returns HTTP 503, never a fabricated zero. Do
+not use or scrape browser-session billing routes under `www.eachlabs.ai/api/`.
 
 ### Get Prediction
 
