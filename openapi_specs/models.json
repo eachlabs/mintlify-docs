@@ -120,8 +120,9 @@
         "tags": [
           "AI Models"
         ],
-        "summary": "Get model details",
-        "description": "Retrieve detailed information about a specific model by slug",
+        "summary": "Get model details (deprecated)",
+        "description": "Deprecated: use `GET /v1/models/{slug}` instead. Retained for backwards compatibility; returns the same payload, including the nullable compact `cost` estimate.\n",
+        "deprecated": true,
         "operationId": "getModel",
         "parameters": [
           {
@@ -1806,6 +1807,9 @@
       },
       "ModelDetail": {
         "type": "object",
+        "required": [
+          "cost"
+        ],
         "properties": {
           "title": {
             "type": "string",
@@ -1839,6 +1843,65 @@
                   "minLength": 10,
                   "maxLength": 500
                 }
+              }
+            }
+          },
+          "cost": {
+            "type": "object",
+            "nullable": true,
+            "required": [
+              "currency",
+              "type",
+              "amount",
+              "unit",
+              "estimate",
+              "description"
+            ],
+            "description": "Nullable pricing guidance for planning. Returns `null` when no reliable public estimate is available. Estimates may change with provider rates, promotions, or model configuration; use `metrics.cost` after execution for the settled value.\n",
+            "properties": {
+              "currency": {
+                "type": "string",
+                "enum": [
+                  "USD"
+                ],
+                "example": "USD"
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "fixed",
+                  "usage_based"
+                ],
+                "description": "Whether the estimate is fixed per execution or usage-based.",
+                "example": "fixed"
+              },
+              "amount": {
+                "type": "number",
+                "format": "double",
+                "nullable": true,
+                "description": "Estimated USD amount for fixed pricing; otherwise `null`.",
+                "example": 0.04
+              },
+              "unit": {
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "execution"
+                ],
+                "description": "Billing unit for fixed pricing; otherwise `null`.",
+                "example": "execution"
+              },
+              "estimate": {
+                "type": "string",
+                "description": "Presentation-ready price guidance. Usage-based pricing may\ninclude a safely recognized unit rate, range, or billing\ndriver; otherwise it falls back to `Usage-based pricing`.\n",
+                "example": "$0.068–$0.28 per second, depending on resolution"
+              },
+              "description": {
+                "type": "string",
+                "enum": [
+                  "Pricing is an estimate and may change as rates are updated."
+                ],
+                "example": "Pricing is an estimate and may change as rates are updated."
               }
             }
           }

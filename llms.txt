@@ -103,7 +103,7 @@ Direct model execution. Async predictions with polling or webhook delivery.
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
 | `GET` | `/v1/models` | No | List available models |
-| `GET` | `/v1/model?slug={slug}` | Yes | Get model details and input schema |
+| `GET` | `/v1/model?slug={slug}` | Yes | Get model details, input schema, and nullable compact cost estimate |
 | `POST` | `/v1/prediction` | Yes | Create a prediction |
 | `GET` | `/v1/prediction/{id}` | Yes | Get prediction status and results |
 | `GET` | `/v1/billing/balance` | Yes | Get the authenticated organization's numeric USD balance |
@@ -128,7 +128,9 @@ Response: Array of `{title, slug, version, output_type, request_schema}`.
 
 `GET https://api.eachlabs.ai/v1/model?slug={slug}`
 
-Response: `{title, slug, version, output_type, request_schema}` where `request_schema` is a JSON Schema describing the model's input parameters.
+Response: `{title, slug, version, output_type, request_schema, cost}` where `cost` is always present but nullable. A non-null value contains six fields: `currency`, `type`, `amount`, `unit`, `estimate`, and `description`. Fixed pricing includes an estimated amount; usage-based pricing provides a concise rate, range, billing driver, or `Usage-based pricing` fallback. `cost` is planning guidance and may change with provider rates, promotions, or model configuration. It is `null` when no reliable public estimate is available. Pricing internals are never included. Use `metrics.cost` after execution for the settled value.
+
+The preferred `GET /v1/models/{slug}` path returns the identical response, including `cost`; the query-parameter route remains available for backwards compatibility.
 
 ### Create Prediction
 

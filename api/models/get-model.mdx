@@ -9,6 +9,12 @@ description: "Retrieve detailed information about a specific AI model."
 GET https://api.eachlabs.ai/v1/model
 ```
 
+<Note>
+  The preferred `GET /v1/models/{slug}` path returns the identical response,
+  including `cost`. The query-parameter route remains available for backwards
+  compatibility.
+</Note>
+
 ## Query Parameters
 
 | Parameter | Type | Required | Description |
@@ -67,6 +73,14 @@ console.log(`Model: ${model.title}`);
         "maxLength": 500
       }
     }
+  },
+  "cost": {
+    "currency": "USD",
+    "type": "fixed",
+    "amount": 0.04,
+    "unit": "execution",
+    "estimate": "$0.04 per execution",
+    "description": "Pricing is an estimate and may change as rates are updated."
   }
 }
 ```
@@ -80,6 +94,28 @@ console.log(`Model: ${model.title}`);
 | `version` | string | Model version |
 | `output_type` | string | Output type (`string`, `array`, `object`) |
 | `request_schema` | object | JSON Schema defining valid input parameters |
+| `cost` | object \| null | Nullable pricing guidance; `null` means no reliable public estimate is available |
+
+### Cost Estimate
+
+When `cost` is non-null, it contains exactly these fields:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `currency` | string | Always `USD` |
+| `type` | string | `fixed` or `usage_based` |
+| `amount` | number \| null | Estimated USD amount for fixed pricing; otherwise `null` |
+| `unit` | string \| null | `execution` for fixed pricing; otherwise `null` |
+| `estimate` | string | Presentation-ready guidance: a fixed amount, a safely recognized usage rate/range or billing driver, or the `Usage-based pricing` fallback |
+| `description` | string | `Pricing is an estimate and may change as rates are updated.` |
+
+`cost` is planning guidance, not the final charge. It may be `null` when no
+reliable public estimate is available, and estimates may change with provider
+rates, promotions, or model configuration. When available, fixed pricing
+includes an amount; usage-based pricing provides a concise rate, range, billing
+driver, or `Usage-based pricing` fallback. Pricing internals are not exposed.
+Use `metrics.cost` on the resulting prediction or workflow execution for the
+settled value.
 
 ## Error Responses
 
