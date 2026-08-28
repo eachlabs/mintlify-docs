@@ -13,6 +13,14 @@ rss: true
   - You can also keep the same model and change its mapped inputs to test a parameter variant without changing live traffic.
 </Update>
 
+<Update label="August 27, 2026" description="Model fallback" rss={{ title: "Keep model requests running with fallback chains", description: "Model fallback" }}>
+  ## Keep model requests running with fallback chains
+
+  - Direct-model fallback lets an async prediction recover when its primary model fails. Compatible fallback models are tried in the order you choose, and the first success completes the original request; when the primary succeeds, the backups do not run.
+  - Open a model from [AI Models](https://www.eachlabs.ai/ai-models) and choose **Fallbacks** to create one or more named chains. Start from a curated recommendation when one is available, or pick compatible models yourself, reorder them, and confirm how the primary model's inputs map to each fallback.
+  - Every chain has a stable request selector. Add `"fallback_selector": "your-chain"` to an async prediction request to use it. Only enabled, saved chains run, and changes apply to new requests.
+</Update>
+
 <Update label="August 27, 2026" description="API" rss={{ title: "See model cost guidance before execution", description: "API" }}>
   ## See model cost guidance before execution
 
