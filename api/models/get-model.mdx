@@ -80,7 +80,11 @@ console.log(`Model: ${model.title}`);
     "amount": 0.04,
     "unit": "execution",
     "estimate": "$0.04 per execution",
-    "description": "Pricing is an estimate and may change as rates are updated."
+    "description": "Pricing is an estimate and may change as rates are updated.",
+    "min": null,
+    "max": null,
+    "depends_on": [],
+    "rows": []
   }
 }
 ```
@@ -94,7 +98,7 @@ console.log(`Model: ${model.title}`);
 | `version` | string | Model version |
 | `output_type` | string | Output type (`string`, `array`, `object`) |
 | `request_schema` | object | JSON Schema defining valid input parameters |
-| `cost` | object \| null | Nullable pricing guidance; `null` means no reliable public estimate is available |
+| `cost` | object \| null | Nullable pricing guidance; `null` means the model has no pricing document |
 
 ### Cost Estimate
 
@@ -105,17 +109,51 @@ When `cost` is non-null, it contains exactly these fields:
 | `currency` | string | Always `USD` |
 | `type` | string | `fixed` or `usage_based` |
 | `amount` | number \| null | Estimated USD amount for fixed pricing; otherwise `null` |
-| `unit` | string \| null | `execution` for fixed pricing; otherwise `null` |
+| `unit` | string \| null | `execution`, `second`, `processing_second`, `minute`, `hour`, `image`, `megapixel`, `million_tokens`, `character`, `step`, or `generation`; `null` when no public rate is listed |
 | `estimate` | string | Presentation-ready guidance: a fixed amount, a safely recognized usage rate/range or billing driver, or the `Usage-based pricing` fallback |
 | `description` | string | `Pricing is an estimate and may change as rates are updated.` |
+| `min` | number \| null | Minimum estimated USD amount per unit for usage-based pricing; otherwise `null` |
+| `max` | number \| null | Maximum estimated USD amount per unit for usage-based pricing; otherwise `null` |
+| `depends_on` | string[] | Input names that determine the estimate; may be empty |
+| `rows` | object[] | Optional price breakdown as `{label, value}` entries; may be empty |
 
-`cost` is planning guidance, not the final charge. It may be `null` when no
-reliable public estimate is available, and estimates may change with provider
-rates, promotions, or model configuration. When available, fixed pricing
-includes an amount; usage-based pricing provides a concise rate, range, billing
-driver, or `Usage-based pricing` fallback. Pricing internals are not exposed.
-Use `metrics.cost` on the resulting prediction or workflow execution for the
-settled value.
+<CodeGroup>
+```json Fixed
+{
+  "currency": "USD",
+  "type": "fixed",
+  "amount": 0.04,
+  "unit": "execution",
+  "estimate": "$0.04 per execution",
+  "description": "Pricing is an estimate and may change as rates are updated.",
+  "min": null,
+  "max": null,
+  "depends_on": [],
+  "rows": []
+}
+```
+
+```json Usage-based
+{
+  "currency": "USD",
+  "type": "usage_based",
+  "amount": null,
+  "unit": "second",
+  "estimate": "$0.03–$0.12 per second, depending on resolution",
+  "description": "Pricing is an estimate and may change as rates are updated.",
+  "min": 0.03,
+  "max": 0.12,
+  "depends_on": ["resolution"],
+  "rows": [
+    {"label": "480p", "value": 0.03},
+    {"label": "1080p", "value": 0.12}
+  ]
+}
+```
+</CodeGroup>
+
+`Usage-based pricing` means no public rate is listed, and the final cost is
+returned as `metrics.cost` on the resulting prediction or workflow execution.
 
 ## Error Responses
 

@@ -1855,9 +1855,13 @@
               "amount",
               "unit",
               "estimate",
-              "description"
+              "description",
+              "min",
+              "max",
+              "depends_on",
+              "rows"
             ],
-            "description": "Nullable pricing guidance for planning. Returns `null` when no reliable public estimate is available. Estimates may change with provider rates, promotions, or model configuration; use `metrics.cost` after execution for the settled value.\n",
+            "description": "Nullable pricing guidance for planning. Returns `null` only when the model has no pricing document. Estimates may change with provider rates, promotions, or model configuration; use `metrics.cost` after execution for the settled value.\n",
             "properties": {
               "currency": {
                 "type": "string",
@@ -1886,9 +1890,19 @@
                 "type": "string",
                 "nullable": true,
                 "enum": [
-                  "execution"
+                  "execution",
+                  "second",
+                  "processing_second",
+                  "minute",
+                  "hour",
+                  "image",
+                  "megapixel",
+                  "million_tokens",
+                  "character",
+                  "step",
+                  "generation"
                 ],
-                "description": "Billing unit for fixed pricing; otherwise `null`.",
+                "description": "Billing unit for fixed and usage-based pricing; `null` when no public rate is listed.",
                 "example": "execution"
               },
               "estimate": {
@@ -1902,6 +1916,52 @@
                   "Pricing is an estimate and may change as rates are updated."
                 ],
                 "example": "Pricing is an estimate and may change as rates are updated."
+              },
+              "min": {
+                "type": "number",
+                "format": "double",
+                "nullable": true,
+                "description": "Minimum estimated USD amount per unit for usage-based pricing; otherwise `null`.",
+                "example": 0.03
+              },
+              "max": {
+                "type": "number",
+                "format": "double",
+                "nullable": true,
+                "description": "Maximum estimated USD amount per unit for usage-based pricing; otherwise `null`.",
+                "example": 0.12
+              },
+              "depends_on": {
+                "type": "array",
+                "description": "Input names that determine the usage-based estimate. May be empty.",
+                "items": {
+                  "type": "string"
+                },
+                "example": [
+                  "resolution"
+                ]
+              },
+              "rows": {
+                "type": "array",
+                "description": "Optional price breakdown in USD per unit. May be empty.",
+                "items": {
+                  "type": "object",
+                  "required": [
+                    "label",
+                    "value"
+                  ],
+                  "properties": {
+                    "label": {
+                      "type": "string",
+                      "example": "480p"
+                    },
+                    "value": {
+                      "type": "number",
+                      "format": "double",
+                      "example": 0.03
+                    }
+                  }
+                }
               }
             }
           }
