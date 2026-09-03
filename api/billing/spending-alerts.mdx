@@ -1,0 +1,42 @@
+---
+title: "Spending Alerts"
+sidebarTitle: "Spending Alerts"
+description: "Create organization-wide email alerts when rolling charged spend crosses a threshold."
+---
+
+Spending alerts notify your organization when charged spend over a rolling
+window crosses a threshold you choose. Use them to watch active usage without
+polling balances or building a separate cost monitor.
+
+## Open Alerts
+
+In the dashboard, open **Activity > Alerts**.
+
+The Alerts page has two sections:
+
+- **Rules** lists the alert thresholds configured for the current organization.
+- **Recent triggers** shows the 20 most recent threshold evaluations that fired.
+
+## Create a Rule
+
+Select **Add rule**, choose a spend threshold and rolling window, then save the
+rule. A rule can be enabled or disabled without deleting it.
+
+Alert emails fire when the rolling charged spend exceeds the configured
+threshold. For example, a `$1.00` threshold on the `Last hour` window sends an
+alert when charged spend over the last hour rises above `$1.00`.
+
+## Email Recipients
+
+Spending alert emails are sent to the organization owner and billing managers.
+Before enabling alerts for a large organization, review those roles on the team
+page so the right people receive the notifications.
+
+## Review Triggers
+
+Recent triggers show when the alert fired, the rolling window, the observed
+spend versus the threshold, delivery state, and whether the event was delivered
+on time.
+
+The email includes the threshold, charged spend, rolling window, and evaluation
+time so recipients can reconcile the notification with the dashboard.
