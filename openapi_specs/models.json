@@ -554,7 +554,7 @@
           "Executions"
         ],
         "summary": "List executions",
-        "description": "Retrieve execution history for the authenticated API key's organization\nwith optional filters.\nModel prediction terminal statuses include `success`, `error`, and `cancelled`;\nworkflow executions can surface `running`, `completed`, `failed`, or `cancelled`\ndepending on the originating backend. The `status` filter accepts the\nfour tokens listed on the parameter; unrecognized tokens return 400.\n\nResults cover every API key in the organization that owns the\nauthenticated key.\n\nPagination: computing an exact total over a large execution history is\nexpensive, so `total_count` is capped. When the response sets\n`total_capped: true`, `total_count` is a lower bound, not the exact\ntotal. To retrieve every matching execution, keep requesting pages\n(increasing `offset` by `limit`) until a page returns fewer than\n`limit` rows — do not stop paging when `offset` reaches `total_count`.\nWhen `from` is omitted, the window defaults to the 90 days ending at\n`to` (or now).\n",
+        "description": "Retrieve execution history for the authenticated API key's organization\nwith optional filters.\nModel prediction terminal statuses include `success`, `error`, and `cancelled`;\nworkflow executions can surface `running`, `completed`, `failed`, or `cancelled`\ndepending on the originating backend. The `status` filter accepts the\nfour tokens listed on the parameter; unrecognized tokens return 400.\n\nResults cover every API key in the organization that owns the\nauthenticated key.\n\nPagination: `offset` is retained for shallow compatibility but is\ndeprecated for history traversal. Use `GET /v2/executions` and its\nopaque cursor to traverse matching history without an implicit total.\nComputing an exact total over a large execution history is expensive,\nso `total_count` can be capped and is then only a lower bound.\nWhen `from` is omitted, the window defaults to the 90 days ending at\n`to` (or now).\n",
         "operationId": "listExecutions",
         "security": [
           {
@@ -577,12 +577,13 @@
           {
             "name": "offset",
             "in": "query",
+            "deprecated": true,
             "schema": {
               "type": "integer",
               "minimum": 0,
               "default": 0
             },
-            "description": "Number of executions to skip for pagination",
+            "description": "Deprecated shallow-page offset; use `GET /v2/executions` for traversal. A later compatibility rollout will limit V1 to a maximum requested prefix of 1,000 rows, evaluated after limit normalization as `offset <= 1000 - appliedLimit`. Requests beyond that boundary will return 400 with `{\"error\":\"V1 execution pagination is limited to 1000 rows; use GET /v2/executions with cursor pagination\"}`.",
             "example": 0
           },
           {
@@ -680,8 +681,157 @@
           "401": {
             "$ref": "#/components/responses/Unauthorized"
           },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "408": {
+            "$ref": "#/components/responses/RequestTimeout"
+          },
           "500": {
             "$ref": "#/components/responses/InternalServerError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          }
+        }
+      }
+    },
+    "/v2/executions": {
+      "get": {
+        "tags": [
+          "Executions"
+        ],
+        "summary": "List executions with cursor pagination",
+        "description": "Returns a total-free execution page for the authenticated API key's\norganization, ordered by `created_at` descending. Continue with\n`next_cursor` while `has_more` is true. Cursors are opaque and bound to\nthe authenticated scope, normalized filters, order, and applied limit.\nChanging any of those inputs requires restarting without a cursor.\nWhen `from` is omitted, the window defaults to the 90 days ending at\n`to` (or now).\n",
+        "operationId": "listExecutionsV2",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            },
+            "description": "Maximum number of executions to return"
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Opaque cursor returned as `next_cursor` by the previous page"
+          },
+          {
+            "name": "model",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter executions by public model slug"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Comma-separated status filter. Each token must be one of `created`,\n`starting`, `success`, or `error`; any other token returns 400.\n",
+            "example": "success,error"
+          },
+          {
+            "name": "workflow_id",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by workflow ID"
+          },
+          {
+            "name": "workflow_execution_id",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by workflow execution ID"
+          },
+          {
+            "name": "error_classification",
+            "in": "query",
+            "style": "form",
+            "explode": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "content_moderation",
+                  "execution_timeout",
+                  "invalid_user_input",
+                  "invalid_model_config",
+                  "provider_auth",
+                  "provider_error",
+                  "provider_rate_limit",
+                  "provider_unavailable",
+                  "internal_error",
+                  "unknown"
+                ]
+              }
+            },
+            "description": "Comma-separated canonical error classifications",
+            "example": [
+              "content_moderation",
+              "provider_error"
+            ]
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "description": "Start of creation time window, as RFC 3339"
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "description": "End of creation time window, as RFC 3339"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Total-free cursor page",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListExecutionsV2Response"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "408": {
+            "$ref": "#/components/responses/RequestTimeout"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
           }
         }
       }
@@ -1755,7 +1905,7 @@
       "BearerAuth": {
         "type": "http",
         "scheme": "bearer",
-        "description": "API key passed as an Authorization Bearer token: `Authorization: Bearer YOUR_API_KEY`"
+        "description": "API key passed as `Authorization: Bearer <api_key>`"
       }
     },
     "schemas": {
@@ -2821,7 +2971,7 @@
           },
           "total_count": {
             "type": "integer",
-            "description": "Number of matching executions. When `total_capped` is `true` this is a lower bound, not the exact total — do not use it as a pagination stop condition; keep increasing `offset` until a page returns fewer than `limit` rows. On the last page that returns rows, the exact total is reported and `total_capped` becomes `false`.",
+            "description": "Number of matching executions. When `total_capped` is `true` this is a lower bound, not the exact total. Use `GET /v2/executions` and its opaque cursor for history traversal rather than relying on this count as a pagination stop condition.",
             "example": 123
           },
           "total_capped": {
@@ -2847,6 +2997,40 @@
           "offset",
           "limit"
         ]
+      },
+      "ListExecutionsV2Response": {
+        "type": "object",
+        "required": [
+          "executions",
+          "limit",
+          "has_more",
+          "next_cursor"
+        ],
+        "properties": {
+          "executions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExecutionSummary"
+            }
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "description": "Applied page limit",
+            "example": 20
+          },
+          "has_more": {
+            "type": "boolean",
+            "description": "Whether another page is available",
+            "example": true
+          },
+          "next_cursor": {
+            "type": "string",
+            "nullable": true,
+            "description": "Opaque cursor for the next page; null at exhaustion"
+          }
+        }
       },
       "ChatCompletionRequest": {
         "type": "object",
@@ -3428,6 +3612,24 @@
             },
             "example": {
               "error": "workflows-engine unavailable"
+            }
+          }
+        }
+      },
+      "ServiceUnavailable": {
+        "description": "Service temporarily unavailable",
+        "headers": {
+          "X-Request-Id": {
+            "$ref": "#/components/headers/RequestId"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "error": "execution store unavailable"
             }
           }
         }
