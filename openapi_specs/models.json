@@ -553,8 +553,9 @@
         "tags": [
           "Executions"
         ],
-        "summary": "List executions",
-        "description": "Retrieve execution history for the authenticated API key's organization\nwith optional filters.\nModel prediction terminal statuses include `success`, `error`, and `cancelled`;\nworkflow executions can surface `running`, `completed`, `failed`, or `cancelled`\ndepending on the originating backend. The `status` filter accepts the\nfour tokens listed on the parameter; unrecognized tokens return 400.\n\nResults cover every API key in the organization that owns the\nauthenticated key.\n\nPagination: `offset` is retained for shallow compatibility but is\ndeprecated for history traversal. Use `GET /v2/executions` and its\nopaque cursor to traverse matching history without an implicit total.\nComputing an exact total over a large execution history is expensive,\nso `total_count` can be capped and is then only a lower bound.\nWhen `from` is omitted, the window defaults to the 90 days ending at\n`to` (or now).\n",
+        "summary": "List executions (deprecated)",
+        "deprecated": true,
+        "description": "Deprecated: use `GET /v2/executions` for cursor-based traversal.\nV1 remains available for shallow compatibility.\n\nRetrieve execution history for the authenticated API key's organization\nwith optional filters.\nModel prediction terminal statuses include `success`, `error`, and `cancelled`;\nworkflow executions can surface `running`, `completed`, `failed`, or `cancelled`\ndepending on the originating backend. The `status` filter accepts the\nfour tokens listed on the parameter; unrecognized tokens return 400.\n\nResults cover every API key in the organization that owns the\nauthenticated key.\n\nPagination: `offset` is retained for shallow compatibility but is\ndeprecated for history traversal. Use `GET /v2/executions` and its\nopaque cursor to traverse matching history without an implicit total.\nComputing an exact total over a large execution history is expensive,\nso `total_count` can be capped and is then only a lower bound.\nWhen `from` is omitted, the window defaults to the 90 days ending at\n`to` (or now).\n",
         "operationId": "listExecutions",
         "security": [
           {
@@ -583,7 +584,7 @@
               "minimum": 0,
               "default": 0
             },
-            "description": "Deprecated shallow-page offset; use `GET /v2/executions` for traversal. A later compatibility rollout will limit V1 to a maximum requested prefix of 1,000 rows, evaluated after limit normalization as `offset <= 1000 - appliedLimit`. Requests beyond that boundary will return 400 with `{\"error\":\"V1 execution pagination is limited to 1000 rows; use GET /v2/executions with cursor pagination\"}`.",
+            "description": "Deprecated shallow-page offset; use GET /v2/executions for traversal. The maximum requested prefix is 1,000 rows, evaluated after limit normalization as offset <= 1000 - appliedLimit. Requests beyond that boundary return {\"error\":\"V1 execution pagination is limited to 1000 rows; use GET /v2/executions with cursor pagination\"}.",
             "example": 0
           },
           {
@@ -667,6 +668,14 @@
         "responses": {
           "200": {
             "description": "List of executions",
+            "headers": {
+              "Deprecation": {
+                "$ref": "#/components/headers/Deprecation"
+              },
+              "Link": {
+                "$ref": "#/components/headers/DeprecationLink"
+              }
+            },
             "content": {
               "application/json": {
                 "schema": {
@@ -1899,6 +1908,20 @@
           ]
         },
         "example": 30
+      },
+      "Deprecation": {
+        "description": "RFC 9745 date indicating that GET /v1/executions is deprecated.",
+        "schema": {
+          "type": "string"
+        },
+        "example": "@1788480000"
+      },
+      "DeprecationLink": {
+        "description": "Link to execution-list migration guidance.",
+        "schema": {
+          "type": "string"
+        },
+        "example": "<https://docs.eachlabs.ai/changelog>; rel=\"deprecation\"; type=\"text/html\""
       }
     },
     "securitySchemes": {
