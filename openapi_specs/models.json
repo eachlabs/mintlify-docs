@@ -1324,11 +1324,11 @@
           "409": {
             "$ref": "#/components/responses/Conflict"
           },
-          "502": {
-            "$ref": "#/components/responses/BadGateway"
-          },
           "500": {
             "$ref": "#/components/responses/InternalServerError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
           }
         }
       }
@@ -1432,11 +1432,11 @@
           "409": {
             "$ref": "#/components/responses/Conflict"
           },
-          "502": {
-            "$ref": "#/components/responses/BadGateway"
-          },
           "500": {
             "$ref": "#/components/responses/InternalServerError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
           }
         }
       }
@@ -1554,11 +1554,11 @@
           "409": {
             "$ref": "#/components/responses/Conflict"
           },
-          "502": {
-            "$ref": "#/components/responses/BadGateway"
-          },
           "500": {
             "$ref": "#/components/responses/InternalServerError"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
           }
         }
       }
@@ -1880,6 +1880,126 @@
           },
           "500": {
             "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/v1/responses": {
+      "post": {
+        "tags": [
+          "OpenAI Compatibility"
+        ],
+        "summary": "Create a response",
+        "description": "OpenAI-compatible Responses API backed by Eachlabs LLM Router. This\nindependently feature-gated endpoint is disabled by default during rollout.\nModel availability comes only from the qualified model catalog after\nqualification; this contract does not imply current support for any\nparticular model.\n\nRequests are stateless: `store` and `background` may be omitted or false;\n`previous_response_id` is unsupported. Only custom function tools with strict\nJSON schemas are accepted. Built-in tools, provider-selection extensions,\nwebhooks, and stateful response chaining are rejected before provider\ndispatch. A buffered success is the canonical Responses object. With\n`stream: true`, the response is `text/event-stream` and relays canonical\nResponses events without converting them into Chat Completions `choices`.\n\nAuthentication, balance, request validation, and stream establishment errors\nreturn the documented JSON error envelope before SSE headers are sent.\n",
+        "operationId": "createResponse",
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResponsesRequest"
+              },
+              "example": {
+                "model": "qualified-model-id",
+                "input": "Write a one sentence caption.",
+                "store": false,
+                "stream": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Canonical buffered Responses object or Responses SSE stream",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResponseObject"
+                }
+              },
+              "text/event-stream": {
+                "schema": {
+                  "type": "string",
+                  "description": "Canonical Responses lifecycle events for `stream: true`, preserving\nevent names and sequence order. Events may include response.created,\nresponse.in_progress, output/content text, refusal, reasoning, and\nfunction-call argument events, followed by response.completed,\nresponse.incomplete, response.failed, or error. A provider `[DONE]`\nsentinel may appear only after a canonical terminal event.\n"
+                },
+                "example": "event: response.created\ndata: {\"type\":\"response.created\",\"sequence_number\":0,\"response\":{\"id\":\"resp_example\",\"object\":\"response\",\"created_at\":1777777777,\"status\":\"in_progress\",\"model\":\"qualified-model-id\",\"output\":[]}}\n\nevent: response.completed\ndata: {\"type\":\"response.completed\",\"sequence_number\":1,\"response\":{\"id\":\"resp_example\",\"object\":\"response\",\"created_at\":1777777777,\"status\":\"completed\",\"model\":\"qualified-model-id\",\"output\":[],\"usage\":{\"input_tokens\":1,\"output_tokens\":1,\"total_tokens\":2,\"input_tokens_details\":{\"cached_tokens\":0},\"output_tokens_details\":{\"reasoning_tokens\":0}}}}\n\ndata: [DONE]\n"
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid or unsupported request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenAIErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenAIErrorResponse"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Insufficient balance",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenAIErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Provider or router rate limit",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenAIErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenAIErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "AI model service temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenAIErrorResponse"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Request timed out before a response or stream was established",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenAIErrorResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -3252,7 +3372,7 @@
           "speed": {
             "type": "number",
             "minimum": 0.25,
-            "maximum": 4.0,
+            "maximum": 4,
             "description": "Playback speed. Accepted only for models that declare support; otherwise 400."
           },
           "instructions": {
@@ -3305,7 +3425,7 @@
       },
       "OpenAIErrorResponse": {
         "type": "object",
-        "description": "OpenAI-compatible error envelope used by chat, audio, and realtime compatibility endpoints.",
+        "description": "OpenAI-compatible error envelope used by Responses, chat, audio, and realtime compatibility endpoints.",
         "properties": {
           "error": {
             "type": "object",
@@ -3474,6 +3594,956 @@
           "offset",
           "total_count"
         ]
+      },
+      "ResponsesRequest": {
+        "type": "object",
+        "description": "Stateless buffered or streaming Responses request. Model availability comes\nonly from the qualified model catalog after qualification.\n",
+        "additionalProperties": false,
+        "required": [
+          "model",
+          "input"
+        ],
+        "properties": {
+          "model": {
+            "type": "string",
+            "minLength": 1,
+            "example": "qualified-model-id"
+          },
+          "input": {
+            "oneOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "$ref": "#/components/schemas/ResponsesInputItem"
+                }
+              }
+            ]
+          },
+          "instructions": {
+            "type": "string",
+            "nullable": true
+          },
+          "max_output_tokens": {
+            "type": "integer",
+            "minimum": 1,
+            "nullable": true
+          },
+          "temperature": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 2,
+            "nullable": true
+          },
+          "top_p": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "nullable": true
+          },
+          "prompt_cache_key": {
+            "type": "string",
+            "nullable": true
+          },
+          "parallel_tool_calls": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "reasoning": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": false,
+            "properties": {
+              "effort": {
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "none",
+                  "minimal",
+                  "low",
+                  "medium",
+                  "high",
+                  "xhigh"
+                ]
+              },
+              "summary": {
+                "type": "string",
+                "nullable": true,
+                "enum": [
+                  "auto",
+                  "concise",
+                  "detailed"
+                ]
+              }
+            }
+          },
+          "tools": {
+            "type": "array",
+            "nullable": true,
+            "items": {
+              "$ref": "#/components/schemas/ResponsesFunctionTool"
+            }
+          },
+          "tool_choice": {
+            "nullable": true,
+            "oneOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "auto",
+                  "none",
+                  "required"
+                ]
+              },
+              {
+                "$ref": "#/components/schemas/ResponsesFunctionToolChoice"
+              }
+            ]
+          },
+          "store": {
+            "type": "boolean",
+            "nullable": true,
+            "enum": [
+              false
+            ],
+            "description": "Phase one accepts only false or null."
+          },
+          "stream": {
+            "type": "boolean",
+            "nullable": true,
+            "description": "Set true to receive canonical Responses Server-Sent Events."
+          },
+          "background": {
+            "type": "boolean",
+            "nullable": true,
+            "enum": [
+              false
+            ],
+            "description": "Phase one accepts only false or null."
+          }
+        }
+      },
+      "ResponsesInputItem": {
+        "description": "Typed phase-one input item. `previous_response_id` is intentionally absent\nfrom ResponsesRequest; any presence is rejected.\n",
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/ResponsesInputMessage"
+          },
+          {
+            "$ref": "#/components/schemas/ResponsesInputFunctionCall"
+          },
+          {
+            "$ref": "#/components/schemas/ResponsesInputFunctionCallOutput"
+          },
+          {
+            "$ref": "#/components/schemas/ResponsesInputReasoning"
+          }
+        ]
+      },
+      "ResponsesInputMessage": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "role",
+          "content"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "message"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "nullable": true
+          },
+          "status": {
+            "$ref": "#/components/schemas/ResponsesItemStatus"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "user",
+              "assistant",
+              "developer",
+              "system"
+            ]
+          },
+          "content": {
+            "oneOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                  "$ref": "#/components/schemas/ResponsesInputContentPart"
+                }
+              }
+            ]
+          }
+        }
+      },
+      "ResponsesItemStatus": {
+        "type": "string",
+        "nullable": true,
+        "enum": [
+          "completed",
+          "incomplete",
+          "in_progress"
+        ]
+      },
+      "ResponsesInputContentPart": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/ResponsesInputTextPart"
+          },
+          {
+            "$ref": "#/components/schemas/ResponsesInputImagePart"
+          },
+          {
+            "$ref": "#/components/schemas/ResponsesInputFilePart"
+          }
+        ]
+      },
+      "ResponsesInputTextPart": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "type",
+          "text"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "input_text",
+              "output_text"
+            ]
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "ResponsesInputImagePart": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "type"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "input_image"
+            ]
+          },
+          "image_url": {
+            "type": "string",
+            "minLength": 1
+          },
+          "file_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "detail": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "auto",
+              "low",
+              "high"
+            ]
+          }
+        },
+        "description": "Exactly one of image_url or file_id is required."
+      },
+      "ResponsesInputFilePart": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "type"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "input_file"
+            ]
+          },
+          "file_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "file_url": {
+            "type": "string",
+            "minLength": 1
+          },
+          "file_data": {
+            "type": "string",
+            "minLength": 1
+          },
+          "filename": {
+            "type": "string",
+            "minLength": 1,
+            "nullable": true
+          }
+        },
+        "description": "Exactly one of file_id, file_url, or file_data is required."
+      },
+      "ResponsesInputFunctionCall": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "type",
+          "name",
+          "call_id",
+          "arguments"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "function_call"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "nullable": true
+          },
+          "status": {
+            "$ref": "#/components/schemas/ResponsesItemStatus"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[A-Za-z0-9_-]+$"
+          },
+          "call_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "arguments": {
+            "type": "string",
+            "description": "JSON encoded as a string."
+          }
+        }
+      },
+      "ResponsesInputFunctionCallOutput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "type",
+          "call_id",
+          "output"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "function_call_output"
+            ]
+          },
+          "call_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "output": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "ResponsesInputReasoning": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "type"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "reasoning"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "nullable": true
+          },
+          "status": {
+            "$ref": "#/components/schemas/ResponsesItemStatus"
+          },
+          "encrypted_content": {
+            "type": "string",
+            "minLength": 1,
+            "nullable": true
+          },
+          "summary": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResponsesSummaryPart"
+            }
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResponsesReasoningPart"
+            }
+          }
+        }
+      },
+      "ResponsesSummaryPart": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "type",
+          "text"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "summary_text"
+            ]
+          },
+          "text": {
+            "type": "string"
+          }
+        }
+      },
+      "ResponsesReasoningPart": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "type",
+          "text"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "reasoning_text"
+            ]
+          },
+          "text": {
+            "type": "string"
+          }
+        }
+      },
+      "ResponsesFunctionTool": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "type",
+          "name",
+          "parameters",
+          "strict"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "function"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[A-Za-z0-9_-]+$"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "parameters": {
+            "type": "object",
+            "description": "Strict JSON Schema with object root, every property required, and additionalProperties false.",
+            "additionalProperties": true
+          },
+          "strict": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          }
+        }
+      },
+      "ResponsesFunctionToolChoice": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "type",
+          "name"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "function"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64,
+            "pattern": "^[A-Za-z0-9_-]+$"
+          }
+        }
+      },
+      "ResponseObject": {
+        "type": "object",
+        "description": "Canonical OpenAI-compatible Responses object. Provider credentials,\nrouting metadata, internal cost evidence, and execution metadata are never\nincluded. The schema lists the complete phase-one output allowlist.\n",
+        "required": [
+          "id",
+          "object",
+          "model",
+          "status",
+          "output",
+          "created_at",
+          "usage"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "resp_abc123"
+          },
+          "object": {
+            "type": "string",
+            "enum": [
+              "response"
+            ]
+          },
+          "created_at": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "model": {
+            "type": "string",
+            "example": "qualified-model-id"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "completed",
+              "incomplete"
+            ]
+          },
+          "output": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResponsesOutputItem"
+            },
+            "example": [
+              {
+                "type": "message",
+                "role": "assistant",
+                "content": [
+                  {
+                    "type": "output_text",
+                    "text": "A cinematic sunset over the ocean."
+                  }
+                ]
+              }
+            ]
+          },
+          "usage": {
+            "$ref": "#/components/schemas/ResponsesUsage"
+          },
+          "completed_at": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "output_text": {
+            "type": "string"
+          },
+          "incomplete_details": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "reason"
+            ],
+            "properties": {
+              "reason": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      },
+      "ResponsesOutputItem": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/ResponsesOutputMessage"
+          },
+          {
+            "$ref": "#/components/schemas/ResponsesOutputFunctionCall"
+          },
+          {
+            "$ref": "#/components/schemas/ResponsesOutputReasoning"
+          }
+        ]
+      },
+      "ResponsesOutputMessage": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "type",
+          "role",
+          "content"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "message"
+            ]
+          },
+          "status": {
+            "$ref": "#/components/schemas/ResponsesItemStatus"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "assistant"
+            ]
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResponsesOutputContentPart"
+            }
+          }
+        }
+      },
+      "ResponsesOutputContentPart": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/ResponsesOutputTextPart"
+          },
+          {
+            "$ref": "#/components/schemas/ResponsesRefusalPart"
+          }
+        ]
+      },
+      "ResponsesOutputTextPart": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "type",
+          "text"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "output_text"
+            ]
+          },
+          "text": {
+            "type": "string"
+          },
+          "annotations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResponsesAnnotation"
+            }
+          }
+        }
+      },
+      "ResponsesAnnotation": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/ResponsesFileCitation"
+          },
+          {
+            "$ref": "#/components/schemas/ResponsesURLCitation"
+          },
+          {
+            "$ref": "#/components/schemas/ResponsesContainerFileCitation"
+          },
+          {
+            "$ref": "#/components/schemas/ResponsesFilePath"
+          }
+        ]
+      },
+      "ResponsesFileCitation": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "type",
+          "file_id",
+          "filename",
+          "index"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "file_citation"
+            ]
+          },
+          "file_id": {
+            "type": "string"
+          },
+          "filename": {
+            "type": "string"
+          },
+          "index": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "ResponsesURLCitation": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "type",
+          "url",
+          "title",
+          "start_index",
+          "end_index"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "url_citation"
+            ]
+          },
+          "url": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "start_index": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "end_index": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "ResponsesContainerFileCitation": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "type",
+          "container_id",
+          "file_id",
+          "filename",
+          "start_index",
+          "end_index"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "container_file_citation"
+            ]
+          },
+          "container_id": {
+            "type": "string"
+          },
+          "file_id": {
+            "type": "string"
+          },
+          "filename": {
+            "type": "string"
+          },
+          "start_index": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "end_index": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "ResponsesFilePath": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "type",
+          "file_id",
+          "index"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "file_path"
+            ]
+          },
+          "file_id": {
+            "type": "string"
+          },
+          "index": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "ResponsesRefusalPart": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "type",
+          "refusal"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "refusal"
+            ]
+          },
+          "refusal": {
+            "type": "string"
+          }
+        }
+      },
+      "ResponsesOutputFunctionCall": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "type",
+          "call_id",
+          "name",
+          "arguments"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "function_call"
+            ]
+          },
+          "status": {
+            "$ref": "#/components/schemas/ResponsesItemStatus"
+          },
+          "call_id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "arguments": {
+            "type": "string",
+            "description": "JSON encoded as a string."
+          }
+        }
+      },
+      "ResponsesOutputReasoning": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "type"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "reasoning"
+            ]
+          },
+          "status": {
+            "$ref": "#/components/schemas/ResponsesItemStatus"
+          },
+          "encrypted_content": {
+            "type": "string",
+            "nullable": true
+          },
+          "summary": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResponsesSummaryPart"
+            }
+          },
+          "content": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResponsesReasoningPart"
+            }
+          }
+        }
+      },
+      "ResponsesUsage": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "input_tokens",
+          "output_tokens",
+          "total_tokens"
+        ],
+        "properties": {
+          "input_tokens": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "input_tokens_details": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "cached_tokens": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          },
+          "output_tokens": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "output_tokens_details": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "reasoning_tokens": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          },
+          "total_tokens": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
       }
     },
     "responses": {

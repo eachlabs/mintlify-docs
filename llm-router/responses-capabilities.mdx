@@ -1,0 +1,98 @@
+---
+title: "Responses model capabilities"
+description: "Exact public model IDs and the controls accepted by the Eachlabs Responses endpoint."
+---
+
+<Warning>
+This is the implemented profile for the gated Responses preview, not a statement
+of general availability. Deployment enablement and runtime qualification remain
+separate gates. Confirm access before integrating.
+</Warning>
+
+This matrix describes `POST /v1/responses`, not native model APIs or Chat Completions.
+A shared API does not make every parameter portable: unsupported fields and model
+combinations return an error instead of being silently dropped.
+
+## Model IDs
+
+| Model | Public alias | Public version-pinned ID |
+| --- | --- | --- |
+| GPT-5.6 Luna | `openai/gpt-5.6-luna` | `openai/gpt-5.6-luna-20260709` |
+| Haiku 4.5 | `anthropic/claude-haiku-4.5` | `anthropic/claude-4.5-haiku-20251001` |
+
+Use the public pin when you need a stable version. Aliases are convenience names;
+do not treat an alias as an immutable version. A pin identifies the model version,
+not deterministic generated output.
+
+`openai/gpt-5.4` is not supported on this endpoint. A legacy or deprecated catalog
+entry elsewhere does not grant Responses support. Other entries in the general
+[model catalog](/llm-router/models) are not automatically Responses-qualified.
+
+## Public endpoint matrix
+
+The alias and pin within each family share these restrictions:
+
+| Capability | GPT-5.6 Luna | Haiku 4.5 |
+| --- | --- | --- |
+| Buffered and SSE text generation | Supported | Supported |
+| Strict custom function tools | Supported | Supported |
+| `parallel_tool_calls` | `true` / `false` | `true` / `false` |
+| `tool_choice` | `auto`, `none`, `required`, specific function | Same, with reasoning restrictions below |
+| Reasoning effort | `none`, `low`, `medium`, `high` | `none`, `low`, `medium`, `high` |
+| Default reasoning | Omit `reasoning` | Omit `reasoning` |
+| `max_output_tokens` | Integer 1–128,000 | Integer 1–64,000 |
+| Prompt caching controls | Automatic caching; optional `prompt_cache_key` | No exposed cache controls; `prompt_cache_key` rejected |
+| Cached-input token reporting | `usage.input_tokens_details.cached_tokens` | Same reporting field; no cache-hit guarantee |
+| Reasoning token reporting | `usage.output_tokens_details.reasoning_tokens` | Same reporting field |
+| `temperature` | Rejected | 0–2, subject to restrictions below |
+| `top_p` | Rejected | 0–1, subject to restrictions below |
+| `stop` / `seed` | Rejected by the public endpoint | Rejected by the public endpoint |
+
+The output limit includes reasoning as well as visible output. Setting a limit does
+not guarantee a completed answer within that budget; inspect terminal status.
+
+### Reasoning
+
+There is no separate boolean reasoning switch. Send `{"effort":"none"}` to request
+reasoning off, or `low`, `medium`, or `high` to request an effort. Omit the `reasoning`
+object to leave default behavior to the model. An explicit empty object `{}` is
+treated as enabled reasoning for validation, not as an off switch.
+
+For Haiku:
+
+- Do not send `temperature` with explicitly enabled reasoning.
+- With explicitly enabled reasoning, `top_p` must be between 0.95 and 1.
+- Never send both `temperature` and `top_p` in the same request.
+- With explicitly enabled reasoning, `tool_choice` must not be `required` or a specific tool.
+
+For predictable sampling or forced tools on Haiku, explicitly request
+`reasoning: {"effort":"none"}`. Luna rejects `temperature` and `top_p` even when
+reasoning is off. Both families reject `minimal`, `xhigh`, and requested reasoning
+summaries. Reported reasoning tokens do not imply that private reasoning text is available.
+
+### Prompt caching
+
+Automatic caching is not a portable on/off switch. For Luna, an optional stable
+`prompt_cache_key` can accompany repeat-prefix requests; it does not force a hit,
+disable caching, or select a retention period. Do not put secrets in that key.
+Haiku does not expose cache controls through this endpoint, regardless of what a
+native API may offer.
+
+For example, this Luna request combines an effort level and a cache key:
+
+```json
+{
+  "model": "openai/gpt-5.6-luna-20260709",
+  "input": "Summarize the following document: ...",
+  "reasoning": {"effort": "low"},
+  "prompt_cache_key": "document-summary-v1",
+  "max_output_tokens": 2048,
+  "store": false
+}
+```
+
+Read the actual cached count from `usage`, including in the terminal streamed
+response. A count of zero is valid; sending a key is not evidence of savings.
+
+See the [Responses guide](/llm-router/responses) for executable SDK/cURL patterns,
+tool continuation, terminal usage, error handling, and endpoint-wide exclusions.
