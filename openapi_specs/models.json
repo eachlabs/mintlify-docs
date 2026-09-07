@@ -2106,7 +2106,7 @@
               },
               "depends_on": {
                 "type": "array",
-                "description": "Input names that determine the usage-based estimate. May be empty.",
+                "description": "Public pricing dimensions, such as resolution or token type. May be empty.",
                 "items": {
                   "type": "string"
                 },

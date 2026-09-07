@@ -102,7 +102,7 @@ console.log(`Model: ${model.title}`);
 
 ### Cost Estimate
 
-When `cost` is non-null, it contains exactly these fields:
+When `cost` is non-null, it contains these fields:
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -114,8 +114,8 @@ When `cost` is non-null, it contains exactly these fields:
 | `description` | string | `Pricing is an estimate and may change as rates are updated.` |
 | `min` | number \| null | Minimum estimated USD amount per unit for usage-based pricing; otherwise `null` |
 | `max` | number \| null | Maximum estimated USD amount per unit for usage-based pricing; otherwise `null` |
-| `depends_on` | string[] | Input names that determine the estimate; may be empty |
-| `rows` | object[] | Optional price breakdown as `{label, value}` entries; may be empty |
+| `depends_on` | string[] | Public pricing dimensions, such as resolution or token type; may be empty |
+| `rows` | object[] | Price breakdown as `{label, value}` entries in USD per `unit`; may be empty |
 
 <CodeGroup>
 ```json Fixed
@@ -152,8 +152,19 @@ When `cost` is non-null, it contains exactly these fields:
 ```
 </CodeGroup>
 
-`Usage-based pricing` means no public rate is listed, and the final cost is
-returned as `metrics.cost` on the resulting prediction or workflow execution.
+`cost` is planning guidance, not a quote for a particular input or the final
+charge. For usage-based pricing, `min` and `max` are rates per `unit`, not the
+minimum and maximum total price of a request. Estimates may change when model
+pricing changes. Use `metrics.cost` on the resulting prediction or workflow
+execution for the settled value.
+
+`Usage-based pricing` with `unit`, `amount`, `min`, and `max` all `null` means
+no reliable public rate is listed. It does not mean the model is free. A free
+model instead has `type: "fixed"`, `amount: 0`, and `estimate: "Free"`.
+
+Render `estimate` for a readable summary and use the structured fields when
+you need rates or tier details. Treat a missing numeric estimate as unknown;
+do not substitute zero.
 
 ## Error Responses
 
