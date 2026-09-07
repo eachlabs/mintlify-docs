@@ -90,6 +90,7 @@
               "GET /v1/prediction/{id}",
               "POST /v1/prediction/{id}/cancel",
               "GET /v1/executions",
+              "GET /v2/executions",
               "GET /v1/webhooks",
               "GET /v1/webhooks/{execution_id}",
               "GET /v1/llm-router/model-catalog",
