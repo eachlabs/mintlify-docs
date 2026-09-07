@@ -1,0 +1,258 @@
+---
+title: "Responses API"
+description: "Stateless text generation, strict function tools, and typed streaming with model-specific controls."
+---
+
+<Warning>
+Responses is a gated preview, not generally available. Confirm that your deployment
+has been enabled before using these examples. A disabled deployment returns HTTP
+404. Model listings alone do not establish endpoint availability.
+</Warning>
+
+`POST https://api.eachlabs.ai/v1/responses` accepts a Responses request and returns
+either a response object or named server-sent events (SSE). It is separate from
+Chat Completions: use `input`, not `messages`, and read `output`, not `choices`.
+Authenticate with `Authorization: Bearer YOUR_EACHLABS_API_KEY`.
+
+The request format is shared, but supported controls still vary by model. Check
+the [capability matrix](/llm-router/responses-capabilities) before switching models.
+The [OpenAPI specification](/openapi_specs/models.json) describes the wire schema;
+the matrix narrows it to the currently implemented model profiles.
+
+## Generate text
+
+```bash cURL
+curl https://api.eachlabs.ai/v1/responses \
+  -H "Authorization: Bearer $EACHLABS_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "openai/gpt-5.6-luna-20260709",
+    "input": "Write a one-sentence caption for a mountain sunrise.",
+    "max_output_tokens": 256,
+    "reasoning": {"effort": "none"},
+    "store": false
+  }'
+```
+
+Use an OpenAI Python SDK release that provides `client.responses.create` and the
+parameters in your request. Older Chat-only SDK releases are insufficient. Configure
+the Eachlabs base URL; OpenAI's full feature set is not implied by SDK compatibility.
+
+```python Python
+import os
+from openai import OpenAI
+
+client = OpenAI(
+    api_key=os.environ["EACHLABS_API_KEY"],
+    base_url="https://api.eachlabs.ai/v1",
+    max_retries=0,
+)
+
+response = client.responses.create(
+    model="openai/gpt-5.6-luna-20260709",
+    input="Write a one-sentence caption for a mountain sunrise.",
+    max_output_tokens=256,
+    reasoning={"effort": "none"},
+    store=False,
+)
+
+print(response.status)
+print(response.output_text)
+print(response.usage)
+```
+
+`output` is an array of typed items, which can include assistant messages, function
+calls, or reasoning items. Do not assume the first item is a text message.
+`output_text` above is an SDK convenience, not a separate wire field. Check
+`status`: `incomplete` or `failed` is not a successful complete answer.
+
+## Stream text and terminal usage
+
+Set `stream: true`. With cURL, add `-N` to disable client-side buffering. Responses
+uses named events, not Chat Completion chunks, and does not accept `stream_options`.
+
+The following continues the Python client setup above:
+
+```python Python
+terminal_seen = False
+with client.responses.create(
+    model="openai/gpt-5.6-luna-20260709",
+    input="Explain why the sky is blue in two sentences.",
+    max_output_tokens=512,
+    reasoning={"effort": "none"},
+    store=False,
+    stream=True,
+) as stream:
+    for event in stream:
+        if event.type == "response.output_text.delta":
+            print(event.delta, end="", flush=True)
+        elif event.type in (
+            "response.completed", "response.incomplete", "response.failed"
+        ):
+            terminal_seen = True
+            print("\nStatus:", event.response.status)
+            print("Usage:", event.response.usage)
+            if event.type != "response.completed":
+                raise RuntimeError("The response did not complete successfully")
+        elif event.type == "error":
+            raise RuntimeError("The response stream failed")
+
+if not terminal_seen:
+    raise RuntimeError("Stream ended without a terminal response")
+```
+
+The lifecycle starts with `response.created` and may include `response.in_progress`.
+Output-item and content-part events identify the item/index to which deltas belong.
+Text arrives through `response.output_text.delta`; function arguments arrive through
+`response.function_call_arguments.delta`. Corresponding `.done` events finish those
+parts. Reasoning and refusal events may also occur.
+
+Read the final response from `response.completed`, `response.incomplete`, or
+`response.failed`; also handle a terminal `error` event. A trailing `data: [DONE]`
+is optional and is not a substitute for a canonical terminal event. EOF or an HTTP
+200 alone does not prove successful generation. Do not automatically replay a request
+after receiving output: that can produce a second generation.
+
+Successful streaming responses include an `X-Execution-ID` response header for
+support correlation. This is not a response-retrieval endpoint or a streaming event.
+
+### Token accounting
+
+Read `usage` on the buffered response or the terminal event's `response`:
+
+| Field | Meaning |
+| --- | --- |
+| `input_tokens` | Total input tokens, including cached input |
+| `output_tokens` | Total output tokens, including reasoning tokens |
+| `total_tokens` | Input plus output tokens |
+| `input_tokens_details.cached_tokens` | Cached portion of input tokens |
+| `output_tokens_details.reasoning_tokens` | Reasoning portion of output tokens |
+
+Cached and reasoning counts are subsets: do not add them to the totals again.
+Zero is valid and does not prove a feature is broken. A failed stream may not have
+usable usage; do not invent counts from text deltas. Token usage is not a billing
+receipt or a public cost breakdown.
+
+## Strict function tools
+
+Only custom function tools are supported. Each tool must use `strict: true`, an
+object-root parameter schema, `additionalProperties: false`, and a `required` array
+listing every declared property. Nested objects have the same strict requirements.
+The supported schema subset includes objects, arrays, strings, numbers, integers,
+booleans, and primitive enums; arbitrary JSON Schema keywords are not accepted.
+
+Unlike Chat Completions, the tool's `name`, `parameters`, and `strict` fields are
+directly on the tool object, not inside a nested `function` object.
+
+```python Python
+tools = [{
+    "type": "function",
+    "name": "lookup_weather",
+    "description": "Look up the weather for a city.",
+    "strict": True,
+    "parameters": {
+        "type": "object",
+        "properties": {"city": {"type": "string"}},
+        "required": ["city"],
+        "additionalProperties": False,
+    },
+}]
+
+request_input = [{"role": "user", "content": "What is the weather in Paris?"}]
+response = client.responses.create(
+    model="openai/gpt-5.6-luna-20260709",
+    input=request_input,
+    tools=tools,
+    tool_choice={"type": "function", "name": "lookup_weather"},
+    parallel_tool_calls=False,
+    reasoning={"effort": "none"},
+    max_output_tokens=512,
+    store=False,
+)
+
+if response.status != "completed":
+    raise RuntimeError("Do not execute an incomplete tool call")
+
+calls = [item for item in response.output if item.type == "function_call"]
+for call in calls:
+    print(call.name, call.call_id, call.arguments)
+```
+
+`arguments` is a JSON-encoded string. Parse and validate it in your application,
+authorize the action, then execute your own tool. The API does not execute it for you.
+For streaming tools, accumulate argument deltas by output item and wait for the
+completed response before executing; a partial argument string is not a complete call.
+
+`tool_choice` accepts `auto`, `none`, `required`, or a specific declared function
+as above. `required` needs at least one declared tool. `parallel_tool_calls: true`
+permits parallel calls; it does not guarantee that multiple calls will be generated.
+Haiku has [reasoning/tool-choice restrictions](/llm-router/responses-capabilities).
+
+### Continue with tool results
+
+Requests are stateless. Send prior input, function-call items, and corresponding
+`function_call_output` items in the next request. For each call from the example
+above, retain `name`, `call_id`, and the original JSON `arguments` string:
+
+```json
+{
+  "model": "openai/gpt-5.6-luna-20260709",
+  "store": false,
+  "reasoning": {"effort": "none"},
+  "max_output_tokens": 256,
+  "input": [
+    {"role": "user", "content": "What is the weather in Paris?"},
+    {
+      "type": "function_call",
+      "name": "lookup_weather",
+      "call_id": "call_example",
+      "arguments": "{\"city\":\"Paris\"}"
+    },
+    {
+      "type": "function_call_output",
+      "call_id": "call_example",
+      "output": "{\"temperature_c\":18,\"condition\":\"cloudy\"}"
+    }
+  ]
+}
+```
+
+The call ID and weather result here are illustrative: use the actual returned ID
+and your tool's actual result. `output` must be a nonempty string. For prior text
+messages, use string content or `input_text`/`output_text` parts with `type` and
+`text`; do not blindly replay output-only metadata as input.
+
+## Errors and unsupported features
+
+Before SSE starts, authentication, balance, validation, and connection-establishment
+failures return JSON rather than SSE. An enabled endpoint uses an OpenAI-shaped
+`error` object. Edge validation errors may include `error.param`; model-specific
+validation currently returns a sanitized generic error without `param`:
+
+```json
+{
+  "error": {
+    "message": "The Responses request is invalid.",
+    "type": "invalid_request_error",
+    "code": "invalid_request_error"
+  }
+}
+```
+
+A deployment with the route disabled returns HTTP 404 with
+`{"status":404,"error":"not found"}` instead. After SSE starts, inspect terminal
+events for failure; the HTTP status cannot be changed at that point.
+
+Unsupported fields are rejected, not silently forwarded. This endpoint does not
+currently support:
+
+- `stop`, `seed`, `max_tokens`, or `max_completion_tokens`; use `max_output_tokens`.
+- A universal caching `on`/`off`/`auto` switch, cache TTL controls, or explicit cache breakpoints.
+- `reasoning.effort: minimal`/`xhigh` or `reasoning.summary` for the listed models.
+- Non-strict function schemas, built-in tools, or schema-constrained text via `text.format`/`response_format`.
+- Stored response chaining (`previous_response_id`, including `null`), `store: true`, background jobs, retrieval, cancellation, or webhook delivery.
+- Provider-selection fields, arbitrary provider extensions, or user-supplied `safety_identifier`.
+
+Use the [model matrix](/llm-router/responses-capabilities) for additional restrictions.
+The [official OpenAI streaming guide](https://developers.openai.com/api/docs/guides/streaming-responses)
+explains the SDK event pattern, but does not expand the Eachlabs feature set.

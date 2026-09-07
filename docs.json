@@ -95,6 +95,7 @@
               "GET /v1/webhooks/{execution_id}",
               "GET /v1/llm-router/model-catalog",
               "POST /v1/chat/completions",
+              "POST /v1/responses",
               "POST /v1/audio/transcriptions",
               "POST /v1/audio/speech",
               "POST /v1/workflows",
@@ -221,7 +222,7 @@
         "groups": [
           {
             "group": "Overview",
-            "pages": ["llm-router/overview", "llm-router/quickstart", "llm-router/audio", "llm-router/models"]
+            "pages": ["llm-router/overview", "llm-router/quickstart", "llm-router/responses", "llm-router/responses-capabilities", "llm-router/audio", "llm-router/models"]
           }
         ]
       },
