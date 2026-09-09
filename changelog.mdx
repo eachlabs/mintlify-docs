@@ -4,6 +4,58 @@ description: "Product updates and releases from each::labs"
 rss: true
 ---
 
+<Update label="September 8, 2026" description="Settings" rss={{ title: "Control how long organization data is retained", description: "Settings" }}>
+  ## Control how long organization data is retained
+
+  - Organization owners can set execution input/output retention from the dashboard, with a confirmation step that names the organization and selected duration before changes are saved.
+  - Storage retention can be capped at up to 365 days, so uploaded outputs expire on a predictable schedule.
+  - Execution retention defaults to never expiring. Clearing the setting uses `-1`, so API callers can return an organization to the default policy explicitly.
+</Update>
+
+<Update label="September 8, 2026" description="Error Analytics" rss={{ title: "See requested models in Error Analytics", description: "Error Analytics" }}>
+  ## See requested models in Error Analytics
+
+  - Error Analytics now shows the requested model alongside the routed parent model, so router traffic can be debugged by the model your request actually named.
+  - Requested-model rows link to the matching model detail page, so you can move from an error cluster to the model that produced it without searching manually.
+</Update>
+
+<Update label="September 8, 2026" description="API" rss={{ title: "Get served pricing estimates from the model API", description: "API" }}>
+  ## Get served pricing estimates from the model API
+
+  - API model pricing now uses served model cost estimates, so public pricing responses match the estimate Eachlabs uses for the model.
+  - Models with pricing documents that do not expose usable metadata return a structured generic estimate, while models without pricing documents return `null`.
+</Update>
+
+<Update label="September 8, 2026" description="AI Models" rss={{ title: "Run the LLM router with one shared model form", description: "AI Models" }}>
+  ## Run the LLM router with one shared model form
+
+  - The LLM router now appears as a regular model across model pages, canvas, workflow steps, and API-builder surfaces.
+  - Router inputs use a flat form with `prompt`, `system`, `images`, and `web_search`, so you can configure a routed run without switching to a separate chat-style interface.
+  - The form adapts to the selected routed model's capabilities, so unsupported parameters stay out of the request before you run it.
+</Update>
+
+<Update label="September 7, 2026" description="API" rss={{ title: "Use the Responses API for buffered and streaming model calls", description: "API" }}>
+  ## Use the Responses API for buffered and streaming model calls
+
+  - `POST /v1/responses` is available through the public API for buffered Responses calls, with the same authentication, balance checks, execution creation, and error framing as other model requests.
+  - Streaming Responses calls proxy provider events over SSE, so clients can consume the response stream without converting it to Chat Completions events.
+  - Responses executions preserve usage, billing, and final execution status for both buffered and streamed calls, so settled records match the request path you used.
+</Update>
+
+<Update label="September 5, 2026" description="AI Models" rss={{ title: "Transcribe audio with Meta Muse Voice Transcribe", description: "AI Models" }}>
+  ## Transcribe audio with Meta Muse Voice Transcribe
+
+  - `meta-muse-voice-transcribe` is available in the model catalog for audio transcription requests.
+  - The route accepts audio transcription input through the public model surface, so you can use Meta Muse Voice Transcribe alongside the rest of your Eachlabs models.
+</Update>
+
+<Update label="September 3, 2026" description="AI Models" rss={{ title: "Run new Flash LLMs from the model catalog", description: "AI Models" }}>
+  ## Run new Flash LLMs from the model catalog
+
+  - `qwen/qwen3.8-flash` is available in the model catalog for low-latency LLM requests.
+  - `z-ai/glm-5.3-flash` is available in the model catalog, so you can choose GLM 5.3 Flash from the same catalog and routing surfaces as other LLMs.
+</Update>
+
 <Update label="September 3, 2026" description="API" rss={{ title: "Traverse execution history with cursor pagination", description: "API" }}>
   ## Traverse execution history with cursor pagination
 
