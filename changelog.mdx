@@ -4,6 +4,14 @@ description: "Product updates and releases from each::labs"
 rss: true
 ---
 
+<Update label="September 11, 2026" description="LLM Router" rss={{ title: "List LLM Router models from the API", description: "LLM Router" }}>
+  ## List LLM Router models from the API
+
+  - `GET /v1/llm-router/models` returns every model the router serves right now, chat and audio, with the id to send as `model`, a title and description, and the endpoint that accepts it. No API key needed. Filter with `?capability=` and `?family=`.
+  - `GET /v1/llm-router/models/{id}` returns one model with its FAQs, or its audio limits. Ids keep their slash and are never renamed; a retired model answers `404`.
+  - The static "Available Models" page and the `GET /v1/llm-router/model-catalog` reference are gone: the list is the API, so it is never out of date.
+</Update>
+
 <Update label="September 9, 2026" description="Organization Settings" rss={{ title: "Control execution and storage retention for your organization", description: "Organization Settings" }}>
   ## Control execution and storage retention for your organization
 

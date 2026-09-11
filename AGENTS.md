@@ -24,5 +24,5 @@ Product and API docs as `.mdx` pages; navigation and site config in `docs.json`;
 
 ## Notes
 
-- **llm-router/models.mdx is generated** below its banner comment by `scripts/generate-llm-router-models.mjs` — never hand-edit the model tables; regenerate per README.md and re-commit.
+- **There is no llm-router model table.** `GET /v1/llm-router/models` is the model list; `llm-router/overview.mdx` shows how to call it. Do not reintroduce a static or generated table.
 - Docs changes are customer-facing on merge. Shipped customer-facing features should be reflected in `changelog.mdx` — that freshness is checked externally (cycle-cat diffs the changelog against merged work and opens draft-entry PRs here).
