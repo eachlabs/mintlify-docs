@@ -19,6 +19,7 @@ Authorization: Bearer YOUR_API_KEY
 
 Public endpoints that do NOT require authentication:
 - `GET https://api.eachlabs.ai/v1/models` (list models)
+- `GET https://api.eachlabs.ai/v1/llm-router/models` (list LLM Router models)
 - `GET https://eachsense-agent.core.eachlabs.run/v1/models` (sense models)
 
 Auth error response: `{"error": "Invalid or missing API key"}` (HTTP 401)

@@ -159,24 +159,124 @@
         }
       }
     },
-    "/v1/llm-router/model-catalog": {
+    "/v1/llm-router/models": {
       "get": {
         "tags": [
           "AI Models"
         ],
-        "summary": "Get eachlabs-llm-router model catalog",
-        "description": "Retrieve the curated visible model list and generated model enum schema for eachlabs-llm-router.",
-        "operationId": "getLLMRouterModelCatalog",
+        "summary": "List LLM Router models",
+        "description": "The models `eachlabs-llm-router` serves right now, in one versioned list: chat models for `/v1/chat/completions` and audio models for the transcription, speech and realtime endpoints. Each entry carries the id to send as `model`, what it does and which endpoint takes it; nothing about how the router serves it. Public, no API key required. The list changes only when the catalog `version` changes.",
+        "operationId": "listLLMRouterModels",
+        "parameters": [
+          {
+            "name": "capability",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "chat_completions",
+                "audio_transcriptions",
+                "audio_speech",
+                "realtime_transcriptions"
+              ]
+            },
+            "description": "Only models of this capability. Any other value answers 400.",
+            "example": "chat_completions"
+          },
+          {
+            "name": "family",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Only chat models of this family (case-insensitive exact match, e.g. `openai`, `anthropic`). Audio models have no family and are excluded when this is set.",
+            "example": "anthropic"
+          }
+        ],
         "responses": {
           "200": {
-            "description": "LLM router model catalog retrieved successfully",
+            "description": "The current model list",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/LLMRouterModelCatalog"
+                  "$ref": "#/components/schemas/LLMRouterModelList"
                 }
               }
             }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/v1/llm-router/models/{id}": {
+      "get": {
+        "tags": [
+          "AI Models"
+        ],
+        "summary": "Get LLM Router model",
+        "description": "One model by its id, with its FAQs (chat models) or its audio limits (audio models). Ids keep their slash: `GET /v1/llm-router/models/openai/gpt-5.2`. An id the router knows but does not serve answers 404 with a `status` and `reason`; an unknown id answers a plain 404. Model ids are stable: a model that is retired disappears from the list and answers 404 here, it is never renamed.",
+        "operationId": "getLLMRouterModel",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Model id as listed, slash included.",
+            "example": "openai/gpt-5.2"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The model",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LLMRouterModelDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown id, or a known id the router does not serve",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LLMRouterModelNotFound"
+                },
+                "examples": {
+                  "unknown": {
+                    "value": {
+                      "error": "model not found",
+                      "id": "nobody/model"
+                    }
+                  },
+                  "not_served": {
+                    "value": {
+                      "error": "model is not available through the router",
+                      "id": "google-text-to-speech",
+                      "status": "unavailable",
+                      "reason": "Asynchronous upstream; cannot back the single-response endpoint."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "502": {
+            "$ref": "#/components/responses/BadGateway"
           },
           "500": {
             "$ref": "#/components/responses/InternalServerError"
@@ -2140,98 +2240,6 @@
           }
         }
       },
-      "LLMRouterModelCatalog": {
-        "type": "object",
-        "properties": {
-          "slug": {
-            "type": "string",
-            "example": "eachlabs-llm-router"
-          },
-          "source": {
-            "type": "string",
-            "enum": [
-              "catalog",
-              "odoo_fallback"
-            ]
-          },
-          "version": {
-            "type": "integer",
-            "example": 1
-          },
-          "updated_at": {
-            "type": "string",
-            "example": "2026-05-24"
-          },
-          "model_enum": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "example": [
-              "openai/gpt-5.2",
-              "anthropic/claude-sonnet-4-6"
-            ]
-          },
-          "request_schema": {
-            "type": "object",
-            "description": "JSON Schema fragment containing the generated model enum."
-          },
-          "models": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/LLMRouterCatalogModel"
-            }
-          }
-        }
-      },
-      "LLMRouterCatalogModel": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "example": "openai/gpt-5.2"
-          },
-          "status": {
-            "type": "string",
-            "example": "visible"
-          },
-          "family": {
-            "type": "string",
-            "example": "openai"
-          },
-          "canonical_provider": {
-            "type": "string",
-            "example": "openrouter"
-          },
-          "canonical_target_model": {
-            "type": "string",
-            "example": "openai/gpt-5.2"
-          },
-          "routing_policy": {
-            "type": "string",
-            "example": "explicit_route"
-          },
-          "legacy_requesty": {
-            "type": "boolean"
-          },
-          "title": {
-            "type": "string",
-            "example": "GPT-5.2"
-          },
-          "description": {
-            "type": "string"
-          },
-          "faqs": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/LLMRouterCatalogFAQ"
-            }
-          },
-          "readme_md": {
-            "type": "string"
-          }
-        }
-      },
       "LLMRouterCatalogFAQ": {
         "type": "object",
         "properties": {
@@ -3534,6 +3542,189 @@
           "offset",
           "total_count"
         ]
+      },
+      "LLMRouterModelSummary": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "description",
+          "capability",
+          "endpoint"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Send this as `model`.",
+            "example": "openai/gpt-5.2"
+          },
+          "title": {
+            "type": "string",
+            "example": "GPT-5.2"
+          },
+          "description": {
+            "type": "string"
+          },
+          "family": {
+            "type": "string",
+            "description": "Chat models only.",
+            "example": "openai"
+          },
+          "capability": {
+            "type": "string",
+            "enum": [
+              "chat_completions",
+              "audio_transcriptions",
+              "audio_speech",
+              "realtime_transcriptions"
+            ]
+          },
+          "endpoint": {
+            "type": "string",
+            "description": "The endpoint that accepts this model.",
+            "example": "/v1/chat/completions"
+          }
+        }
+      },
+      "LLMRouterModelList": {
+        "type": "object",
+        "required": [
+          "version",
+          "updated_at",
+          "count",
+          "models"
+        ],
+        "properties": {
+          "version": {
+            "type": "integer",
+            "description": "Catalog version; changes whenever the list changes.",
+            "example": 4
+          },
+          "updated_at": {
+            "type": "string",
+            "example": "2026-09-10"
+          },
+          "count": {
+            "type": "integer",
+            "example": 366
+          },
+          "models": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LLMRouterModelSummary"
+            }
+          }
+        }
+      },
+      "LLMRouterModelAudio": {
+        "type": "object",
+        "description": "Limits of an audio model, as enforced by the endpoint.",
+        "properties": {
+          "docs_url": {
+            "type": "string"
+          },
+          "language_support": {
+            "type": "string",
+            "example": "auto_or_iso_code"
+          },
+          "input_formats": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "response_formats": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "timestamp_granularities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "voices": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "supports_speed": {
+            "type": "boolean"
+          },
+          "supports_instructions": {
+            "type": "boolean"
+          },
+          "minimum_speed": {
+            "type": "number"
+          },
+          "maximum_speed": {
+            "type": "number"
+          },
+          "max_input_bytes": {
+            "type": "integer"
+          },
+          "max_input_chars": {
+            "type": "integer"
+          },
+          "max_duration_seconds": {
+            "type": "integer"
+          },
+          "max_message_bytes": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "supports_speed",
+          "supports_instructions"
+        ]
+      },
+      "LLMRouterModelDetail": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/LLMRouterModelSummary"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "faqs": {
+                "type": "array",
+                "description": "Chat models only.",
+                "items": {
+                  "$ref": "#/components/schemas/LLMRouterCatalogFAQ"
+                }
+              },
+              "audio": {
+                "$ref": "#/components/schemas/LLMRouterModelAudio"
+              }
+            }
+          }
+        ]
+      },
+      "LLMRouterModelNotFound": {
+        "type": "object",
+        "required": [
+          "error"
+        ],
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "description": "Present when the id is known but not served.",
+            "example": "unavailable"
+          },
+          "reason": {
+            "type": "string",
+            "description": "Present when the id is known but not served."
+          }
+        }
       }
     },
     "responses": {

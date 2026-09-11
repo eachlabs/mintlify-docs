@@ -46,7 +46,7 @@ https://api.eachlabs.ai/v1
 | Amazon | `amazon/nova-pro-v1`, `amazon/nova-lite-v1` |
 
 <Note>
-  This is just a taste. Check out the full menu on the [Available Models](/llm-router/models) page.
+  This is just a taste. The full list is one request away — see [Listing models](#listing-models) below.
 </Note>
 
 ## Model Format
@@ -59,6 +59,45 @@ anthropic/claude-sonnet-4-20250514
 google/gemini-2.5-pro-preview-06-05
 deepseek/deepseek-r1
 ```
+
+## Listing Models
+
+The router publishes the models it serves right now, so you never work from a stale table. No API key needed.
+
+<CodeGroup>
+
+```bash curl
+# every model, chat and audio
+curl -s https://api.eachlabs.ai/v1/llm-router/models
+
+# chat models only, one family
+curl -s "https://api.eachlabs.ai/v1/llm-router/models?capability=chat_completions&family=anthropic"
+
+# one model, with its FAQs (ids keep their slash)
+curl -s https://api.eachlabs.ai/v1/llm-router/models/openai/gpt-5.2
+```
+
+```python Python
+import requests
+
+models = requests.get("https://api.eachlabs.ai/v1/llm-router/models").json()
+print(models["version"], models["count"])
+for m in models["models"]:
+    print(m["id"], "→", m["endpoint"])
+
+detail = requests.get("https://api.eachlabs.ai/v1/llm-router/models/openai/gpt-5.2").json()
+print(detail["title"], detail["description"])
+```
+
+```javascript Node.js
+const models = await fetch("https://api.eachlabs.ai/v1/llm-router/models").then((r) => r.json());
+console.log(models.version, models.count);
+for (const m of models.models) console.log(m.id, "→", m.endpoint);
+```
+
+</CodeGroup>
+
+Each entry carries `id` (send it as `model`), `title`, `description`, `family` (chat models), `capability` and the `endpoint` that accepts it. The list is versioned: `version` changes whenever a model is added, retired or edited. Filter with `?capability=` (`chat_completions`, `audio_transcriptions`, `audio_speech`, `realtime_transcriptions`) and `?family=`. A model that is retired disappears from the list and its detail answers `404`; ids are never renamed. Full contract: [List LLM Router models](/api-reference/ai-models/list-llm-router-models) and [Get LLM Router model](/api-reference/ai-models/get-llm-router-model).
 
 ## How It Works
 
@@ -76,7 +115,7 @@ deepseek/deepseek-r1
 
 ## Pricing
 
-You only pay for the tokens you use. Pricing varies per model and we match the original provider's pricing, so you're never overpaying. Check per-model costs on the [Available Models](/llm-router/models) page or in your [dashboard](https://www.eachlabs.ai).
+You only pay for the tokens you use. Pricing varies per model and we match the original provider's pricing, so you're never overpaying. Check per-model costs in your [dashboard](https://www.eachlabs.ai).
 
 ## Next Steps
 
