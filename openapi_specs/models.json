@@ -115,19 +115,18 @@
         }
       }
     },
-    "/v1/model": {
+    "/v1/models/{slug}": {
       "get": {
         "tags": [
           "AI Models"
         ],
-        "summary": "Get model details (deprecated)",
-        "description": "Deprecated: use `GET /v1/models/{slug}` instead. Retained for backwards compatibility; returns the same payload, including the nullable compact `cost` estimate.\n",
-        "deprecated": true,
-        "operationId": "getModel",
+        "summary": "Get model details",
+        "description": "Returns a single model's detail payload, including the nullable compact `cost` estimate. Supersedes the removed `GET /v1/model?slug=` query route.\n",
+        "operationId": "getModelBySlug",
         "parameters": [
           {
             "name": "slug",
-            "in": "query",
+            "in": "path",
             "required": true,
             "schema": {
               "type": "string"

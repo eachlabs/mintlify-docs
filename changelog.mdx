@@ -4,6 +4,13 @@ description: "Product updates and releases from each::labs"
 rss: true
 ---
 
+<Update label="September 14, 2026" description="API" rss={{ title: "Model details now use a path-based endpoint", description: "API" }}>
+  ## Model details now use a path-based endpoint
+
+  - `GET /v1/models/{slug}` is now the single route for retrieving model details. It returns the same payload as before, including the nullable `cost` guidance.
+  - The deprecated `GET /v1/model?slug=` query route has been removed. Update any integration that used it to `GET /v1/models/{slug}`.
+</Update>
+
 <Update label="September 9, 2026" description="Organization Settings" rss={{ title: "Control execution and storage retention for your organization", description: "Organization Settings" }}>
   ## Control execution and storage retention for your organization
 

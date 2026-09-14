@@ -32,7 +32,7 @@ https://api.eachlabs.ai
 | Method | Path | Description |
 |--------|------|-------------|
 | `GET` | `/v1/models` | List available AI models |
-| `GET` | `/v1/model?slug={slug}` | Get model details |
+| `GET` | `/v1/models/{slug}` | Get model details |
 | `POST` | `/v1/prediction` | Create a prediction |
 | `GET` | `/v1/prediction/{id}` | Get prediction status and results |
 | `GET` | `/v1/executions` | List prediction executions and costs |
@@ -43,10 +43,10 @@ Need to pass your own media as a model input? Upload and manage files under the 
 
 ## Authentication
 
-The model catalog (`GET /v1/models`, `GET /v1/model`, `GET /v1/llm-router/model-catalog`) is public; all other endpoints require an API key via the `Authorization: Bearer` header.
+The model catalog (`GET /v1/models`, `GET /v1/models/{slug}`, `GET /v1/llm-router/model-catalog`) is public; all other endpoints require an API key via the `Authorization: Bearer` header.
 
 ```bash
-curl https://api.eachlabs.ai/v1/model?slug=flux-1-1-pro \
+curl https://api.eachlabs.ai/v1/models/flux-1-1-pro \
   -H "Authorization: Bearer YOUR_API_KEY"
 ```
 
