@@ -28,10 +28,10 @@ It runs behind the same [eachlabs prediction API](/api/overview) you may already
 
 ## Why it's safe to build on
 
-- **Strict validation, $0 rejects.** Every capability validates its parameters server-side with `additionalProperties: false`. A malformed request — wrong enum, out-of-range value, unknown key, structurally incompatible input — is rejected *before any compute runs* and costs nothing.
+- **Strict validation, $0 rejects.** Every capability validates its parameters server-side with `additionalProperties: false`. Invalid parameters — wrong enum, out-of-range value, unknown key — are rejected before execution and cost nothing. An input failure during metered execution, including subtitle conversion, follows the failed-compute rules below.
 - **Per-second integer billing, no multipliers.** You pay `billed_seconds × $0.0015`, plus output delivery only beyond a 200 MB free allowance per job ($0.30/GB on the excess). No resolution, codec, or duration multipliers. Details in [Billing & Limits](/video/billing-limits).
 - **Deliver-or-don't-bill for platform faults.** If a failure on our side — including an upload failure — prevents delivering your output, you are not billed; `platform_fault` is the one error class where retrying the same request can succeed (`platform_drift`, also $0, is deterministic — see the [error catalog](/video/billing-limits#error-catalog)). Failures caused by your input after compute starts are metered by the engine — a mid-run ffmpeg failure meters the elapsed execution wall, a job killed at the 3600 s execution cap meters exactly 3600 seconds — and settle at `metrics.cost: 0` during the beta. The full matrix is in [Billing & Limits](/video/billing-limits#failed-compute).
-- **Empty outputs are rejected at $0 when the source can be probed.** Requests whose parameters would produce nothing (a trim starting past the end of the clip, a fade beyond the video's duration) are rejected by a probe gate before execution. On a source the probe cannot read, that gate fails open: the job runs and bills its execution seconds even if the output is near-empty.
+- **Empty outputs are rejected at $0 when the source can be probed.** Requests whose parameters would produce nothing (a trim starting past the end of the clip, a fade beyond the video's duration) are rejected by a probe gate before execution. Unsupported input formats are also rejected. On other probe failures, the empty-output gate fails open: the job runs and bills its execution seconds even if the output is near-empty.
 
 ## How results come back
 

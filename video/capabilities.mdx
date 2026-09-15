@@ -234,6 +234,8 @@ Swap or mix a video's audio track using a second input as the audio source; vide
 
 Burn a subtitle track (SRT/VTT/ASS) into the video via libass, with optional style overrides. No subtitle file yet? Generate one with a speech-to-text model first (e.g. `elevenlabs-speech-to-text-scribe-v2`), or use [subtitle_compose](#subtitle_compose) to author animated captions directly from word timings.
 
+Staged subtitle files are normalized before rendering. The source file and normalized subtitle document must each be smaller than 32 MiB. This conversion is part of the job's metered execution; subtitle styles and the overrides below remain supported.
+
 **Inputs:** `input_urls` (2) — `input_urls[0]` is the video, `input_urls[1]` is the subtitle file (SRT/VTT/ASS) · **Output:** media — single file
 
 | Parameter | Type | Constraints | Default | Required | Notes |
@@ -1689,12 +1691,16 @@ The example above is a working audio-mastering command (compress → normalize t
 }
 ```
 
-**The enforced safety boundary.** Commands are validated server-side, and ffmpeg runs with an injected `-protocol_whitelist file` — commands can read local files only, never the network. Every `run_ffmpeg` job is billed like any capability job. The argv restrictions — this is the **complete** list; anything not listed passes validation (and, if ffmpeg itself rejects it, fails at execution as `exec_error`):
+**Input and command restrictions.** Commands are validated server-side, and media readers are restricted to supported input formats and the file protocol. Use staged placeholders for media access. Every `run_ffmpeg` job follows the same [billing rules](/video/billing-limits) as capability jobs. The main restrictions are:
 
 - `argv[0]` must be `ffmpeg` or `ffprobe`.
 - **URL schemes are an allow-list of one** (`protocol_denied`): any token carrying a `scheme:` prefix is denied unless the scheme is `expr:` (ffmpeg's expression prefix). Nested prefixes are unwrapped recursively — `async:file:...`-style chains are caught.
-- **Denied tokens** (`flag_denied`): `-protocol_whitelist` (the sandbox injects its own), a bare `-` (stdin/stdout), `movie=` / `amovie=` filter sources (an arbitrary-file-read vector), and `-safe` with any value other than the literal `1`.
-- **Placeholder-assembled paths** reject `..` traversal; raw literal path tokens are permitted in `run_ffmpeg` (it compiles in escalated mode — `/dev/null` and plain local paths pass validation, though only staged placeholder paths resolve to your media).
+- **Filesystem paths:** use staged media placeholders instead of literal paths (`literal_path`). The `/dev/null` output sink is permitted. A binding cannot grant access to an existing file on the server.
+- **Input formats:** HLS, DASH, caller-supplied concat playlists, and other unsupported media formats are rejected even when renamed with a supported extension. Use [concat](#concat) or [concat_copy](#concat_copy) for joining media. HLS/DASH output remains supported.
+- **Unsafe options** (`flag_denied`): overriding `-protocol_whitelist` or `-format_whitelist`, the MOV external-file options `-enable_drefs` and `-use_absolute_path`, a bare `-` (stdin/stdout), and `-safe` with any value other than the literal `1`. Filtergraph files and file-loaded command options (`-/option`) are also rejected; pass the filtergraph directly in `argv`.
+- **File-reading filters** require a complete staged placeholder in each file option, including after quoting and escaping. Raw `subtitles` accepts staged SRT/VTT/ASS files with named options, including `force_style`; only the filename may be positional. The files are normalized before rendering as part of the job's metered execution, with the same 32 MiB source/output limit as [captions](#captions). Raw `ass` accepts a staged ASS file.
+- **Source and command filters:** `movie`, `amovie`, `sendcmd`, `asendcmd`, `zmq`, and `azmq` are unavailable in raw mode. The [reframe_track](#reframe_track) capability provides its own crop-tracking graph.
+- **Code-loading filters** are unavailable: `ladspa`, `lv2`, `frei0r`, `frei0r_src`, `program_opencl`, and `openclsrc`.
 - **`-var_stream_map`** values are checked against a strict grammar; a nonconforming value rejects as `invalid_command`.
 - **Placeholder bindings**: a bound value may not begin with `-` (`flag_denied`), may not contain `..` traversal, and, when spliced inside a filtergraph argument, may not contain the filtergraph metacharacters `` , : ; ' [ ] \ ``.
 
