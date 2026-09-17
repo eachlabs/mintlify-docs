@@ -49,7 +49,7 @@ A workflow consists of:
 
 ## Steps
 
-Each step defines an operation in the workflow. Steps can be model invocations, HTTP requests, Python functions, parallel branches, conditional logic, or simple pass-through operations.
+Each step defines an operation in the workflow. Steps can be model invocations, parallel branches, conditional logic, or simple pass-through operations. HTTP requests and Python code also run as model invocations, through the `eachlabs-http-step` and `eachlabs-python-step` models.
 
 ```json
 {
@@ -70,7 +70,7 @@ All step types share these fields:
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `id` | string | Yes | Unique identifier within the workflow |
-| `type` | string | Yes | Step type: `model`, `http`, `python`, `parallel`, `choice`, or `pass` |
+| `type` | string | Yes | Step type: `model`, `parallel`, `choice`, or `pass` |
 | `continue_on_error` | boolean | No | Continue workflow execution even if this step fails |
 | `timeout_seconds` | integer | No | Maximum execution time for this step |
 | `retry` | object | No | Step-level retry configuration |
@@ -100,11 +100,11 @@ All step types share these fields:
 | Type | Description |
 |------|-------------|
 | `model` | Invokes an AI model via each::api |
-| `http` | Makes an HTTP request to an external URL |
-| `python` | Executes a Python function |
 | `parallel` | Executes multiple branches concurrently |
 | `choice` | Evaluates a condition and routes to the matching branch |
 | `pass` | Passes input through without processing, optionally injecting a result |
+
+HTTP requests and Python code are not separate step types — they run as model steps, through the `eachlabs-http-step` and `eachlabs-python-step` models (see [HTTP Steps](#http-steps) and [Python Steps](#python-steps)).
 
 ---
 
@@ -143,70 +143,81 @@ Invoke an AI model from the each::api catalog.
 
 ## HTTP Steps
 
-Make HTTP requests to external APIs or services.
+Make HTTP requests to external APIs or services through the `eachlabs-http-step` model.
 
 ```json
 {
   "id": "call_api",
-  "type": "http",
-  "url": "https://api.example.com/process",
-  "method": "POST",
-  "headers": {
-    "Content-Type": "application/json"
-  },
-  "body": {
-    "data": "{{step1.primary}}"
-  },
-  "auth": {
-    "type": "bearer",
-    "token": "{{inputs.api_token}}"
-  },
-  "timeout": 30000
+  "type": "model",
+  "model": "eachlabs-http-step",
+  "params": {
+    "url": "https://api.example.com/process",
+    "method": "POST",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "data": "{{step1.primary}}"
+    },
+    "timeout_seconds": 30
+  }
 }
 ```
 
 | Field | Type | Required | Default | Description |
 |-------|------|----------|---------|-------------|
-| `url` | string | Yes | `-` | Request URL (supports template variables) |
-| `method` | string | No | `GET` | HTTP method: `GET`, `POST`, `PUT`, `DELETE`, `PATCH` |
-| `headers` | object | No | `-` | Request headers |
-| `query_params` | object | No | `-` | URL query parameters |
-| `body` | any | No | `-` | Request body |
-| `auth` | object | No | `-` | Authentication configuration |
-| `timeout` | integer | No | `-` | Request timeout in milliseconds |
-| `follow_redirects` | boolean | No | `-` | Follow HTTP redirects |
-| `validate_ssl` | boolean | No | `-` | Validate SSL certificates |
+| `url` | string | Yes | `-` | Full request URL (supports template variables) |
+| `method` | string | No | `GET` | HTTP method: `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `HEAD`, `OPTIONS` |
+| `headers` | object | No | `{}` | Request headers as key/value pairs. Set `Content-Type` explicitly when sending a body |
+| `query_params` | object | No | `{}` | Appended to the URL as `?k=v` |
+| `body` | object | No | `-` | JSON object body, sent as `application/json` on `POST`/`PUT`/`PATCH`. Ignored for `GET`/`HEAD`/`DELETE`/`OPTIONS`. Non-object payloads (strings, arrays, raw form data) are not supported |
+| `timeout_seconds` | integer | No | `30` | Per-request deadline, clamped to 1-60 |
+| `fail_on_status` | string | No | `-` | Which responses fail the step. Omitted (the default), every response that arrives is a success, whatever it says. `non_2xx` fails any status outside 200-299. A comma-separated list such as `429,500,502` fails only those |
 
-### Auth Configuration
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `type` | string | Auth type: `basic`, `bearer`, or `api_key` |
-| `username` | string | For `basic` auth |
-| `password` | string | For `basic` auth |
-| `token` | string | For `bearer` auth |
+There is no `auth` parameter: authentication for `eachlabs-http-step` is configured on the model's connection, not passed per-step.
 
 ---
 
 ## Python Steps
 
-Execute Python code within the workflow.
+<Note>
+`eachlabs-python-step` is in private beta and is not available to every organization.
+</Note>
+
+Run Python code within the workflow through the `eachlabs-python-step` model.
 
 ```json
 {
   "id": "transform_data",
-  "type": "python",
-  "code": "result = inputs['text'].upper()",
-  "inputs": {
-    "text": "{{step1.primary}}"
+  "type": "model",
+  "model": "eachlabs-python-step",
+  "params": {
+    "code": "result = inputs['text'].upper()",
+    "inputs": {
+      "text": "{{step1.primary}}"
+    },
+    "timeout_seconds": 30
   }
 }
 ```
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `code` | string | Yes | Python code to execute |
-| `inputs` | object | No | Input variables available in the code (supports template variables) |
+| Field | Type | Required | Default | Description |
+|-------|------|----------|---------|-------------|
+| `code` | string | Yes | `-` | Python code to execute. Set the variable `result` to the value you want returned; a `SyntaxError` rejects the step before it runs |
+| `inputs` | object | No | `{}` | Available in the code as the `inputs` dict (supports template variables) |
+| `file` | string | No | `-` | Single file URL, downloaded before the code runs and exposed to the code as `files["file"]` |
+| `files` | object | No | `{}` | Map of name to file URL, downloaded before the code runs and exposed to the code as `files[name]` |
+| `timeout_seconds` | integer | No | `300` | Wall-clock limit for the code, `1`-`840` |
+
+### Python Step Outputs
+
+| Field | Description |
+|-------|-------------|
+| `return_value` | The value assigned to `result` in the code (JSON-serializable, up to 1 MiB). `null` if `result` is never set |
+| `printed` | Captured stdout, up to 64 KiB |
+| `output_files` | Files written under the code's output directory, keyed by filename, as URLs |
+
+A step-level `retry` re-runs the code from scratch on failure; each retry attempt is billed separately, so keep the code idempotent.
 
 ---
 
@@ -524,7 +535,7 @@ Each completed step produces a `StepOutput`:
 
 | Field | Description |
 |-------|-------------|
-| `kind` | Step type: `model`, `http`, `python`, `parallel`, `choice`, `pass` |
+| `kind` | Step type: `model`, `parallel`, `choice`, `pass` |
 | `status` | Execution status: `running`, `completed`, `failed`, `cancelled`, `queued`, `skipped` |
 | `output` | Full step output (string, array, or object) |
 | `primary` | First/main result for quick access |
