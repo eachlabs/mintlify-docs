@@ -4,6 +4,15 @@ description: "Product updates and releases from each::labs"
 rss: true
 ---
 
+<Update label="Unreleased" description="Video API security update — pending deployment" rss={{ title: "Upcoming Video API input restrictions", description: "Pending deployment" }}>
+  ## Upcoming Video API input restrictions
+
+  This security update is under review and has not been deployed.
+
+  - Raw FFmpeg commands will require staged media placeholders and reject local server paths, unsafe options, and code-loading filters. See the [command restrictions](/video/capabilities#run_ffmpeg).
+  - HLS, DASH, and caller-supplied concat playlists will be rejected as inputs. Ordinary media formats, SRT/VTT/ASS captions with styles, and HLS/DASH output remain supported; see the [input guidance](/video/quickstart#2-provide-your-input-video).
+</Update>
+
 <Update label="September 14, 2026" description="API" rss={{ title: "Model details now use a path-based endpoint", description: "API" }}>
   ## Model details now use a path-based endpoint
 

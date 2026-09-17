@@ -41,7 +41,7 @@ Jobs run on shared `cpu` infrastructure; a legacy `tier` field is still accepted
 |-|-|
 | Invalid request | Unknown capability, wrong enum, out-of-range value, unknown parameter key, wrong input count |
 | Input rejected pre-compute | Input over the size budget, input duration over 3600s, unsupported input URL, an input missing a stream the capability declares it needs — the closed per-capability list is in [What the probe gate checks](/video/capabilities#what-the-probe-gate-checks) |
-| Parameters that would produce an empty output — when the source can be probed | `trim` starting at/past the end of the clip, `fade` scheduled beyond the video's duration, sub-frame output windows. On a source the probe cannot read the gate fails open: the job runs and bills its execution seconds |
+| Parameters that would produce an empty output — when the source can be probed | `trim` starting at/past the end of the clip, `fade` scheduled beyond the video's duration, sub-frame output windows. Unsupported input formats are rejected; on other probe failures the gate fails open and the job runs and bills its execution seconds |
 | Platform faults | Any failure on our side — including output-upload failure. **Deliver-or-don't-bill:** if the failure is ours, you were not billed. `platform_fault` is retryable; `platform_drift` is deterministic (see [the drift class](#platform_drift-defined)) |
 
 ## Failed compute
@@ -51,7 +51,7 @@ A failure caused by your input **after compute starts** is metered by the engine
 | Event | Delivered | Engine meters | `failure_class` | Retryable |
 |-|-|-|-|-|
 | The job reaches 3600 s of metered ffmpeg wall | Nothing — the job is killed at the cap | Exactly 3600 s | `billed_seconds_cap` | No |
-| ffmpeg fails mid-run after N seconds, on input content that passed the pre-compute probe gate (corrupt media, an impossible mux, an out-of-bounds crop/pad window) | Nothing | `ceil(N)` seconds, 5 s floor applies | `exec_error` | No |
+| ffmpeg fails mid-run after N seconds, on input content that passed the pre-compute probe gate (corrupt media, failed subtitle conversion, an impossible mux, an out-of-bounds crop/pad window) | Nothing | `ceil(N)` seconds, 5 s floor applies | `exec_error` | No |
 
 <Note>
 **Beta settlement.** Today, every prediction that ends in any status other than `success` settles with `metrics.cost: 0` — including `exec_error`, `billed_seconds_cap`, and `cancelled` (verified against production; see the captured `exec_error` example below). The **Engine meters** column is what the engine records for these outcomes and the reserved charge basis for them; if charging failed compute activates during the beta it will be announced [with notice](/video/versioning), per the note at the top of this page. Do not design flows that rely on failed compute staying free — the cap kill in particular is designed to bill exactly 3600 s.
