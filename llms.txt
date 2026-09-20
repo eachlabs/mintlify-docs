@@ -1277,6 +1277,10 @@ The one account limit is a **low-balance concurrency cap**: while the organizati
 - [Get Webhook](/api/webhooks/get-webhook): `GET /v1/webhooks/{execution_id}`
 - [Webhook Payloads](/api/webhooks/payload-reference)
 
+### each::router
+- [Decisions API](/llm-router/decisions): Gated native `POST /v1/decisions` for TypeSafe Jev. Disabled by default; not a production-availability announcement or a chat-completions SDK operation.
+- [Decisions OpenAPI](/openapi_specs/decisions.json): Canonical machine-readable Decisions request/response schemas.
+
 ### each::workflows
 - [Overview](/workflows/overview)
 - [Quickstart](/workflows/quickstart)

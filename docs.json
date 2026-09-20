@@ -221,7 +221,12 @@
         "groups": [
           {
             "group": "Overview",
-            "pages": ["llm-router/overview", "llm-router/quickstart", "llm-router/audio", "llm-router/models"]
+            "pages": ["llm-router/overview", "llm-router/quickstart", "llm-router/audio", "llm-router/decisions", "llm-router/models"]
+          },
+          {
+            "group": "Decisions Reference",
+            "openapi": {"source": "/openapi_specs/decisions.json", "directory": "decisions-api-reference"},
+            "pages": ["POST /v1/decisions"]
           }
         ]
       },

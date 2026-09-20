@@ -1,0 +1,162 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "each::labs Decisions API",
+    "version": "1.0.0",
+    "description": "Native TypeSafe Jev Decisions contract. Disabled by default; documentation is not confirmation of production availability. Contact Eachlabs before integrating."
+  },
+  "servers": [{"url": "https://api.eachlabs.ai", "description": "Public API; Decisions requires environment enablement"}],
+  "paths": {
+    "/v1/decisions": {
+      "post": {
+        "operationId": "createDecision",
+        "summary": "Evaluate typed questions",
+        "description": "Synchronous buffered JSON; one typed answer per question. Only model, state, and questions are accepted. Streaming, async, provider overrides, metadata, and webhook headers are unsupported. Body limit: 8 MiB. No automatic replay or idempotency key. Availability is gated per environment.",
+        "security": [{"BearerAuth": []}],
+        "requestBody": {
+          "required": true,
+          "content": {"application/json": {"schema": {"$ref": "#/components/schemas/DecisionsRequest"}}}
+        },
+        "responses": {
+          "200": {
+            "description": "Typed answers and native usage with billable USD cost",
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/DecisionsResponse"}}}
+          },
+          "400": {"$ref": "#/components/responses/RequestError"},
+          "401": {"$ref": "#/components/responses/RequestError"},
+          "402": {"$ref": "#/components/responses/RequestError"},
+          "404": {"description": "Endpoint unavailable while rollout is disabled"},
+          "429": {"$ref": "#/components/responses/RequestError"},
+          "500": {"$ref": "#/components/responses/RequestError"},
+          "503": {"$ref": "#/components/responses/RequestError"},
+          "504": {"$ref": "#/components/responses/RequestError"}
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {"BearerAuth": {"type": "http", "scheme": "bearer"}},
+    "responses": {
+      "RequestError": {
+        "description": "Validation, authentication, balance, rate-limit, or execution error; inspect HTTP status and error.code",
+        "content": {"application/json": {"schema": {"$ref": "#/components/schemas/DecisionError"}}}
+      }
+    },
+    "schemas": {
+      "DecisionContent": {
+        "description": "A string, JSON object, or array of arbitrary JSON values",
+        "oneOf": [{"type": "string"}, {"type": "object", "additionalProperties": true}, {"type": "array", "items": {}}]
+      },
+      "DecisionsRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["model", "state", "questions"],
+        "properties": {
+          "model": {"type": "string", "minLength": 1, "pattern": "\\S", "examples": ["typesafe/jev-1.13"]},
+          "state": {"$ref": "#/components/schemas/DecisionContent"},
+          "questions": {
+            "type": "object",
+            "minProperties": 1,
+            "additionalProperties": {"oneOf": [{"$ref": "#/components/schemas/NoulQuestion"}, {"$ref": "#/components/schemas/ChoiceQuestion"}, {"$ref": "#/components/schemas/ScoreQuestion"}]}
+          }
+        }
+      },
+      "NoulQuestion": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["type", "instructions"],
+        "properties": {
+          "type": {"type": "string", "const": "noul"},
+          "instructions": {"$ref": "#/components/schemas/DecisionContent"},
+          "criteria": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["true", "false"],
+            "properties": {"true": {"$ref": "#/components/schemas/DecisionContent"}, "false": {"$ref": "#/components/schemas/DecisionContent"}}
+          }
+        }
+      },
+      "ChoiceQuestion": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["type", "instructions", "criteria"],
+        "properties": {
+          "type": {"type": "string", "const": "choice"},
+          "instructions": {"$ref": "#/components/schemas/DecisionContent"},
+          "criteria": {"type": "object", "additionalProperties": {"oneOf": [{"$ref": "#/components/schemas/DecisionContent"}, {"type": "null"}]}}
+        }
+      },
+      "ScoreQuestion": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["type", "instructions", "criteria"],
+        "properties": {
+          "type": {"type": "string", "const": "score"},
+          "instructions": {"$ref": "#/components/schemas/DecisionContent"},
+          "criteria": {"type": "array", "items": {"$ref": "#/components/schemas/DecisionContent"}}
+        }
+      },
+      "Probabilities": {"type": "object", "additionalProperties": {"type": "number"}},
+      "NoulAnswer": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["type", "noul"],
+        "properties": {"type": {"type": "string", "const": "noul"}, "noul": {"type": "number"}}
+      },
+      "ChoiceAnswer": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["type", "choice"],
+        "properties": {
+          "type": {"type": "string", "const": "choice"},
+          "choice": {"type": "string"},
+          "confidence": {"type": "number"},
+          "probabilities": {"$ref": "#/components/schemas/Probabilities"}
+        }
+      },
+      "ScoreAnswer": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["type", "score"],
+        "properties": {
+          "type": {"type": "string", "const": "score"},
+          "score": {"type": "number"},
+          "confidence": {"type": "number"},
+          "probabilities": {"$ref": "#/components/schemas/Probabilities"},
+          "legend": {"type": "object", "additionalProperties": {"$ref": "#/components/schemas/DecisionContent"}}
+        }
+      },
+      "DecisionsResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["model", "answers", "usage"],
+        "properties": {
+          "id": {"type": "string"},
+          "model": {"type": "string"},
+          "answers": {"type": "object", "minProperties": 1, "additionalProperties": {"oneOf": [{"$ref": "#/components/schemas/NoulAnswer"}, {"$ref": "#/components/schemas/ChoiceAnswer"}, {"$ref": "#/components/schemas/ScoreAnswer"}]}},
+          "usage": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["input_tokens", "output_tokens", "cost"],
+            "properties": {
+              "input_tokens": {"type": "integer", "minimum": 0},
+              "output_tokens": {"type": "integer", "minimum": 0},
+              "cost": {"type": "number", "minimum": 0, "description": "Billable USD cost under the existing account pricing policy. Explicit zero is valid; missing authoritative cost is an error."}
+            }
+          }
+        }
+      },
+      "DecisionError": {
+        "type": "object",
+        "required": ["error"],
+        "properties": {
+          "error": {
+            "type": "object",
+            "required": ["message", "type", "code"],
+            "properties": {"message": {"type": "string"}, "type": {"type": "string"}, "code": {"type": "string"}, "param": {"type": ["string", "null"]}}
+          }
+        }
+      }
+    }
+  }
+}
