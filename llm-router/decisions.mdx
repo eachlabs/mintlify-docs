@@ -1,0 +1,109 @@
+---
+title: "Decisions API"
+description: "Evaluate structured questions with native TypeSafe Jev answers."
+---
+
+`POST /v1/decisions` evaluates a shared state against named questions and returns
+typed answers. The initial model is `typesafe/jev-1.13`.
+
+<Warning>
+  Decisions is disabled by default and available only in environments where its
+  rollout has been enabled. This documentation does not indicate production
+  availability. [Contact us](https://www.eachlabs.ai/contact) before integrating.
+</Warning>
+
+Use a Bearer each::labs API key. Decisions uses native JSON rather than the
+OpenAI chat-completions or Responses contract. Jev requests must use this
+endpoint; the chat and Responses endpoints reject the model.
+
+The [Decisions OpenAPI specification](/openapi_specs/decisions.json) is the
+machine-readable source of truth for request and response shapes.
+
+## Request
+
+The body requires `model`, `state`, and a nonempty `questions` object. State
+accepts a string, JSON object, or array. Each question key identifies the answer
+returned for that question. Instructions use the same string/object/array shapes.
+
+| Question type | Criteria | Answer |
+| --- | --- | --- |
+| `noul` | Optional object with both `true` and `false` guidance | Numeric `noul` value, preserved without boolean conversion |
+| `choice` | Required object of named options; each value is guidance or `null` | Selected `choice`, optional `confidence` and `probabilities` |
+| `score` | Required ordered array of guidance | Numeric `score`, optional `confidence`, `probabilities`, and `legend` |
+
+Guidance accepts a string, object, or array. Only choice criteria allow `null`.
+The request body limit is 8 MiB. Unknown fields are rejected, including
+`messages`, `input`, `stream`, `async`, `provider`, `metadata`, and `source`.
+Provider-selection and webhook headers are unsupported.
+
+```bash cURL
+curl https://api.eachlabs.ai/v1/decisions \
+  -H "Authorization: Bearer YOUR_EACHLABS_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "typesafe/jev-1.13",
+    "state": {"text": "The sky is blue."},
+    "questions": {
+      "relevant": {
+        "type": "noul",
+        "instructions": "Does this mention the sky?"
+      },
+      "color": {
+        "type": "choice",
+        "instructions": "Choose the stated sky color.",
+        "criteria": {"blue": null, "red": null}
+      },
+      "clarity": {
+        "type": "score",
+        "instructions": "Rate the clarity of the sentence.",
+        "criteria": ["unclear", "clear"]
+      }
+    }
+  }'
+```
+
+## Response
+
+The endpoint returns one buffered JSON response and one typed answer per
+question. No streaming, background mode, webhook completion, or prediction API
+adapter is supported in this phase. Example values below are illustrative:
+
+```json
+{
+  "model": "typesafe/jev-1.13",
+  "answers": {
+    "relevant": {"type": "noul", "noul": 0.98},
+    "color": {
+      "type": "choice",
+      "choice": "blue",
+      "confidence": 0.99,
+      "probabilities": {"blue": 0.99, "red": 0.01}
+    },
+    "clarity": {
+      "type": "score",
+      "score": 0.95,
+      "probabilities": {"0": 0.05, "1": 0.95},
+      "legend": {"0": "unclear", "1": "clear"}
+    }
+  },
+  "usage": {"input_tokens": 40, "output_tokens": 12, "cost": 0.00105}
+}
+```
+
+An optional native `id` may also be present. `usage.cost` is the billable USD
+cost under the existing account pricing policy. Input and output token counts
+retain their native names. Missing cost or malformed provider output is an
+error; it is not reported as a free successful request. An explicit zero cost
+is valid.
+
+## Errors
+
+Invalid input returns `400` before an execution is created. Authentication and
+balance failures use the existing API policy. A disabled endpoint is unavailable
+and can return `404`. Provider errors, rate limits, and timeouts return JSON with
+an `error` object containing `message`, `type`, and `code`. Internal provider
+details and execution-write ownership are not included in the public response.
+
+The request is synchronous and billable. A lost response can occur after the
+provider has processed it, so automatically retrying can create another billable
+execution. This endpoint does not provide a request idempotency key.
