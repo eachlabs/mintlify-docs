@@ -96,18 +96,20 @@ app.post("/webhooks/prediction", (req, res) => {
 
 ## Security
 
-### Webhook Secret Verification
+### Verifying Deliveries
 
-If you set a `webhook_secret` when creating your prediction, every delivery carries it verbatim in the `X-Webhook-Secret` header. Verify it with a constant-time string comparison:
+If you set a `webhook_secret` when creating your prediction, each::labs signs every delivery for that prediction. Signed deliveries carry two extra headers:
 
-```python
-import hmac
+- `X-Webhook-Signature` — `sha256=` followed by a lowercase hex HMAC-SHA256 over `<X-Webhook-Timestamp>.<raw request body>`
+- `X-Webhook-Timestamp` — Unix time in seconds at which the delivery was signed
 
-def verify_webhook(request_secret_header: str, secret: str) -> bool:
-    return hmac.compare_digest(request_secret_header, secret)
-```
+Recompute that HMAC with your secret over the raw request body and compare it in constant time. [Verifying Webhook Signatures](/api/webhooks/verifying-signatures) covers the full procedure, with Python and JavaScript handlers you can copy.
 
-The header carries the secret itself — no body signature is computed, so verification is a header comparison, not an HMAC of the payload.
+Deliveries also carry the secret as plain text in the `X-Webhook-Secret` header. That header predates signing and is still sent so receivers built against it keep working, but prefer the signature: it proves the body was not modified, which comparing the header cannot.
+
+<Note>
+  Verify against the **raw bytes** of the request body. The handler examples above call `await request.json()` and read `req.body`, which is fine once a delivery is verified — but a parsed-and-re-serialized body produces a different signature. Capture the raw body first.
+</Note>
 
 ## Retry Behavior
 
@@ -118,5 +120,5 @@ Deliveries are attempted up to 3 times in total: the initial attempt plus 2 retr
 - Return `2xx` as fast as you can, then process data asynchronously
 - Implement idempotency, since you may receive the same webhook more than once
 - Log incoming payloads for debugging
-- Use `webhook_secret` to verify payload authenticity
+- Set a `webhook_secret` and [verify the signature](/api/webhooks/verifying-signatures) on every delivery
 - Set up monitoring for your webhook endpoint's availability

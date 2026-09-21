@@ -1,0 +1,186 @@
+---
+title: "Verifying Webhook Signatures"
+description: "Confirm a webhook delivery came from each::labs and was not modified in transit."
+---
+
+## Why verify
+
+Your webhook endpoint is a public URL, so anyone who learns it can POST to it. Verifying the signature on each delivery proves two things: the request came from each::labs, and the body was not changed on the way.
+
+Signing is opt-in. Supply a `webhook_secret` when you create a prediction or trigger a workflow, and every delivery for that execution is signed. Deliveries without a secret are still sent, just unsigned.
+
+## Signature headers
+
+A signed delivery carries two headers in addition to the payload:
+
+| Header | Example | Meaning |
+|--------|---------|---------|
+| `X-Webhook-Signature` | `sha256=1e77208b549b...` | HMAC-SHA256 of the signed string, lowercase hex, prefixed with `sha256=` |
+| `X-Webhook-Timestamp` | `1789994667` | Unix time in seconds at which the delivery was signed |
+
+## How the signature is computed
+
+The signed string joins the timestamp and the body with a single `.` character:
+
+```
+<X-Webhook-Timestamp> + "." + <raw request body>
+```
+
+That string is passed through HMAC-SHA256 using your `webhook_secret` as the key, and the result is hex-encoded in lowercase.
+
+The timestamp is part of what gets signed, so a captured delivery cannot be replayed under a different one.
+
+<Warning>
+  Compute the HMAC over the **raw bytes of the request body**, exactly as received.
+
+  Parsing the JSON and re-serializing it changes the bytes — key order, spacing and indentation all differ — and the signature will not match. This is the most common reason verification fails.
+</Warning>
+
+## Verification steps
+
+<Steps>
+  <Step title="Read the two headers">
+    Take `X-Webhook-Signature` and `X-Webhook-Timestamp` from the request. Reject the delivery if either is missing, or if the signature does not begin with `sha256=`.
+  </Step>
+  <Step title="Check the timestamp">
+    Reject the delivery if the timestamp is not a number, or if it differs from your current clock by more than your tolerance. Five minutes is a reasonable default.
+  </Step>
+  <Step title="Rebuild the signed string">
+    Join the timestamp, a `.`, and the raw body bytes.
+  </Step>
+  <Step title="Compute the expected signature">
+    HMAC-SHA256 the signed string with your `webhook_secret`, then hex-encode it.
+  </Step>
+  <Step title="Compare in constant time">
+    Compare your value against the header using a constant-time comparison, never `==`. A plain comparison leaks how much of the signature matched.
+  </Step>
+</Steps>
+
+## Examples
+
+<CodeGroup>
+```python Python (FastAPI)
+import hashlib
+import hmac
+import os
+import time
+
+from fastapi import FastAPI, HTTPException, Request
+
+app = FastAPI()
+
+WEBHOOK_SECRET = os.environ["EACHLABS_WEBHOOK_SECRET"].encode()
+TOLERANCE_SECONDS = 300
+
+
+@app.post("/webhooks/eachlabs")
+async def handle_webhook(request: Request):
+    timestamp = request.headers.get("X-Webhook-Timestamp", "")
+    signature = request.headers.get("X-Webhook-Signature", "")
+
+    # Raw bytes, before any JSON parsing.
+    body = await request.body()
+
+    if not timestamp.isdigit():
+        raise HTTPException(status_code=401, detail="missing or malformed timestamp")
+
+    if abs(time.time() - int(timestamp)) > TOLERANCE_SECONDS:
+        raise HTTPException(status_code=401, detail="timestamp outside tolerance")
+
+    if not signature.startswith("sha256="):
+        raise HTTPException(status_code=401, detail="malformed signature")
+
+    signed = timestamp.encode() + b"." + body
+    expected = hmac.new(WEBHOOK_SECRET, signed, hashlib.sha256).hexdigest()
+
+    if not hmac.compare_digest(expected, signature[len("sha256="):]):
+        raise HTTPException(status_code=401, detail="signature mismatch")
+
+    payload = await request.json()
+    print(f"Verified delivery for {payload.get('execution_id') or payload.get('exec_id')}")
+
+    return {"received": True}
+```
+
+```javascript JavaScript (Express)
+const crypto = require("crypto");
+const express = require("express");
+
+const app = express();
+
+const WEBHOOK_SECRET = process.env.EACHLABS_WEBHOOK_SECRET;
+const TOLERANCE_SECONDS = 300;
+
+// express.raw() must come before any express.json() for this route,
+// otherwise the raw body is gone by the time you verify.
+app.post(
+  "/webhooks/eachlabs",
+  express.raw({ type: "application/json" }),
+  (req, res) => {
+    const timestamp = req.get("X-Webhook-Timestamp") || "";
+    const signature = req.get("X-Webhook-Signature") || "";
+
+    if (!/^\d+$/.test(timestamp)) {
+      return res.status(401).json({ error: "missing or malformed timestamp" });
+    }
+
+    if (Math.abs(Date.now() / 1000 - Number(timestamp)) > TOLERANCE_SECONDS) {
+      return res.status(401).json({ error: "timestamp outside tolerance" });
+    }
+
+    const expected =
+      "sha256=" +
+      crypto
+        .createHmac("sha256", WEBHOOK_SECRET)
+        .update(timestamp + ".")
+        .update(req.body) // Buffer holding the raw body
+        .digest("hex");
+
+    const a = Buffer.from(expected);
+    const b = Buffer.from(signature);
+
+    // timingSafeEqual throws when the lengths differ, so check length first.
+    if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
+      return res.status(401).json({ error: "signature mismatch" });
+    }
+
+    const payload = JSON.parse(req.body.toString("utf8"));
+    console.log(`Verified delivery for ${payload.execution_id || payload.exec_id}`);
+
+    res.json({ received: true });
+  },
+);
+```
+</CodeGroup>
+
+## Retries and the timestamp window
+
+A delivery is attempted up to 3 times in total — the initial attempt plus 2 retries, roughly 10 seconds apart. **All attempts of one delivery carry the same signature and the same timestamp**; they are computed once, before the first attempt.
+
+So a retry can reach you a little after its timestamp was generated. A five-minute tolerance covers the whole retry window comfortably. Do not set a tolerance of only a few seconds.
+
+The tolerance is yours to choose and enforce — each::labs does not reject anything on your behalf.
+
+## The X-Webhook-Secret header
+
+Signed deliveries also carry `X-Webhook-Secret`, holding your secret as plain text. It predates signing and is still sent so that receivers built against it keep working.
+
+<Note>
+  Verify the signature, not this header. Comparing `X-Webhook-Secret` only proves the sender knew the secret, and the secret travels in every delivery — so it does not establish that the body is unmodified. The signature does.
+</Note>
+
+## Troubleshooting
+
+**The signature never matches.** Almost always the body. Confirm you are hashing the exact bytes received, not a parsed-and-re-serialized copy. In Express, `express.json()` replaces the raw body with a parsed object; in Flask, use `request.get_data()` rather than `request.json`. Copying a payload out of a web-based request inspector usually re-indents it, which changes the bytes too.
+
+**It matches sometimes, not always.** Check for non-ASCII characters in the payload and make sure you hash bytes rather than a decoded string.
+
+**Timestamps look far off.** Compare your server clock against UTC. `X-Webhook-Timestamp` is Unix seconds, not milliseconds.
+
+**No signature headers at all.** The execution was triggered without a `webhook_secret`, so the delivery is unsigned. Add the field to your trigger or prediction request.
+
+## Related
+
+- [Webhook Payload Reference](/api/webhooks/payload-reference) — payload shapes and delivery behavior
+- [Webhooks Overview](/api/webhooks/overview) — setting up a webhook
+- [Workflow Webhooks](/workflows/webhooks) — webhooks for workflow executions

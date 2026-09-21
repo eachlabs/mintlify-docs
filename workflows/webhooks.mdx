@@ -5,11 +5,11 @@ description: "Receive automatic notifications when workflow executions complete.
 
 ## Overview
 
-Provide a `webhook_url` when triggering a workflow to receive an HTTP POST with execution results when it completes (successfully or with an error).
+Provide a `webhook_url` when triggering a workflow to receive an HTTP POST with execution results when it completes (successfully or with an error). Add a `webhook_secret` to have each delivery signed so you can verify it came from each::labs.
 
 ## Setting Up
 
-Include `webhook_url` in your trigger request:
+Include `webhook_url` in your trigger request, and `webhook_secret` to receive signed deliveries:
 
 ```bash
 curl -X POST https://api.eachlabs.ai/v1/workflows/trigger/WF_ID/v1 \
@@ -17,7 +17,8 @@ curl -X POST https://api.eachlabs.ai/v1/workflows/trigger/WF_ID/v1 \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
     "inputs": {"prompt": "A sunset landscape"},
-    "webhook_url": "https://your-app.com/webhooks/workflow-completed"
+    "webhook_url": "https://your-app.com/webhooks/workflow-completed",
+    "webhook_secret": "whsec_your_secret_key"
   }'
 ```
 
@@ -26,6 +27,17 @@ curl -X POST https://api.eachlabs.ai/v1/workflows/trigger/WF_ID/v1 \
 - **Method:** `POST`
 - **Content-Type:** `application/json`
 - **Body:** Same structure as [Get Execution](/workflows/endpoints/get-execution) response
+
+### Signature headers
+
+When the trigger included a `webhook_secret`, the delivery also carries:
+
+| Header | Meaning |
+|--------|---------|
+| `X-Webhook-Signature` | `sha256=` plus a lowercase hex HMAC-SHA256 over `<X-Webhook-Timestamp>.<raw request body>` |
+| `X-Webhook-Timestamp` | Unix time in seconds at which the delivery was signed |
+
+Verify the signature over the **raw** request body — see [Verifying Webhook Signatures](/api/webhooks/verifying-signatures).
 
 ## Payload Examples
 
@@ -137,7 +149,7 @@ app.post("/webhooks/workflow-completed", (req, res) => {
 
 ## Retry Behavior
 
-Failed webhook deliveries are automatically retried with exponential backoff. Your endpoint should return a `200 OK` to acknowledge receipt.
+Deliveries are attempted up to 3 times in total: the initial attempt plus 2 retries, spaced roughly 10 seconds apart. Every attempt carries the same signature and timestamp. Your endpoint should return a `200 OK` to acknowledge receipt.
 
 ## Best Practices
 
@@ -145,3 +157,4 @@ Failed webhook deliveries are automatically retried with exponential backoff. Yo
 - Implement idempotency using `execution_id` as a deduplication key
 - Handle both `completed` and `failed` statuses
 - For bulk operations, correlate webhooks using `bulk_id`
+- Set a `webhook_secret` and [verify the signature](/api/webhooks/verifying-signatures) before trusting a payload

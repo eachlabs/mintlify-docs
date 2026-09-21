@@ -25,7 +25,7 @@ The workflow executes asynchronously. You'll get an execution ID right away, the
 |-------|------|----------|-------------|
 | `inputs` | object | No | Input parameters matching the workflow's input schema |
 | `webhook_url` | string | No | URL to receive completion notification |
-| `webhook_secret` | string | No | Shared secret used to verify webhook deliveries |
+| `webhook_secret` | string | No | Shared secret used to sign webhook deliveries. When set, each delivery carries `X-Webhook-Signature` and `X-Webhook-Timestamp` — see [Verifying Webhook Signatures](/api/webhooks/verifying-signatures) |
 
 ## Code Examples
 

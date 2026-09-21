@@ -4,6 +4,16 @@ description: "Product updates and releases from each::labs"
 rss: true
 ---
 
+<Update label="September 21, 2026" description="API" rss={{ title: "Webhook deliveries are now signed with HMAC-SHA256", description: "API" }}>
+  ## Webhook deliveries are now signed with HMAC-SHA256
+
+  - Set a `webhook_secret` when creating a prediction or triggering a workflow, and every delivery for that execution now carries `X-Webhook-Signature` and `X-Webhook-Timestamp`.
+  - The signature is an HMAC-SHA256 over `<X-Webhook-Timestamp>.<raw request body>`, hex-encoded and prefixed with `sha256=`.
+  - The new [Verifying Webhook Signatures](/api/webhooks/verifying-signatures) guide covers the procedure, with Python and JavaScript handlers.
+  - The plain-text `X-Webhook-Secret` header is still sent, so receivers comparing it keep working. Verify the signature instead — it also proves the body was not modified.
+  - Deliveries triggered without a `webhook_secret` are unchanged and remain unsigned.
+</Update>
+
 <Update label="September 14, 2026" description="API" rss={{ title: "Model details now use a path-based endpoint", description: "API" }}>
   ## Model details now use a path-based endpoint
 
