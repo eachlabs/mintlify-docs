@@ -15,7 +15,7 @@ Instead of polling for prediction results, you can provide a `webhook_url` when 
 
 <Steps>
   <Step title="Provide a webhook URL">
-    Include `webhook_url` (and optionally `webhook_secret`) when creating a prediction.
+    Include `webhook_url` when creating a prediction, plus `webhook_secret` if you want deliveries signed.
   </Step>
   <Step title="Prediction runs">
     The model processes your input asynchronously.
@@ -40,9 +40,11 @@ curl -X POST https://api.eachlabs.ai/v1/prediction \
   }'
 ```
 
+When you supply `webhook_secret`, each delivery is signed with HMAC-SHA256 and carries `X-Webhook-Signature` and `X-Webhook-Timestamp` headers. See [Verifying Webhook Signatures](/api/webhooks/verifying-signatures). Omit the secret and deliveries are still sent, just unsigned.
+
 ## Retry Behavior
 
-Failed webhook deliveries are automatically retried with exponential backoff. You can track delivery attempts using the [Get Webhook](/api/webhooks/get-webhook) endpoint.
+Deliveries are attempted up to 3 times in total: the initial attempt plus 2 retries, spaced roughly 10 seconds apart. Every attempt of a delivery carries the same signature and timestamp. You can track delivery attempts using the [Get Webhook](/api/webhooks/get-webhook) endpoint.
 
 ### Delivery Attempt Statuses
 

@@ -24,7 +24,7 @@ Run the same workflow with up to **10 different inputs** in parallel. All execut
 |-------|------|----------|-------------|
 | `inputs` | array | Yes | Array of input objects (1–10 items) |
 | `webhook_url` | string | No | URL to receive completion notifications |
-| `webhook_secret` | string | No | Shared secret used to verify webhook deliveries |
+| `webhook_secret` | string | No | Shared secret used to sign webhook deliveries. When set, each delivery carries `X-Webhook-Signature` and `X-Webhook-Timestamp` — see [Verifying Webhook Signatures](/api/webhooks/verifying-signatures) |
 
 ## Code Examples
 

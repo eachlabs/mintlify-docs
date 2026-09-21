@@ -17,7 +17,7 @@ POST https://api.eachlabs.ai/v1/prediction
 | `version` | string | Yes | Model version (e.g., `1.0.0`) |
 | `input` | object | Yes | Input parameters (varies by model) |
 | `webhook_url` | string | No | URL to receive prediction result via webhook |
-| `webhook_secret` | string | No | Secret used to sign webhook requests |
+| `webhook_secret` | string | No | Secret used to sign webhook requests. When set, each delivery carries `X-Webhook-Signature` and `X-Webhook-Timestamp` — see [Verifying Webhook Signatures](/api/webhooks/verifying-signatures) |
 
 The `input` object accepts model-specific parameters. Some models also support:
 

@@ -153,7 +153,7 @@ Response: `{title, slug, version, output_type, request_schema, cost}` where `cos
 | `version` | string | Yes | Model version (currently `"1.0.0"` for all models) |
 | `input` | object | Yes | Model-specific input parameters |
 | `webhook_url` | string | No | URL to receive results via HTTP POST |
-| `webhook_secret` | string | No | Secret for HMAC-SHA256 webhook signature verification |
+| `webhook_secret` | string | No | Secret used to sign deliveries; produces `X-Webhook-Signature` and `X-Webhook-Timestamp` headers |
 
 Response (201): `{"status": "success", "message": "Prediction created successfully", "predictionID": "..."}`
 
@@ -234,9 +234,9 @@ Webhooks deliver prediction results via HTTP POST. Include `webhook_url` when cr
 }
 ```
 
-Retry schedule: ~30s, ~2min, ~10min. Delivery statuses: `PENDING`, `SUCCESS`, `FAILED`.
+Retry schedule: up to 3 attempts in total (initial plus 2 retries), roughly 10 seconds apart; all attempts reuse the same signature and timestamp. Delivery statuses: `PENDING`, `SUCCESS`, `FAILED`.
 
-Security: Verify webhook authenticity with HMAC-SHA256 using `webhook_secret`. Return 200 OK quickly.
+Security: when `webhook_secret` is set, deliveries carry `X-Webhook-Signature` (`sha256=` plus lowercase hex) and `X-Webhook-Timestamp`. The signature is an HMAC-SHA256 over `<X-Webhook-Timestamp>.<raw request body>`; verify it over the raw bytes using a constant-time comparison, and reject timestamps outside a tolerance such as 5 minutes. The plain-text `X-Webhook-Secret` header is still sent but proves less than the signature. Deliveries without a secret are unsigned. Return 200 OK quickly.
 
 ---
 
@@ -1276,6 +1276,7 @@ The one account limit is a **low-balance concurrency cap**: while the organizati
 - [List Webhooks](/api/webhooks/list-webhooks): `GET /v1/webhooks`
 - [Get Webhook](/api/webhooks/get-webhook): `GET /v1/webhooks/{execution_id}`
 - [Webhook Payloads](/api/webhooks/payload-reference)
+- [Verifying Webhook Signatures](/api/webhooks/verifying-signatures)
 
 ### each::workflows
 - [Overview](/workflows/overview)

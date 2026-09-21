@@ -74,7 +74,7 @@
           },
           {
             "group": "Webhooks",
-            "pages": ["api/webhooks/overview", "api/webhooks/list-webhooks", "api/webhooks/get-webhook", "api/webhooks/payload-reference"]
+            "pages": ["api/webhooks/overview", "api/webhooks/list-webhooks", "api/webhooks/get-webhook", "api/webhooks/payload-reference", "api/webhooks/verifying-signatures"]
           },
           {
             "group": "OpenAPI Reference",
