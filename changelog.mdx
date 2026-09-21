@@ -4,6 +4,14 @@ description: "Product updates and releases from each::labs"
 rss: true
 ---
 
+<Update label="September 21, 2026" description="API" rss={{ title: "Ask structured questions with the Decisions API", description: "API" }}>
+  ## Ask structured questions with the Decisions API
+
+  - `POST /v1/decisions` answers typed questions over one shared context and returns structured results instead of prose: a `noul` question gives you a probability, a `choice` question a named option, and a `score` question a rating on an ordered scale.
+  - Send `model: "typesafe/jev-1.13"` with `state` and `questions`, authenticated with the same Bearer API key as the rest of each::api. The response carries `answers` keyed by your question names plus billable `usage`.
+  - The model is routed through OpenRouter to TypeSafe Jev. This API is in **alpha** and its contract may change — see the [Decisions API](/llm-router/decisions) page.
+</Update>
+
 <Update label="September 21, 2026" description="API" rss={{ title: "Webhook deliveries are now signed with HMAC-SHA256", description: "API" }}>
   ## Webhook deliveries are now signed with HMAC-SHA256
 

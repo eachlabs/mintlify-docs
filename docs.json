@@ -221,7 +221,7 @@
         "groups": [
           {
             "group": "Overview",
-            "pages": ["llm-router/overview", "llm-router/quickstart", "llm-router/audio", "llm-router/models"]
+            "pages": ["llm-router/overview", "llm-router/quickstart", "llm-router/audio", "llm-router/decisions", "llm-router/models"]
           }
         ]
       },
