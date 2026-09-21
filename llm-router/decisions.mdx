@@ -1,0 +1,217 @@
+---
+title: "Decisions API"
+sidebarTitle: "Decisions"
+description: "Ask structured questions and get typed answers — probabilities, named choices, and scores — from one call."
+---
+
+The Decisions API answers a set of typed questions over the same context. Instead
+of free-form text, it returns a probability, one of a named set of options, or a
+score on an ordered scale, so a caller can branch on the result without parsing
+prose. Use the same each::labs API key and base URL as the rest of each::api:
+
+```text
+https://api.eachlabs.ai/v1
+```
+
+<Warning>
+  The Decisions API is in **alpha**. Its request and response contract may change
+  without notice while it is stabilized, so avoid depending on it in production
+  yet. [Contact us](https://www.eachlabs.ai/contact) if you want to build against
+  it.
+</Warning>
+
+## Model and routing
+
+Send `typesafe/jev-1.13` as the `model`. each::labs routes the request through
+the LLM Router to [OpenRouter](https://openrouter.ai), which serves TypeSafe Jev.
+You call a single each::labs endpoint; provider selection and credentials stay on
+our side, and usage is billed to your each::labs account.
+
+Unlike chat completions, this is not an OpenAI-compatible operation and has no
+corresponding OpenAI SDK method. Call it directly over HTTP.
+
+## Endpoint
+
+```
+POST https://api.eachlabs.ai/v1/decisions
+```
+
+A request is answered synchronously: one call evaluates every question and
+returns the answers in the response body. There is no prediction to poll.
+
+## Authentication
+
+Pass a standard API key as a Bearer token:
+
+```http
+Authorization: Bearer YOUR_API_KEY
+```
+
+## Request body
+
+The body has exactly three fields: `model`, `state`, and `questions`. Any other
+field is rejected.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `model` | string | The decision model to use. Currently `typesafe/jev-1.13`. |
+| `state` | string \| object \| array | The shared context every question is evaluated against. |
+| `questions` | object | A map of question names to typed questions. At least one is required. |
+
+Each question is an object with a `type`, `instructions`, and — depending on the
+type — `criteria`:
+
+| `type` | Meaning | `criteria` |
+|--------|---------|------------|
+| `noul` | A yes/no probability. | Optional object with exactly `true` and `false` keys describing each side. |
+| `choice` | Choose one of a named set of options. | Required object mapping each option name to an optional description (a value may be `null`). |
+| `score` | Rate on an ordered scale. | Required array of level descriptions, lowest first. |
+
+`instructions` and every `criteria` value accept a string, an object, or an
+array. The response preserves your question names as the keys of `answers`.
+
+<Warning>
+  Streaming, asynchronous mode, provider overrides, webhooks, and client-supplied
+  `metadata` or `source` are not supported on this endpoint. Sending them — or an
+  `X-Provider` or webhook header — returns `400`. Organization, user, execution,
+  and source identity are always taken from the authenticated key.
+</Warning>
+
+## Example
+
+<CodeGroup>
+```bash cURL
+curl https://api.eachlabs.ai/v1/decisions \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "typesafe/jev-1.13",
+    "state": "Applicant is 34, income 120k, no dependents, existing card holder.",
+    "questions": {
+      "approve": {
+        "type": "noul",
+        "instructions": "Should this application be approved?"
+      },
+      "segment": {
+        "type": "choice",
+        "instructions": "Pick the customer segment.",
+        "criteria": {
+          "premium": "high spend, long tenure",
+          "standard": "typical retail cardholder"
+        }
+      },
+      "risk": {
+        "type": "score",
+        "instructions": "Rate the credit risk.",
+        "criteria": ["low", "medium", "high"]
+      }
+    }
+  }'
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    "https://api.eachlabs.ai/v1/decisions",
+    headers={
+        "Authorization": "Bearer YOUR_API_KEY",
+        "Content-Type": "application/json",
+    },
+    json={
+        "model": "typesafe/jev-1.13",
+        "state": "Applicant is 34, income 120k, no dependents, existing card holder.",
+        "questions": {
+            "approve": {
+                "type": "noul",
+                "instructions": "Should this application be approved?",
+            },
+            "segment": {
+                "type": "choice",
+                "instructions": "Pick the customer segment.",
+                "criteria": {
+                    "premium": "high spend, long tenure",
+                    "standard": "typical retail cardholder",
+                },
+            },
+            "risk": {
+                "type": "score",
+                "instructions": "Rate the credit risk.",
+                "criteria": ["low", "medium", "high"],
+            },
+        },
+    },
+    timeout=300,
+)
+response.raise_for_status()
+
+print(response.json()["answers"])
+```
+</CodeGroup>
+
+## Response
+
+```json
+{
+  "answers": {
+    "approve": { "type": "noul", "noul": 0.82 },
+    "segment": {
+      "type": "choice",
+      "choice": "standard",
+      "confidence": 0.71,
+      "probabilities": { "premium": 0.29, "standard": 0.71 }
+    },
+    "risk": {
+      "type": "score",
+      "score": 1.4,
+      "legend": { "0": "low", "1": "medium", "2": "high" },
+      "probabilities": { "0": 0.12, "1": 0.68, "2": 0.2 }
+    }
+  },
+  "model": "typesafe/jev-1.13",
+  "usage": { "input_tokens": 118, "output_tokens": 24, "cost": 0.0031 }
+}
+```
+
+### Answer fields
+
+Every answer carries the question's `type`. The remaining fields depend on it:
+
+| `type` | Fields |
+|--------|--------|
+| `noul` | `noul` — the probability that the answer is "no", between `0` and `1`. |
+| `choice` | `choice` — the selected option name. Optional `confidence` and `probabilities`, keyed by option name. |
+| `score` | `score` — the chosen level's index. Optional `confidence`, `probabilities`, and `legend`, which maps each level index to its description. |
+
+### Usage
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `model` | string | The resolved model id. |
+| `usage.input_tokens` | integer | Tokens consumed by `state` and `questions`. |
+| `usage.output_tokens` | integer | Tokens generated for the answers. |
+| `usage.cost` | number | The billable cost in USD for this call. |
+
+When the upstream returns a decision `id`, it is included in the response.
+
+## Error responses
+
+Errors use the same shape as the rest of each::api:
+
+```json
+{
+  "error": {
+    "message": "Invalid API key",
+    "type": "authentication_error",
+    "code": "invalid_api_key"
+  }
+}
+```
+
+| Status | `type` | Description |
+|--------|--------|-------------|
+| `400` | `invalid_request_error` | The body is not a JSON object, contains an unsupported field, or has no valid questions. |
+| `401` | `authentication_error` | The API key is missing or invalid. |
+| `402` | `insufficient_quota` | The organization's balance is below the minimum for an execution. |
+| `404` | `not_found_error` | The Decisions API is not enabled for your account or environment. |
+| `5xx` | `server_error` | The model service failed or timed out. Retry, and simplify the input if it persists. |
