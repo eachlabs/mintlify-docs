@@ -27,7 +27,7 @@ A neat two-step workflow that enhances a prompt with an LLM, then generates an i
     },
     "steps": [
       {
-        "step_id": "enhance_prompt",
+        "id": "enhance_prompt",
         "type": "model",
         "model": "openai-chatgpt-5",
         "params": {
@@ -36,7 +36,7 @@ A neat two-step workflow that enhances a prompt with an LLM, then generates an i
         }
       },
       {
-        "step_id": "generate_image",
+        "id": "generate_image",
         "type": "model",
         "model": "flux-1-1-pro",
         "params": {
@@ -80,7 +80,7 @@ Generate a portrait image, bring it to life with animation, and upscale the fina
     },
     "steps": [
       {
-        "step_id": "generate_portrait",
+        "id": "generate_portrait",
         "type": "model",
         "model": "nano-banana-pro",
         "params": {
@@ -89,7 +89,7 @@ Generate a portrait image, bring it to life with animation, and upscale the fina
         }
       },
       {
-        "step_id": "animate",
+        "id": "animate",
         "type": "model",
         "model": "kling-2-1-image-to-video",
         "params": {
@@ -98,7 +98,7 @@ Generate a portrait image, bring it to life with animation, and upscale the fina
         }
       },
       {
-        "step_id": "upscale",
+        "id": "upscale",
         "type": "model",
         "model": "topaz-upscale-video",
         "params": {
@@ -353,7 +353,7 @@ workflow = requests.post(f"{BASE_URL}/workflows", headers=HEADERS, json={
             "properties": {"prompt": {"type": "string"}}
         },
         "steps": [{
-            "step_id": "generate",
+            "id": "generate",
             "type": "model",
             "model": "flux-1-1-pro",
             "params": {"prompt": "{{inputs.prompt}}"}
