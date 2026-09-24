@@ -57,7 +57,7 @@ curl -X PUT https://api.eachlabs.ai/v1/workflows/WF_ID/versions/v2 \
       },
       "steps": [
         {
-          "step_id": "generate_text",
+          "id": "generate_text",
           "type": "model",
           "model": "openai-chatgpt-5",
           "params": {
@@ -65,7 +65,7 @@ curl -X PUT https://api.eachlabs.ai/v1/workflows/WF_ID/versions/v2 \
           }
         },
         {
-          "step_id": "generate_image",
+          "id": "generate_image",
           "type": "model",
           "model": "flux-dev",
           "params": {
@@ -102,7 +102,7 @@ response = requests.put(
             "version": "v2",
             "steps": [
                 {
-                    "step_id": "generate",
+                    "id": "generate",
                     "type": "model",
                     "model": "flux-1-1-pro",
                     "params": {"prompt": "{{inputs.prompt}}"}

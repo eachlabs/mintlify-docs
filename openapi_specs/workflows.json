@@ -467,7 +467,7 @@
                 },
                 "example": [
                   {
-                    "step_id": "generate_text",
+                    "id": "generate_text",
                     "type": "model",
                     "model": "openai-chatgpt-5",
                     "params": {
@@ -476,7 +476,7 @@
                     }
                   },
                   {
-                    "step_id": "generate_image",
+                    "id": "generate_image",
                     "type": "model",
                     "model": "flux-dev",
                     "params": {

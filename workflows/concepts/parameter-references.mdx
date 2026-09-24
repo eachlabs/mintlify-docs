@@ -21,7 +21,7 @@ Use `{{double braces}}` to reference workflow inputs and previous step outputs i
 
 ```json
 {
-  "step_id": "generate_text",
+  "id": "generate_text",
   "type": "model",
   "model": "openai-chatgpt-5",
   "params": {
@@ -37,7 +37,7 @@ Use `{{double braces}}` to reference workflow inputs and previous step outputs i
 {
   "steps": [
     {
-      "step_id": "step1",
+      "id": "step1",
       "type": "model",
       "model": "openai-chatgpt-5",
       "params": {
@@ -45,7 +45,7 @@ Use `{{double braces}}` to reference workflow inputs and previous step outputs i
       }
     },
     {
-      "step_id": "step2",
+      "id": "step2",
       "type": "model",
       "model": "flux-1-1-pro",
       "params": {
@@ -53,7 +53,7 @@ Use `{{double braces}}` to reference workflow inputs and previous step outputs i
       }
     },
     {
-      "step_id": "step3",
+      "id": "step3",
       "type": "model",
       "model": "topaz-upscale-image",
       "params": {
