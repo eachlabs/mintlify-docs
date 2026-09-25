@@ -167,8 +167,8 @@ A [redelivery](/api/webhooks/overview#redelivery) sends the original payload a s
 
 This is what you want: the timestamp is current, so a redelivery passes the tolerance check like any other delivery. Two things follow.
 
-- **Do not treat a redelivery as a replay attack.** A repeated body with a fresh, valid signature is a redelivery, not a captured request replayed against you. A replayed capture carries the *original* timestamp and fails the tolerance check.
-- **Do not cache a signature to detect duplicates.** Each delivery of the same body has its own signature, so they will not match. Use `execution_id` from the body to recognise work you have already done.
+- **A repeated body is expected.** A redelivery sends a body you have already seen, with a current timestamp and its own valid signature. Verify it exactly as you would a first delivery — the tolerance check is about when the delivery was signed, not about whether the body is new. Nothing is loosened by accepting it: a delivery signed long ago still carries that old timestamp and still falls outside your tolerance.
+- **Do not use the signature to detect duplicates.** Each delivery of the same body is signed separately, so their signatures will not match. Use `execution_id` from the body to recognise work you have already done.
 
 A redelivery also carries `X-Webhook-Redelivery: true`, which an ordinary delivery never sends. Headers are not part of the signed string, so use it for logging rather than as proof — the signature covers the body and the timestamp only.
 
