@@ -161,6 +161,17 @@ So a retry can reach you a little after its timestamp was generated. A five-minu
 
 The tolerance is yours to choose and enforce — each::labs does not reject anything on your behalf.
 
+## Redeliveries are signed again
+
+A [redelivery](/api/webhooks/overview#redelivery) sends the original payload a second time, and it is signed when it is sent. Its `X-Webhook-Signature` and `X-Webhook-Timestamp` therefore differ from the original delivery, even though the body is identical.
+
+This is what you want: the timestamp is current, so a redelivery passes the tolerance check like any other delivery. Two things follow.
+
+- **Do not treat a redelivery as a replay attack.** A repeated body with a fresh, valid signature is a redelivery, not a captured request replayed against you. A replayed capture carries the *original* timestamp and fails the tolerance check.
+- **Do not cache a signature to detect duplicates.** Each delivery of the same body has its own signature, so they will not match. Use `execution_id` from the body to recognise work you have already done.
+
+A redelivery also carries `X-Webhook-Redelivery: true`, which an ordinary delivery never sends. Headers are not part of the signed string, so use it for logging rather than as proof — the signature covers the body and the timestamp only.
+
 ## The X-Webhook-Secret header
 
 Signed deliveries also carry `X-Webhook-Secret`, holding your secret as plain text. It predates signing and is still sent so that receivers built against it keep working.
