@@ -3922,7 +3922,7 @@
               },
               "style": {
                 "type": "object",
-                "description": "Concrete caption style (Ring resolves a named preset to this).",
+                "description": "Concrete caption style; callers resolve any named preset to these fields before submitting.",
                 "properties": {
                   "font": {
                     "type": "string",
