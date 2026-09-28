@@ -4,6 +4,16 @@ description: "Product updates and releases from each::labs"
 rss: true
 ---
 
+<Update label="September 25, 2026" description="Webhooks" rss={{ title: "Redeliver a webhook from the dashboard", description: "Webhooks" }}>
+  ## Redeliver a webhook from the dashboard
+
+  - Open a webhook on the Webhooks page and choose **Redeliver** to send the same payload to your endpoint again, without re-running the execution.
+  - The button is offered only when a redelivery would be accepted, and names the reason when it would not: a delivery still in flight, a short cooldown after a previous redelivery, or a payload that is no longer stored.
+  - A redelivery carries `X-Webhook-Redelivery: true`, which an ordinary delivery never sends, so your endpoint can tell the two apart.
+  - Signed webhooks are signed again when the redelivery is sent, so it passes your timestamp tolerance rather than looking like a replayed request. See [Redeliveries are signed again](/api/webhooks/verifying-signatures#redeliveries-are-signed-again).
+  - The body is unchanged, so handle deliveries idempotently and key on `execution_id`.
+</Update>
+
 <Update label="September 21, 2026" description="API" rss={{ title: "Ask structured questions with the Decisions API", description: "API" }}>
   ## Ask structured questions with the Decisions API
 

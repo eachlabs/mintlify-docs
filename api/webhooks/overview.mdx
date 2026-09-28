@@ -44,7 +44,7 @@ When you supply `webhook_secret`, each delivery is signed with HMAC-SHA256 and c
 
 ## Retry Behavior
 
-Deliveries are attempted up to 3 times in total: the initial attempt plus 2 retries, spaced roughly 10 seconds apart. Every attempt of a delivery carries the same signature and timestamp. You can track delivery attempts using the [Get Webhook](/api/webhooks/get-webhook) endpoint.
+Deliveries are attempted up to 3 times in total: the initial attempt plus 2 retries, spaced roughly 10 seconds apart. Every attempt of one delivery carries the same signature and timestamp. You can track delivery attempts using the [Get Webhook](/api/webhooks/get-webhook) endpoint.
 
 ### Delivery Attempt Statuses
 
@@ -53,6 +53,22 @@ Deliveries are attempted up to 3 times in total: the initial attempt plus 2 retr
 | `PENDING` | Delivery is queued |
 | `SUCCESS` | Delivered successfully (2xx response) |
 | `FAILED` | Delivery failed (timeout, non-2xx, or connection error) |
+
+## Redelivery
+
+If a delivery failed, or your endpoint was down when it arrived, you can send the same payload again. Open the webhook on the **Webhooks** page in the dashboard and choose **Redeliver**.
+
+A redelivery is a fresh delivery of the original payload:
+
+- The request body is byte-for-byte the original.
+- It carries `X-Webhook-Redelivery: true`. An ordinary delivery does not send this header at all, so your endpoint can tell the two apart. The header is set when the request is sent and cannot be supplied through your own webhook headers.
+- A signed webhook is signed again at send time, so its signature and timestamp differ from the original delivery. See [Redeliveries are signed again](/api/webhooks/verifying-signatures#redeliveries-are-signed-again).
+- It is sent once. The retry policy above covers the original delivery, not a redelivery. To try again after a redelivery fails, redeliver again.
+- The attempt is recorded alongside the original attempts and appears in [Get Webhook](/api/webhooks/get-webhook). The response does not mark which attempt was a redelivery — only the delivered request carries the header.
+
+Because a redelivery repeats a payload your endpoint may already have processed, handle deliveries idempotently. Key on `execution_id` rather than assuming every request is new.
+
+**Redelivery** is offered only when it would succeed. It is unavailable while a delivery is still in flight, for a short cooldown after a redelivery, and once the stored payload has been erased.
 
 ## Webhook Endpoints
 
