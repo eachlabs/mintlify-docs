@@ -197,6 +197,12 @@ Response:
 
 Poll every 2 seconds until terminal status (`success`, `failed`, `cancelled`).
 
+When the request set `fallback_selector`, the response also has a `fallback`
+object: `{"selector", "requested_model", "served_by", "used", "resolved"}`. If
+the requested model fails, the prediction stays `processing` while a fallback
+model runs (`used: true`, `resolved: false`, `served_by: null`); once it ends,
+`served_by` names the model whose output is returned. Keep polling the same ID.
+
 ### Content Safety
 
 Safety checker is enabled by default. Pass `enable_safety_checker: false` in the `input` object to disable.

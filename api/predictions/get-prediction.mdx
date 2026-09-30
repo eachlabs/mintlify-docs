@@ -110,10 +110,56 @@ console.log(`Output: ${result.output}`);
 | `metrics.output_gb` | number | Size of the uploaded output artifacts in GB. Metered engines only; omitted for other models |
 | `urls.cancel` | string | URL to cancel the prediction |
 | `urls.get` | string | URL to re-fetch this prediction |
+| `fallback` | object | Present only when the request set `fallback_selector`. See [Predictions with a fallback](#predictions-with-a-fallback) |
+| `fallback.selector` | string | Fallback configuration the request selected |
+| `fallback.requested_model` | string \| null | Model the request named |
+| `fallback.served_by` | string \| null | Model whose result this prediction returns; `null` until `resolved` is `true` |
+| `fallback.used` | boolean | `true` once a fallback model ran because the requested model failed |
+| `fallback.resolved` | boolean | `false` while the requested model or a fallback model is still running |
 
 <Note>
 The `metrics.tier`, `metrics.billed_seconds`, and `metrics.output_gb` fields appear only on predictions run against metered engines such as the [Video API](/video/overview), where they show exactly what the execution was billed for. When present, they are emitted even at zero values — for example, a probe job reports `output_gb: 0`.
 </Note>
+
+## Predictions with a fallback
+
+When a request sets [`fallback_selector`](/api/predictions/create-prediction#using-a-configured-model-fallback), keep polling the same prediction ID. If the requested model fails, the prediction does **not** become `error`: it stays `processing` while the fallback model runs, and `fallback.used` turns `true`. The status becomes terminal only when a model succeeds or no fallback model is left to try.
+
+While a fallback model runs:
+
+```json
+{
+  "id": "abc123-def456-ghi789",
+  "status": "processing",
+  "output": null,
+  "fallback": {
+    "selector": "quality-recovery",
+    "requested_model": "kling-v2-5-turbo-standard-image-to-video",
+    "served_by": null,
+    "used": true,
+    "resolved": false
+  }
+}
+```
+
+After the fallback model succeeds, `output` is its result and `metrics.cost` is the total for the request:
+
+```json
+{
+  "id": "abc123-def456-ghi789",
+  "status": "success",
+  "output": "https://storage.example.com/predictions/abc123/video.mp4",
+  "fallback": {
+    "selector": "quality-recovery",
+    "requested_model": "kling-v2-5-turbo-standard-image-to-video",
+    "served_by": "bytedance-seedance-2-0-mini-image-to-video",
+    "used": true,
+    "resolved": true
+  }
+}
+```
+
+If the requested model succeeds, `fallback.used` is `false` and `served_by` equals `requested_model`. If every model fails, `status` is `error` and `output` carries the last model's error.
 
 ### Prediction Status Values
 
