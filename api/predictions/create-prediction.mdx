@@ -16,6 +16,7 @@ POST https://api.eachlabs.ai/v1/prediction
 | `model` | string | Yes | Model slug (e.g., `flux-1-1-pro`) |
 | `version` | string | Yes | Model version (e.g., `1.0.0`) |
 | `input` | object | Yes | Input parameters (varies by model) |
+| `fallback_selector` | string | No | Slug of an enabled, saved fallback configuration for your organization and the primary model. Omit to run only the primary model. |
 | `webhook_url` | string | No | URL to receive prediction result via webhook |
 | `webhook_secret` | string | No | Secret used to sign webhook requests. When set, each delivery carries `X-Webhook-Signature` and `X-Webhook-Timestamp` — see [Verifying Webhook Signatures](/api/webhooks/verifying-signatures) |
 
@@ -24,6 +25,27 @@ The `input` object accepts model-specific parameters. Some models also support:
 | Input Field | Type | Default | Description |
 |-------------|------|---------|-------------|
 | `enable_safety_checker` | boolean | `true` | Set to `false` to disable NSFW filtering. Only works on [supported models](/api/nsfw-content#supported-models). |
+
+## Using a configured model fallback
+
+Saving or enabling a model fallback does **not** automatically apply it to prediction requests. Include `fallback_selector` in every request that should use it, at the top level alongside `model` and `input`, **not inside `input`**.
+
+Use the saved **configuration's slug**, not the fallback model's slug or ID. The configuration must be enabled and belong to the API key's organization and the requested primary model. The selector accepts 1-50 lowercase letters and digits separated by single hyphens.
+
+For example, if you have saved an enabled configuration with the slug `quality-recovery` for `flux-1-1-pro`:
+
+```json
+{
+  "model": "flux-1-1-pro",
+  "fallback_selector": "quality-recovery",
+  "input": {
+    "prompt": "A beautiful sunset over the ocean",
+    "aspect_ratio": "16:9"
+  }
+}
+```
+
+Replace `quality-recovery` with your saved configuration's slug. Keep `model` and `input` set for the primary model; the saved configuration supplies the fallback models and input mappings. If `fallback_selector` is omitted, only the primary model runs, even when a fallback configuration exists.
 
 ## Code Examples
 
