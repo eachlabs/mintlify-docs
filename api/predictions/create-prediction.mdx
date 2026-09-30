@@ -47,6 +47,8 @@ For example, if you have saved an enabled configuration with the slug `quality-r
 
 Replace `quality-recovery` with your saved configuration's slug. Keep `model` and `input` set for the primary model; the saved configuration supplies the fallback models and input mappings. If `fallback_selector` is omitted, only the primary model runs, even when a fallback configuration exists.
 
+Poll the returned prediction ID as usual. It stays `processing` while a fallback model runs, and its `fallback` object says which model was requested and which one served the result. See [Predictions with a fallback](/api/predictions/get-prediction#predictions-with-a-fallback).
+
 ## Code Examples
 
 <CodeGroup>
