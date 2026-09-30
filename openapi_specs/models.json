@@ -189,7 +189,7 @@
           "AI Models Prediction"
         ],
         "summary": "Create Model Prediction",
-        "description": "Create a new prediction for a specific model.\n",
+        "description": "Create a new prediction for a specific model.\n\n## Using a configured model fallback\n\nSaving or enabling a model fallback does not automatically apply it to prediction requests. To opt a prediction into an enabled fallback configuration, include `fallback_selector` at the top level of the request body, alongside `model` and `input` (not inside `input`). Its value is the saved fallback configuration's slug, not the fallback model's slug or ID. The configuration must belong to the API key's organization and the requested primary model.\n\nFor example, if you have saved an enabled configuration with the slug `quality-recovery` for `flux-1-1-pro`, send:\n\n```json\n{\n  \"model\": \"flux-1-1-pro\",\n  \"fallback_selector\": \"quality-recovery\",\n  \"input\": {\n    \"prompt\": \"A beautiful sunset over the ocean\",\n    \"aspect_ratio\": \"16:9\"\n  }\n}\n```\n\nReplace `quality-recovery` with your saved configuration's slug, and keep `model` and `input` set for the primary model. The saved configuration supplies the fallback models and input mappings. Omit `fallback_selector` to run only the primary model, even when a fallback configuration exists.\n",
         "operationId": "createPrediction",
         "security": [
           {
@@ -2681,6 +2681,14 @@
             "type": "string",
             "description": "Model slug or identifier",
             "example": "flux-1-1-pro"
+          },
+          "fallback_selector": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50,
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "description": "Optional opt-in to an enabled, saved fallback configuration for this organization and primary model. Use the configuration's slug, not a fallback model slug or ID. Set this at the top level of the request, not inside input. Saving a configuration alone does not enable fallback for a request: omitting this field runs only the primary model. Use 1-50 lowercase letters and digits separated by single hyphens.",
+            "example": "quality-recovery"
           },
           "version": {
             "type": "string",
