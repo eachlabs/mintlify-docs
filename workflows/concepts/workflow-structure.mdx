@@ -174,7 +174,7 @@ Make HTTP requests to external APIs or services through the `eachlabs-http-step`
 | `timeout_seconds` | integer | No | `30` | Per-request deadline, clamped to 1-60 |
 | `fail_on_status` | string | No | `-` | Which responses fail the step. Omitted (the default), every response that arrives is a success, whatever it says. `non_2xx` fails any status outside 200-299. A comma-separated list such as `429,500,502` fails only those |
 
-There is no `auth` parameter: authentication for `eachlabs-http-step` is configured on the model's connection, not passed per-step.
+There is no `auth` parameter: send the target API's credentials in `headers`, for example `"Authorization": "Bearer {{inputs.api_token}}"`.
 
 ---
 
@@ -215,7 +215,7 @@ Run Python code within the workflow through the `eachlabs-python-step` model.
 |-------|-------------|
 | `return_value` | The value assigned to `result` in the code (JSON-serializable, up to 1 MiB). `null` if `result` is never set |
 | `printed` | Captured stdout, up to 64 KiB |
-| `output_files` | Files written under the code's output directory, keyed by filename, as URLs |
+| `output_files` | Media files (image, video, audio, PDF, subtitle) written to the top level of `OUTPUT_DIR`, keyed by filename, as URLs. Up to 20 files; other data belongs in `result` |
 
 A step-level `retry` re-runs the code from scratch on failure; each retry attempt is billed separately, so keep the code idempotent.
 
