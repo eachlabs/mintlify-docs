@@ -116,8 +116,15 @@ const FAMILY_ORDER = [
   "inception",
 ];
 
+// Chat IDs the router rejects even though OpenRouter lists them (llm-router reject rules).
+const UNAVAILABLE_FOR_CHAT = new Set(["typesafe/jev-1.13"]);
+
+const OTHER_MODELS_INTRO = `## Other available models
+
+Every other chat model on [OpenRouter](https://openrouter.ai/models) works too. Pass its ID exactly as listed. Free (\`:free\`) variants are not available.`;
+
 const FOOTER = `<Note>
-  Pricing is per million tokens. Prices may change, so check your [dashboard](https://www.eachlabs.ai) for the latest rates.
+  Prices are the model's list price per million tokens. You pay that price plus the same standard platform fee OpenRouter charges, nothing more. The exact cost of every request is shown in your [dashboard](https://www.eachlabs.ai).
 </Note>`;
 
 function parseArgs(argv) {
@@ -212,6 +219,8 @@ async function fetchOpenRouterPricing(url) {
   for (const model of body.data) {
     if (!model?.id) continue;
     byId.set(String(model.id), {
+      name: typeof model.name === "string" ? model.name : "",
+      textOutput: !Array.isArray(model.architecture?.output_modalities) || model.architecture.output_modalities.includes("text"),
       inputPerMillion: perMillion(model.pricing?.prompt),
       outputPerMillion: perMillion(model.pricing?.completion),
       contextLength: Number.isFinite(model.context_length) ? model.context_length : null,
@@ -323,7 +332,9 @@ function renderSections(models, pricingById, overrides) {
       else if (ov && (ov.inputPerMillion !== null || ov.outputPerMillion !== null)) fromOverrides++;
       else if (or || ov) knownUnpriced++;
       else missingData.push(model.id);
-      const name = escapeCell((model.title || model.id).trim());
+      const openRouterId = or && model.targetModel && model.targetModel !== model.id && pricingById.has(model.targetModel) ? model.targetModel : null;
+      const title = escapeCell((model.title || model.id).trim());
+      const name = openRouterId ? `${title} (OpenRouter ID: \`${openRouterId}\`)` : title;
       lines.push(
         `| \`${model.id}\` | ${name} | ${formatPrice(inputPerMillion)} | ${formatPrice(outputPerMillion)} | ${formatContext(contextLength)} |`
       );
@@ -331,6 +342,28 @@ function renderSections(models, pricingById, overrides) {
     sections.push(lines.join("\n"));
   }
   return { body: sections.join("\n\n"), fromOpenRouter, fromOverrides, knownUnpriced, missingData };
+}
+
+// Long-tail rows: OpenRouter text models that no featured entry already covers.
+function renderOtherModels(featured, pricingById) {
+  const covered = new Set();
+  for (const model of featured) {
+    covered.add(model.id);
+    if (model.targetModel) covered.add(model.targetModel);
+  }
+  const ids = [...pricingById.keys()]
+    .filter((id) => !covered.has(id) && !id.endsWith(":free") && !UNAVAILABLE_FOR_CHAT.has(id))
+    .filter((id) => pricingById.get(id).textOutput)
+    .sort();
+  const lines = [OTHER_MODELS_INTRO, "", "| Model ID | Name | Input | Output | Context |", "|-|-|-|-|-|"];
+  for (const id of ids) {
+    const or = pricingById.get(id);
+    const name = escapeCell((or.name || id).trim());
+    lines.push(
+      `| \`${id}\` | ${name} | ${formatPrice(or.inputPerMillion)} | ${formatPrice(or.outputPerMillion)} | ${formatContext(or.contextLength)} |`
+    );
+  }
+  return { body: lines.join("\n"), count: ids.length };
 }
 
 function preservedIntro(outPath) {
@@ -369,13 +402,15 @@ async function main() {
     );
   }
 
-  const output = `${preservedIntro(args.out)}${BANNER}\n\n${body}\n\n${FOOTER}\n`;
+  const other = renderOtherModels(visible, pricingById);
+  const output = `${preservedIntro(args.out)}${BANNER}\n\n${body}\n\n${other.body}\n\n${FOOTER}\n`;
   writeFileSync(args.out, output);
 
   console.error(
     `generate-llm-router-models: wrote ${args.out} — ${visible.length} visible models ` +
       `(${fromOpenRouter} priced via OpenRouter, ${fromOverrides} priced via overrides, ` +
-      `${knownUnpriced} known-unpriced (—), ${missingData.length} without any data source)`
+      `${knownUnpriced} known-unpriced (—), ${missingData.length} without any data source); ` +
+      `${other.count} other available OpenRouter models`
   );
   if (missingData.length > 0) {
     console.error(

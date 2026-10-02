@@ -1,16 +1,24 @@
 ---
 title: "Available Models"
-description: "The full menu. 300+ LLM models, pricing per million tokens, context windows. Pick your favorite."
+description: "Use any chat model on OpenRouter with the LLM Router. Featured models, list prices per million tokens and context windows."
 ---
 
-Grab any model ID from the tables below and pass it as the `model` parameter. Format: `provider/model-name`.
+Pass any chat model ID from [OpenRouter's model list](https://openrouter.ai/models) as the `model` parameter. The tables below start with our <Tooltip tip="Models we have reviewed and documented, each with its own page.">featured models</Tooltip>, followed by every other <Tooltip tip="Any other chat model OpenRouter publishes. It works the same way, with the same pricing.">available model</Tooltip>.
 
 ```python
 response = client.chat.completions.create(
-    model="openai/gpt-5.1",  # any model ID from the tables below
+    model="openai/gpt-5.6-sol",  # any model ID from the tables below
     messages=[{"role": "user", "content": "Hello!"}]
 )
 ```
+
+## How it works
+
+- **Send the exact ID.** Use the value in the *Model ID* column. When a featured model's ID differs from OpenRouter's, the matching <Tooltip tip="The ID OpenRouter uses for the same model, shown so you can match the two lists.">OpenRouter ID</Tooltip> is shown next to its name.
+- **Pricing.** You pay the model's list price plus the same standard <Tooltip tip="5.5%, OpenRouter's standard credit fee.">platform fee</Tooltip> OpenRouter charges, nothing more. The exact cost of every request is shown in your [dashboard](https://www.eachlabs.ai).
+- **Not available.** Free (`:free`) variants of non-featured models. Audio and Decisions have their own model lists: see [Audio](/llm-router/audio) and [Decisions](/llm-router/decisions).
+- **Unknown or unavailable IDs** return a `400` error that names the model.
+- **Model catalog as JSON.** The [Model catalog API](/llm-router/model-catalog) returns the featured models.
 
 ---
 
@@ -20,9 +28,17 @@ response = client.chat.completions.create(
 
 | Model ID | Name | Input | Output | Context |
 |-|-|-|-|-|
+| `openai/gpt-6.1-sol` | GPT-6.1 Sol | $2.00 | $10.00 | 1,050,000 |
+| `openai/gpt-6-luna-pro` | GPT-6 Luna Pro | $0.10 | $0.50 | 1,050,000 |
+| `openai/gpt-6-luna` | GPT-6 Luna | $0.10 | $0.50 | 1,050,000 |
+| `openai/gpt-6-sol-pro` | GPT-6 Sol Pro | $2.00 | $10.00 | 1,050,000 |
+| `openai/gpt-6-sol` | GPT-6 Sol | $2.00 | $10.00 | 1,050,000 |
+| `openai/gpt-5.6-luna-pro` | GPT-5.6 Luna Pro | $0.20 | $1.20 | 1,050,000 |
 | `openai/gpt-5.6-luna` | GPT-5.6 Luna | $0.20 | $1.20 | 1,050,000 |
+| `openai/gpt-5.6-terra-pro` | GPT-5.6 Terra Pro | $2.00 | $12.00 | 1,050,000 |
 | `openai/gpt-5.6-terra` | GPT-5.6 Terra | $2.00 | $12.00 | 1,050,000 |
-| `openai/gpt-5.6-sol` | GPT-5.6 Sol | $2.50 | $15.00 | 1,050,000 |
+| `openai/gpt-5.6-sol-pro` | GPT-5.6 Sol Pro | $4.00 | $20.00 | 1,050,000 |
+| `openai/gpt-5.6-sol` | GPT-5.6 Sol | $2.00 | $10.00 | 1,050,000 |
 | `openai/gpt-chat-latest` | GPT Chat Latest | $5.00 | $30.00 | 400,000 |
 | `openai/gpt-5.5-pro` | GPT-5.5 Pro | $30.00 | $180.00 | 1,050,000 |
 | `openai/gpt-5.5` | GPT-5.5 | $5.00 | $30.00 | 1,050,000 |
@@ -42,10 +58,10 @@ response = client.chat.completions.create(
 | `openai/gpt-5-pro` | GPT-5 Pro | $15.00 | $120.00 | 400,000 |
 | `openai/gpt-5` | GPT-5 | $1.25 | $10.00 | 400,000 |
 | `openai/gpt-5-mini` | GPT-5 Mini | $0.25 | $2.00 | 400,000 |
+| `openai/gpt-5-mini:flex` | Gpt 5 Mini:flex (OpenRouter ID: `openai/gpt-5-mini`) | $0.25 | $2.00 | 400,000 |
 | `openai/gpt-5-nano` | GPT-5 Nano | $0.05 | $0.40 | 400,000 |
-| `openai/gpt-oss-120b` | gpt-oss-120b | $0.03 | $0.17 | 131,072 |
-| `openai/gpt-oss-20b` | gpt-oss-20b | $0.03 | $0.13 | 131,072 |
-| `openai/gpt-oss-20b:free` | gpt-oss-20b (free) | $0.00 | $0.00 | 131,072 |
+| `openai/gpt-oss-120b` | gpt-oss-120b | $0.04 | $0.17 | 131,072 |
+| `openai/gpt-oss-20b` | gpt-oss-20b | $0.02 | $0.09 | 131,072 |
 | `openai/o3-pro` | o3 Pro | $20.00 | $80.00 | 200,000 |
 | `openai/o4-mini-high` | o4 Mini High | $1.10 | $4.40 | 200,000 |
 | `openai/o3` | o3 | $2.00 | $8.00 | 200,000 |
@@ -68,7 +84,10 @@ response = client.chat.completions.create(
 | `openai/gpt-3.5-turbo-16k` | GPT-3.5 Turbo 16k | $3.00 | $4.00 | 16,385 |
 | `openai/gpt-3.5-turbo` | GPT-3.5 Turbo | $0.50 | $1.50 | 16,385 |
 | `openai/gpt-4` | GPT-4 | $30.00 | $60.00 | 8,191 |
+| `openai/gpt-4.1-mini:online` | GPT-4.1 Mini (Online) | — | — | — |
+| `openai/gpt-4.1:online` | GPT-4.1 (Online) | — | — | — |
 | `openai/gpt-4o-mini-search-preview` | GPT-4o-mini Search Preview | — | — | — |
+| `openai/gpt-4o-mini:online` | GPT-4o Mini (Online) | — | — | — |
 | `openai/gpt-4o-search-preview` | GPT-4o Search Preview | — | — | — |
 | `openai/gpt-5-chat` | GPT-5 Chat | — | — | — |
 | `openai/gpt-5-codex` | GPT-5 Codex | — | — | — |
@@ -76,8 +95,11 @@ response = client.chat.completions.create(
 | `openai/gpt-5-nano:flex` | Gpt 5 Nano:flex | — | — | — |
 | `openai/gpt-5.1-chat` | GPT-5.1 Chat | — | — | — |
 | `openai/gpt-5.3-chat` | GPT-5.3 Chat | — | — | — |
+| `openai/gpt-5.4-mini:online` | GPT-5.4 Mini (Online) | — | — | — |
+| `openai/gpt-5.5:online` | GPT-5.5 (Online) | — | — | — |
 | `openai/gpt-5:flex` | Gpt 5:flex | — | — | — |
 | `openai/gpt-5:priority` | Gpt 5:priority | — | — | — |
+| `openai/gpt-oss-20b:free` | gpt-oss-20b (free) | — | — | — |
 | `openai/o1:high` | O1:high | — | — | — |
 | `openai/o1:low` | O1:low | — | — | — |
 | `openai/o1:medium` | O1:medium | — | — | — |
@@ -96,81 +118,86 @@ response = client.chat.completions.create(
 
 | Model ID | Name | Input | Output | Context |
 |-|-|-|-|-|
-| `openai-responses/gpt-5.2-codex` | Gpt 5.2 Codex | $1.75 | $14.00 | 400,000 |
-| `openai-responses/gpt-5.2` | Gpt 5.2 | $1.75 | $14.00 | 400,000 |
-| `openai-responses/gpt-5.1-codex` | Gpt 5.1 Codex | $1.25 | $10.00 | 400,000 |
-| `openai-responses/gpt-5-pro` | Gpt 5 Pro | $15.00 | $120.00 | 400,000 |
-| `openai-responses/gpt-5` | Gpt 5 | $1.25 | $10.00 | 400,000 |
-| `openai-responses/gpt-5-nano` | Gpt 5 Nano | $0.05 | $0.40 | 400,000 |
-| `openai-responses/o3-pro` | O3 Pro | $20.00 | $80.00 | 200,000 |
-| `openai-responses/o4-mini` | O4 Mini | $1.10 | $4.40 | 200,000 |
-| `openai-responses/gpt-4.1` | Gpt 4.1 | $2.00 | $8.00 | 1,047,576 |
-| `openai-responses/o3-mini` | O3 Mini | $1.10 | $4.40 | 200,000 |
+| `openai-responses/gpt-5.2-codex` | Gpt 5.2 Codex (OpenRouter ID: `openai/gpt-5.2-codex`) | $1.75 | $14.00 | 400,000 |
+| `openai-responses/gpt-5.2` | Gpt 5.2 (OpenRouter ID: `openai/gpt-5.2`) | $1.75 | $14.00 | 400,000 |
+| `openai-responses/gpt-5.1-codex` | Gpt 5.1 Codex (OpenRouter ID: `openai/gpt-5.1-codex`) | $1.25 | $10.00 | 400,000 |
+| `openai-responses/gpt-5-pro` | Gpt 5 Pro (OpenRouter ID: `openai/gpt-5-pro`) | $15.00 | $120.00 | 400,000 |
+| `openai-responses/gpt-5` | Gpt 5 (OpenRouter ID: `openai/gpt-5`) | $1.25 | $10.00 | 400,000 |
+| `openai-responses/gpt-5-nano` | Gpt 5 Nano (OpenRouter ID: `openai/gpt-5-nano`) | $0.05 | $0.40 | 400,000 |
+| `openai-responses/o3-pro` | O3 Pro (OpenRouter ID: `openai/o3-pro`) | $20.00 | $80.00 | 200,000 |
+| `openai-responses/o4-mini` | O4 Mini (OpenRouter ID: `openai/o4-mini`) | $1.10 | $4.40 | 200,000 |
+| `openai-responses/gpt-4.1` | Gpt 4.1 (OpenRouter ID: `openai/gpt-4.1`) | $2.00 | $8.00 | 1,047,576 |
+| `openai-responses/o3-mini` | O3 Mini (OpenRouter ID: `openai/o3-mini`) | $1.10 | $4.40 | 200,000 |
 | `openai-responses/gpt-5-codex` | Gpt 5 Codex | — | — | — |
 
 ## Anthropic
 
 | Model ID | Name | Input | Output | Context |
 |-|-|-|-|-|
+| `anthropic/claude-sonnet-5.5` | Claude Sonnet 5.5 | $2.00 | $10.00 | 1,000,000 |
 | `anthropic/claude-fable-5` | Claude Fable 5 | $10.00 | $50.00 | 1,000,000 |
-| `anthropic/claude-sonnet-4-6` | Claude Sonnet 4.6 | $3.00 | $15.00 | 1,000,000 |
+| `anthropic/claude-sonnet-4-6` | Claude Sonnet 4.6 (OpenRouter ID: `anthropic/claude-sonnet-4.6`) | $3.00 | $15.00 | 1,000,000 |
+| `anthropic/claude-opus-4-6` | Claude Opus 4.6 (OpenRouter ID: `anthropic/claude-opus-4.6`) | $5.00 | $25.00 | 1,000,000 |
 | `anthropic/claude-mythos-5` | Claude Mythos 5 | — | — | — |
-| `anthropic/claude-opus-4-6` | Claude Opus 4.6 | — | — | — |
 
 ## Anthropic (Claude)
 
 | Model ID | Name | Input | Output | Context |
 |-|-|-|-|-|
-| `anthropic/claude-opus-5-fast` | Claude Opus 5 (Fast) | $10.00 | $50.00 | 1,000,000 |
+| `anthropic/claude-opus-5.5` | Claude Opus 5.5 | $4.00 | $20.00 | 1,000,000 |
 | `anthropic/claude-opus-5` | Claude Opus 5 | $5.00 | $25.00 | 1,000,000 |
 | `anthropic/claude-sonnet-5` | Claude Sonnet 5 | $2.00 | $10.00 | 1,000,000 |
-| `anthropic/claude-opus-4.8-fast` | Claude Opus 4.8 (Fast) | $10.00 | $50.00 | 1,000,000 |
 | `anthropic/claude-opus-4.8` | Claude Opus 4.8 | $5.00 | $25.00 | 1,000,000 |
-| `anthropic/claude-opus-4.7-fast` | Claude Opus 4.7 (Fast) | $30.00 | $150.00 | 1,000,000 |
 | `anthropic/claude-opus-4.7` | Claude Opus 4.7 | $5.00 | $25.00 | 1,000,000 |
 | `anthropic/claude-opus-4.5` | Claude Opus 4.5 | $5.00 | $25.00 | 200,000 |
 | `anthropic/claude-haiku-4.5` | Claude Haiku 4.5 | $1.00 | $5.00 | 200,000 |
 | `anthropic/claude-opus-4.1` | Claude Opus 4.1 | $15.00 | $75.00 | 200,000 |
-| `anthropic/claude-opus-4` | Claude Opus 4 | $15.00 | $75.00 | 200,000 |
-| `anthropic/claude-3-haiku` | Claude 3 Haiku | $0.25 | $1.25 | 200,000 |
+| `anthropic/claude-3-haiku` | Claude 3 Haiku | — | — | — |
+| `anthropic/claude-opus-4` | Claude Opus 4 | — | — | — |
+| `anthropic/claude-opus-4.7-fast` | Claude Opus 4.7 (Fast) | — | — | — |
+| `anthropic/claude-opus-4.8-fast` | Claude Opus 4.8 (Fast) | — | — | — |
+| `anthropic/claude-opus-5-fast` | Claude Opus 5 (Fast) | — | — | — |
 
 ## Google Gemini
 
 | Model ID | Name | Input | Output | Context |
 |-|-|-|-|-|
-| `google/gemini-3.7-flash` | Gemini 3.7 Flash | $0.38 | $1.88 | 1,048,576 |
+| `google/gemini-3.8-flash` | Gemini 3.8 Flash | $0.75 | $3.75 | 1,048,576 |
+| `google/gemini-3.7-flash` | Gemini 3.7 Flash | $0.75 | $3.75 | 1,048,576 |
 | `google/gemini-3.6-flash` | Gemini 3.6 Flash | $0.75 | $3.75 | 1,048,576 |
 | `google/gemini-3.5-flash-lite` | Gemini 3.5 Flash-Lite | $0.30 | $2.50 | 1,048,576 |
 | `google/gemini-3.5-flash` | Gemini 3.5 Flash | $1.50 | $9.00 | 1,048,576 |
 | `google/gemini-3.1-flash-lite` | Gemini 3.1 Flash Lite | $0.25 | $1.50 | 1,048,576 |
-| `google/gemma-4-26b-a4b-it` | Gemma 4 26B A4B | $0.07 | $0.34 | 262,144 |
+| `google/gemma-4-26b-a4b-it` | Gemma 4 26B A4B | $0.07 | $0.22 | 262,144 |
 | `google/gemma-4-26b-a4b-it:free` | Gemma 4 26B A4B  (free) | $0.00 | $0.00 | 262,144 |
-| `google/gemma-4-31b-it` | Gemma 4 31B | $0.10 | $0.34 | 262,144 |
+| `google/gemma-4-31b-it` | Gemma 4 31B | $0.09 | $0.34 | 262,144 |
 | `google/gemma-4-31b-it:free` | Gemma 4 31B (free) | $0.00 | $0.00 | 262,144 |
 | `google/gemini-3.1-flash-lite-preview` | Gemini 3.1 Flash Lite Preview | $0.25 | $1.50 | 1,048,576 |
-| `vertex/gemini-3.1-flash-lite-preview` | Gemini 3.1 Flash Lite Preview | $0.25 | $1.50 | 1,048,576 |
+| `vertex/gemini-3.1-flash-lite-preview` | Gemini 3.1 Flash Lite Preview (OpenRouter ID: `google/gemini-3.1-flash-lite-preview`) | $0.25 | $1.50 | 1,048,576 |
 | `google/gemini-3.1-pro-preview-customtools` | Gemini 3.1 Pro Preview Custom Tools | $2.00 | $12.00 | 1,048,576 |
 | `google/gemini-3.1-pro-preview` | Gemini 3.1 Pro Preview | $2.00 | $12.00 | 1,048,576 |
 | `google/gemini-3-flash-preview` | Gemini 3 Flash Preview | $0.50 | $3.00 | 1,048,576 |
-| `vertex/gemini-3-flash-preview` | Gemini 3 Flash Preview | $0.50 | $3.00 | 1,048,576 |
+| `vertex/gemini-3-flash-preview` | Gemini 3 Flash Preview (OpenRouter ID: `google/gemini-3-flash-preview`) | $0.50 | $3.00 | 1,048,576 |
 | `google/gemini-3-pro-image-preview` | Nano Banana Pro (Gemini 3 Pro Image Preview) | $2.00 | $12.00 | 65,536 |
+| `google/gemini-2.5-flash-lite:batch` | Gemini 2.5 Flash Lite (Batch) | $0.05 | $0.20 | 1,048,576 |
+| `google/gemini-2.5-flash:batch` | Gemini 2.5 Flash (Batch) | $0.15 | $1.25 | 1,048,576 |
+| `vertex/gemini-2.5-flash` | Gemini 2.5 Flash (OpenRouter ID: `google/gemini-2.5-flash`) | $0.30 | $2.50 | 1,048,576 |
 | `google/gemini-2.5-pro-preview` | Gemini 2.5 Pro Preview 06-05 | $1.25 | $10.00 | 1,048,576 |
-| `google/gemma-3n-e4b-it` | Gemma 3n 4B | $0.06 | $0.12 | 32,768 |
-| `google/gemini-2.5-pro-preview-05-06` | Gemini 2.5 Pro Preview 05-06 | $1.25 | $10.00 | 1,048,576 |
 | `google/gemma-3-4b-it` | Gemma 3 4B | $0.05 | $0.10 | 131,072 |
 | `google/gemma-3-12b-it` | Gemma 3 12B | $0.05 | $0.15 | 131,072 |
-| `google/gemma-3-27b-it` | Gemma 3 27B | $0.08 | $0.45 | 262,144 |
+| `google/gemma-3-27b-it` | Gemma 3 27B | $0.08 | $0.45 | 131,072 |
 | `google/gemma-2-27b-it` | Gemma 2 27B | $0.65 | $0.65 | 8,192 |
 | `google/gemini-2.5-flash-lite-preview-09-2025` | Gemini 2.5 Flash Lite Preview 09-2025 | — | — | — |
-| `vertex/gemini-2.5-flash` | Gemini 2.5 Flash | — | — | — |
+| `google/gemini-2.5-pro-preview-05-06` | Gemini 2.5 Pro Preview 05-06 | — | — | — |
+| `google/gemma-3n-e4b-it` | Gemma 3n 4B | — | — | — |
 
 ## Meta Llama
 
 | Model ID | Name | Input | Output | Context |
 |-|-|-|-|-|
-| `meta-llama/llama-guard-4-12b` | Llama Guard 4 12B | $0.18 | $0.18 | 1,048,576 |
-| `meta-llama/llama-4-maverick` | Llama 4 Maverick | $0.20 | $0.80 | 1,048,576 |
-| `groq/llama-4-scout` | Llama 4 Scout | $0.10 | $0.30 | 1,310,720 |
+| `meta-llama/llama-guard-4-12b` | Llama Guard 4 12B | $0.18 | $0.18 | 163,840 |
+| `meta-llama/llama-4-maverick` | Llama 4 Maverick | $0.19 | $0.65 | 1,048,576 |
+| `groq/llama-4-scout` | Llama 4 Scout (OpenRouter ID: `meta-llama/llama-4-scout`) | $0.10 | $0.30 | 1,310,720 |
 | `meta-llama/llama-4-scout` | Llama 4 Scout | $0.10 | $0.30 | 1,310,720 |
 | `meta-llama/llama-3.3-70b-instruct` | Llama 3.3 70B Instruct | $0.10 | $0.32 | 131,072 |
 | `meta-llama/llama-3.2-1b-instruct` | Llama 3.2 1B Instruct | $0.03 | $0.20 | 60,000 |
@@ -183,22 +210,28 @@ response = client.chat.completions.create(
 
 | Model ID | Name | Input | Output | Context |
 |-|-|-|-|-|
-| `deepseek/deepseek-v4-pro` | DeepSeek V4 Pro | $0.66 | $1.98 | 1,048,576 |
-| `deepseek/deepseek-v4-flash` | DeepSeek V4 Flash | $0.08 | $0.17 | 1,048,576 |
-| `deepseek/deepseek-v3.2` | DeepSeek V3.2 | $0.27 | $0.40 | 163,840 |
+| `deepseek/deepseek-v4.1-flash` | DeepSeek V4.1 Flash | $0.02 | $0.60 | 1,048,576 |
+| `deepseek/deepseek-v4-pro-0813` | DeepSeek V4 Pro 0813 | $0.66 | $1.98 | 1,048,576 |
+| `deepseek/deepseek-v4-flash-0731` | DeepSeek V4 Flash 0731 | $0.01 | $1.28 | 1,048,576 |
+| `deepseek/deepseek-v4-pro` | DeepSeek V4 Pro | $0.21 | $0.42 | 1,048,576 |
+| `deepseek/deepseek-v4-flash` | DeepSeek V4 Flash | $0.03 | $0.06 | 1,048,576 |
+| `deepseek/deepseek-v3.2` | DeepSeek V3.2 | $0.28 | $0.42 | 163,840 |
 | `deepseek/deepseek-v3.2-exp` | DeepSeek V3.2 Exp | $0.27 | $0.41 | 163,840 |
-| `deepseek/deepseek-v3.1-terminus` | DeepSeek V3.1 Terminus | $0.27 | $1.00 | 163,840 |
+| `deepseek/deepseek-v3.1-terminus` | DeepSeek V3.1 Terminus | $0.30 | $1.00 | 163,840 |
 | `deepseek/deepseek-chat-v3.1` | DeepSeek V3.1 | $0.25 | $0.95 | 163,840 |
 | `deepseek/deepseek-r1-0528` | R1 0528 | $0.50 | $2.15 | 163,840 |
-| `deepseek/deepseek-chat-v3-0324` | DeepSeek V3 0324 | $0.27 | $1.12 | 163,840 |
-| `deepseek/deepseek-r1-distill-llama-70b` | R1 Distill Llama 70B | $0.80 | $0.80 | 8,192 |
+| `deepseek/deepseek-chat-v3-0324` | DeepSeek V3 0324 | $0.29 | $1.14 | 163,840 |
 | `deepseek/deepseek-r1` | R1 | $0.70 | $2.50 | 64,000 |
 | `deepseek/deepseek-chat` | DeepSeek V3 | $0.26 | $1.03 | 163,840 |
+| `deepseek/deepseek-r1-distill-llama-70b` | R1 Distill Llama 70B | — | — | — |
 
 ## xAI Grok
 
 | Model ID | Name | Input | Output | Context |
 |-|-|-|-|-|
+| `x-ai/grok-4.7` | Grok 4.7 | $2.00 | $6.00 | 500,000 |
+| `x-ai/grok-4.6` | Grok 4.6 | $2.00 | $6.00 | 500,000 |
+| `x-ai/grok-4.5` | Grok 4.5 | $2.00 | $6.00 | 500,000 |
 | `x-ai/grok-build-0.1` | Grok Build 0.1 | $1.00 | $2.00 | 256,000 |
 | `x-ai/grok-4.3` | Grok 4.3 | $1.25 | $2.50 | 1,000,000 |
 | `x-ai/grok-4.20-multi-agent` | Grok 4.20 Multi-Agent | $1.25 | $2.50 | 2,000,000 |
@@ -210,11 +243,12 @@ response = client.chat.completions.create(
 |-|-|-|-|-|
 | `mistralai/mistral-medium-3-5` | Mistral Medium 3.5 | $1.50 | $7.50 | 262,144 |
 | `mistralai/mistral-small-2603` | Mistral Small 4 | $0.15 | $0.60 | 262,144 |
+| `mistralai/devstral-2512` | Devstral 2 2512 | $0.40 | $2.00 | 262,144 |
 | `mistralai/ministral-14b-2512` | Ministral 3 14B 2512 | $0.20 | $0.20 | 262,144 |
 | `mistralai/ministral-8b-2512` | Ministral 3 8B 2512 | $0.15 | $0.15 | 262,144 |
 | `mistralai/ministral-3b-2512` | Ministral 3 3B 2512 | $0.10 | $0.10 | 131,072 |
 | `mistralai/mistral-large-2512` | Mistral Large 3 2512 | $0.50 | $1.50 | 262,144 |
-| `mistralai/voxtral-small-24b-2507` | Voxtral Small 24B 2507 | $0.10 | $0.30 | 32,000 |
+| `mistralai/voxtral-small-24b-2507` | Voxtral Small 24B 2507 | $0.10 | $0.30 | 32,768 |
 | `mistralai/mistral-medium-3.1` | Mistral Medium 3.1 | $0.40 | $2.00 | 131,072 |
 | `mistralai/codestral-2508` | Codestral 2508 | $0.30 | $0.90 | 256,000 |
 | `mistralai/mistral-small-3.2-24b-instruct` | Mistral Small 3.2 24B | $0.09 | $0.25 | 256,000 |
@@ -226,34 +260,37 @@ response = client.chat.completions.create(
 | `mistralai/mistral-nemo` | Mistral Nemo | $0.02 | $0.03 | 131,072 |
 | `mistralai/mixtral-8x22b-instruct` | Mixtral 8x22B Instruct | $2.00 | $6.00 | 65,536 |
 | `mistralai/mistral-large` | Mistral Large | $2.00 | $6.00 | 128,000 |
-| `mistralai/devstral-2512` | Devstral 2 2512 | — | — | — |
 
 ## Qwen
 
 | Model ID | Name | Input | Output | Context |
 |-|-|-|-|-|
+| `qwen/qwen3.8-flash` | Qwen3.8 Flash | $0.15 | $0.47 | 1,000,000 |
+| `qwen/qwen3.8-27b` | Qwen3.8 27B | $0.42 | $3.00 | 1,000,000 |
+| `qwen/qwen3.8-2.4t-a95b` | Qwen3.8 2.4T A95B | $2.00 | $6.00 | 1,048,576 |
+| `qwen/qwen3.7-flash` | Qwen3.7 Flash | $0.03 | $0.13 | 1,000,000 |
 | `qwen/qwen3.7-plus` | Qwen3.7 Plus | $0.32 | $1.28 | 1,000,000 |
 | `qwen/qwen3.7-max` | Qwen3.7 Max | $1.48 | $4.42 | 1,000,000 |
 | `qwen/qwen3.5-plus-20260420` | Qwen3.5 Plus 2026-04-20 | $0.30 | $1.80 | 1,000,000 |
 | `qwen/qwen3.6-flash` | Qwen3.6 Flash | $0.19 | $1.13 | 1,000,000 |
-| `qwen/qwen3.6-35b-a3b` | Qwen3.6 35B A3B | $0.14 | $1.00 | 262,144 |
+| `qwen/qwen3.6-35b-a3b` | Qwen3.6 35B A3B | $0.15 | $1.00 | 262,144 |
 | `qwen/qwen3.6-max-preview` | Qwen3.6 Max Preview | $1.03 | $6.16 | 262,144 |
-| `qwen/qwen3.6-27b` | Qwen3.6 27B | $0.29 | $2.40 | 262,144 |
+| `qwen/qwen3.6-27b` | Qwen3.6 27B | $0.32 | $3.20 | 262,144 |
 | `qwen/qwen3.6-plus` | Qwen3.6 Plus | $0.33 | $1.95 | 1,000,000 |
 | `qwen/qwen3.5-9b` | Qwen3.5-9B | $0.10 | $0.15 | 262,144 |
-| `qwen/qwen3.5-35b-a3b` | Qwen3.5-35B-A3B | $0.22 | $1.80 | 262,144 |
+| `qwen/qwen3.5-35b-a3b` | Qwen3.5-35B-A3B | $0.15 | $1.00 | 262,144 |
 | `qwen/qwen3.5-27b` | Qwen3.5-27B | $0.20 | $1.56 | 262,144 |
-| `qwen/qwen3.5-122b-a10b` | Qwen3.5-122B-A10B | $0.29 | $2.40 | 262,144 |
+| `qwen/qwen3.5-122b-a10b` | Qwen3.5-122B-A10B | $0.26 | $2.08 | 262,144 |
 | `qwen/qwen3.5-flash-02-23` | Qwen3.5-Flash | $0.07 | $0.26 | 1,000,000 |
 | `qwen/qwen3.5-plus-02-15` | Qwen3.5 Plus 2026-02-15 | $0.26 | $1.56 | 1,000,000 |
-| `qwen/qwen3.5-397b-a17b` | Qwen3.5 397B A17B | $0.39 | $2.34 | 262,144 |
+| `qwen/qwen3.5-397b-a17b` | Qwen3.5 397B A17B | $0.55 | $3.50 | 262,144 |
 | `qwen/qwen3-max-thinking` | Qwen3 Max Thinking | $0.78 | $3.90 | 262,144 |
 | `qwen/qwen3-coder-next` | Qwen3 Coder Next | $0.12 | $0.80 | 262,144 |
 | `qwen/qwen3-vl-32b-instruct` | Qwen3 VL 32B Instruct | $0.10 | $0.42 | 131,072 |
 | `qwen/qwen3-vl-8b-thinking` | Qwen3 VL 8B Thinking | $0.18 | $2.10 | 131,072 |
 | `qwen/qwen3-vl-8b-instruct` | Qwen3 VL 8B Instruct | $0.12 | $0.45 | 262,144 |
 | `qwen/qwen3-vl-30b-a3b-thinking` | Qwen3 VL 30B A3B Thinking | $0.20 | $2.40 | 262,144 |
-| `qwen/qwen3-vl-30b-a3b-instruct` | Qwen3 VL 30B A3B Instruct | $0.13 | $0.52 | 262,144 |
+| `qwen/qwen3-vl-30b-a3b-instruct` | Qwen3 VL 30B A3B Instruct | $0.15 | $0.60 | 262,144 |
 | `qwen/qwen3-vl-235b-a22b-thinking` | Qwen3 VL 235B A22B Thinking | $0.40 | $4.00 | 131,072 |
 | `qwen/qwen3-vl-235b-a22b-instruct` | Qwen3 VL 235B A22B Instruct | $0.21 | $1.90 | 262,144 |
 | `qwen/qwen3-max` | Qwen3 Max | $0.78 | $3.90 | 262,144 |
@@ -262,14 +299,13 @@ response = client.chat.completions.create(
 | `qwen/qwen3-next-80b-a3b-thinking` | Qwen3 Next 80B A3B Thinking | $0.15 | $1.20 | 262,144 |
 | `qwen/qwen3-next-80b-a3b-instruct` | Qwen3 Next 80B A3B Instruct | $0.10 | $1.10 | 262,144 |
 | `qwen/qwen-plus-2025-07-28` | Qwen Plus 0728 | $0.26 | $0.78 | 1,000,000 |
-| `qwen/qwen-plus-2025-07-28:thinking` | Qwen Plus 0728 (thinking) | $0.26 | $0.78 | 1,000,000 |
 | `qwen/qwen3-30b-a3b-thinking-2507` | Qwen3 30B A3B Thinking 2507 | $0.20 | $2.40 | 81,920 |
 | `qwen/qwen3-coder-30b-a3b-instruct` | Qwen3 Coder 30B A3B Instruct | $0.07 | $0.28 | 262,144 |
 | `qwen/qwen3-30b-a3b-instruct-2507` | Qwen3 30B A3B Instruct 2507 | $0.05 | $0.19 | 262,144 |
-| `qwen/qwen3-235b-a22b-thinking-2507` | Qwen3 235B A22B Thinking 2507 | $0.23 | $2.30 | 262,144 |
+| `qwen/qwen3-235b-a22b-thinking-2507` | Qwen3 235B A22B Thinking 2507 | $0.23 | $2.30 | 131,072 |
 | `qwen/qwen3-coder` | Qwen3 Coder 480B A35B | $0.30 | $1.00 | 262,144 |
-| `qwen/qwen3-235b-a22b-2507` | Qwen3 235B A22B Instruct 2507 | $0.09 | $0.55 | 262,144 |
-| `qwen/qwen3-30b-a3b` | Qwen3 30B A3B | $0.13 | $0.52 | 131,072 |
+| `qwen/qwen3-235b-a22b-2507` | Qwen3 235B A22B Instruct 2507 | $0.09 | $0.35 | 262,144 |
+| `qwen/qwen3-30b-a3b` | Qwen3 30B A3B | $0.12 | $0.50 | 131,072 |
 | `qwen/qwen3-8b` | Qwen3 8B | $0.12 | $0.45 | 131,072 |
 | `qwen/qwen3-14b` | Qwen3 14B | $0.12 | $0.24 | 131,072 |
 | `qwen/qwen3-32b` | Qwen3 32B | $0.08 | $0.28 | 131,072 |
@@ -279,6 +315,8 @@ response = client.chat.completions.create(
 | `qwen/qwen-2.5-coder-32b-instruct` | Qwen2.5 Coder 32B Instruct | $0.66 | $1.00 | 32,768 |
 | `qwen/qwen-2.5-7b-instruct` | Qwen2.5 7B Instruct | $0.10 | $0.20 | 32,768 |
 | `qwen/qwen-2.5-72b-instruct` | Qwen2.5 72B Instruct | $0.36 | $0.40 | 32,768 |
+| `qwen/qwen-plus-2025-07-28:thinking` | Qwen Plus 0728 (thinking) | — | — | — |
+| `qwen/qwen3.8-max` | Qwen3.8 Max | — | — | — |
 
 ## Amazon Nova
 
@@ -304,9 +342,10 @@ response = client.chat.completions.create(
 
 | Model ID | Name | Input | Output | Context |
 |-|-|-|-|-|
-| `moonshotai/kimi-k2.7-code` | Kimi K2.7 Code | $0.71 | $3.50 | 262,144 |
-| `moonshotai/kimi-k2.6` | Kimi K2.6 | $0.95 | $4.00 | 262,144 |
-| `moonshotai/kimi-k2.5` | Kimi K2.5 | $0.57 | $2.85 | 262,144 |
+| `moonshotai/kimi-k3` | Kimi K3 | $2.70 | $13.50 | 1,048,576 |
+| `moonshotai/kimi-k2.7-code` | Kimi K2.7 Code | $0.67 | $3.35 | 262,144 |
+| `moonshotai/kimi-k2.6` | Kimi K2.6 | $0.43 | $1.83 | 262,144 |
+| `moonshotai/kimi-k2.5` | Kimi K2.5 | $0.45 | $2.25 | 262,144 |
 | `moonshotai/kimi-k2-thinking` | Kimi K2 Thinking | $0.60 | $2.50 | 262,144 |
 | `moonshotai/kimi-k2-0905` | Kimi K2 0905 | $0.60 | $2.50 | 262,144 |
 | `moonshotai/kimi-k2` | Kimi K2 0711 | $0.57 | $2.30 | 131,072 |
@@ -316,11 +355,11 @@ response = client.chat.completions.create(
 | Model ID | Name | Input | Output | Context |
 |-|-|-|-|-|
 | `minimax/minimax-m3` | MiniMax M3 | $0.30 | $1.20 | 1,048,576 |
-| `minimax/minimax-m2.7` | MiniMax M2.7 | $0.30 | $1.20 | 204,800 |
-| `minimax/minimax-m2.5` | MiniMax M2.5 | $0.22 | $0.90 | 204,800 |
+| `minimax/minimax-m2.7` | MiniMax M2.7 | $0.21 | $0.84 | 204,800 |
+| `minimax/minimax-m2.5` | MiniMax M2.5 | $0.27 | $1.08 | 204,800 |
 | `minimax/minimax-m2-her` | MiniMax M2-her | $0.30 | $1.20 | 65,536 |
 | `minimax/minimax-m2.1` | MiniMax M2.1 | $0.30 | $1.20 | 204,800 |
-| `minimax/minimax-m2` | MiniMax M2 | $0.26 | $1.02 | 204,800 |
+| `minimax/minimax-m2` | MiniMax M2 | $0.30 | $1.20 | 204,800 |
 | `minimax/minimax-m1` | MiniMax M1 | $0.55 | $2.20 | 1,000,000 |
 | `minimax/minimax-01` | MiniMax-01 | $0.20 | $1.10 | 1,000,192 |
 
@@ -328,8 +367,9 @@ response = client.chat.completions.create(
 
 | Model ID | Name | Input | Output | Context |
 |-|-|-|-|-|
-| `nvidia/nemotron-3-ultra-550b-a55b` | Nemotron 3 Ultra | $0.60 | $3.60 | 512,288 |
-| `nvidia/nemotron-3-super-120b-a12b` | Nemotron 3 Super | $0.08 | $0.40 | 1,000,000 |
+| `nvidia/nemotron-3.5-lightning` | Nemotron 3.5 Lightning | $0.06 | $0.16 | 262,144 |
+| `nvidia/nemotron-3-ultra-550b-a55b` | Nemotron 3 Ultra | $0.50 | $2.20 | 262,144 |
+| `nvidia/nemotron-3-super-120b-a12b` | Nemotron 3 Super | $0.08 | $0.45 | 262,144 |
 | `nvidia/nemotron-3-nano-30b-a3b` | Nemotron 3 Nano 30B A3B | $0.05 | $0.20 | 262,144 |
 | `nvidia/llama-3.3-nemotron-super-49b-v1.5` | Llama 3.3 Nemotron Super 49B V1.5 | — | — | — |
 
@@ -347,15 +387,16 @@ response = client.chat.completions.create(
 
 | Model ID | Name | Input | Output | Context |
 |-|-|-|-|-|
-| `z-ai/glm-5.2` | GLM 5.2 | $1.19 | $3.74 | 1,048,576 |
-| `z-ai/glm-5.1` | GLM 5.1 | $0.97 | $3.04 | 204,800 |
+| `z-ai/glm-5.3-flash` | GLM 5.3 Flash | $0.15 | $0.50 | 1,048,576 |
+| `z-ai/glm-5.2` | GLM 5.2 | $0.41 | $3.99 | 1,048,576 |
+| `z-ai/glm-5.1` | GLM 5.1 | $0.96 | $3.03 | 204,800 |
 | `z-ai/glm-5v-turbo` | GLM 5V Turbo | $1.20 | $4.00 | 202,752 |
 | `z-ai/glm-5-turbo` | GLM 5 Turbo | $1.20 | $4.00 | 202,752 |
 | `z-ai/glm-5` | GLM 5 | $0.60 | $1.92 | 204,800 |
-| `z-ai/glm-4.7-flash` | GLM 4.7 Flash | $0.06 | $0.40 | 202,752 |
-| `z-ai/glm-4.7` | GLM 4.7 | $0.40 | $1.75 | 204,800 |
+| `z-ai/glm-4.7-flash` | GLM 4.7 Flash | $0.06 | $0.40 | 200,000 |
+| `z-ai/glm-4.7` | GLM 4.7 | $0.60 | $2.20 | 204,800 |
 | `z-ai/glm-4.6v` | GLM 4.6V | $0.30 | $0.90 | 131,072 |
-| `z-ai/glm-4.6` | GLM 4.6 | $0.50 | $2.00 | 204,800 |
+| `z-ai/glm-4.6` | GLM 4.6 | $0.43 | $1.75 | 204,800 |
 | `z-ai/glm-4.5v` | GLM 4.5V | $0.60 | $1.80 | 65,536 |
 | `z-ai/glm-4.5` | GLM 4.5 | $0.60 | $2.20 | 131,072 |
 | `z-ai/glm-4.5-air` | GLM 4.5 Air | $0.13 | $0.85 | 131,072 |
@@ -364,6 +405,8 @@ response = client.chat.completions.create(
 
 | Model ID | Name | Input | Output | Context |
 |-|-|-|-|-|
+| `bytedance-seed/seed-2-1-turbo` | Seed 2.1 Turbo | $0.50 | $2.50 | 262,144 |
+| `bytedance-seed/seed-2.0-code` | Seed-2.0-Code | $0.50 | $3.00 | 262,144 |
 | `bytedance-seed/seed-2.0-lite` | Seed-2.0-Lite | $0.25 | $2.00 | 262,144 |
 | `bytedance-seed/seed-2.0-mini` | Seed-2.0-Mini | $0.10 | $0.40 | 262,144 |
 | `bytedance-seed/seed-1.6-flash` | Seed 1.6 Flash | $0.07 | $0.30 | 262,144 |
@@ -391,7 +434,7 @@ response = client.chat.completions.create(
 
 | Model ID | Name | Input | Output | Context |
 |-|-|-|-|-|
-| `ai21/jamba-large-1.7` | Jamba Large 1.7 | $2.00 | $8.00 | 256,000 |
+| `ai21/jamba-large-1.7` | Jamba Large 1.7 | — | — | — |
 
 ## AionLabs
 
@@ -406,13 +449,13 @@ response = client.chat.completions.create(
 
 | Model ID | Name | Input | Output | Context |
 |-|-|-|-|-|
-| `anthracite-org/magnum-v4-72b` | Magnum v4 72B | $3.00 | $5.00 | 32,768 |
+| `anthracite-org/magnum-v4-72b` | Magnum v4 72B | $2.50 | $5.00 | 32,768 |
 
 ## Arcee AI
 
 | Model ID | Name | Input | Output | Context |
 |-|-|-|-|-|
-| `arcee-ai/trinity-large-thinking` | Trinity Large Thinking | $0.22 | $0.85 | 262,144 |
+| `arcee-ai/trinity-large-thinking` | Trinity Large Thinking | $0.25 | $0.80 | 262,144 |
 | `arcee-ai/trinity-mini` | Trinity Mini | — | — | — |
 
 ## ByteDance
@@ -425,28 +468,28 @@ response = client.chat.completions.create(
 
 | Model ID | Name | Input | Output | Context |
 |-|-|-|-|-|
-| `deepcogito/cogito-v2.1-671b` | Cogito v2.1 671B | $1.25 | $1.25 | 128,000 |
+| `deepcogito/cogito-v2.1-671b` | Cogito v2.1 671B | — | — | — |
 
 ## Gryphe
 
 | Model ID | Name | Input | Output | Context |
 |-|-|-|-|-|
-| `gryphe/mythomax-l2-13b` | MythoMax 13B | $0.06 | $0.06 | 8,192 |
+| `gryphe/mythomax-l2-13b` | MythoMax 13B | $0.08 | $0.11 | 8,192 |
 
 ## IBM Granite
 
 | Model ID | Name | Input | Output | Context |
 |-|-|-|-|-|
-| `ibm-granite/granite-4.1-8b` | Granite 4.1 8B | $0.05 | $0.10 | 131,072 |
 | `ibm-granite/granite-4.0-h-micro` | Granite 4.0 Micro | $0.02 | $0.11 | 131,000 |
+| `ibm-granite/granite-4.1-8b` | Granite 4.1 8B | — | — | — |
 
 ## InclusionAI
 
 | Model ID | Name | Input | Output | Context |
 |-|-|-|-|-|
-| `inclusionai/ring-2.6-1t` | Ring-2.6-1T | $0.07 | $0.63 | 262,144 |
-| `inclusionai/ling-2.6-1t` | Ling-2.6-1T | $0.07 | $0.63 | 262,144 |
-| `inclusionai/ling-2.6-flash` | Ling-2.6-flash | $0.01 | $0.03 | 262,144 |
+| `inclusionai/ling-2.6-1t` | Ling-2.6-1T | — | — | — |
+| `inclusionai/ling-2.6-flash` | Ling-2.6-flash | — | — | — |
+| `inclusionai/ring-2.6-1t` | Ring-2.6-1T | — | — | — |
 
 ## Inflection
 
@@ -455,11 +498,18 @@ response = client.chat.completions.create(
 | `inflection/inflection-3-pi` | Inflection 3 Pi | — | — | — |
 | `inflection/inflection-3-productivity` | Inflection 3 Productivity | — | — | — |
 
+## Inkling
+
+| Model ID | Name | Input | Output | Context |
+|-|-|-|-|-|
+| `thinkingmachines/inkling-small` | Inkling Small | $0.45 | $1.20 | 524,288 |
+| `thinkingmachines/inkling` | Inkling | $0.95 | $4.05 | 524,288 |
+
 ## Kwaipilot
 
 | Model ID | Name | Input | Output | Context |
 |-|-|-|-|-|
-| `kwaipilot/kat-coder-pro-v2` | KAT-Coder-Pro V2 | $0.30 | $1.20 | 262,144 |
+| `kwaipilot/kat-coder-pro-v2` | KAT-Coder-Pro V2 | — | — | — |
 
 ## Liquid
 
@@ -471,7 +521,7 @@ response = client.chat.completions.create(
 
 | Model ID | Name | Input | Output | Context |
 |-|-|-|-|-|
-| `mancer/weaver` | Weaver (alpha) | $0.50 | $0.75 | 8,000 |
+| `mancer/weaver` | Weaver (alpha) | $0.40 | $0.75 | 8,000 |
 
 ## Microsoft
 
@@ -487,21 +537,30 @@ response = client.chat.completions.create(
 | `morph/morph-v3-large` | Morph V3 Large | $0.90 | $1.90 | 262,144 |
 | `morph/morph-v3-fast` | Morph V3 Fast | $0.80 | $1.20 | 81,920 |
 
+## Muse
+
+| Model ID | Name | Input | Output | Context |
+|-|-|-|-|-|
+| `meta/muse-spark-1.3` | Muse Spark 1.3 | $1.25 | $4.25 | 1,048,576 |
+| `meta/muse-glimmer-30b` | Muse Glimmer 30B | $0.35 | $1.50 | 131,072 |
+| `meta/muse-spark-1.2` | Muse Spark 1.2 | $1.25 | $4.25 | 1,048,576 |
+| `meta/muse-spark-1.1` | Muse Spark 1.1 | $1.25 | $4.25 | 1,048,576 |
+
 ## Nex AGI
 
 | Model ID | Name | Input | Output | Context |
 |-|-|-|-|-|
-| `nex-agi/nex-n2-mini` | Nex-N2-Mini | $0.02 | $0.10 | 262,144 |
-| `nex-agi/nex-n2-pro` | Nex-N2-Pro | $0.25 | $1.00 | 262,144 |
+| `nex-agi/nex-n2-mini` | Nex-N2-Mini | — | — | — |
+| `nex-agi/nex-n2-pro` | Nex-N2-Pro | — | — | — |
 
 ## Nous Research
 
 | Model ID | Name | Input | Output | Context |
 |-|-|-|-|-|
-| `nousresearch/hermes-4-70b` | Hermes 4 70B | $0.13 | $0.40 | 131,072 |
 | `nousresearch/hermes-4-405b` | Hermes 4 405B | $1.00 | $3.00 | 131,072 |
 | `nousresearch/hermes-3-llama-3.1-70b` | Hermes 3 70B Instruct | $0.70 | $0.70 | 131,072 |
 | `nousresearch/hermes-3-llama-3.1-405b` | Hermes 3 405B Instruct | $1.00 | $1.00 | 131,072 |
+| `nousresearch/hermes-4-70b` | Hermes 4 70B | — | — | — |
 
 ## OpenRouter
 
@@ -569,7 +628,7 @@ response = client.chat.completions.create(
 
 | Model ID | Name | Input | Output | Context |
 |-|-|-|-|-|
-| `tencent/hy3` | Hy3 | $0.13 | $0.53 | 262,144 |
+| `tencent/hy3` | Hy3 | $0.08 | $0.33 | 262,144 |
 | `tencent/hy3-preview` | Hy3 preview | $0.18 | $0.60 | 262,144 |
 | `tencent/hunyuan-a13b-instruct` | Hunyuan A13B Instruct | $0.14 | $0.57 | 131,072 |
 | `tencent/hy3:free` | Hy3 (free) | — | — | — |
@@ -581,13 +640,20 @@ response = client.chat.completions.create(
 | `thedrummer/cydonia-24b-v4.1` | Cydonia 24B V4.1 | $0.30 | $0.50 | 131,072 |
 | `thedrummer/skyfall-36b-v2` | Skyfall 36B V2 | $0.55 | $0.80 | 32,768 |
 | `thedrummer/unslopnemo-12b` | UnslopNemo 12B | $0.40 | $0.40 | 1,024,000 |
-| `thedrummer/rocinante-12b` | Rocinante 12B | $0.25 | $0.50 | 65,536 |
+| `thedrummer/rocinante-12b` | Rocinante 12B | — | — | — |
+
+## Typesafe
+
+| Model ID | Name | Input | Output | Context |
+|-|-|-|-|-|
+| `typesafe/jev-router` | TypeSafe: Jev Router | — | — | 1,000,000 |
+| `typesafe/jev-1.13` | Jev 1.13 | — | — | — |
 
 ## Undi95
 
 | Model ID | Name | Input | Output | Context |
 |-|-|-|-|-|
-| `undi95/remm-slerp-l2-13b` | ReMM SLERP 13B | $0.45 | $0.65 | 6,144 |
+| `undi95/remm-slerp-l2-13b` | ReMM SLERP 13B | $0.35 | $0.65 | 6,144 |
 
 ## Upstage
 
@@ -605,9 +671,178 @@ response = client.chat.completions.create(
 
 | Model ID | Name | Input | Output | Context |
 |-|-|-|-|-|
+| `xiaomi/mimo-v2.6-pro-ultraspeed` | MiMo-V2.6-Pro-UltraSpeed | $4.35 | $8.70 | 1,048,576 |
+| `xiaomi/mimo-v2.6-flash` | MiMo-V2.6-Flash | $0.14 | $0.28 | 1,050,000 |
+| `xiaomi/mimo-v2.6-pro` | MiMo-V2.6-Pro | $0.43 | $0.87 | 1,050,000 |
 | `xiaomi/mimo-v2.5-pro` | MiMo-V2.5-Pro | $0.43 | $0.87 | 1,050,000 |
 | `xiaomi/mimo-v2.5` | MiMo-V2.5 | $0.14 | $0.28 | 1,050,000 |
 
+## Other available models
+
+Every other chat model on [OpenRouter](https://openrouter.ai/models) works too. Pass its ID exactly as listed. Free (`:free`) variants are not available.
+
+| Model ID | Name | Input | Output | Context |
+|-|-|-|-|-|
+| `aion-labs/aion-3.5` | AionLabs: Aion 3.5 | $3.00 | $6.00 | 262,144 |
+| `aion-labs/aion-3.5-mini` | AionLabs: Aion 3.5 Mini | $0.70 | $1.40 | 262,144 |
+| `anthropic/claude-fable-5.1` | Anthropic: Claude Fable 5.1 | $10.00 | $50.00 | 1,000,000 |
+| `anthropic/claude-fable-5.1:batch` | Anthropic: Claude Fable 5.1 (batch) | $5.00 | $25.00 | 1,000,000 |
+| `anthropic/claude-fable-5:batch` | Anthropic: Claude Fable 5 (batch) | $5.00 | $25.00 | 1,000,000 |
+| `anthropic/claude-haiku-4.5:batch` | Anthropic: Claude Haiku 4.5 (batch) | $0.50 | $2.50 | 200,000 |
+| `anthropic/claude-opus-4.1:batch` | Anthropic: Claude Opus 4.1 (batch) | $7.50 | $37.50 | 200,000 |
+| `anthropic/claude-opus-4.5:batch` | Anthropic: Claude Opus 4.5 (batch) | $2.50 | $12.50 | 200,000 |
+| `anthropic/claude-opus-4.6:batch` | Anthropic: Claude Opus 4.6 (batch) | $2.50 | $12.50 | 1,000,000 |
+| `anthropic/claude-opus-4.7:batch` | Anthropic: Claude Opus 4.7 (batch) | $2.50 | $12.50 | 1,000,000 |
+| `anthropic/claude-opus-4.8:batch` | Anthropic: Claude Opus 4.8 (batch) | $2.50 | $12.50 | 1,000,000 |
+| `anthropic/claude-opus-5.5:batch` | Anthropic: Claude Opus 5.5 (batch) | $2.00 | $10.00 | 1,000,000 |
+| `anthropic/claude-opus-5:batch` | Anthropic: Claude Opus 5 (batch) | $2.50 | $12.50 | 1,000,000 |
+| `anthropic/claude-sonnet-4` | Anthropic: Claude Sonnet 4 | $3.00 | $15.00 | 200,000 |
+| `anthropic/claude-sonnet-4.5` | Anthropic: Claude Sonnet 4.5 | $3.00 | $15.00 | 1,000,000 |
+| `anthropic/claude-sonnet-4.5:batch` | Anthropic: Claude Sonnet 4.5 (batch) | $1.50 | $7.50 | 1,000,000 |
+| `anthropic/claude-sonnet-4.6:batch` | Anthropic: Claude Sonnet 4.6 (batch) | $1.50 | $7.50 | 1,000,000 |
+| `anthropic/claude-sonnet-5.5:batch` | Anthropic: Claude Sonnet 5.5 (batch) | $1.00 | $5.00 | 1,000,000 |
+| `anthropic/claude-sonnet-5:batch` | Anthropic: Claude Sonnet 5 (batch) | $1.00 | $5.00 | 1,000,000 |
+| `cognitivecomputations/dolphin-mistral-24b-venice-edition` | Venice: Uncensored | $0.20 | $0.90 | 128,000 |
+| `cohere/command-a-plus` | Cohere: Command A+ | $0.30 | $1.50 | 192,000 |
+| `deepseek/deepseek-v4-flash-vision-exp` | DeepSeek: DeepSeek V4 Flash Vision Exp | $0.22 | $0.65 | 1,048,576 |
+| `deepseek/deepseek-v4.1-flash:batch` | DeepSeek: DeepSeek V4.1 Flash (batch) | $0.11 | $0.34 | 1,048,576 |
+| `fireworks/ember-1` | Fireworks: Ember-1 | $3.00 | $15.00 | 1,048,576 |
+| `google/gemini-2.5-flash-image` | Google: Nano Banana (Gemini 2.5 Flash Image) | $0.30 | $2.50 | 32,768 |
+| `google/gemini-2.5-flash-lite` | Google: Gemini 2.5 Flash Lite | $0.10 | $0.40 | 1,048,576 |
+| `google/gemini-2.5-pro` | Google: Gemini 2.5 Pro | $1.25 | $10.00 | 1,048,576 |
+| `google/gemini-2.5-pro:batch` | Google: Gemini 2.5 Pro (batch) | $0.63 | $5.00 | 1,048,576 |
+| `google/gemini-3-flash-preview:batch` | Google: Gemini 3 Flash Preview (batch) | $0.25 | $1.50 | 1,048,576 |
+| `google/gemini-3-pro-image` | Google: Nano Banana Pro (Gemini 3 Pro Image) | $2.00 | $12.00 | 131,072 |
+| `google/gemini-3.1-flash-image` | Google: Nano Banana 2 (Gemini 3.1 Flash Image) | $0.50 | $3.00 | 131,072 |
+| `google/gemini-3.1-flash-image-preview` | Google: Nano Banana 2 (Gemini 3.1 Flash Image Preview) | $0.50 | $3.00 | 65,536 |
+| `google/gemini-3.1-flash-lite-image` | Google: Nano Banana 2 Lite (Gemini 3.1 Flash Lite Image) | $0.25 | $1.50 | 65,536 |
+| `google/gemini-3.1-flash-lite:batch` | Google: Gemini 3.1 Flash Lite (batch) | $0.13 | $0.75 | 1,048,576 |
+| `google/gemini-3.1-pro-preview:batch` | Google: Gemini 3.1 Pro Preview (batch) | $1.00 | $6.00 | 1,048,576 |
+| `google/gemini-3.5-flash-lite:batch` | Google: Gemini 3.5 Flash Lite (batch) | $0.15 | $1.25 | 1,048,576 |
+| `google/gemini-3.5-flash:batch` | Google: Gemini 3.5 Flash (batch) | $0.75 | $4.50 | 1,048,576 |
+| `google/gemini-3.6-flash:batch` | Google: Gemini 3.6 Flash (batch) | $0.38 | $1.88 | 1,048,576 |
+| `google/gemini-3.7-flash:batch` | Google: Gemini 3.7 Flash (batch) | $0.38 | $1.88 | 1,048,576 |
+| `google/gemini-3.8-flash:batch` | Google: Gemini 3.8 Flash (batch) | $0.38 | $1.88 | 1,048,576 |
+| `google/lyria-3-clip-preview` | Google: Lyria 3 Clip Preview | $0.00 | $0.00 | 1,048,576 |
+| `google/lyria-3-pro-preview` | Google: Lyria 3 Pro Preview | $0.00 | $0.00 | 1,048,576 |
+| `ibm-granite/granite-4.2-8b` | IBM: Granite 4.2 8B | $0.06 | $0.25 | 131,072 |
+| `inception/mercury-2.5` | Inception: Mercury 2.5 | $0.04 | $0.15 | 260,000 |
+| `inclusionai/ling-3.0-flash` | inclusionAI: Ling 3.0 Flash | $0.02 | $0.06 | 262,144 |
+| `inclusionai/ling-3.0-flash-fin` | inclusionAI: Ling 3.0 Flash Fin | $0.04 | $0.12 | 262,144 |
+| `inclusionai/ling-3.0-flash-vl` | inclusionAI: Ling 3.0 Flash VL | $0.02 | $0.06 | 262,144 |
+| `inclusionai/ling-3.1-flash` | inclusionAI: Ling 3.1 Flash | $0.00 | $0.00 | 262,144 |
+| `inference-net/schematron-v2-small` | Inference.net: Schematron V2 Small | $0.05 | $0.23 | 128,000 |
+| `inference-net/schematron-v2-turbo` | Inference.net: Schematron V2 Turbo | $0.03 | $0.15 | 128,000 |
+| `kwaipilot/kat-coder-pro-v2.5` | Kwaipilot: KAT-Coder-Pro V2.5 | $0.74 | $2.96 | 262,144 |
+| `meituan/longcat-2.0` | Meituan: LongCat 2.0 | $0.30 | $1.20 | 1,048,756 |
+| `meta/muse-spark-1.2-contributor` | Meta: Muse Spark 1.2 Contributor | $0.10 | $0.20 | 1,048,576 |
+| `meta/muse-spark-1.3-contributor` | Meta: Muse Spark 1.3 Contributor | $0.10 | $0.20 | 1,048,576 |
+| `mistralai/codestral-2508:batch` | Mistral: Codestral 2508 (batch) | $0.15 | $0.45 | 256,000 |
+| `mistralai/ministral-8b-2512:batch` | Mistral: Ministral 3 8B 2512 (batch) | $0.07 | $0.07 | 262,144 |
+| `mistralai/mistral-large-2512:batch` | Mistral: Mistral Large 3 2512 (batch) | $0.25 | $0.75 | 262,144 |
+| `mistralai/mistral-medium-3-5:batch` | Mistral: Mistral Medium 3.5 (batch) | $0.75 | $3.75 | 262,144 |
+| `mistralai/mistral-medium-3.1:batch` | Mistral: Mistral Medium 3.1 (batch) | $0.20 | $1.00 | 131,072 |
+| `mistralai/mistral-small-2603:batch` | Mistral: Mistral Small 4 (batch) | $0.07 | $0.30 | 262,144 |
+| `moonshotai/kimi-k3:batch` | MoonshotAI: Kimi K3 (batch) | $2.28 | $11.40 | 1,048,576 |
+| `nex-agi/nex-n2.5-mini` | Nex AGI: Nex-N2.5-Mini | $0.02 | $0.10 | 262,144 |
+| `nex-agi/nex-n2.5-pro` | Nex AGI: Nex-N2.5-Pro | $0.07 | $0.25 | 262,144 |
+| `nvidia/nemotron-3.5-content-safety` | NVIDIA: Nemotron 3.5 Content Safety | $0.20 | $0.20 | 131,072 |
+| `nvidia/switchyard` | NVIDIA: Switchyard | — | — | 1,000,000 |
+| `openai/gpt-3.5-turbo:batch` | OpenAI: GPT-3.5 Turbo (batch) | $0.25 | $0.75 | 16,385 |
+| `openai/gpt-4-turbo:batch` | OpenAI: GPT-4 Turbo (batch) | $5.00 | $15.00 | 128,000 |
+| `openai/gpt-4.1-mini:batch` | OpenAI: GPT-4.1 Mini (batch) | $0.20 | $0.80 | 1,047,576 |
+| `openai/gpt-4.1-nano:batch` | OpenAI: GPT-4.1 Nano (batch) | $0.05 | $0.20 | 1,047,576 |
+| `openai/gpt-4.1:batch` | OpenAI: GPT-4.1 (batch) | $1.00 | $4.00 | 1,047,576 |
+| `openai/gpt-4o` | OpenAI: GPT-4o | $2.50 | $10.00 | 128,000 |
+| `openai/gpt-4o-mini:batch` | OpenAI: GPT-4o-mini (batch) | $0.07 | $0.30 | 128,000 |
+| `openai/gpt-4o:batch` | OpenAI: GPT-4o (batch) | $1.25 | $5.00 | 128,000 |
+| `openai/gpt-5-image` | OpenAI: GPT-5 Image | $10.00 | $10.00 | 400,000 |
+| `openai/gpt-5-image-mini` | OpenAI: GPT-5 Image Mini | $2.50 | $2.00 | 400,000 |
+| `openai/gpt-5-mini:batch` | OpenAI: GPT-5 Mini (batch) | $0.13 | $1.00 | 400,000 |
+| `openai/gpt-5-nano:batch` | OpenAI: GPT-5 Nano (batch) | $0.02 | $0.20 | 400,000 |
+| `openai/gpt-5-pro:batch` | OpenAI: GPT-5 Pro (batch) | $7.50 | $60.00 | 400,000 |
+| `openai/gpt-5.1:batch` | OpenAI: GPT-5.1 (batch) | $0.63 | $5.00 | 400,000 |
+| `openai/gpt-5.2-pro:batch` | OpenAI: GPT-5.2 Pro (batch) | $10.50 | $84.00 | 400,000 |
+| `openai/gpt-5.2:batch` | OpenAI: GPT-5.2 (batch) | $0.88 | $7.00 | 400,000 |
+| `openai/gpt-5.4` | OpenAI: GPT-5.4 | $2.50 | $15.00 | 1,050,000 |
+| `openai/gpt-5.4-image-2` | OpenAI: GPT-5.4 Image 2 | $8.00 | $15.00 | 272,000 |
+| `openai/gpt-5.4-mini:batch` | OpenAI: GPT-5.4 Mini (batch) | $0.38 | $2.25 | 400,000 |
+| `openai/gpt-5.4-nano:batch` | OpenAI: GPT-5.4 Nano (batch) | $0.10 | $0.63 | 400,000 |
+| `openai/gpt-5.4-pro:batch` | OpenAI: GPT-5.4 Pro (batch) | $15.00 | $90.00 | 1,050,000 |
+| `openai/gpt-5.4:batch` | OpenAI: GPT-5.4 (batch) | $1.25 | $7.50 | 1,050,000 |
+| `openai/gpt-5.5-pro:batch` | OpenAI: GPT-5.5 Pro (batch) | $15.00 | $90.00 | 1,050,000 |
+| `openai/gpt-5.5:batch` | OpenAI: GPT-5.5 (batch) | $2.50 | $15.00 | 1,050,000 |
+| `openai/gpt-5.6-luna-pro:batch` | OpenAI: GPT-5.6 Luna Pro (batch) | $0.10 | $0.60 | 1,050,000 |
+| `openai/gpt-5.6-luna:batch` | OpenAI: GPT-5.6 Luna (batch) | $0.10 | $0.60 | 1,050,000 |
+| `openai/gpt-5.6-sol-pro:batch` | OpenAI: GPT-5.6 Sol Pro (batch) | $1.00 | $5.00 | 1,050,000 |
+| `openai/gpt-5.6-sol:batch` | OpenAI: GPT-5.6 Sol (batch) | $1.00 | $5.00 | 1,050,000 |
+| `openai/gpt-5.6-terra-pro:batch` | OpenAI: GPT-5.6 Terra Pro (batch) | $1.00 | $6.00 | 1,050,000 |
+| `openai/gpt-5.6-terra:batch` | OpenAI: GPT-5.6 Terra (batch) | $1.00 | $6.00 | 1,050,000 |
+| `openai/gpt-5:batch` | OpenAI: GPT-5 (batch) | $0.63 | $5.00 | 400,000 |
+| `openai/gpt-6-astra` | OpenAI: GPT-6 Astra | $10.00 | $50.00 | 1,050,000 |
+| `openai/gpt-6-astra-pro` | OpenAI: GPT-6 Astra Pro | $10.00 | $50.00 | 1,050,000 |
+| `openai/gpt-6-astra-pro:batch` | OpenAI: GPT-6 Astra Pro (batch) | $5.00 | $25.00 | 1,050,000 |
+| `openai/gpt-6-astra:batch` | OpenAI: GPT-6 Astra (batch) | $5.00 | $25.00 | 1,050,000 |
+| `openai/gpt-6-luna-pro:batch` | OpenAI: GPT-6 Luna Pro (batch) | $0.05 | $0.25 | 1,050,000 |
+| `openai/gpt-6-luna:batch` | OpenAI: GPT-6 Luna (batch) | $0.05 | $0.25 | 1,050,000 |
+| `openai/gpt-6-sol-pro:batch` | OpenAI: GPT-6 Sol Pro (batch) | $1.00 | $5.00 | 1,050,000 |
+| `openai/gpt-6-sol:batch` | OpenAI: GPT-6 Sol (batch) | $1.00 | $5.00 | 1,050,000 |
+| `openai/gpt-6.1-sol-pro` | OpenAI: GPT-6.1 Sol Pro | $2.00 | $10.00 | 1,050,000 |
+| `openai/gpt-audio` | OpenAI: GPT Audio | $2.50 | $10.00 | 128,000 |
+| `openai/gpt-audio-mini` | OpenAI: GPT Audio Mini | $0.60 | $2.40 | 128,000 |
+| `openai/gpt-oss-120b:batch` | OpenAI: gpt-oss-120b (batch) | $0.03 | $0.14 | 131,072 |
+| `openai/gpt-oss-20b:batch` | OpenAI: gpt-oss-20b (batch) | $0.02 | $0.11 | 131,072 |
+| `openai/o3-mini:batch` | OpenAI: o3 Mini (batch) | $0.55 | $2.20 | 200,000 |
+| `openai/o3:batch` | OpenAI: o3 (batch) | $1.00 | $4.00 | 200,000 |
+| `openai/o4-mini:batch` | OpenAI: o4 Mini (batch) | $0.55 | $2.20 | 200,000 |
+| `openrouter/auto` | Auto Router | — | — | 2,000,000 |
+| `openrouter/auto-beta` | Auto Router (Beta) | — | — | 2,000,000 |
+| `perceptron/perceptron-mk1.5` | Perceptron: Perceptron Mk1.5 | $0.15 | $1.50 | 36,864 |
+| `poolside/laguna-s-2.1` | Poolside: Laguna S 2.1 | $0.09 | $0.18 | 1,048,576 |
+| `prism-ml/ternary-bonsai-2-27b` | PrismML: Ternary Bonsai 2 27B | $0.07 | $0.50 | 262,144 |
+| `qwen/qwen3.8-max-0902` | Qwen: Qwen3.8 Max (0902) | $2.00 | $6.00 | 1,000,000 |
+| `qwen/qwen3.8-max-prime` | Qwen: Qwen3.8 Max Prime | $4.00 | $12.00 | 1,000,000 |
+| `qwen/qwen3.8-omni-flash` | Qwen: Qwen3.8 Omni Flash | $0.15 | $0.47 | 1,000,000 |
+| `rekaai/reka-flash-3` | Reka Flash 3 | $0.10 | $0.20 | 65,536 |
+| `relace/relace-apply-3` | Relace: Relace Apply 3 | $0.85 | $1.25 | 256,000 |
+| `sakana/fugu-max` | Sakana: Fugu Max | $2.00 | $6.00 | 1,000,000 |
+| `sakana/fugu-ultra-v2` | Sakana: Fugu Ultra v2 | $5.00 | $30.00 | 1,000,000 |
+| `sakana/sakana-namazu` | Sakana: Sakana Namazu | $0.95 | $4.00 | 262,144 |
+| `stealth/space-bunny-alpha` | Space Bunny Alpha | $0.00 | $0.00 | 1,000,000 |
+| `stepfun/step-3.5-flash` | StepFun: Step 3.5 Flash | $0.10 | $0.30 | 262,144 |
+| `tencent/hy-mt2-1.8b` | Tencent: Hy-MT2-1.8B | $0.04 | $0.18 | 8,192 |
+| `tencent/hy-mt2-30b-a3b` | Tencent: Hy-MT2-30B-A3B | $0.07 | $0.29 | 8,192 |
+| `tencent/hy-mt2-7b` | Tencent: Hy-MT2-7B | $0.07 | $0.29 | 8,192 |
+| `tencent/hy4-preview` | Tencent: Hy4 preview | $0.75 | $2.25 | 1,048,576 |
+| `unbiased/pareto` | Pareto | $2.50 | $7.50 | 262,144 |
+| `unbiased/pareto-26.10-preview` | Pareto 26.10 Preview | $0.80 | $3.20 | 1,048,576 |
+| `upstage/solar-mini4` | Upstage: Solar Mini 4 | $0.05 | $0.20 | 524,288 |
+| `upstage/solar-pro4` | Upstage: Solar Pro 4 | $0.09 | $0.36 | 524,288 |
+| `x-ai/grok-4.3:batch` | SpaceXAI: Grok 4.3 (batch) | $1.00 | $2.00 | 1,000,000 |
+| `z-ai/glm-5.3` | Z.ai: GLM 5.3 | $1.40 | $4.40 | 1,048,576 |
+| `z-ai/glm-5.3-flash:batch` | Z.ai: GLM 5.3 Flash (batch) | $0.06 | $0.20 | 1,048,576 |
+| `z-ai/glm-5.3-flashx` | Z.ai: GLM 5.3 FlashX | $0.37 | $1.25 | 1,048,576 |
+| `z-ai/glm-5.3-prime` | Z.ai: GLM 5.3 Prime | $2.80 | $8.80 | 1,000,000 |
+| `z-ai/glm-5.3:batch` | Z.ai: GLM 5.3 (batch) | $0.45 | $2.00 | 1,048,576 |
+| `~anthropic/claude-fable-latest` | Anthropic: Claude Fable Latest | $10.00 | $50.00 | 1,000,000 |
+| `~anthropic/claude-haiku-latest` | Anthropic: Claude Haiku Latest | $1.00 | $5.00 | 200,000 |
+| `~anthropic/claude-opus-latest` | Anthropic: Claude Opus Latest | $4.00 | $20.00 | 1,000,000 |
+| `~anthropic/claude-sonnet-latest` | Anthropic: Claude Sonnet Latest | $2.00 | $10.00 | 1,000,000 |
+| `~deepseek/deepseek-flash-latest` | DeepSeek: DeepSeek Flash Latest | $0.02 | $0.60 | 1,048,576 |
+| `~deepseek/deepseek-pro-latest` | DeepSeek: DeepSeek Pro Latest | $0.13 | $0.40 | 1,048,576 |
+| `~deepseek/deepseek-v4-flash-latest` | DeepSeek: DeepSeek V4 Flash Latest | $0.01 | $1.28 | 1,048,576 |
+| `~google/gemini-flash-latest` | Google: Gemini Flash Latest | $0.75 | $3.75 | 1,048,576 |
+| `~google/gemini-pro-latest` | Google: Gemini Pro Latest | $2.00 | $12.00 | 1,048,576 |
+| `~moonshotai/kimi-latest` | MoonshotAI: Kimi Latest | $1.00 | $11.36 | 1,048,576 |
+| `~openai/gpt-astra-latest` | OpenAI: GPT Astra Latest | $10.00 | $50.00 | 1,050,000 |
+| `~openai/gpt-luna-latest` | OpenAI: GPT Luna Latest | $0.10 | $0.50 | 1,050,000 |
+| `~openai/gpt-mini-latest` | OpenAI: GPT Mini Latest | $0.75 | $4.50 | 400,000 |
+| `~openai/gpt-sol-latest` | OpenAI: GPT Sol Latest | $2.00 | $10.00 | 1,050,000 |
+| `~openai/gpt-terra-latest` | OpenAI: GPT Terra Latest | $2.00 | $12.00 | 1,050,000 |
+| `~x-ai/grok-latest` | xAI: Grok Latest | $2.00 | $6.00 | 500,000 |
+| `~z-ai/glm-flash-latest` | Z.ai: GLM Flash Latest | $0.03 | $0.93 | 1,048,576 |
+| `~z-ai/glm-latest` | Z.ai: GLM Latest | $0.12 | $4.00 | 1,048,576 |
+
 <Note>
-  Pricing is per million tokens. Prices may change, so check your [dashboard](https://www.eachlabs.ai) for the latest rates.
+  Prices are the model's list price per million tokens. You pay that price plus the same standard platform fee OpenRouter charges, nothing more. The exact cost of every request is shown in your [dashboard](https://www.eachlabs.ai).
 </Note>

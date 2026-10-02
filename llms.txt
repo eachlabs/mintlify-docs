@@ -563,6 +563,18 @@ Bulk trigger: each execution sends its own webhook, all include `bulk_id`.
 
 ---
 
+## each::router (LLM Router)
+
+OpenAI-compatible chat completions for every chat model on OpenRouter. Use the official OpenAI SDK with base URL `https://api.eachlabs.ai/v1` and your each::labs API key.
+
+- `POST https://api.eachlabs.ai/v1/chat/completions`. Buffered or `stream: true`.
+- `model`: any chat model ID from OpenRouter's model list (https://openrouter.ai/models), for example `openai/gpt-5.6-sol`. Send the ID exactly as listed. Free (`:free`) variants of non-featured models are not available. Unknown or unavailable IDs return `400`.
+- Featured models (reviewed, with pages): `GET https://api.eachlabs.ai/v1/llm-router/model-catalog`.
+- Pricing: the model's list price plus the same standard platform fee OpenRouter charges (5.5%), nothing more. The exact cost of every request is in the dashboard.
+- Docs: [Overview](/llm-router/overview), [Quickstart](/llm-router/quickstart), [Available Models](/llm-router/models), [Model catalog API](/llm-router/model-catalog).
+
+---
+
 ## each::sense
 
 OpenAI-compatible AI agent. Natural language in, media out. Auto-selects models, generates media, builds workflows.
