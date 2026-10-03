@@ -164,7 +164,7 @@
           "AI Models"
         ],
         "summary": "Get eachlabs-llm-router model catalog",
-        "description": "Retrieve the curated visible model list and generated model enum schema for eachlabs-llm-router.",
+        "description": "Retrieve the featured LLM Router models and the generated model enum schema. The chat completions endpoint also accepts any other chat model ID published by OpenRouter.",
         "operationId": "getLLMRouterModelCatalog",
         "responses": {
           "200": {
@@ -3133,8 +3133,8 @@
         "properties": {
           "model": {
             "type": "string",
-            "description": "LLM model identifier",
-            "example": "openai/gpt-4o-mini"
+            "description": "Model ID. Any chat model ID from OpenRouter's model list works (for example `openai/gpt-5.6-sol`); see Available Models in the LLM Router docs.",
+            "example": "openai/gpt-5.6-sol"
           },
           "messages": {
             "type": "array",

@@ -16,4 +16,4 @@ Without a be-monorepo checkout, use the public GraphQL catalog instead:
 node scripts/generate-llm-router-models.mjs --remote
 ```
 
-Pricing and context length come from the public OpenRouter catalog (`https://openrouter.ai/api/v1/models`), joined by each model's canonical target model. Models absent from that list fall back to `scripts/llm-router-models-overrides.json`; entries with `null` values render as `—`.
+Pricing and context length come from the public OpenRouter catalog (`https://openrouter.ai/api/v1/models`), joined by each model's canonical target model. Models absent from that list fall back to `scripts/llm-router-models-overrides.json`; entries with `null` values render as `—`. The page also gets an "Other available models" table: every OpenRouter text model that no featured entry covers, excluding `:free` variants and the chat IDs the router rejects (`UNAVAILABLE_FOR_CHAT` in the script).

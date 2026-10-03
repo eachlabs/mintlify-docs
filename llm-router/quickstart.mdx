@@ -1,7 +1,7 @@
 ---
 title: "LLM Router Quickstart"
 sidebarTitle: "Quickstart"
-description: "Get up and running with 300+ LLM models in under 5 minutes. Seriously."
+description: "Get up and running with any OpenRouter chat model in under 5 minutes. Seriously."
 ---
 
 ## Prerequisites
@@ -43,7 +43,7 @@ description: "Get up and running with 300+ LLM models in under 5 minutes. Seriou
     <CodeGroup>
     ```python Python
     response = client.chat.completions.create(
-        model="openai/gpt-4o",
+        model="openai/gpt-5.6-sol",
         messages=[
             {"role": "user", "content": "What is the capital of France?"}
         ]
@@ -54,7 +54,7 @@ description: "Get up and running with 300+ LLM models in under 5 minutes. Seriou
 
     ```typescript TypeScript
     const response = await client.chat.completions.create({
-      model: "openai/gpt-4o",
+      model: "openai/gpt-5.6-sol",
       messages: [
         { role: "user", content: "What is the capital of France?" },
       ],
@@ -73,19 +73,19 @@ Just change the `model` parameter. That's literally it. No config changes, no ne
 ```python
 # Use Anthropic Claude
 response = client.chat.completions.create(
-    model="anthropic/claude-sonnet-4-20250514",
+    model="anthropic/claude-sonnet-4.6",
     messages=[{"role": "user", "content": "Explain quantum computing"}]
 )
 
 # Use Google Gemini
 response = client.chat.completions.create(
-    model="google/gemini-2.5-pro-preview-06-05",
+    model="google/gemini-3.5-flash",
     messages=[{"role": "user", "content": "Explain quantum computing"}]
 )
 
 # Use DeepSeek
 response = client.chat.completions.create(
-    model="deepseek/deepseek-r1",
+    model="deepseek/deepseek-v4-pro",
     messages=[{"role": "user", "content": "Explain quantum computing"}]
 )
 ```
@@ -97,7 +97,7 @@ Set `stream: true` to receive OpenAI-compatible server-sent events as tokens arr
 <CodeGroup>
 ```python Python
 stream = client.chat.completions.create(
-    model="openai/gpt-4o",
+    model="openai/gpt-5.6-sol",
     messages=[{"role": "user", "content": "Write a haiku about coding"}],
     stream=True
 )
@@ -110,7 +110,7 @@ for chunk in stream:
 
 ```typescript TypeScript
 const stream = await client.chat.completions.create({
-  model: "openai/gpt-4o",
+  model: "openai/gpt-5.6-sol",
   messages: [{ role: "user", content: "Write a haiku about coding" }],
   stream: true,
 });
@@ -141,7 +141,7 @@ LLM Router comes with some nice tricks out of the box:
     The full rundown on features and supported providers.
   </Card>
   <Card title="Available Models" icon="layer-group" href="/llm-router/models">
-    Browse 300+ models with pricing. Go window shopping.
+    Browse every available model with list prices. Go window shopping.
   </Card>
   <Card title="Audio API" icon="waveform" href="/llm-router/audio">
     Use OpenAI-compatible file transcription and streamed speech.
