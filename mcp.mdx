@@ -1,98 +1,69 @@
 ---
 title: "MCP Server"
-description: "Connect each::labs to Cursor, Claude Desktop, Windsurf, and other AI editors. Generate media right from your IDE."
+description: "Use the each::labs Video API from Claude Code, Claude Desktop, Codex, Cursor and other MCP clients through the hosted server at mcp.eachlabs.ai. Sign in with your each::labs account; no API key."
 ---
 
-The each::labs MCP server lets AI-powered editors and agents tap into 500+ AI models for image, video, audio, and 3D generation. All without leaving your IDE.
-
-## Connect to Cursor
-
-<Steps>
-  <Step title="Open Cursor Settings">
-    Go to **Cursor Settings > MCP** or press `Cmd+Shift+P` and search for "MCP".
-  </Step>
-  <Step title="Add the each::labs MCP server">
-    Click **"Add new MCP server"** and paste this URL:
-
-    ```
-    https://docs.eachlabs.ai/mcp
-    ```
-  </Step>
-  <Step title="Start using it">
-    Ask Cursor to generate images, videos, or audio. The MCP server handles the rest.
-  </Step>
-</Steps>
-
-## Connect to Claude Desktop
-
-Add this to your Claude Desktop config file:
-
-<Tabs>
-  <Tab title="macOS">
-    Edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
-
-    ```json
-    {
-      "mcpServers": {
-        "eachlabs": {
-          "url": "https://docs.eachlabs.ai/mcp"
-        }
-      }
-    }
-    ```
-  </Tab>
-  <Tab title="Windows">
-    Edit `%APPDATA%\Claude\claude_desktop_config.json`:
-
-    ```json
-    {
-      "mcpServers": {
-        "eachlabs": {
-          "url": "https://docs.eachlabs.ai/mcp"
-        }
-      }
-    }
-    ```
-  </Tab>
-</Tabs>
-
-## Connect to Windsurf
-
-Go to **Windsurf Settings > MCP** and add a new server with this URL:
+The each::labs MCP server is a hosted [Model Context Protocol](https://modelcontextprotocol.io) server at:
 
 ```
-https://docs.eachlabs.ai/mcp
+https://mcp.eachlabs.ai/mcp
 ```
 
-## Connect to VS Code (Copilot)
+Any MCP client that supports the Streamable HTTP transport with OAuth can connect to it. You sign in with your each::labs account in the browser; there is no API key to create or paste. Jobs run and bill as the organization you choose when you sign in.
 
-Add to your VS Code `settings.json`:
+## Clients
 
-```json
-{
-  "mcp": {
-    "servers": {
-      "eachlabs": {
-        "url": "https://docs.eachlabs.ai/mcp"
-      }
-    }
-  }
-}
-```
+| Client | How to connect |
+| --- | --- |
+| Claude Code | `claude mcp add --transport http eachlabs-video https://mcp.eachlabs.ai/mcp`, then run `/mcp` and approve the sign-in. |
+| Claude Desktop | **Customize > Connectors > Add custom connector**, enter `https://mcp.eachlabs.ai/mcp`, then **Connect**. |
+| Codex | `codex mcp add eachlabs-video --url https://mcp.eachlabs.ai/mcp --oauth-resource https://mcp.eachlabs.ai/mcp` |
+| Cursor and other MCP clients | Add `{ "url": "https://mcp.eachlabs.ai/mcp" }` to the client's `mcpServers` config. Per-client steps are in the [video MCP quickstart](/video/mcp/quickstart#connect-your-agent). |
 
-## Connect to Claude Code
+`eachlabs-video` is the name the server gets in your client; choose another if you prefer.
 
-```bash
-claude mcp add eachlabs --transport sse https://docs.eachlabs.ai/mcp
-```
+Environments without a browser (CI, servers) can run the same server locally with an API key instead. See [Headless and CI](/video/mcp/quickstart#headless-and-ci-api-key).
 
-## What You Can Do
+## Sign-in and billing
 
-Once connected, your AI assistant gets superpowers:
+The first call opens the each::labs consent page in your browser. If you are not signed in to the dashboard, the page sends you through [sign-in](https://www.eachlabs.ai/sign-in) and back.
 
-- **Generate images** with Flux, Nano Banana, Gemini Imagen, and more
-- **Generate videos** with Veo 3, Kling 3.0, Sora 2, and more
-- **Edit images** like background removal, upscaling, face swap, inpainting
-- **Generate audio** with ElevenLabs TTS and Mureka music generation
-- **Run workflows** to trigger multi-step AI pipelines
-- **Chat with each::sense** for natural language media generation
+On the consent page you:
+
+1. Choose the **Organization**. The page states it plainly: *Predictions will run and bill as &lt;organization&gt;*.
+2. Review the permissions the client asks for (the [scopes](#scopes) below).
+3. Click **Approve**.
+
+| What | Value |
+| --- | --- |
+| Credential | An OAuth token that your client stores. It never appears in the conversation and is never shown to the model. |
+| Billed organization | The one chosen on the consent page. Every job behaves as if that organization had called the API itself, at the same prices as the REST API. |
+| Signing in again | Not needed. The token is refreshed in the background. To bill a different organization, disconnect the server in your client and connect again. |
+| Precondition | The organization needs a runner credential. If consent fails with *organization has no runner credential*, open the [dashboard](https://www.eachlabs.ai) once as that organization and try again. |
+
+## Scopes
+
+A scope is a permission your client asks for at sign-in. Each tool needs one of the scopes listed for it; a call is refused before anything is submitted when the token lacks the scope, and nothing is billed for a refused call.
+
+| Scope | Grants |
+| --- | --- |
+| `predictions:create` | Submit predictions and poll the ones you submitted |
+| `predictions:read` | Read prediction status and results |
+
+## Long jobs
+
+Every tool that creates a job waits for the result and returns it in the same call. The wait has a limit: the hosted server holds a call for about four minutes. A job that is still running when the hold ends returns the prediction id with `status: "running"` instead of a result. Call `get_job` with that id to fetch the result when it is ready. Billing happens once, when the job runs, not per poll.
+
+## Tools
+
+Tool names are lowercase with underscores. Every tool's schema is strict: a parameter the tool does not declare is rejected before submit, so nothing reaches the engine and nothing bills. Every tool carries a title and hints that tell the client whether it only reads (`get_job`, `probe`) or creates a billed job; Claude uses these to decide which calls need your confirmation.
+
+The server exposes 46 tools: one for each of the 44 [Video API capabilities](/video/capabilities) (`transcode`, `trim`, `captions`, `concat`, `scale`, `overlay` and the rest), plus `run_ffmpeg` and `get_job`. The full list with parameters, defaults and return values is the [MCP tool reference](/video/mcp/tools); the per-client setup is the [video MCP quickstart](/video/mcp/quickstart).
+
+## Searching this documentation
+
+`https://docs.eachlabs.ai/mcp` is a different server. It searches these documentation pages and runs no models. To run video jobs, connect to `https://mcp.eachlabs.ai/mcp` as described above.
+
+## Policies
+
+Jobs are billed to the organization you approve; see [Billing & Limits](/video/billing-limits). [Acceptable Use](/video/acceptable-use) · [Abuse & Takedown](/video/abuse-and-takedown) · [Versioning & Deprecation](/video/versioning)

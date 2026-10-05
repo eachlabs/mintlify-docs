@@ -9,7 +9,7 @@ description: "Drive the Video API from Claude, Cursor, or any MCP-capable agent 
 
 ## What you get
 
-An MCP server that exposes the full Video API as native agent tools — all 44 capabilities in the [capabilities reference](/video/capabilities), with client-side schema validation, automatic submit-and-poll, and results returned as artifact URLs or structured analysis JSON. Your agent edits video by calling tools; you connect with one OAuth login (or an API key in [headless environments](#headless-and-ci-api-key)).
+An MCP server that exposes the full Video API as native agent tools — 46 tools: one for each of the 44 capabilities in the [capabilities reference](/video/capabilities), plus `run_ffmpeg` and `get_job` — with client-side schema validation, automatic submit-and-poll, and results returned as artifact URLs or structured analysis JSON. Your agent edits video by calling tools; you connect with one OAuth login (or an API key in [headless environments](#headless-and-ci-api-key)).
 
 ## Connect your agent
 
@@ -46,7 +46,7 @@ One OAuth login — approve access in the browser and your agent is ready. No AP
     ```
   </Tab>
   <Tab title="Claude Desktop">
-    **Settings → Connectors → Add custom connector**, set the URL to `https://mcp.eachlabs.ai/mcp`, then connect and approve with your eachlabs account.
+    **Customize → Connectors → Add custom connector**, set the URL to `https://mcp.eachlabs.ai/mcp`, then connect and approve with your eachlabs account.
   </Tab>
   <Tab title="Kimi Code">
     Add to `~/.kimi-code/mcp.json`, then log in when prompted:
