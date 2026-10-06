@@ -1,312 +1,29 @@
 ---
 title: "each::workflows Examples"
 sidebarTitle: "Examples"
-description: "Complete workflow examples for common use cases."
+description: "Tested workflow examples, bulk runs and a complete Python client."
 ---
 
-## Text-to-Image Pipeline
+## Workflow examples
 
-A neat two-step workflow that enhances a prompt with an LLM, then generates an image from it.
+The [overview](/workflows/overview) has eight complete workflows. Each one was created and run
+end to end:
 
-```json
-{
-  "name": "Enhanced Image Generator",
-  "definition": {
-    "version": "v1",
-    "input_schema": {
-      "type": "object",
-      "required": ["prompt"],
-      "properties": {
-        "prompt": {"type": "string"},
-        "aspect_ratio": {
-          "type": "string",
-          "enum": ["1:1", "16:9", "9:16"],
-          "default": "1:1"
-        }
-      }
-    },
-    "steps": [
-      {
-        "id": "enhance_prompt",
-        "type": "model",
-        "model": "openai-chatgpt-5",
-        "params": {
-          "system_prompt": "Enhance the following image prompt with vivid details. Return only the enhanced prompt.",
-          "user_prompt": "{{inputs.prompt}}"
-        }
-      },
-      {
-        "id": "generate_image",
-        "type": "model",
-        "model": "flux-1-1-pro",
-        "params": {
-          "prompt": "{{enhance_prompt.output}}",
-          "aspect_ratio": "{{inputs.aspect_ratio}}"
-        },
-        "fallback": {
-          "enabled": true,
-          "model": "flux-dev",
-          "params": {
-            "prompt": "{{enhance_prompt.output}}"
-          }
-        }
-      }
-    ]
-  }
-}
-```
+| Example | Shows |
+|---------|-------|
+| One-photo effect | A single step with a fixed prompt and a fallback model |
+| Restyle a photo, then animate it | Chaining steps with `$.step.primary` |
+| An LLM writes the prompt | An `eachlabs-llm-router` step feeding image and video steps |
+| Two photos, one clip, with music | `parallel` steps, resizing and adding music |
+| A reliable vision call | A fallback to another LLM provider and named outputs |
+| Call an API, then use its data | An `eachlabs-http-step` call and its JSON fields |
+| Let AI choose the path | A `choice` step routed by a vision model |
+| Several scenes in parallel | Multi-step branches joined with `merge-videos` |
 
-## Image-to-Video with Upscaling
+## Run many inputs at once
 
-Generate a portrait image, bring it to life with animation, and upscale the final result.
-
-```json
-{
-  "name": "Portrait to Video",
-  "definition": {
-    "version": "v1",
-    "input_schema": {
-      "type": "object",
-      "required": ["description"],
-      "properties": {
-        "description": {"type": "string"},
-        "duration": {
-          "type": "integer",
-          "minimum": 3,
-          "maximum": 30,
-          "default": 5
-        }
-      }
-    },
-    "steps": [
-      {
-        "id": "generate_portrait",
-        "type": "model",
-        "model": "nano-banana-pro",
-        "params": {
-          "prompt": "{{inputs.description}}, portrait photo, natural lighting",
-          "aspect_ratio": "1:1"
-        }
-      },
-      {
-        "id": "animate",
-        "type": "model",
-        "model": "kling-2-1-image-to-video",
-        "params": {
-          "image": "{{generate_portrait.primary}}",
-          "duration": "{{inputs.duration}}"
-        }
-      },
-      {
-        "id": "upscale",
-        "type": "model",
-        "model": "topaz-upscale-video",
-        "params": {
-          "video": "{{animate.primary}}",
-          "scale": 2
-        }
-      }
-    ]
-  }
-}
-```
-
-## Parallel Branching: Multi-Format Generation
-
-Run image-to-video, image editing, and text-to-image all at once, then conditionally upscale based on the output format.
-
-```json
-{
-  "name": "Multi-Format Generator with Conditional Upscale",
-  "definition": {
-    "version": "v1",
-    "input_schema": {
-      "type": "object",
-      "required": ["prompt"],
-      "properties": {
-        "prompt": {"type": "string"},
-        "source_image": {"type": "string"}
-      }
-    },
-    "steps": [
-      {
-        "id": "step1",
-        "type": "parallel",
-        "branches": [
-          {
-            "name": "Video Generation",
-            "steps": [
-              {
-                "id": "step1_branch_0",
-                "type": "model",
-                "model": "kling-v3-pro-image-to-video",
-                "params": {
-                  "prompt": "{{inputs.prompt}}, smooth cinematic motion",
-                  "start_image_url": "{{inputs.source_image}}",
-                  "duration": "5",
-                  "aspect_ratio": "16:9",
-                  "negative_prompt": "blur, distort, low quality"
-                }
-              }
-            ]
-          },
-          {
-            "name": "Image Edit",
-            "steps": [
-              {
-                "id": "step1_branch_1",
-                "type": "model",
-                "model": "flux-2-edit",
-                "params": {
-                  "prompt": "{{inputs.prompt}}",
-                  "image_url": "{{inputs.source_image}}"
-                }
-              }
-            ]
-          },
-          {
-            "name": "New Image",
-            "steps": [
-              {
-                "id": "step1_branch_2",
-                "type": "model",
-                "model": "flux-2-max",
-                "params": {
-                  "prompt": "{{inputs.prompt}}",
-                  "aspect_ratio": "16:9"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "id": "step2",
-        "type": "choice",
-        "condition": {
-          "expression": "$.step1.primary",
-          "operator": "string_matches",
-          "value": ".mp4"
-        },
-        "condition_met_branch": {
-          "name": "condition_met",
-          "step_id": "step2_condition_met",
-          "steps": [
-            {
-              "id": "step2_branch_0",
-              "type": "model",
-              "model": "topaz-upscale-video",
-              "params": {
-                "video": "{{step1.primary}}",
-                "scale": 2
-              }
-            }
-          ]
-        },
-        "default_branch": {
-          "name": "default",
-          "step_id": "step2_default",
-          "steps": [
-            {
-              "id": "step2_default",
-              "type": "model",
-              "model": "topaz-upscale-image",
-              "params": {
-                "image_url": "{{step1.primary}}",
-                "scale": 2
-              }
-            }
-          ]
-        }
-      }
-    ]
-  }
-}
-```
-
-This workflow demonstrates:
-1. **Parallel step**: Three branches run concurrently for video generation, image editing, and text-to-image
-2. **Choice step**: Checks if the primary output is a video (`.mp4`) and routes to the right upscaler
-
-## Logical Conditions: AND/OR Operators
-
-You can use logical operators to combine multiple conditions in a choice step.
-
-This example only upscales when the output is a PNG **and** the user explicitly requested upscaling:
-
-```json
-{
-  "id": "conditional_upscale",
-  "type": "choice",
-  "condition": {
-    "and": [
-      {
-        "expression": "$.step1.primary",
-        "operator": "string_matches",
-        "value": ".png"
-      },
-      {
-        "expression": "$.inputs.upscale",
-        "operator": "equals",
-        "value": true
-      }
-    ]
-  },
-  "condition_met_branch": {
-    "name": "condition_met",
-    "step_id": "upscale_branch",
-    "steps": [
-      {
-        "id": "upscale",
-        "type": "model",
-        "model": "topaz-upscale-image",
-        "params": {
-          "image_url": "{{step1.primary}}",
-          "scale": 4
-        }
-      }
-    ]
-  },
-  "default_branch": {
-    "name": "default",
-    "step_id": "skip_branch",
-    "steps": [
-      {
-        "id": "passthrough",
-        "type": "pass",
-        "result": "{{step1.primary}}"
-      }
-    ]
-  }
-}
-```
-
-You can also use `or` to match multiple formats:
-
-```json
-{
-  "condition": {
-    "or": [
-      {"expression": "$.step1.primary", "operator": "string_matches", "value": ".mp4"},
-      {"expression": "$.step1.primary", "operator": "string_matches", "value": ".webm"}
-    ]
-  }
-}
-```
-
-Or `not` to negate a condition:
-
-```json
-{
-  "condition": {
-    "not": {"expression": "$.step1.primary", "operator": "is_null"}
-  }
-}
-```
-
-## Batch Processing with Bulk Trigger
-
-Fire off the same workflow with multiple inputs in one go:
+Bulk trigger starts up to 10 runs of the same workflow version in one request. With a one-step
+image workflow (the one on [Create Workflow](/workflows/endpoints/create-workflow)):
 
 ```bash
 curl -X POST https://api.eachlabs.ai/v1/workflows/bulk-trigger/WF_ID/v1 \
@@ -314,82 +31,89 @@ curl -X POST https://api.eachlabs.ai/v1/workflows/bulk-trigger/WF_ID/v1 \
   -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
     "inputs": [
-      {"description": "Professional woman, 30s, confident smile"},
-      {"description": "Young man, casual outfit, warm expression"},
-      {"description": "Elderly gentleman, distinguished, wise"}
+      {"prompt": "A red bicycle against a white wall"},
+      {"prompt": "A blue bicycle against a white wall"}
     ],
     "webhook_url": "https://your-app.com/webhooks/batch-complete"
   }'
 ```
 
-Then track all executions together:
+The response has a `bulk_id` and one `execution_id` per input. List the runs of a batch with:
 
 ```bash
 curl "https://api.eachlabs.ai/v1/workflows/WF_ID/executions?bulk_id=BULK_ID" \
   -H "Authorization: Bearer YOUR_API_KEY"
 ```
 
-## End-to-End Python Example
+## End-to-end Python
+
+Create the [quickstart](/workflows/quickstart) workflow, run it and wait for the result:
 
 ```python
-import requests
 import time
+
+import requests
 
 API_KEY = "YOUR_API_KEY"
 BASE_URL = "https://api.eachlabs.ai/v1"
-HEADERS = {
-    "Content-Type": "application/json",
-    "Authorization": f"Bearer {API_KEY}"
-}
+HEADERS = {"Authorization": f"Bearer {API_KEY}"}
 
-# 1. Create workflow
+# 1. Create the workflow
 workflow = requests.post(f"{BASE_URL}/workflows", headers=HEADERS, json={
-    "name": "Quick Image Generator",
+    "name": "Text to Image Generator",
     "definition": {
-        "version": "v1",
         "input_schema": {
-            "type": "object",
-            "required": ["prompt"],
-            "properties": {"prompt": {"type": "string"}}
+            "properties": {"prompt": {"type": "string", "required": True}}
         },
-        "steps": [{
-            "id": "generate",
-            "type": "model",
-            "model": "flux-1-1-pro",
-            "params": {"prompt": "{{inputs.prompt}}"}
-        }]
-    }
+        "steps": [
+            {
+                "id": "write_prompt",
+                "type": "model",
+                "model": "eachlabs-llm-router",
+                "params": {
+                    "model": "google/gemini-3.6-flash",
+                    "messages": [
+                        {"role": "system", "content": "Rewrite the idea as one vivid, detailed image prompt. Reply with the prompt only."},
+                        {"role": "user", "content": "$.inputs.prompt"},
+                    ],
+                },
+            },
+            {
+                "id": "generate_image",
+                "type": "model",
+                "model": "nano-banana-2-text-to-image",
+                "params": {
+                    "prompt": "$.write_prompt.primary.choices[0].message.content",
+                    "aspect_ratio": "16:9",
+                },
+            },
+        ],
+    },
 }).json()
 
 workflow_id = workflow["workflow_id"]
 version_id = workflow["versions"][0]["version_id"]
 print(f"Created workflow: {workflow_id}")
 
-# 2. Trigger execution (202 with execution_id and status)
+# 2. Run it
 execution = requests.post(
     f"{BASE_URL}/workflows/trigger/{workflow_id}/{version_id}",
     headers=HEADERS,
-    json={"inputs": {"prompt": "A serene zen garden at sunrise"}}
+    json={"inputs": {"prompt": "A zen garden at sunrise"}},
 ).json()
-
 execution_id = execution["execution_id"]
 print(f"Execution started: {execution_id}")
 
-# 3. Poll for results
+# 3. Wait for the result
 while True:
-    result = requests.get(
-        f"{BASE_URL}/workflows/executions/{execution_id}",
-        headers=HEADERS
-    ).json()
-
+    result = requests.get(f"{BASE_URL}/workflows/executions/{execution_id}", headers=HEADERS).json()
     if result["status"] in ("completed", "failed", "cancelled"):
         break
-
-    print(f"Status: {result['status']}...")
     time.sleep(3)
 
 if result["status"] == "completed":
-    print(f"Output: {result['output']}")
+    print(f"Prompt: {result['step_outputs']['write_prompt']['primary']['choices'][0]['message']['content']}")
+    print(f"Image: {result['output']}")
 else:
-    print(f"Error: {result.get('error_cause')}")
+    print(f"Error: {result.get('error')}: {result.get('error_cause')}")
 ```
