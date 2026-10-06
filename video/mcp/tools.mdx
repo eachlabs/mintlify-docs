@@ -2764,6 +2764,26 @@ Show the person an upload card inside the conversation so they can pick a file f
 }
 ```
 
+## wait_for_upload
+
+Waits for the files the person uploads on the card and returns their public URLs
+
+```json
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "properties": {
+    "receipt_url": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "receipt_url"
+  ],
+  "type": "object"
+}
+```
+
 ## presign_upload
 
 Called by the upload card for a file the person picked: returns a signed storage URL for that file's type. Not for the model; the card calls it.

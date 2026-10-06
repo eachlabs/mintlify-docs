@@ -128,10 +128,11 @@ Tool inputs are URLs. A file attached to a Claude conversation cannot reach a co
 | Tool | Does | Scope |
 | --- | --- | --- |
 | `request_file` | Shows the upload card with a one-line prompt, the kinds it accepts (`image`, `video`, `audio`) and how many files it expects (1 to 4) | none |
+| `wait_for_upload` | Waits for the files the person uploads on the card and returns their public URLs | none |
 | `presign_upload` | Called by the card, not by Claude or by you: returns a signed upload URL for the picked file's type | `uploads:create` |
 | `file_uploaded` | Called by the card after the upload: returns the file's `public_url` | none |
 
-After the upload, the card writes the file list into the person's message box as a draft. The person presses **Send**, and Claude continues with the URL; Claude does not continue on its own. The card renders in Claude on claude.ai, Claude Desktop and mobile. Clients that do not render it, Claude Code among them, take a public URL in the message instead. How to use the card is on [Use each::labs in Claude](/mcp/claude-chat#give-a-file-as-input).
+Claude calls `wait_for_upload` right after showing the card. When the upload is done, the card writes a small receipt to storage, the waiting call returns the file list, and Claude continues on its own; the person sends nothing. In Claude, a generated image, video or audio result appears under the tool call in a result card with a link to the full file; a data result shows no card. The card renders in Claude on claude.ai, Claude Desktop and mobile. Clients that do not render it, Claude Code among them, take a public URL in the message instead. How to use the card is on [Use each::labs in Claude](/mcp/claude-chat#give-a-file-as-input).
 
 ## Searching this documentation
 
