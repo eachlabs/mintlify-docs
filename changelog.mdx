@@ -4,6 +4,17 @@ description: "Product updates and releases from each::labs"
 rss: true
 ---
 
+<Update label="October 6, 2026" description="MCP" rss={{ title: "Run any model, your workflows and your files from Claude", description: "MCP" }}>
+  ## Run any model, your workflows and your files from Claude
+
+  - The hosted MCP server at `https://mcp.eachlabs.ai/mcp` now covers the whole platform, not only video. `search_models` and `get_model_schema` browse the catalog; `run_model` runs any model by slug with an input matching its schema.
+  - `list_workflows`, `get_workflow`, `trigger_workflow` and `get_workflow_execution` run and read the workflows your organization built in the dashboard. Building a workflow stays in the dashboard.
+  - Three new permissions, `workflows:run`, `workflows:read` and `uploads:create`, appear on the consent page. A connection approved before this release keeps working for the video tools; disconnect and connect again to approve the new ones.
+  - In Claude, a photo, video or audio file becomes a model input through an upload card shown in the conversation. The file uploads from your browser to each::labs storage. Claude's paperclip attachment cannot reach a connector tool, so put the file on the card.
+  - The each::labs plugin for Claude bundles the connector with twelve skills for common media tasks. Add it from **Customize > Plugins > Add > Add marketplace** with the repository URL `https://github.com/eachlabs/claude-plugin`. On Team and Enterprise plans an Owner adds it once and members sign in with their own account.
+  - Setup for claude.ai, Claude Desktop, mobile and Claude Code is on the new [Use each::labs in Claude](/mcp/claude-chat) page; the [MCP Server](/mcp) page describes sign-in, billing, scopes and every tool family, and the [MCP tool reference](/video/mcp/tools) lists the new tools' parameters.
+</Update>
+
 <Update label="October 2, 2026" description="LLM Router" rss={{ title: "Use any OpenRouter chat model with the LLM Router", description: "LLM Router" }}>
   ## Use any OpenRouter chat model with the LLM Router
 
