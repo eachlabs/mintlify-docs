@@ -129,9 +129,9 @@ Tool inputs are URLs. A file attached to a Claude conversation cannot reach a co
 | --- | --- | --- |
 | `request_file` | Shows the upload card with a one-line prompt, the kinds it accepts (`image`, `video`, `audio`) and how many files it expects (1 to 4) | none |
 | `presign_upload` | Called by the card, not by Claude or by you: returns a signed upload URL for the picked file's type | `uploads:create` |
-| `file_uploaded` | Called by the card after the upload: returns the file's `public_url`, which Claude passes to the next tool | none |
+| `file_uploaded` | Called by the card after the upload: returns the file's `public_url` | none |
 
-The card renders in Claude on claude.ai, Claude Desktop and mobile. Clients that do not render it, Claude Code among them, take a public URL in the message instead. How to use the card is on [Use each::labs in Claude](/mcp/claude-chat#give-a-file-as-input).
+After the upload, the card writes the file list into the person's message box as a draft. The person presses **Send**, and Claude continues with the URL; Claude does not continue on its own. The card renders in Claude on claude.ai, Claude Desktop and mobile. Clients that do not render it, Claude Code among them, take a public URL in the message instead. How to use the card is on [Use each::labs in Claude](/mcp/claude-chat#give-a-file-as-input).
 
 ## Searching this documentation
 

@@ -141,13 +141,16 @@ You can turn the connector off for one conversation: click the **+** button in t
 
 Most recipes start from your own photo, video or audio file. Tool inputs are URLs, and a file attached with Claude's paperclip stays inside Claude: it cannot reach a connector tool. When a model needs a file, Claude shows the each::labs **upload card** in the conversation instead. Put the file on the card, not on the paperclip.
 
+The upload ends with a message for you to send. The card writes the list of uploaded files into your message box; you press **Send**, and Claude continues with the file's URL. Claude does not continue on its own.
+
 ```mermaid
 flowchart LR
   C["Claude calls request_file"] --> K["Upload card in the conversation"]
   K --> P["You drop a file on the card or pick one"]
   P --> U["The card uploads it from your browser to each::labs storage"]
-  U --> F["The card hands Claude the file's public URL"]
-  F --> R["Claude runs the model with that URL"]
+  U --> D["The card writes the file list into your message box"]
+  D --> S["You press Send"]
+  S --> R["Claude runs the model with the file's URL"]
 ```
 
 | Step | What happens |
@@ -156,13 +159,15 @@ flowchart LR
 | 2 | Claude shows the upload card. The first time, Claude asks you to allow the each::labs app; allow it once. |
 | 3 | Drop the file on the card or pick it with the card's button. On a phone the card opens the gallery. |
 | 4 | The card uploads the file from your browser to each::labs storage and shows a thumbnail and progress. Nothing passes through Claude. |
-| 5 | Claude continues with the uploaded file's URL as the model input. |
+| 5 | The card shows *Press Send in the message box to continue* and puts the file list into your message box as a draft. Above the box, Claude shows its red caution notice, *Use caution before running this prompt*. Claude shows this notice for any message an app prepares; it is standard. |
+| 6 | Press **Send**. Claude continues with the uploaded file's URL as the model input. |
 
 | Limit | Value |
 | --- | --- |
 | File kinds | Image, video or audio, as the recipe asks for |
 | Files per card | 1 to 4 |
 | File size | 100 MB per file |
+| Sending | The upload ends with a message to send: press **Send**. The caution notice above the box is standard. |
 | Storage | The file is kept for 180 days, as with [Upload file](/storage/upload-file) |
 | Phone | The card opens the gallery picker. Add the connector on the web or desktop first; the phone app then has it. |
 | Already have a URL | Paste a public URL in the message instead; no card is needed |
