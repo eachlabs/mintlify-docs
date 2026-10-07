@@ -4,9 +4,10 @@ sidebarTitle: "Quickstart"
 description: "Create and run your first workflow in minutes."
 ---
 
-## 1. Create a Workflow
+## 1. Create a workflow
 
-Create a two-step workflow that generates text and then creates an image from it:
+This workflow has two steps: an LLM turns a short idea into a detailed prompt, then an image model
+draws it.
 
 ```bash
 curl -X POST https://api.eachlabs.ai/v1/workflows \
@@ -15,39 +16,40 @@ curl -X POST https://api.eachlabs.ai/v1/workflows \
   -d '{
     "name": "Text to Image Generator",
     "definition": {
-      "version": "v1",
       "input_schema": {
-        "type": "object",
-        "required": ["prompt"],
         "properties": {
-          "prompt": {
-            "type": "string",
-            "description": "Text prompt for generation"
-          }
+          "prompt": { "type": "string", "required": true }
         }
       },
       "steps": [
         {
-          "id": "generate_text",
+          "id": "write_prompt",
           "type": "model",
-          "model": "openai-chatgpt-5",
+          "model": "eachlabs-llm-router",
           "params": {
-            "system_prompt": "You are a creative image prompt writer",
-            "user_prompt": "{{inputs.prompt}}"
+            "model": "google/gemini-3.6-flash",
+            "messages": [
+              { "role": "system", "content": "Rewrite the idea as one vivid, detailed image prompt. Reply with the prompt only." },
+              { "role": "user", "content": "$.inputs.prompt" }
+            ]
           }
         },
         {
           "id": "generate_image",
           "type": "model",
-          "model": "flux-1-1-pro",
+          "model": "nano-banana-2-text-to-image",
           "params": {
-            "prompt": "{{generate_text.output}}"
+            "prompt": "$.write_prompt.primary.choices[0].message.content",
+            "aspect_ratio": "16:9"
           }
         }
       ]
     }
   }'
 ```
+
+`$.inputs.prompt` is the workflow input. `$.write_prompt.primary.choices[0].message.content` is the
+text the LLM step returned. See [parameter references](/workflows/concepts/parameter-references).
 
 Response:
 
@@ -67,7 +69,7 @@ Response:
 }
 ```
 
-## 2. Trigger the Workflow
+## 2. Run it
 
 ```bash
 curl -X POST https://api.eachlabs.ai/v1/workflows/trigger/50741f40-8621-4d46-8a91-dff4d873be98/v1 \
@@ -75,7 +77,7 @@ curl -X POST https://api.eachlabs.ai/v1/workflows/trigger/50741f40-8621-4d46-8a9
   -H "Authorization: Bearer YOUR_API_KEY" \
   -d '{
     "inputs": {
-      "prompt": "A majestic mountain landscape at golden hour"
+      "prompt": "A lighthouse on a cliff at sunset"
     }
   }'
 ```
@@ -89,38 +91,44 @@ Response:
 }
 ```
 
-## 3. Check Execution Status
+## 3. Read the result
+
+Poll until `status` is `completed`, `failed` or `cancelled`:
 
 ```bash
 curl https://api.eachlabs.ai/v1/workflows/executions/e2dba2bb-bc1d-4651-b6bf-fbbbebdee104 \
   -H "Authorization: Bearer YOUR_API_KEY"
 ```
 
-Response (completed):
+Response (shortened):
 
 ```json
 {
   "execution_id": "e2dba2bb-bc1d-4651-b6bf-fbbbebdee104",
   "workflow_id": "50741f40-8621-4d46-8a91-dff4d873be98",
   "status": "completed",
-  "output": "https://storage.googleapis.com/uploads/image.png",
+  "output": "https://cdn-us.eachlabs.ai/uploads/3334048f.png",
   "step_outputs": {
-    "generate_text": {
-      "step_id": "generate_text",
+    "write_prompt": {
+      "step_id": "write_prompt",
       "status": "completed",
-      "output": "A breathtaking panoramic view of..."
+      "primary": { "choices": [{ "message": { "content": "A dramatic wide-angle photograph of a weather-beaten lighthouse..." } }] }
     },
     "generate_image": {
       "step_id": "generate_image",
       "status": "completed",
-      "output": "https://storage.googleapis.com/uploads/image.png"
+      "output": "https://cdn-us.eachlabs.ai/uploads/3334048f.png",
+      "primary": "https://cdn-us.eachlabs.ai/uploads/3334048f.png"
     }
   }
 }
 ```
 
-## Next Steps
+`output` is the result of the last step.
 
-- Learn about [workflow structure](/workflows/concepts/workflow-structure) and step types
+## Next steps
+
+- Copy one of the [tested examples](/workflows/overview)
+- Learn the [workflow structure](/workflows/concepts/workflow-structure) and step types
 - Add [fallback models](/workflows/concepts/fallback-configuration) for resilience
-- Use [webhooks](/workflows/webhooks) for async notifications
+- Use [webhooks](/workflows/webhooks) instead of polling
