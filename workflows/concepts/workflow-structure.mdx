@@ -6,29 +6,19 @@ description: "Understand how workflows are structured with steps, input schemas,
 ## Anatomy of a Workflow
 
 A workflow consists of:
-- **Metadata**: Name, description, categories, tags, visibility
-- **Versions**: Each version holds a complete definition
-- **Definition**: Steps, input/output schema, retry config, and timeouts
+- **Name**: set when you create it; new workflows are private
+- **Versions**: each version holds a complete definition
+- **Definition**: inputs, steps and optional named outputs
 
 ```json
 {
   "name": "Text to Image Generator",
-  "description": "Generates images from text prompts",
-  "categories": ["image-generation"],
-  "tags": ["image", "ai"],
-  "visibility": "private",
   "definition": {
-    "version": "v1",
     "input_schema": { ... },
-    "output_schema": { ... },
-    "output_mapping": { ... },
-    "timeout_seconds": 900,
-    "retry": {
-      "max_attempts": 3,
-      "backoff_multiplier": 2,
-      "initial_delay_seconds": 1
-    },
-    "steps": [ ... ]
+    "steps": [ ... ],
+    "metadata": {
+      "output_mapping": { ... }
+    }
   }
 }
 ```
@@ -37,13 +27,12 @@ A workflow consists of:
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `version` | string | Yes | Definition version identifier |
-| `steps` | array | Yes | Array of steps to execute |
-| `input_schema` | object | No | JSON Schema defining workflow inputs |
-| `output_schema` | object | No | JSON Schema defining workflow outputs |
-| `output_mapping` | object | No | Map step outputs to workflow output |
-| `timeout_seconds` | integer | No | Maximum execution time for the entire workflow |
-| `retry` | object | No | Default retry configuration for all steps |
+| `steps` | array | Yes | Steps to run, top to bottom |
+| `input_schema` | object | No | Workflow inputs (see [Input Schema](#input-schema)) |
+| `metadata.output_mapping` | object | No | Named outputs returned as `workflow_output`, e.g. `{"image": "$.generate_image.primary"}` |
+| `version` | string | No | Name of the first version when creating a workflow (default `"v1"`) |
+
+Retries and timeouts are set per step, not for the whole workflow.
 
 ---
 
@@ -55,9 +44,9 @@ Each step defines an operation in the workflow. Steps can be model invocations, 
 {
   "id": "generate_image",
   "type": "model",
-  "model": "flux-1-1-pro",
+  "model": "nano-banana-2-text-to-image",
   "params": {
-    "prompt": "{{inputs.prompt}}",
+    "prompt": "$.inputs.prompt",
     "aspect_ratio": "16:9"
   }
 }
@@ -90,10 +79,10 @@ All step types share these fields:
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| `max_attempts` | integer | `-` | Maximum number of retry attempts |
-| `backoff_multiplier` | number | `-` | Multiplier for exponential backoff between retries |
-| `initial_delay_seconds` | number | `-` | Initial delay before first retry |
-| `retry_on` | string[] | `-` | Error types that trigger retries |
+| `max_attempts` | integer | `3` | Maximum number of attempts |
+| `backoff_multiplier` | number | `2` | Multiplier for the delay between attempts |
+| `initial_delay_seconds` | number | `1` | Delay before the second attempt |
+| `retry_on` | string[] | `["server_error"]` | Failure types that trigger a retry: `timeout`, `server_error` |
 
 ### Step Types
 
@@ -114,19 +103,19 @@ Invoke an AI model from the each::api catalog.
 
 ```json
 {
-  "id": "generate_image",
+  "id": "restyle",
   "type": "model",
-  "model": "flux-2-max",
-  "version": "1.0.0",
+  "model": "nano-banana-2-edit",
   "params": {
-    "prompt": "{{inputs.prompt}}",
-    "aspect_ratio": "16:9"
+    "prompt": "Restyle this photo as $.inputs.style. Keep the person's face unchanged.",
+    "image_urls": ["$.inputs.photo"]
   },
   "fallback": {
     "enabled": true,
-    "model": "flux-2-pro",
+    "model": "gpt-image-v2-edit",
     "params": {
-      "prompt": "{{inputs.prompt}}"
+      "prompt": "Restyle this photo as $.inputs.style. Keep the person's face unchanged.",
+      "image_urls": ["$.inputs.photo"]
     }
   }
 }
@@ -134,9 +123,8 @@ Invoke an AI model from the each::api catalog.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `model` | string | Yes | AI model slug |
-| `version` | string | No | Model version |
-| `params` | object | Yes | Model-specific parameters (supports [template variables](/workflows/concepts/parameter-references)) |
+| `model` | string | Yes | AI model slug; read its inputs with [`GET /v1/models/{slug}`](/api/models/get-model) |
+| `params` | object | No | Model parameters; supports [`$.` references](/workflows/concepts/parameter-references) |
 | `fallback` | object | No | [Fallback configuration](/workflows/concepts/fallback-configuration) |
 
 ---
@@ -229,8 +217,7 @@ Use `type: "parallel"` to run multiple branches concurrently. Each branch contai
           "params": {
             "prompt": "A bee collecting nectar, wings vibrating",
             "start_image_url": "https://example.com/bee.png",
-            "duration": "5",
-            "aspect_ratio": "16:9"
+            "duration": "5"
           }
         }
       ]
@@ -272,8 +259,8 @@ Use `type: "parallel"` to run multiple branches concurrently. Each branch contai
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `name` | string | No | Human-readable branch name |
-| `steps` | array | Yes | Sequence of steps to execute within this branch |
+| `name` | string | No | Label for readers; the engine names branches by position |
+| `steps` | array | Yes | Steps to run in order within this branch |
 
 All branches kick off at the same time and run independently. The parallel step wraps up once every branch finishes.
 
@@ -285,45 +272,47 @@ Use `type: "choice"` to route execution based on a condition. The workflow evalu
 
 ```json
 {
-  "id": "step2",
+  "id": "portrait",
   "type": "choice",
   "condition": {
-    "expression": "$.step1.primary",
+    "expression": "$.subject.primary.choices[0].message.content",
     "operator": "string_matches",
-    "value": ".mp4"
+    "value": "*PET*"
   },
   "condition_met_branch": {
-    "name": "condition_met",
-    "step_id": "step2_condition_met",
+    "name": "pet",
     "steps": [
       {
-        "id": "step2_branch_0",
+        "id": "pet_portrait",
         "type": "model",
-        "model": "topaz-upscale-video",
+        "model": "nano-banana-2-edit",
         "params": {
-          "video": "{{step1.primary}}",
-          "scale": 2
+          "prompt": "A royal oil-painting portrait of this animal wearing a small crown.",
+          "image_urls": ["$.inputs.photo"]
         }
       }
     ]
   },
   "default_branch": {
-    "name": "default",
-    "step_id": "step2_default",
+    "name": "person",
     "steps": [
       {
-        "id": "step2_default",
+        "id": "person_portrait",
         "type": "model",
-        "model": "topaz-upscale-image",
+        "model": "nano-banana-2-edit",
         "params": {
-          "image_url": "{{step1.primary}}",
-          "scale": 2
+          "prompt": "A royal oil-painting portrait of this person wearing a crown. Keep their face unchanged.",
+          "image_urls": ["$.inputs.photo"]
         }
       }
     ]
   }
 }
 ```
+
+Here `subject` is an earlier `eachlabs-llm-router` step that answers `PET` or `PERSON`. After the
+choice, `$.portrait.primary` is the image from whichever branch ran. The full workflow is example 7
+on the [overview](/workflows/overview).
 
 ### Condition Types
 
@@ -337,15 +326,15 @@ Compares a single expression against a value:
 {
   "expression": "$.step1.primary",
   "operator": "string_matches",
-  "value": ".mp4"
+  "value": "*.mp4"
 }
 ```
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `expression` | string | Yes | Value to evaluate using `$` reference syntax (e.g., `$.step1.primary`, `$.inputs.email`) |
+| `expression` | string | Yes | One `$.` reference to evaluate (e.g., `$.step1.primary`, `$.inputs.email`) |
 | `operator` | string | Yes | Comparison operator (see table below) |
-| `value` | any | Yes | Value to compare against |
+| `value` | any | Yes, except existence operators | Value to compare against |
 
 #### Logical Conditions
 
@@ -356,7 +345,7 @@ Combine multiple simple conditions using `and`, `or`, or `not`:
 ```json And (all must be true)
 {
   "and": [
-    {"expression": "$.step1.primary", "operator": "string_matches", "value": ".png"},
+    {"expression": "$.step1.primary", "operator": "string_matches", "value": "*.png"},
     {"expression": "$.inputs.upscale", "operator": "equals", "value": true}
   ]
 }
@@ -365,8 +354,8 @@ Combine multiple simple conditions using `and`, `or`, or `not`:
 ```json Or (any must be true)
 {
   "or": [
-    {"expression": "$.step1.primary", "operator": "string_matches", "value": ".mp4"},
-    {"expression": "$.step1.primary", "operator": "string_matches", "value": ".webm"}
+    {"expression": "$.step1.primary", "operator": "string_matches", "value": "*.mp4"},
+    {"expression": "$.step1.primary", "operator": "string_matches", "value": "*.webm"}
   ]
 }
 ```
@@ -374,8 +363,9 @@ Combine multiple simple conditions using `and`, `or`, or `not`:
 ```json Not (negate)
 {
   "not": {
-    "expression": "$.step1.primary",
-    "operator": "is_null"
+    "expression": "$.inputs.style",
+    "operator": "equals",
+    "value": ""
   }
 }
 ```
@@ -388,8 +378,8 @@ Combine multiple simple conditions using `and`, `or`, or `not`:
 
 | Operator | Description | Example |
 |----------|-------------|---------|
-| `equals` | Equals comparison (auto-detects type: boolean, numeric, or string) | `$.inputs.count` equals `5` |
-| `not_equals` | Not equals comparison (auto-detects type) | `$.inputs.format` not equals `"raw"` |
+| `equals` | Equal, including type: `5` does not equal `"5"` | `$.inputs.count` equals `5` |
+| `not_equals` | Not equal, including type | `$.inputs.format` not equals `"raw"` |
 | `greater_than` | Numeric greater than | `$.step1.output.score` greater than `0.8` |
 | `less_than` | Numeric less than | `$.step1.output.score` less than `0.5` |
 | `greater_than_or_equal` | Numeric greater than or equal | `$.inputs.count` \>= `1` |
@@ -400,23 +390,18 @@ Combine multiple simple conditions using `and`, `or`, or `not`:
 | Operator | Description | Example |
 |----------|-------------|---------|
 | `string_equals` | Explicit string equality | `$.inputs.format` string equals `"png"` |
-| `string_matches` | String pattern matching (contains) | `$.step1.primary` matches `".mp4"` |
+| `string_matches` | Pattern with `*` wildcards; without `*` it must match exactly | `$.step1.primary` matches `"*.mp4"` |
 
-#### Array Operators
-
-| Operator | Description | Example |
-|----------|-------------|---------|
-| `in` | Value is in array | `$.inputs.format` in `["png", "jpg", "webp"]` |
-| `not_in` | Value is not in array | `$.inputs.format` not in `["gif", "bmp"]` |
+To test one of several values, combine `equals` conditions with `or`.
 
 #### Existence Operators
 
 | Operator | Description | Example |
 |----------|-------------|---------|
-| `exists` | Field exists and is present | `$.step1.output.url` exists |
-| `not_exists` | Field does not exist | `$.step1.output.error` not exists |
-| `is_null` | Field is null | `$.step1.primary` is null |
-| `is_not_null` | Field is not null | `$.step1.primary` is not null |
+| `exists` | The field is present (even if its value is `null`) | `$.step1.output.url` exists |
+| `is_not_null` | Same as `exists` | `$.step1.primary` is not null |
+| `is_null` | The field is present and `null`; fails the run if the field is missing | `$.step1.output.error` is null |
+| `not_exists` | Same as `is_null` | `$.step1.output.error` not exists |
 
 <Note>
 Existence operators (`exists`, `not_exists`, `is_null`, `is_not_null`) do not require a `value` field in the condition.
@@ -426,15 +411,14 @@ Existence operators (`exists`, `not_exists`, `is_null`, `is_not_null`) do not re
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `name` | string | Yes | Branch identifier (`condition_met` or `default`) |
-| `step_id` | string | Yes | Unique ID for the branch |
-| `steps` | array | Yes | Steps to execute in this branch |
+| `name` | string | No | Branch name, returned as `selected`; the two branches need different names |
+| `steps` | array | Yes | Steps to run in this branch (at least one) |
 
 ---
 
 ## Pass Steps
 
-A pass-through step that does no processing. Super handy for injecting static values or as a placeholder.
+A step that does no processing and returns a fixed value.
 
 ```json
 {
@@ -449,40 +433,37 @@ A pass-through step that does no processing. Super handy for injecting static va
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `result` | any | No | Static value to output |
-| `result_path` | string | No | Path to place the result in the output |
+| `result` | any | No | Fixed value to return; `$.` references inside it are not resolved |
+
+Later steps read its fields directly, for example `$.static_config.style`.
 
 ---
 
 ## Input Schema
 
-Define what inputs your workflow accepts using JSON Schema:
+List the inputs under `properties`. Each input takes:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `type` | string | `string`, `number`, `boolean`, `image`, `video`, `voice` (audio), `file` or `json_array`; describes the input, the engine does not convert values |
+| `required` | boolean | `true` rejects a run that leaves the input out or empty |
+| `default_value` | any | Used when the caller leaves the input out |
+| `description` | string | Optional help text |
 
 ```json
 {
   "input_schema": {
-    "type": "object",
-    "required": ["prompt"],
     "properties": {
-      "prompt": {
-        "type": "string",
-        "description": "Text prompt for generation"
-      },
-      "style": {
-        "type": "string",
-        "enum": ["realistic", "artistic", "anime"],
-        "default": "realistic"
-      },
-      "num_images": {
-        "type": "integer",
-        "minimum": 1,
-        "maximum": 4,
-        "default": 1
-      }
+      "photo": { "type": "image", "required": true, "description": "Photo of the person" },
+      "style": { "type": "string", "required": false, "default_value": "a 1990s film photo" },
+      "num_images": { "type": "number", "required": false, "default_value": 1 }
     }
   }
 }
 ```
+
+A run fails if a step references an input that was left out and has no `default_value`. Files are
+passed as public URLs; upload your own with [each::storage](/storage/upload-file).
 
 ## Execution Flow
 
@@ -534,19 +515,16 @@ Each completed step produces a `StepOutput`:
 
 ### Choice Step Output
 
-For choice steps, the output includes which branch was selected:
+A choice step reports the branch that ran in `selected`, and its `output` and `primary` are that
+branch's result:
 
 ```json
 {
-  "step_id": "step2",
   "kind": "choice",
   "status": "completed",
-  "selected": "condition_met",
-  "metadata": {
-    "choice_branch_selected": "condition_met",
-    "branch_name": "condition_met",
-    "choice_step_id": "step2_condition_met"
-  }
+  "selected": "pet",
+  "output": "https://cdn-us.eachlabs.ai/uploads/450d34d7.png",
+  "primary": "https://cdn-us.eachlabs.ai/uploads/450d34d7.png"
 }
 ```
 
@@ -562,11 +540,11 @@ When a fallback kicks in, a separate step output appears with a `_fallback` suff
     "fallback_from_step": "step1",
     "reason": "primary_failed"
   },
-  "metadata": {
-    "fallback_used": true,
-    "primary_error": "Model timeout"
-  }
+  "primary": "https://cdn-us.eachlabs.ai/uploads/7c1e.png",
+  "metadata": { "model": "gpt-image-v2-edit" }
 }
 ```
 
-Fallback reasons: `primary_failed` (the primary step failed and fallback kicked in) or `not_triggered` (primary succeeded, so fallback was skipped).
+Fallback reasons: `primary_failed` (the primary model failed and the fallback ran) or `not_triggered`
+(the primary model succeeded; the fallback entry has status `skipped`). Later steps that reference
+`$.step1.primary` receive the fallback's result when it ran.

@@ -1,6 +1,6 @@
 # Eachlabs Sense API - Frontend Integration Guide
 
-**Base URL:** `https://sense.eachlabs.run`
+**Base URL:** `https://eachsense-agent.core.eachlabs.run`
 
 ---
 
@@ -66,7 +66,7 @@ The unified chat endpoint. The AI agent decides what to do based on the user's m
 ### Chat Request Schema
 
 ```json
-POST https://sense.eachlabs.run/chat
+POST https://eachsense-agent.core.eachlabs.run/chat
 Content-Type: application/json
 Authorization: Bearer your-api-key
 
@@ -558,7 +558,7 @@ Dedicated workflow builder endpoint for creating/updating AI workflows. Use this
 ### Workflow Request Schema
 
 ```json
-POST https://sense.eachlabs.run/workflow
+POST https://eachsense-agent.core.eachlabs.run/workflow
 Content-Type: application/json
 Authorization: Bearer your-api-key
 
@@ -656,7 +656,7 @@ Same SSE format as `/chat`. Event types specific to `/workflow`:
 Get conversation memory for a session.
 
 ```
-GET https://sense.eachlabs.run/memory?session_id=your-session-id
+GET https://eachsense-agent.core.eachlabs.run/memory?session_id=your-session-id
 ```
 
 #### Query Parameters
@@ -689,7 +689,7 @@ GET https://sense.eachlabs.run/memory?session_id=your-session-id
 Clear conversation memory for a session.
 
 ```
-DELETE https://sense.eachlabs.run/memory?session_id=your-session-id
+DELETE https://eachsense-agent.core.eachlabs.run/memory?session_id=your-session-id
 ```
 
 #### Query Parameters
@@ -714,7 +714,7 @@ DELETE https://sense.eachlabs.run/memory?session_id=your-session-id
 List all active sessions that have conversation memory.
 
 ```
-GET https://sense.eachlabs.run/sessions
+GET https://eachsense-agent.core.eachlabs.run/sessions
 ```
 
 #### Response
@@ -730,7 +730,7 @@ GET https://sense.eachlabs.run/sessions
 ## GET /health
 
 ```
-GET https://sense.eachlabs.run/health
+GET https://eachsense-agent.core.eachlabs.run/health
 ```
 
 #### Response
@@ -1012,7 +1012,7 @@ async function chatStream(
   onError: (error: Error) => void
 ) {
   try {
-    const response = await fetch("https://sense.eachlabs.run/chat", {
+    const response = await fetch("https://eachsense-agent.core.eachlabs.run/chat", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
