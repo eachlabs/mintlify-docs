@@ -16,7 +16,7 @@ Any MCP client that supports the Streamable HTTP transport with OAuth can connec
 | Client | How to connect |
 | --- | --- |
 | Claude (claude.ai, Claude Desktop, mobile) | Add the each::labs plugin, or add the URL as a custom connector. Steps are on [Use each::labs in Claude](/mcp/claude-chat). |
-| Claude Code | `claude mcp add --transport http eachlabs https://mcp.eachlabs.ai/mcp`, then run `/mcp` and approve the sign-in. |
+| Claude Code | Install the plugin with `/plugin marketplace add eachlabs/claude-plugin` and `/plugin install eachlabs@eachlabs`, or add only the connector with `claude mcp add --transport http eachlabs https://mcp.eachlabs.ai/mcp`. Then run `/mcp` and approve the sign-in. Steps are on [Use each::labs in Claude](/mcp/claude-chat#add-the-plugin). |
 | Codex | `codex mcp add eachlabs --url https://mcp.eachlabs.ai/mcp --oauth-resource https://mcp.eachlabs.ai/mcp` |
 | Cursor and other MCP clients | Add `{ "url": "https://mcp.eachlabs.ai/mcp" }` to the client's `mcpServers` config. Per-client steps are in the [video MCP quickstart](/video/mcp/quickstart#connect-your-agent). |
 
@@ -141,7 +141,7 @@ Tool inputs are URLs. A file attached to a Claude conversation cannot reach a co
 | `wait_for_choice` | After a run that asked for several results, waits for the variant the person submits and returns it | none |
 | `show_files` | Shows files Claude already has a URL for, such as an earlier result, on a result card | none |
 
-Every tool that returns media also carries the result card: the image, a video or audio player and download buttons. When a run asked for several results, the result card is a picker: the person selects a variant, as often as they like, and presses **Use this variant** once. A workflow's outputs show together as a gallery. An edit of a file the person gave gets a **Compare** button for a before-and-after view.
+Every tool that returns media also carries the result card: the image, a video or audio player and download buttons. When a run asked for several results, the result card is a picker: the person selects a variant, as often as they like, and presses the button under the variants once; it reads **Use variant** and the number selected. A workflow's outputs show together as a gallery. An edit of a file the person gave gets a **Compare** button for a before-and-after view.
 
 One upload card takes up to 50 files of up to 100 MB each and uploads four at a time; too many files or a file over 100 MB is refused before anything uploads. The workflow form's file fields follow the same limits. A card used once keeps showing that choice when the conversation is reopened; the small record behind it is kept as long as other files.
 
