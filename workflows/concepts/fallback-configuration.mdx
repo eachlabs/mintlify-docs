@@ -1,76 +1,85 @@
 ---
 title: "Fallback Configuration"
-description: "Automatic retry with alternative models when the primary model fails."
+description: "Run an alternative model automatically when the primary model fails."
 ---
 
 ## Overview
 
-Model steps support an optional fallback that automatically retries with an alternative model if the primary model fails. This keeps your workflow humming along even during temporary outages or rate limits.
+A model step can name a fallback model. If the primary model fails (an outage, a rate limit, a
+refusal), the fallback runs with its own parameters, and the workflow continues with its result.
 
-## How It Works
+## How it works
 
-1. **Execute the primary model** with configured parameters
-2. **If primary fails**, automatically execute the fallback model
-3. **If both fail**, mark the step as failed
+1. The primary model runs with the step's `params`.
+2. If it fails, the fallback model runs with the fallback's `params`.
+3. If both fail, the step fails.
+
+Later steps don't need to know which model answered: `$.<step_id>.primary` is the fallback's
+result when the fallback ran.
 
 ## Configuration
 
-Add a `fallback` object to any model step:
+Add a `fallback` object to a model step. Map the inputs again in the fallback's `params`, because
+the second model often takes different parameter names:
 
 ```json
 {
-  "id": "generate_image",
+  "id": "restyle",
   "type": "model",
-  "model": "flux-dev",
+  "model": "nano-banana-2-edit",
   "params": {
-    "prompt": "{{inputs.prompt}}",
-    "num_images": 1
+    "prompt": "Restyle this photo as $.inputs.style. Keep the person's face unchanged.",
+    "image_urls": ["$.inputs.photo"],
+    "aspect_ratio": "9:16"
   },
   "fallback": {
     "enabled": true,
-    "model": "flux-1-1-pro",
+    "model": "gpt-image-v2-edit",
     "params": {
-      "prompt": "{{inputs.prompt}}",
-      "guidance_scale": 7.5
+      "prompt": "Restyle this photo as $.inputs.style. Keep the person's face unchanged.",
+      "image_urls": ["$.inputs.photo"],
+      "image_size": "1024x1536"
     }
   }
 }
 ```
 
-## Fallback Properties
+The full workflow is example 2 on the [overview](/workflows/overview).
+
+## Fallback properties
 
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
-| `enabled` | boolean | `true` | Enable/disable fallback |
-| `model` | string | `-` | Alternative model slug |
-| `version` | string | Primary version | Fallback model version |
-| `params` | object | `-` | Parameters for the fallback model (supports template variables) |
+| `enabled` | boolean | `true` | Turn the fallback on or off |
+| `model` | string | `-` | Fallback model slug |
+| `params` | object | `-` | Parameters for the fallback model; supports [`$.` references](/workflows/concepts/parameter-references) |
 
-## Detecting Fallback Usage
+## Detecting fallback usage
 
-When a fallback is used, the step metadata includes:
+When a step has a fallback, the execution's `step_outputs` has an extra entry `<step_id>_fallback`:
 
 ```json
 {
-  "step_id": "generate_image",
-  "status": "completed",
-  "output": "https://storage.googleapis.com/uploads/image.png",
-  "metadata": {
-    "model": "flux-1-1-pro",
-    "fallback_used": true,
-    "primary_error": "Primary model flux-dev failed: rate limit exceeded"
+  "restyle": {
+    "step_id": "restyle",
+    "status": "failed",
+    "error": "provider rate limit"
+  },
+  "restyle_fallback": {
+    "step_id": "restyle_fallback",
+    "status": "completed",
+    "primary": "https://cdn-us.eachlabs.ai/uploads/7c1e.png",
+    "fallback": { "fallback_from_step": "restyle", "reason": "primary_failed" }
   }
 }
 ```
 
-| Field | Description |
-|-------|-------------|
-| `fallback_used` | `true` when step completed using fallback |
-| `primary_error` | Why the primary model failed |
+`fallback.reason` is `primary_failed` when the fallback ran and `not_triggered` when the primary
+model succeeded.
 
-## Best Practices
+## Best practices
 
-- Choose fallback models that produce compatible output formats
-- Use fallback for critical production workflows
-- Monitor `fallback_used` in execution results to identify recurring primary failures
-- Consider cost differences between primary and fallback models
+- Pick a fallback that returns the same kind of output (an image URL for an image step).
+- Use fallbacks on steps your product depends on, especially video and LLM steps.
+- Watch `primary_failed` in your results to spot a primary model that fails often.
+- Check the fallback model's price; it may differ from the primary's.

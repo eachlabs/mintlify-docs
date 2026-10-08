@@ -1,160 +1,108 @@
 ---
 title: "Parameter References"
-description: "Wire outputs between steps using template variables."
+description: "Pass workflow inputs and earlier step results into a step with $. references."
 ---
 
-## Template Syntax
+## Syntax
 
-Use `{{double braces}}` to reference workflow inputs and previous step outputs in your step parameters.
+A reference starts with `$.` and can be used in any step parameter:
 
-## Reference Types
+| Reference | Value | Example |
+|-----------|-------|---------|
+| `$.inputs.<name>` | A workflow input | `$.inputs.photo` |
+| `$.<step_id>.primary` | The step's main result | `$.restyle.primary` |
+| `$.<step_id>.output` | The step's full result | `$.restyle.output` |
+| `$.<step_id>.primary.<field>` | A field inside an object result | `$.product.primary.output.title` |
+| `[n]` | An item in a list | `$.product.primary.output.images[0]` |
 
-| Reference | Description | Example |
-|-----------|-------------|---------|
-| `{{inputs.field}}` | Workflow input field | `{{inputs.prompt}}` |
-| `{{step_id.output}}` | Full output of a step | `{{generate_text.output}}` |
-| `{{step_id.primary}}` | Primary output of a step | `{{step1.primary}}` |
+<Warning>
+`{{inputs.prompt}}` is not a reference. Double braces are sent to the model as literal text.
+</Warning>
 
-## Examples
+## Whole values and text
 
-### Referencing Inputs
+A parameter that is exactly one reference keeps the referenced value's type, such as a URL, a
+number, a list or an object:
+
+```json
+"image_urls": ["$.inputs.photo"],
+"price": "$.product.primary.output.price"
+```
+
+A reference inside a longer string is inserted as text:
+
+```json
+"prompt": "Restyle this photo as $.inputs.style. Keep the person's face unchanged."
+```
+
+A reference ends at a space or punctuation, so it can end a sentence (`$.inputs.style.` followed by a
+space). Write a space after the full stop: `$.inputs.style.Keep` would be read as one longer path.
+
+## What `primary` holds
+
+| Step | `primary` | Read text or fields with |
+|------|-----------|--------------------------|
+| Image or video model | The file URL (the first one if the model returns several) | `$.step.primary`, `$.step.output[1]` |
+| `eachlabs-llm-router` | The chat completion object | `$.step.primary.choices[0].message.content` |
+| `eachlabs-http-step` | The response: `status_code` and `output` (the parsed JSON body) | `$.step.primary.output.<field>` |
+| A `choice` step | The result of the branch that ran | `$.choice_id.primary`, `$.choice_id.selected` (branch name) |
+
+## Prompt fields and whole references
+
+If a prompt-like parameter (`prompt`, `user_prompt`, `system_prompt`, `text`, `content`, `message`,
+`caption`, `title` or `description`) is exactly `$.step.primary` or `$.step.output`, the value
+arrives JSON-encoded, so a string comes wrapped in quotes. Reference a deeper field, or embed the
+reference in a sentence:
+
+```json
+"prompt": "$.write_prompt.primary.choices[0].message.content"
+"prompt": "Use the product from the second image. $.write_scene.primary.choices[0].message.content"
+```
+
+## Lists and optional inputs
+
+Empty strings and `null` values are dropped from lists. An optional input with
+`"default_value": ""` can therefore sit in a list and disappears when the caller leaves it out:
+
+```json
+"image_urls": ["$.inputs.photo1", "$.inputs.photo2"]
+```
+
+## Parallel branches
+
+After a `parallel` step, reference each branch step by its own id:
 
 ```json
 {
-  "id": "generate_text",
+  "id": "clip",
   "type": "model",
-  "model": "openai-chatgpt-5",
+  "model": "bytedance-seedance-2-0-reference-to-video-fast",
   "params": {
-    "system_prompt": "You are a helpful assistant",
-    "user_prompt": "{{inputs.prompt}}"
+    "prompt": "The two people from the reference images walk side by side through a sunny market.",
+    "image_urls": ["$.edit_a.primary", "$.edit_b.primary"]
   }
 }
 ```
 
-### Chaining Steps
+## Conditions
+
+A `choice` condition uses the same paths in its `expression`:
 
 ```json
 {
-  "steps": [
-    {
-      "id": "step1",
-      "type": "model",
-      "model": "openai-chatgpt-5",
-      "params": {
-        "user_prompt": "{{inputs.prompt}}"
-      }
-    },
-    {
-      "id": "step2",
-      "type": "model",
-      "model": "flux-1-1-pro",
-      "params": {
-        "prompt": "{{step1.output}}"
-      }
-    },
-    {
-      "id": "step3",
-      "type": "model",
-      "model": "topaz-upscale-image",
-      "params": {
-        "image": "{{step2.primary}}",
-        "scale": 2
-      }
-    }
-  ]
+  "expression": "$.subject.primary.choices[0].message.content",
+  "operator": "string_matches",
+  "value": "*PET*"
 }
 ```
 
-### Embedding in Strings
+See [condition operators](/workflows/concepts/workflow-structure#condition-operators).
 
-Template variables can be embedded within larger strings:
+## When a reference fails
 
-```json
-{
-  "prompt": "A portrait of {{inputs.name}} in {{inputs.style}} style"
-}
-```
+- A run is rejected if a step references an input that wasn't sent and has no `default_value`.
+- References to steps are checked when the workflow runs, not when you save it. A step can only use
+  inputs and steps that ran before it.
+- Use brackets for list items: `$.step.output[0]`, not `$.step.output.0`.
 
-## Referencing Parallel Branch Outputs
-
-When a parallel step completes, you can reference outputs from its branches using the branch step IDs:
-
-```json
-{
-  "steps": [
-    {
-      "id": "step1",
-      "type": "parallel",
-      "branches": [
-        {
-          "name": "Video",
-          "steps": [{"id": "step1_branch_0", "type": "model", "model": "veo-3", "params": {"prompt": "{{inputs.prompt}}"}}]
-        },
-        {
-          "name": "Image",
-          "steps": [{"id": "step1_branch_1", "type": "model", "model": "flux-2-max", "params": {"prompt": "{{inputs.prompt}}"}}]
-        }
-      ]
-    },
-    {
-      "id": "step2",
-      "type": "model",
-      "model": "topaz-upscale-image",
-      "params": {
-        "image_url": "{{step1_branch_1.primary}}"
-      }
-    }
-  ]
-}
-```
-
-## Condition Expressions
-
-Choice steps use `$` reference syntax (not `{{template}}` syntax) to evaluate conditions:
-
-| Reference | Description | Example |
-|-----------|-------------|---------|
-| `$.inputs.field` | Workflow input | `$.inputs.email` |
-| `$.step_id.primary` | Primary output of a step | `$.step1.primary` |
-| `$.step_id.output` | Full output of a step | `$.step1.output` |
-| `$.step_id.output.field` | Nested field from step output | `$.step1.output.filename` |
-
-```json
-{
-  "condition": {
-    "expression": "$.step1.primary",
-    "operator": "string_matches",
-    "value": ".mp4"
-  }
-}
-```
-
-You can also access nested output fields:
-
-```json
-{
-  "condition": {
-    "expression": "$.step1.output.filename",
-    "operator": "string_matches",
-    "value": ".pdf"
-  }
-}
-```
-
-<Note>
-Condition expressions use `$.step_id.field` syntax, while step parameters use `{{step_id.field}}` template syntax. These are different reference systems.
-</Note>
-
-For the full list of condition operators (comparison, string, array, existence, and logical), check out [Workflow Structure: Condition Operators](/workflows/concepts/workflow-structure#condition-operators).
-
-## Resolution
-
-Template variables get resolved at execution time. Here's what the workflow engine does under the hood:
-
-1. Evaluates steps in order
-2. Executes parallel branches concurrently
-3. Evaluates choice conditions and routes to the matching branch
-4. Resolves template variables using actual values from inputs and completed steps
-5. Passes the resolved parameters to the model
-
-If a referenced step hasn't completed or doesn't exist, the execution will fail. So make sure your references point to steps that actually run before they're needed!
+The [overview examples](/workflows/overview) use every pattern on this page and were run end to end.

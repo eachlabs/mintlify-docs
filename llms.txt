@@ -263,239 +263,126 @@ On `https://api.eachlabs.ai`:
 
 ### Create Workflow
 
-`POST https://api.eachlabs.ai/v1/workflows`
-
-Body accepts `name` (required) and `definition` (optional).
+`POST /v1/workflows` with `name` and an optional `definition`; creates version `v1` (or `definition.version`). New workflows are private. A definition that fails validation returns `400 invalid argument`; send it to `PUT /v1/workflows/{workflowID}/versions/v1` as `{"definition": {...}}` to see the exact reason.
 
 ```json
 {
-  "name": "Image Enhancement Pipeline",
+  "name": "Text to Image Generator",
   "definition": {
-    "version": "v1",
     "input_schema": {
-      "type": "object",
       "properties": {
-        "prompt": {"type": "string", "description": "Image description"}
-      },
-      "required": ["prompt"]
+        "prompt": {"type": "string", "required": true}
+      }
     },
     "steps": [
       {
-        "step_id": "generate",
+        "id": "write_prompt",
         "type": "model",
-        "model": "flux-2-pro",
+        "model": "eachlabs-llm-router",
         "params": {
-          "prompt": "{{inputs.prompt}}",
-          "aspect_ratio": "16:9"
+          "model": "google/gemini-3.6-flash",
+          "messages": [
+            {"role": "system", "content": "Rewrite the idea as one vivid, detailed image prompt. Reply with the prompt only."},
+            {"role": "user", "content": "$.inputs.prompt"}
+          ]
         }
       },
       {
-        "step_id": "upscale",
+        "id": "generate_image",
         "type": "model",
-        "model": "topaz-upscale-image",
-        "params": {
-          "image_url": "{{generate.primary}}",
-          "scale": 2
-        }
+        "model": "nano-banana-2-text-to-image",
+        "params": {"prompt": "$.write_prompt.primary.choices[0].message.content", "aspect_ratio": "16:9"}
       }
     ]
   }
 }
 ```
 
-Response: the full workflow object, including `versions: [{"version_id": "v1", ...}]`.
-
 ### Create/Update Version
 
-`PUT https://api.eachlabs.ai/v1/workflows/{workflowID}/versions/{versionID}`
+`PUT /v1/workflows/{workflowID}/versions/{versionID}` with `definition` (required for a new version), `output_mapping` (named outputs, e.g. `{"image": "$.generate_image.primary"}`, returned as `workflow_output`), `published`, `locked`, `production`, `allowed_to_share`. Omitted fields keep their stored values.
 
-Patch semantics — omitted body fields keep their stored values. `definition` is required to create a new version; omit it (or send `null`) to keep the stored one. `output_mapping` maps final output keys to step refs (e.g. `{"image": "$.generate.output"}`): omit = unchanged, `{}` = clear, entries = replace the whole map. Boolean flags: `published`, `locked`, `production`, `allowed_to_share`. Errors: `403` locked version.
+### Authoring rules
+
+- References use `$.` paths: `$.inputs.<name>`, `$.<step_id>.primary`, `$.<step_id>.output`, nested fields and `[n]` for list items (`$.step.output[0]`). `{{inputs.x}}` is NOT a reference; it is sent to the model as literal text.
+- A parameter that is exactly one reference keeps its type; a reference inside a longer string is inserted as text.
+- `primary` is the main result: the file URL for image/video models, the chat completion for `eachlabs-llm-router` (text at `$.step.primary.choices[0].message.content`), the response for `eachlabs-http-step` (JSON body fields at `$.step.primary.output.<field>`).
+- If a prompt-like parameter (`prompt`, `user_prompt`, `system_prompt`, `text`, `content`, `message`, `caption`, `title`, `description`) is exactly `$.step.primary` or `$.step.output`, the value arrives JSON-encoded (in quotes). Reference a deeper field or embed it in a sentence.
+- Every step, including steps inside branches, needs a unique `id`. Steps run top to bottom and can only reference inputs and earlier steps.
+- Inputs: `input_schema.properties.<name>` with `type` (`string`, `number`, `boolean`, `image`, `video`, `voice`, `file`, `json_array`), `required` (boolean) and optional `default_value`. A run fails if a step references an omitted input with no default. Empty values are dropped from lists.
+- Model slugs and parameters are checked when a step runs, not at save time; read inputs with `GET /v1/models/{slug}`.
+- The run's `output` is the last step's result; `workflow_output` holds named outputs.
+
+Tested, complete examples: https://docs.eachlabs.ai/workflows/overview
 
 ### Step Types
 
-| Type | Description |
-|------|-------------|
-| `model` | Execute an AI model via each::api |
-| `http` | External HTTP request (GET, POST, PUT, DELETE, PATCH) with auth support |
-| `python` | Execute Python code |
-| `parallel` | Execute multiple branches concurrently |
-| `choice` | Evaluate a condition and route to matching branch |
-| `pass` | Pass-through, optionally inject static values |
+| Type | Purpose |
+|------|---------|
+| `model` | Run a model: `model` (slug), `params`, optional `fallback`, `retry`, `timeout_seconds` |
+| `parallel` | Run `branches[].steps` at the same time |
+| `choice` | Route to `condition_met_branch` or `default_branch` |
+| `pass` | Return a fixed `result` (no `$.` resolution inside it) |
 
-All steps support: `continue_on_error` (boolean), `timeout_seconds` (integer), `retry` config.
-
-### HTTP Steps
+HTTP requests and Python code are not step types: they run as model steps through `eachlabs-http-step` (`url`, `method`, `headers`, `query_params`, `body`, `timeout_seconds`, `fail_on_status: "non_2xx"`) and `eachlabs-python-step` (private beta).
 
 ```json
 {
-  "id": "call_api",
-  "type": "http",
-  "url": "https://api.example.com/process",
-  "method": "POST",
-  "headers": {"Content-Type": "application/json"},
-  "body": {"data": "{{step1.primary}}"},
-  "auth": {"type": "bearer", "token": "{{inputs.api_token}}"},
-  "timeout": 30000
+  "id": "product",
+  "type": "model",
+  "model": "eachlabs-http-step",
+  "params": {"url": "https://dummyjson.com/products/$.inputs.product_id", "method": "GET", "fail_on_status": "non_2xx"}
 }
 ```
 
-Auth types: `basic` (username/password), `bearer` (token), `api_key`.
-
-### Python Steps
+### Parallel Steps
 
 ```json
 {
-  "id": "transform",
-  "type": "python",
-  "code": "result = inputs['text'].upper()",
-  "inputs": {"text": "{{step1.primary}}"}
-}
-```
-
-### Parallel Steps (Branching)
-
-Run multiple branches concurrently. Each branch has a `name` and `steps` array.
-
-```json
-{
-  "id": "step1",
+  "id": "prepare",
   "type": "parallel",
   "branches": [
-    {
-      "name": "Video Generation",
-      "steps": [
-        {
-          "id": "step1_branch_0",
-          "type": "model",
-          "model": "kling-v3-pro-image-to-video",
-          "params": {"prompt": "{{inputs.prompt}}", "start_image_url": "{{inputs.image}}", "duration": "5"}
-        }
-      ]
-    },
-    {
-      "name": "Image Edit",
-      "steps": [
-        {
-          "id": "step1_branch_1",
-          "type": "model",
-          "model": "flux-2-edit",
-          "params": {"prompt": "{{inputs.prompt}}", "image_url": "{{inputs.image}}"}
-        }
-      ]
-    }
+    {"steps": [{"id": "edit_a", "type": "model", "model": "nano-banana-2-edit", "params": {"prompt": "Full-body photo of this person as a traveler.", "image_urls": ["$.inputs.photo_a"]}}]},
+    {"steps": [{"id": "edit_b", "type": "model", "model": "nano-banana-2-edit", "params": {"prompt": "Full-body photo of this person as a traveler.", "image_urls": ["$.inputs.photo_b"]}}]}
   ]
 }
 ```
 
-All branches start simultaneously and execute independently. The parallel step completes when all branches finish.
+Later steps reference branch steps by their own ids: `$.edit_a.primary`, `$.edit_b.primary`.
 
-### Choice Steps (Conditional Logic)
-
-Route execution based on a condition. Evaluates the condition, then runs `condition_met_branch` or `default_branch`.
+### Choice Steps
 
 ```json
 {
-  "id": "step2",
+  "id": "portrait",
   "type": "choice",
-  "condition": {
-    "expression": "$.step1.primary",
-    "operator": "string_matches",
-    "value": ".mp4"
-  },
-  "condition_met_branch": {
-    "name": "condition_met",
-    "step_id": "step2_condition_met",
-    "steps": [
-      {"id": "step2_branch_0", "type": "model", "model": "topaz-upscale-video", "params": {"video": "{{step1.primary}}", "scale": 2}}
-    ]
-  },
-  "default_branch": {
-    "name": "default",
-    "step_id": "step2_default",
-    "steps": [
-      {"id": "step2_default", "type": "model", "model": "topaz-upscale-image", "params": {"image_url": "{{step1.primary}}", "scale": 2}}
-    ]
-  }
+  "condition": {"expression": "$.subject.primary.choices[0].message.content", "operator": "string_matches", "value": "*PET*"},
+  "condition_met_branch": {"name": "pet", "steps": [{"id": "pet_portrait", "type": "model", "model": "nano-banana-2-edit", "params": {"prompt": "A royal portrait of this animal.", "image_urls": ["$.inputs.photo"]}}]},
+  "default_branch": {"name": "person", "steps": [{"id": "person_portrait", "type": "model", "model": "nano-banana-2-edit", "params": {"prompt": "A royal portrait of this person.", "image_urls": ["$.inputs.photo"]}}]}
 }
 ```
 
-**Condition types:**
+After the choice, `$.portrait.primary` is the result of the branch that ran; `selected` holds its name.
 
-Simple condition: `{expression, operator, value}`
-Logical AND: `{and: [condition, condition, ...]}`  (all must be true)
-Logical OR: `{or: [condition, condition, ...]}`  (any must be true)
-Logical NOT: `{not: condition}`  (negate)
-
-```json
-{"and": [
-  {"expression": "$.step1.primary", "operator": "string_matches", "value": ".png"},
-  {"expression": "$.inputs.upscale", "operator": "equals", "value": true}
-]}
-```
-
-**Condition operators:**
-
-| Category | Operators |
-|----------|-----------|
-| Comparison | `equals`, `not_equals`, `greater_than`, `less_than`, `greater_than_or_equal`, `less_than_or_equal` |
-| String | `string_equals`, `string_matches` (pattern/contains) |
-| Array | `in`, `not_in` |
-| Existence | `exists`, `not_exists`, `is_null`, `is_not_null` (no `value` needed) |
-
-**Important:** Condition expressions use `$.step_id.field` syntax (e.g., `$.step1.primary`, `$.inputs.email`), while step params use `{{step_id.field}}` template syntax.
-
-### Pass Steps
-
-```json
-{"id": "config", "type": "pass", "result": {"style": "cinematic"}}
-```
-
-### Parameter References (Template Syntax)
-
-Use `{{double braces}}` to reference inputs and step outputs:
-
-| Reference | Description | Example |
-|-----------|-------------|---------|
-| `{{inputs.field}}` | Workflow input | `{{inputs.prompt}}` |
-| `{{step_id.output}}` | Full output of a step | `{{generate.output}}` |
-| `{{step_id.primary}}` | Primary/first result | `{{generate.primary}}` |
-| `{{branch_step_id.primary}}` | Output from a parallel branch step | `{{step1_branch_0.primary}}` |
-
-Templates can be embedded in strings: `"A portrait of {{inputs.name}} in {{inputs.style}} style"`
-
-Condition expressions use `$` syntax: `$.step_id.primary`, `$.step_id.output`, `$.step_id.output.field`, `$.inputs.field`
+Operators: `equals` / `not_equals` (type-strict), `greater_than`, `greater_than_or_equal`, `less_than`, `less_than_or_equal`, `string_equals`, `string_matches` (`*` wildcard pattern; without `*` it must match exactly), `exists` / `is_not_null` (field present), `is_null` / `not_exists` (field present and null). Combine with `and`, `or`, `not`. `in` and `not_in` are not supported.
 
 ### Fallback Configuration
 
-Automatic model fallback when the primary model fails:
-
 ```json
 {
-  "step_id": "generate",
+  "id": "restyle",
   "type": "model",
-  "model": "flux-2-max",
-  "params": {"prompt": "{{inputs.prompt}}"},
-  "fallback": {
-    "enabled": true,
-    "model": "flux-2-pro",
-    "params": {"prompt": "{{inputs.prompt}}"}
-  }
+  "model": "nano-banana-2-edit",
+  "params": {"prompt": "Restyle this photo as $.inputs.style.", "image_urls": ["$.inputs.photo"]},
+  "fallback": {"enabled": true, "model": "gpt-image-v2-edit", "params": {"prompt": "Restyle this photo as $.inputs.style.", "image_urls": ["$.inputs.photo"]}}
 }
 ```
 
-When fallback is used, step metadata includes `fallback_used: true` and `primary_error`.
+When the primary fails, the fallback runs and `$.restyle.primary` is its result. `step_outputs.restyle_fallback.fallback.reason` is `primary_failed` or `not_triggered`.
 
 ### Versioning
 
-**Version states:** `active`, `archived`, `deleted`
-
-**Locking:** Locked versions cannot be modified. Set `locked: true` for production stability.
-
-**Visibility:**
-| Setting | Behavior |
-|---------|----------|
-| `allowed_to_share: false` (default) | Private — only your organization |
-| `allowed_to_share: true` | Unlisted — accessible via direct link |
+Each version holds a complete definition. Trigger a specific version with `POST /v1/workflows/trigger/{workflowID}/{versionID}`. A locked version cannot be modified.
 
 ### Trigger Workflow
 
