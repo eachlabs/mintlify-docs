@@ -60,7 +60,7 @@ A scope is a permission your client asks for at sign-in. The consent page lists 
 | `predictions:read` | Read prediction status and results |
 | `workflows:run` | Trigger workflow executions, and list and read workflows and executions |
 | `workflows:read` | List and read workflows and executions |
-| `uploads:create` | Request a signed upload URL for a file you give through the [upload card](/mcp/claude-chat#give-a-file-as-input) |
+| `uploads:create` | Show a card in the conversation (it keeps a small record of your choice in storage) and request a signed upload URL for a file you give through the [upload card](/mcp/claude-chat#give-a-file-as-input) |
 
 The model catalog tools (`search_models`, `get_model_schema`) need no scope.
 
@@ -106,7 +106,7 @@ Three tools cover the whole model catalog, not only video. They use the same cat
 | --- | --- | --- |
 | `search_models` | Finds models by name; returns slug, name, type and pricing for each match | none |
 | `get_model_schema` | Returns a model's input schema, so an input can be built from it | none |
-| `run_model` | Runs a model by slug with an input matching its schema; waits for the result up to the hold | `predictions:create` |
+| `run_model` | Runs a model by slug with an input matching its schema; waits for the result up to the hold. With `count` (1 to 8) it runs that many predictions of the same input and returns them together | `predictions:create` |
 
 ### Workflows
 
@@ -121,18 +121,31 @@ Run and read the [workflows](/workflows/overview) your organization built in the
 
 Webhook settings are not exposed through these tools; the tool polls instead.
 
-### File input
+### Cards
 
-Tool inputs are URLs. A file attached to a Claude conversation cannot reach a connector tool, so the server provides an upload card that Claude shows inside the conversation.
+Tool inputs are URLs. A file attached to a Claude conversation cannot reach a connector tool, so the server provides small interactive cards that Claude shows inside the conversation: one to upload files, and others to pick settings, choose a variant, fill in a workflow's inputs or choose a range or crop. Each card hands its result back through a matching wait tool that Claude calls right after showing it, so the person sends nothing.
 
 | Tool | Does | Scope |
 | --- | --- | --- |
-| `request_file` | Shows the upload card with a one-line prompt, the kinds it accepts (`image`, `video`, `audio`) and how many files it expects (1 to 4) | none |
+| `request_file` | Shows the upload card with a one-line prompt and the kinds it accepts (`image`, `video`, `audio`). `count` is the number of files expected; `max` is the most the target model or tool takes. A card for several files takes up to `max`, or up to 50 | `uploads:create` |
 | `wait_for_upload` | Waits for the files the person uploads on the card and returns their public URLs | none |
 | `presign_upload` | Called by the card, not by Claude or by you: returns a signed upload URL for the picked file's type | `uploads:create` |
 | `file_uploaded` | Called by the card after the upload: returns the file's `public_url` | none |
+| `request_parameters` | Shows a model's settings as a form, built from its input schema, with a Run button | `uploads:create` |
+| `wait_for_parameters` | Waits for Run and returns the model, version and input to pass to `run_model` | none |
+| `request_workflow_inputs` | Shows a workflow version's inputs as a form, with a file picker for each image, video or audio input | `uploads:create` |
+| `wait_for_workflow_inputs` | Waits for Run and returns the workflow, version and inputs to pass to `trigger_workflow` | none |
+| `request_trim` | Shows a video or audio file with a timeline and two handles | `uploads:create` |
+| `request_crop` | Shows a video's first frame or an image with a rectangle to move and resize | `uploads:create` |
+| `wait_for_edit` | Waits for the person's range or rectangle and returns the values to pass to `trim` or `crop` | none |
+| `wait_for_choice` | After a run that asked for several results, waits for the variant the person submits and returns it | none |
+| `show_files` | Shows files Claude already has a URL for, such as an earlier result, on a result card | none |
 
-Claude calls `wait_for_upload` right after showing the card. When the upload is done, the card writes a small receipt to storage, the waiting call returns the file list, and Claude continues on its own; the person sends nothing. In Claude, a generated image, video or audio result appears under the tool call in a result card with a link to the full file; a data result shows no card. The card renders in Claude on claude.ai, Claude Desktop and mobile. Clients that do not render it, Claude Code among them, take a public URL in the message instead. How to use the card is on [Use each::labs in Claude](/mcp/claude-chat#give-a-file-as-input).
+Every tool that returns media also carries the result card: the image, a video or audio player and download buttons. When a run asked for several results, the result card is a picker: the person selects a variant, as often as they like, and presses **Use this variant** once. A workflow's outputs show together as a gallery. An edit of a file the person gave gets a **Compare** button for a before-and-after view.
+
+One upload card takes up to 50 files of up to 100 MB each and uploads four at a time; too many files or a file over 100 MB is refused before anything uploads. The workflow form's file fields follow the same limits. A card used once keeps showing that choice when the conversation is reopened; the small record behind it is kept as long as other files.
+
+The cards render in Claude on claude.ai, Claude Desktop and mobile. Clients that do not render them, Claude Code among them, take a public URL in the message instead and show results as text. How to use the cards is on [Use each::labs in Claude](/mcp/claude-chat#give-a-file-as-input).
 
 ## Searching this documentation
 

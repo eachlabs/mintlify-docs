@@ -37,6 +37,8 @@ The same steps work in claude.ai and in the Claude desktop app. **Customize** is
 
 The plugin's skills load whether or not you connect. A skill cannot reach each::labs until the connector shows **Connected**. Once added, the connector also appears under **Customize > Connectors**.
 
+If you received the plugin as a zip file instead, select **Add > Upload plugin** in step 2 and choose the zip. A plugin added from a zip does not update itself: to update it, upload the newer zip the same way. A plugin added from the marketplace updates with the marketplace. After an update, restart Claude Desktop or reload claude.ai so the new version and its cards load.
+
 ## Connector without the plugin
 
 Add the server URL as a custom connector. You get the same tools and the same sign-in, without the skills: you describe the task and Claude chooses the tools itself.
@@ -61,6 +63,8 @@ On the Free plan you can add one custom connector.
 ## Team and Enterprise plans
 
 Members cannot add a custom connector themselves. An Owner adds it once for the organization, and each member then signs in with their own each::labs account. On Enterprise plans, a member whose custom role includes managing the organization's libraries can add it too.
+
+Each member's each::labs account must belong to the each::labs organization that should pay for the runs, and the member picks that organization at sign-in. A member who signs in with a personal account and organization is billed there instead.
 
 ```mermaid
 flowchart LR
@@ -164,13 +168,29 @@ If Claude does not pick the upload up on its own, the card has a button, **Send 
 | Limit | Value |
 | --- | --- |
 | File kinds | Image, video or audio, as the recipe asks for |
-| Files per card | 1 to 4 |
+| Files per card | One card takes a whole set: up to 50 files, or fewer when the chosen model accepts fewer. A card for one specific file, such as the face to use, takes exactly one |
 | File size | 100 MB per file |
-| Time to pick | Pick the file within a few minutes; Claude waits for it. After that, tell Claude the upload is done. |
-| Storage | The file is kept for 180 days, as with [Upload file](/storage/upload-file) |
+| Upload | Four files upload at a time; the rest wait their turn. Choosing more files than the card takes, or a file over 100 MB, is refused before anything uploads |
+| Time to pick | Claude waits for the card. If it stops waiting before you are done, tell Claude when the upload is finished |
+| Storage | The file is kept for 180 days, or for your organization's own retention period, as with [Upload file](/storage/upload-file). Anyone who has the file's link can open it; links are long random addresses that are not listed anywhere |
 | Phone | The card opens the gallery picker. Add the connector on the web or desktop first; the phone app then has it. |
 | Already have a URL | Paste a public URL in the message instead; no card is needed |
 | Claude Code | Does not render the card. Give files as public URLs; see [Claude Code](#claude-code). |
+
+## Cards in the conversation
+
+Besides the upload card, some answers come with a small card instead of plain text. After you press a card's button, Claude continues on its own; there is nothing to type or send.
+
+| You see | When |
+| --- | --- |
+| The result: the image, a video or audio player, and download buttons | Every run that produces media. A file in several formats has one button per format. A workflow's outputs show together as a gallery |
+| Several results to choose from, and a **Use this variant** button | You asked for several variants of one prompt, up to 8 in one request. Select between them as often as you like, then press **Use this variant**; Claude continues with that one and the choice is final |
+| A form with the model's settings and a **Run** button | You ask to adjust settings, or a run has options worth choosing first. After the first run of a model, Claude ends its reply with a short **Adjust generation settings** line naming a few of them |
+| A **Compare** button under an edited image or video | The result is an edit of a file you gave. Drag the handle to compare before and after |
+| A timeline with two handles, or a rectangle on the first frame | You want to cut a clip or crop a frame and have not given exact numbers. Trimmed audio keeps its format; FLAC comes back as mp4 |
+| A workflow's inputs as a form, with a file picker for each photo, video or audio input | A workflow needs inputs you have not given |
+
+A card you already used stays locked on your choice when you come back to the conversation later. To see a result again, ask Claude to show it; it shows the file on a card without running anything.
 
 ## Skills
 
@@ -190,6 +210,8 @@ Claude loads a skill when your request matches its description. To pick one your
 | `eachlabs-workflows` | Running a workflow your organization built and reading its executions |
 | `gpt-image-v2` | OpenAI GPT Image v2 for text to image and instruction-based edits |
 | `bytedance-seedance-2-0` | ByteDance Seedance 2.0 for video with native audio, from text or from an image |
+
+The public [eachlabs/skills](https://github.com/eachlabs/skills) collection also has skills that run through each::sense, the each::labs agent. Access to each::sense is limited to specific organizations, so the plugin does not include those skills. Most of their tasks, such as background removal, upscaling or trimming, work through the skills and tools above.
 
 ## When a tool says running
 
