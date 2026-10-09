@@ -2574,7 +2574,7 @@ Upload a local file (max 100MB) to eachlabs storage and get a public URL usable 
 
 ## get_job
 
-Fetch the status and result of a prediction. With wait: true, waits up to the hold for it to finish. Call it again with the same id to show a finished result again.
+Fetch the status and result of a prediction. With wait: true, waits up to the hold for it to finish; call it again while the result says running. Call it again with the same id to show a finished result again. For the predictions of one run_model call with count above 1, pass all their ids as prediction_ids to get them back together as one result.
 
 ```json
 {
@@ -2585,14 +2585,20 @@ Fetch the status and result of a prediction. With wait: true, waits up to the ho
       "description": "The prediction id returned by a prior tool call",
       "type": "string"
     },
+    "prediction_ids": {
+      "description": "Instead of prediction_id: every prediction id from one run_model call with count above 1",
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 8,
+      "minItems": 2,
+      "type": "array"
+    },
     "wait": {
       "description": "true: wait up to the server hold for the prediction to finish before answering (default false)",
       "type": "boolean"
     }
   },
-  "required": [
-    "prediction_id"
-  ],
   "type": "object"
 }
 ```
@@ -2649,7 +2655,7 @@ Return a model's input schema (OpenAPI document) by slug, so a run_model input c
 
 ## run_model
 
-Run any each::labs model by slug with an input that matches its schema. Creates a billed prediction and waits for the result up to the server hold; if the result says running, poll get_job with the prediction id. With count above 1, starts that many predictions of the same input and returns them together as one result, so several variants show on one card.
+Run any each::labs model by slug with an input that matches its schema. Creates a billed prediction and returns the result, or, for a job that takes longer than about 20 s, its prediction id with status running: then check it with get_job and wait: true until it finishes. If a call ends without a result or an id, use list_recent_jobs before starting the run again. With count above 1, starts that many predictions of the same input and returns them together as one result, so several variants show on one card; while they are running, check them with get_job and all their ids as prediction_ids.
 
 ```json
 {
@@ -2732,7 +2738,7 @@ Return one workflow: its definition, versions and input schema.
 
 ## trigger_workflow
 
-Trigger a workflow version with its inputs. Creates a billed execution and waits for it up to the server hold; if the result says running, poll get_workflow_execution with the execution id.
+Trigger a workflow version with its inputs. Creates a billed execution and returns its outputs, or, for a run that takes longer than about 20 s, its execution id with status running: then check it with get_workflow_execution and wait: true until it finishes. If a call ends without a result or an id, use list_recent_jobs before starting the run again.
 
 ```json
 {
@@ -2764,7 +2770,7 @@ Trigger a workflow version with its inputs. Creates a billed execution and waits
 
 ## get_workflow_execution
 
-Fetch the status and outputs of a workflow execution. With wait: true, waits up to the hold for it to finish. Call it again with the same id to show a finished result again.
+Fetch the status and outputs of a workflow execution. With wait: true, waits up to the hold for it to finish; call it again while the result says running. Call it again with the same id to show a finished result again.
 
 ```json
 {
@@ -2783,6 +2789,43 @@ Fetch the status and outputs of a workflow execution. With wait: true, waits up 
   "required": [
     "execution_id"
   ],
+  "type": "object"
+}
+```
+
+## list_recent_jobs
+
+Lists the organization's most recent runs: id, model, status, time and output link. Use it when a call that starts a run (run_model, trigger_workflow or a video tool) ended without a clear answer and you have no job id: it timed out, the connection dropped, or the reply was cut off. The run may still be going and billed, so find it here and check it with get_job instead of starting it again. Don't use it after a clear answer: a result, "still running" with an id, or an error such as rate limited (429), insufficient balance or invalid input; those runs either finished, gave you their id, or never started.
+
+```json
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "additionalProperties": false,
+  "properties": {
+    "limit": {
+      "description": "How many runs to list, newest first; default 10, at most 25",
+      "minimum": 1,
+      "type": "integer"
+    },
+    "model": {
+      "description": "Only runs of this model slug",
+      "type": "string"
+    },
+    "status": {
+      "description": "Only runs in these states: created, starting, success or error",
+      "items": {
+        "enum": [
+          "created",
+          "starting",
+          "success",
+          "error"
+        ],
+        "type": "string"
+      },
+      "minItems": 1,
+      "type": "array"
+    }
+  },
   "type": "object"
 }
 ```
