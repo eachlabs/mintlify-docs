@@ -76,8 +76,8 @@ A scope is a permission your client asks for at sign-in. The consent page lists 
 
 | Scope | Grants |
 | --- | --- |
-| `predictions:create` | Run models and video tools, and poll the jobs you submitted |
-| `predictions:read` | Read prediction status and results |
+| `predictions:create` | Run models and video tools, check on their jobs, and list the organization's recent runs |
+| `predictions:read` | Read prediction status and results, and list the organization's recent runs |
 | `workflows:run` | Trigger workflow executions, and list and read workflows and executions |
 | `workflows:read` | List and read workflows and executions |
 | `uploads:create` | Show a card in the conversation (it keeps a small record of your choice in storage) and request a signed upload URL for a file you give through the [upload card](/mcp/claude-chat#give-a-file-as-input) |
@@ -86,23 +86,29 @@ The model catalog tools (`search_models`, `get_model_schema`) need no scope.
 
 ## Long jobs
 
-Every tool that creates a job waits for the result and returns it in the same call. The wait has a limit: the hosted server holds a call for about three minutes. A job still running when the hold ends returns its id with `status: "running"` instead of a result. The job keeps running on each::labs.
+A tool that starts a job waits up to about 20 seconds for it. A job that finishes in that time returns its result in the same call. A longer job returns its id with `status: "running"` within those 20 seconds, and the AI keeps checking with that id until the job finishes. The job keeps running on each::labs the whole time. Returning the id early matters because apps end a tool call that waits too long, and the reply carrying the id would then be lost.
 
 ```mermaid
 flowchart LR
-  T["run_model, trigger_workflow or a video tool"] --> H{"Finished within the hold?"}
+  T["run_model, trigger_workflow or a video tool"] --> H{"Finished within about 20 s?"}
   H -- yes --> R["Result"]
   H -- no --> I["id, status: running"]
-  I --> S["get_job or get_workflow_execution with that id"]
+  I --> S["get_job or get_workflow_execution with that id and wait: true"]
+  S -- still running --> S
   S --> R
 ```
 
 | The call that returned `running` | Continue with |
 | --- | --- |
 | `run_model` or a video tool | `get_job` with the `prediction_id` |
+| `run_model` with `count` above 1 | `get_job` with every id as `prediction_ids`; the variants show together once all finish |
 | `trigger_workflow` | `get_workflow_execution` with the `execution_id` |
 
 Billing happens once, when the job runs, not per check.
+
+### If a run's id gets lost
+
+A call that starts a job can still end without an answer: the connection drops or the reply is cut off. The job may be running and billed all the same. Instead of starting it again, the AI calls `list_recent_jobs`, finds the job among the organization's most recent runs and continues checking it with `get_job`. The list shows only each run's id, model, status, time and, once it is done, the output link; it never shows prompts or inputs. It covers the whole organization, as the runs list in the dashboard does.
 
 ## Tools
 
@@ -110,23 +116,24 @@ Tool names are lowercase with underscores. Every tool's schema is strict: a para
 
 ### Video
 
-One tool per [Video API capability](/video/capabilities): `transcode`, `trim`, `captions`, `concat`, `scale`, `overlay` and the rest, plus `run_ffmpeg` and `get_job`: 46 tools on the hosted server. With the model catalog, workflow and card tools below, the hosted server offers 66 tools. Per-client setup is in the [video MCP quickstart](/video/mcp/quickstart).
+One tool per [Video API capability](/video/capabilities): `transcode`, `trim`, `captions`, `concat`, `scale`, `overlay` and the rest, plus `run_ffmpeg` and `get_job`: 46 tools on the hosted server. With the eight model and workflow tools and the 13 card tools below, the hosted server offers 67 tools. Per-client setup is in the [video MCP quickstart](/video/mcp/quickstart).
 
 | Tool | Does | Scope |
 | --- | --- | --- |
 | A capability tool (`transcode`, `trim`, ...) | Runs that capability on the input URL and returns the output URL or analysis JSON | `predictions:create` |
 | `run_ffmpeg` | Runs an ffmpeg command on the input URLs | `predictions:create` |
-| `get_job` | Returns the status and result of a prediction | `predictions:read` or `predictions:create` |
+| `get_job` | Returns the status and result of a prediction, or of several variants from one `run_model` call | `predictions:read` or `predictions:create` |
 
 ### Model catalog and any model
 
-Three tools cover the whole model catalog, not only video. They use the same catalog and the same prediction as [List models](/api/models/list-models) and [Create prediction](/api/predictions/create-prediction).
+Three tools cover the whole model catalog, not only video, and `list_recent_jobs` finds a run whose id was lost. The three use the same catalog and the same prediction as [List models](/api/models/list-models) and [Create prediction](/api/predictions/create-prediction).
 
 | Tool | Does | Scope |
 | --- | --- | --- |
 | `search_models` | Finds models by name; returns slug, name, type and pricing for each match | none |
 | `get_model_schema` | Returns a model's input schema, so an input can be built from it | none |
-| `run_model` | Runs a model by slug with an input matching its schema; waits for the result up to the hold. With `count` (1 to 8) it runs that many predictions of the same input and returns them together | `predictions:create` |
+| `run_model` | Runs a model by slug with an input matching its schema; returns the result, or the job id while it is still running. With `count` (1 to 8) it runs that many predictions of the same input and returns them together | `predictions:create` |
+| `list_recent_jobs` | Lists the organization's most recent runs, newest first: id, model, status, time and output link. Used only to find a run whose id was lost | `predictions:read` or `predictions:create` |
 
 ### Workflows
 
@@ -136,7 +143,7 @@ Run and read the [workflows](/workflows/overview) your organization built in the
 | --- | --- | --- |
 | `list_workflows` | Lists the organization's workflows: id, slug, name, status and counts | `workflows:read` or `workflows:run` |
 | `get_workflow` | Returns one workflow: its definition, versions and input schema | `workflows:read` or `workflows:run` |
-| `trigger_workflow` | Triggers a workflow version with inputs; waits for the result up to the hold | `workflows:run` |
+| `trigger_workflow` | Triggers a workflow version with inputs; returns the outputs, or the execution id while it is still running | `workflows:run` |
 | `get_workflow_execution` | Returns an execution's status and outputs | `workflows:read` or `workflows:run` |
 
 Webhook settings are not exposed through these tools; the tool polls instead.

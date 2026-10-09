@@ -78,7 +78,7 @@ Claude shows the track on a timeline with two handles. Drag them, press **Previe
 
 > Turn this photo into a 5-second clip where the camera slowly pushes in.
 
-Claude asks for the photo on an upload card, runs a video model and shows the clip on a result card that plays in the conversation. A video can take a few minutes; see [When a tool says running](#when-a-tool-says-running).
+Claude asks for the photo on an upload card, runs a video model and shows the clip on a result card that plays in the conversation. A video can take a few minutes; Claude shows it as still running and checks again until it is done. See [When a tool says running](#when-a-tool-says-running).
 
 <Frame caption="A finished video in the conversation">
   <img style={{ maxWidth: "440px", width: "100%" }} src="/images/mcp/02b-result-video.webp" alt="each::labs result card with a video player showing a woman in a red coat on a reindeer sleigh at a Christmas market, and a download button." />
@@ -369,9 +369,13 @@ The public [eachlabs/skills](https://github.com/eachlabs/skills) collection also
 
 ## When a tool says running
 
-A tool waits for its job and returns the result in the same reply. The wait has a limit of about three minutes. A job still running at that point returns its id with `status: "running"` instead of a result. This is normal for long video renders and multi-step workflows; the job keeps running on each::labs.
+A tool waits about 20 seconds for its job. A job that takes longer, such as a long video render or a multi-step workflow, shows as still running: the tool returns the job's id with `status: "running"`, and Claude checks again with that id until the job is done, then shows the result. The job keeps running on each::labs the whole time. You do not need to ask; if Claude stops before the job is done, ask "is that job done?" and it checks again.
 
-Ask Claude to check on it: "is that job done?" Claude calls `get_job` for a model or video job, or `get_workflow_execution` for a workflow, and returns the result when it is ready. You are billed once, when the job runs, not for checking. Details are under [Long jobs](/mcp#long-jobs).
+When you asked for several variants, Claude checks on all of them together, and they arrive on one card with the picker once every variant is done.
+
+If a reply is cut off before Claude got the job's id, Claude can list your organization's recent runs and pick the job up from there instead of starting it again. That list shows only each run's id, model, status, time and result link.
+
+You are billed once, when the job runs, not for checking. Details are under [Long jobs](/mcp#long-jobs).
 
 Results are URLs to files on each::labs storage, kept as long as [uploads](#give-a-file-as-input). Download anything you want to keep longer. A data result, such as a transcript or an analysis, comes back as text without a card.
 
