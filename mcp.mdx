@@ -3,7 +3,7 @@ title: "MCP Server"
 description: "Use each::labs models, workflows and the Video API from Claude, ChatGPT, Codex, Grok, Cursor and other MCP clients through the hosted server at mcp.eachlabs.ai. Sign in with your each::labs account; no API key."
 ---
 
-The each::labs MCP server is a hosted [Model Context Protocol](https://modelcontextprotocol.io) server at:
+MCP ([Model Context Protocol](https://modelcontextprotocol.io)) is an open standard that lets AI apps such as Claude and ChatGPT use outside tools. The each::labs MCP server is hosted at:
 
 ```
 https://mcp.eachlabs.ai/mcp
@@ -16,7 +16,7 @@ Any MCP client that supports the Streamable HTTP transport with OAuth can connec
 | Client | How to connect |
 | --- | --- |
 | Claude (claude.ai, Claude Desktop, mobile) | Add the each::labs plugin, or add the URL as a custom connector. Steps are on [Use each::labs in Claude](/mcp/claude-chat). |
-| Claude Code | Install the plugin with `/plugin marketplace add eachlabs/claude-plugin` and `/plugin install eachlabs@eachlabs`, or add only the connector with `claude mcp add --transport http eachlabs https://mcp.eachlabs.ai/mcp`. Then run `/mcp` and approve the sign-in. Steps are on [Use each::labs in Claude](/mcp/claude-chat#add-the-plugin). |
+| Claude Code | Install the plugin from the plugin zip file from each::labs, or add only the connector with `claude mcp add --transport http eachlabs https://mcp.eachlabs.ai/mcp`. Then run `/mcp` and approve the sign-in. Steps are on [Use each::labs in Claude](/mcp/claude-chat#add-the-plugin). |
 | Codex CLI | `codex mcp add eachlabs --url https://mcp.eachlabs.ai/mcp --oauth-resource https://mcp.eachlabs.ai/mcp` |
 | ChatGPT | Add the URL as a custom connector in developer mode. See [Works in other MCP apps](#works-in-other-mcp-apps). |
 | OpenAI Codex app | Add the URL as a custom MCP server under plugins, with the Streamable HTTP transport. See [Works in other MCP apps](#works-in-other-mcp-apps). |
@@ -68,7 +68,7 @@ On the consent page you:
 | Credential | An OAuth token that your client stores. It never appears in the conversation and is never shown to the model. |
 | Billed organization | The one chosen on the consent page. Every job behaves as if that organization had called the API itself, at the same prices as the REST API. |
 | Signing in again | Not needed. The token is refreshed in the background. To bill a different organization, disconnect the server in your client and connect again. |
-| Precondition | The organization needs a runner credential. If consent fails with *organization has no runner credential*, open the [dashboard](https://www.eachlabs.ai) once as that organization and try again. |
+| If sign-in fails | If the consent page shows *organization has no runner credential*, open the [dashboard](https://www.eachlabs.ai) once as that organization and try again. |
 
 ## Scopes
 
@@ -80,13 +80,13 @@ A scope is a permission your client asks for at sign-in. The consent page lists 
 | `predictions:read` | Read prediction status and results, and list the organization's recent runs |
 | `workflows:run` | Trigger workflow executions, and list and read workflows and executions |
 | `workflows:read` | List and read workflows and executions |
-| `uploads:create` | Show a card in the conversation (it keeps a small record of your choice in storage) and request a signed upload URL for a file you give through the [upload card](/mcp/claude-chat#give-a-file-as-input) |
+| `uploads:create` | Show cards in the conversation, and upload the files you give on the [upload card](/mcp/claude-chat#give-a-file-as-input) |
 
 The model catalog tools (`search_models`, `get_model_schema`) need no scope.
 
 ## Long jobs
 
-A tool that starts a job waits up to about 20 seconds for it. A job that finishes in that time returns its result in the same call. A longer job returns its id with `status: "running"` within those 20 seconds, and the AI keeps checking with that id until the job finishes. The job keeps running on each::labs the whole time. Returning the id early matters because apps end a tool call that waits too long, and the reply carrying the id would then be lost.
+A tool that starts a job waits up to about 20 seconds for it. A job that finishes in that time returns its result in the same call. A longer job returns its id with `status: "running"` within those 20 seconds, and the AI keeps checking with that id until the job finishes. The job keeps running on each::labs the whole time. Returning early keeps your app from giving up on a call that waits too long.
 
 ```mermaid
 flowchart LR
@@ -112,7 +112,7 @@ A call that starts a job can still end without an answer: the connection drops o
 
 ## Tools
 
-Tool names are lowercase with underscores. Every tool's schema is strict: a parameter the tool does not declare is rejected before submit, so nothing reaches the engine and nothing bills. Every tool carries a title and hints that tell the client whether it only reads or creates a billed job; your app uses these to decide which calls need your confirmation. The full list with parameters, defaults and return values is the [MCP tool reference](/video/mcp/tools).
+Tool names are lowercase with underscores. A call with a parameter the tool does not have is refused before anything runs, and nothing is billed. Each tool also tells your app whether it only reads or starts a billed job; your app uses this to decide which calls need your confirmation. The full list with parameters, defaults and return values is the [MCP tool reference](/video/mcp/tools).
 
 ### Video
 
@@ -146,17 +146,17 @@ Run and read the [workflows](/workflows/overview) your organization built in the
 | `trigger_workflow` | Triggers a workflow version with inputs; returns the outputs, or the execution id while it is still running | `workflows:run` |
 | `get_workflow_execution` | Returns an execution's status and outputs | `workflows:read` or `workflows:run` |
 
-Webhook settings are not exposed through these tools; the tool polls instead.
+These tools do not set up webhooks; the AI checks on a run itself until it finishes.
 
 ### Cards
 
-Tool inputs are URLs. A file attached to a conversation cannot reach a connector tool, so the server provides small interactive cards that your app shows inside the conversation: one to upload files, and others to pick settings, choose a variant, fill in a workflow's inputs or choose a range or crop. Each card hands its result back through a matching wait tool that the AI calls right after showing it, so the person sends nothing. One wait lasts up to 60 seconds; then the AI reads any new message and waits again.
+Tool inputs are URLs. A file attached to a conversation cannot reach a connector tool, so the server provides small interactive cards that your app shows inside the conversation: one to upload files, and others to pick settings, choose a variant, fill in a workflow's inputs or choose a range or crop. Each card has a matching wait tool that the AI calls right after showing it. When you press the card's button, the AI receives your choice and continues; you do not need to type anything.
 
 | Tool | Does | Scope |
 | --- | --- | --- |
 | `request_file` | Shows the upload card with a one-line prompt and the kinds it accepts (`image`, `video`, `audio`). `count` is the number of files expected; `max` is the most the target model or tool takes. A card for several files takes up to `max`, or up to 50 | `uploads:create` |
 | `wait_for_upload` | Waits for the files the person uploads on the card and returns their public URLs | none |
-| `presign_upload` | Called by the card, not by the AI or by you: returns a signed upload URL for the picked file's type | `uploads:create` |
+| `presign_upload` | Called by the upload card, not by the AI or by you: prepares the upload of the file you picked | `uploads:create` |
 | `file_uploaded` | Called by the card after the upload: returns the file's `public_url` | none |
 | `request_parameters` | Shows a model's settings as a form, built from its input schema, with a Run button | `uploads:create` |
 | `wait_for_parameters` | Waits for Run and returns the model, version and input to pass to `run_model` | none |
@@ -170,9 +170,9 @@ Tool inputs are URLs. A file attached to a conversation cannot reach a connector
 
 Every tool that returns media also carries the result card: the image, a video or audio player and download buttons. When a run asked for several results, the result card is a picker: the person selects a variant, as often as they like, and presses the button under the variants once; it reads **Use variant** and the number selected. A workflow's outputs show together as a gallery. An edit of a file the person gave gets a **Compare** button for a before-and-after view.
 
-One upload card takes up to 50 files of up to 100 MB each and uploads four at a time; too many files or a file over 100 MB is refused before anything uploads. The workflow form's file fields follow the same limits. A card used once keeps showing that choice when the conversation is reopened; the small record behind it is kept as long as other files.
+One upload card takes up to 50 files of up to 100 MB each and uploads four at a time; too many files or a file over 100 MB is refused before anything uploads. The workflow form's file fields follow the same limits. A card used once keeps showing that choice when the conversation is reopened.
 
-Cards are MCP Apps served by this server. They show in Claude, ChatGPT, the Codex app and Grok; Mistral Le Chat shows the result cards. In terminals the AI asks in the chat instead, and results come back as text. A card that gets no setup from the app says to use the chat instead. See [Works in other MCP apps](#works-in-other-mcp-apps); how to use the cards is on [Use each::labs in Claude](/mcp/claude-chat#give-a-file-as-input).
+Cards are MCP Apps served by this server. They show in Claude, ChatGPT, the Codex app and Grok; Mistral Le Chat shows the result cards. In terminals the AI asks in the chat instead, and results come back as text. A card that cannot load in your app says to use the chat instead. See [Works in other MCP apps](#works-in-other-mcp-apps); how to use the cards is on [Use each::labs in Claude](/mcp/claude-chat#give-a-file-as-input).
 
 ## Searching this documentation
 
