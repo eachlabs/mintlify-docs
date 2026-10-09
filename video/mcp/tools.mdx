@@ -2789,7 +2789,7 @@ Fetch the status and outputs of a workflow execution. With wait: true, waits up 
 
 ## request_file
 
-Show the person an upload card inside the conversation so they can pick files from their device (drop zone or file picker; the gallery on a phone). The card uploads them from their browser to eachlabs storage. One card takes up to 50 files of up to 100 MB each. Set count to the number of files the person mentioned, and max to the most files the target accepts for that input when you know it (the array's maxItems in get_model_schema, or the video tool's input limit, e.g. slideshow takes up to 50); a card for more than one file lets the person add up to max, or up to 50 without it. Show one card for the whole set (for example all the images of a slideshow); use separate cards only for files with different roles (a face and a target). Returns a receipt_url: call wait_for_upload with it immediately and continue with the files it returns. Do not ask the person to paste a link or to attach the file to the chat. Renders only in hosts that support MCP Apps (Claude web, desktop and mobile).
+Show the person an upload card inside the conversation so they can pick files from their device (drop zone or file picker; the gallery on a phone). The card uploads them from their browser to eachlabs storage. One card takes up to 50 files of up to 100 MB each. Set count to the number of files the person mentioned, and max to the most files the target accepts for that input when you know it (the array's maxItems in get_model_schema, or the video tool's input limit, e.g. slideshow takes up to 50); a card for more than one file lets the person add up to max, or up to 50 without it. Show one card for the whole set (for example all the images of a slideshow); use separate cards only for files with different roles (a face and a target). Returns a receipt_url: call wait_for_upload with it immediately and continue with the files it returns. In an app that shows cards, do not ask the person to paste a link or to attach the file to the chat. If your app does not show cards (for example a terminal), do not call wait_for_upload; ask the person in the chat for a public file URL instead. Renders only in hosts that support MCP Apps.
 
 ```json
 {
@@ -2904,7 +2904,7 @@ Called by the upload card once a file is in eachlabs storage; records the public
 
 ## wait_for_choice
 
-Call with the choice_receipt_url from a result that showed several artifacts, when the person should pick one. Waits until they select one and press Use this variant on the card and returns the chosen artifact's number and URL; continue with that URL. If it returns status "waiting", call it again, or ask the person which one.
+Call with the choice_receipt_url from a result that showed several artifacts, when the person should pick one. Waits until they select one and press Use this variant on the card and returns the chosen artifact's number and URL; continue with that URL. If it returns status "waiting", call it again, or ask the person which one. If your app does not show cards (for example a terminal), do not call wait_for_choice; ask the person in the chat which one they want instead.
 
 ```json
 {
@@ -2926,7 +2926,7 @@ Call with the choice_receipt_url from a result that showed several artifacts, wh
 
 ## show_files
 
-Show files the person already has as a card in the conversation: a picked variant, an earlier result, an uploaded input. Give the public URLs; do not run a model or a video tool just to display a file. With pick: true the card becomes a picker and the choice reaches you through wait_for_choice.
+Show files the person already has as a card in the conversation: a picked variant, an earlier result, an uploaded input. Give the public URLs; do not run a model or a video tool just to display a file. With pick: true the card becomes a picker and the choice reaches you through wait_for_choice. If your app does not show cards (for example a terminal), do not call wait_for_choice; ask the person in the chat which one they want instead.
 
 ```json
 {
@@ -2963,7 +2963,7 @@ Show files the person already has as a card in the conversation: a picked varian
 
 ## request_parameters
 
-Show the person a settings card for a model before running it: the model's options from its schema as visible controls (size, count, format, guidance, seed and so on), prefilled with the input you have, and a Run button. File inputs you already have are kept and not shown. Returns a receipt_url: call wait_for_parameters with it immediately; it returns the model, version and input to pass to run_model. Use it when a model has options worth choosing; skip it when the person already said exactly what they want. Renders only in hosts that support MCP Apps.
+Show the person a settings card for a model before running it: the model's options from its schema as visible controls (size, count, format, guidance, seed and so on), prefilled with the input you have, and a Run button. File inputs you already have are kept and not shown. Returns a receipt_url: call wait_for_parameters with it immediately; it returns the model, version and input to pass to run_model. Use it when a model has options worth choosing; skip it when the person already said exactly what they want. If your app does not show cards (for example a terminal), do not call wait_for_parameters; ask the person in the chat for the values instead. Renders only in hosts that support MCP Apps.
 
 ```json
 {
@@ -3023,7 +3023,7 @@ Call right after request_parameters with the receipt_url it returned. Waits unti
 
 ## request_workflow_inputs
 
-Show the person a card to set up a workflow run: the inputs of the version to run as visible controls (text, choices, numbers, switches), prefilled with what you have, with a drop zone inside the form for each image, video or audio input, and a Run button. Returns a receipt_url: call wait_for_workflow_inputs with it immediately; it returns the workflow_id, version_id and inputs to pass to trigger_workflow. Use it when a workflow needs a file or has inputs worth choosing; skip it when the person already gave every input. Renders only in hosts that support MCP Apps.
+Show the person a card to set up a workflow run: the inputs of the version to run as visible controls (text, choices, numbers, switches), prefilled with what you have, with a drop zone inside the form for each image, video or audio input, and a Run button. Returns a receipt_url: call wait_for_workflow_inputs with it immediately; it returns the workflow_id, version_id and inputs to pass to trigger_workflow. Use it when a workflow needs a file or has inputs worth choosing; skip it when the person already gave every input. If your app does not show cards (for example a terminal), do not call wait_for_workflow_inputs; ask the person in the chat for the inputs instead. Renders only in hosts that support MCP Apps.
 
 ```json
 {
@@ -3084,7 +3084,7 @@ Call right after request_workflow_inputs with the receipt_url it returned. Waits
 
 ## request_trim
 
-Show the person a timeline to choose a range of a video or audio file: the player, two draggable handles for the start and the end, the times and the length, and a Preview button. Use it when the person wants to cut, trim or keep part of a clip and has not given exact times. Returns a receipt_url: call wait_for_edit with it immediately; it returns \{edit: "trim", url, start, duration\} to pass to trim as input_url, start and duration. Renders only in hosts that support MCP Apps.
+Show the person a timeline to choose a range of a video or audio file: the player, two draggable handles for the start and the end, the times and the length, and a Preview button. Use it when the person wants to cut, trim or keep part of a clip and has not given exact times. Returns a receipt_url: call wait_for_edit with it immediately; it returns \{edit: "trim", url, start, duration\} to pass to trim as input_url, start and duration. If your app does not show cards (for example a terminal), do not call wait_for_edit; ask the person in the chat for the start and end times instead. Renders only in hosts that support MCP Apps.
 
 ```json
 {
@@ -3121,7 +3121,7 @@ Show the person a timeline to choose a range of a video or audio file: the playe
 
 ## request_crop
 
-Show the person the first frame of a video, or an image, with a draggable, resizable rectangle to choose a crop region, aspect presets (free, 1:1, 16:9, 9:16, 4:5) and the region's x, y, width and height in source pixels. Use it when the person wants to crop or reframe and has not given exact pixels. Returns a receipt_url: call wait_for_edit with it immediately; it returns \{edit: "crop", url, x, y, width, height\}. Today the values feed the video crop tool (input_url, x, y, width, height); an image URL gives the same rectangle for an image crop. Renders only in hosts that support MCP Apps.
+Show the person the first frame of a video, or an image, with a draggable, resizable rectangle to choose a crop region, aspect presets (free, 1:1, 16:9, 9:16, 4:5) and the region's x, y, width and height in source pixels. Use it when the person wants to crop or reframe and has not given exact pixels. Returns a receipt_url: call wait_for_edit with it immediately; it returns \{edit: "crop", url, x, y, width, height\}. Today the values feed the video crop tool (input_url, x, y, width, height); an image URL gives the same rectangle for an image crop. If your app does not show cards (for example a terminal), do not call wait_for_edit; ask the person in the chat for the crop region in pixels instead. Renders only in hosts that support MCP Apps.
 
 ```json
 {
