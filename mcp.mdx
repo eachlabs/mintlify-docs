@@ -72,11 +72,54 @@ Tool names are lowercase with underscores. A call with a parameter the tool does
 
 ### Video
 
-One tool per [Video API capability](/video/capabilities): `transcode`, `trim`, `captions`, `concat`, `scale`, `overlay` and the rest, plus `run_ffmpeg` and `get_job`: 46 tools on the hosted server. With the eight model and workflow tools and the 13 card tools below, the hosted server offers 67 tools. Per-client setup is in the [video MCP quickstart](/video/mcp/quickstart).
+One tool per [Video API capability](/video/capabilities), plus `run_ffmpeg` and `get_job`: 46 tools on the hosted server. Each takes media by URL and returns the result by URL, except the four that measure or detect, which return numbers. With the eight model and workflow tools and the 13 card tools below, the hosted server offers 67 tools. Per-client setup is in the [video MCP quickstart](/video/mcp/quickstart).
 
 | Tool | Does | Scope |
 | --- | --- | --- |
-| A capability tool (`transcode`, `trim`, ...) | Runs that capability on the input URL and returns the output URL or analysis JSON | `predictions:create` |
+| `trim` | Cuts a clip by start time and length, without re-encoding | `predictions:create` |
+| `segment` | Splits a video into equal-length parts | `predictions:create` |
+| `concat` | Joins 2 to 10 clips into one video | `predictions:create` |
+| `concat_copy` | Joins 2 to 50 parts that share one format, without re-encoding | `predictions:create` |
+| `crossfade` | Joins two clips with a crossfade between them | `predictions:create` |
+| `speed` | Changes playback speed, from 0.25x to 4x | `predictions:create` |
+| `reverse` | Plays a video and its audio backwards | `predictions:create` |
+| `crop` | Crops a region of the frame | `predictions:create` |
+| `scale` | Resizes a video, keeping its proportions if you ask | `predictions:create` |
+| `pad` | Places a video on a larger canvas with a background colour | `predictions:create` |
+| `rotate` | Rotates a video by 90, 180 or 270 degrees | `predictions:create` |
+| `reframe` | Changes the aspect ratio for social formats (9:16, 1:1, 4:5, 16:9) by cropping or adding bars | `predictions:create` |
+| `reframe_track` | Reframes to a smaller frame that follows a subject over time | `predictions:create` |
+| `color` | Adjusts brightness, contrast, saturation and gamma | `predictions:create` |
+| `lut3d` | Colour-grades a video with a .cube LUT file | `predictions:create` |
+| `fade` | Fades a video and its audio in, out or both | `predictions:create` |
+| `overlay` | Places a second video over a base video at a corner or the centre | `predictions:create` |
+| `watermark` | Places an image or video over a video as a watermark | `predictions:create` |
+| `sticker_overlay` | Shows a sticker or logo over a video during a time window | `predictions:create` |
+| `title_card` | Draws a text title over a video | `predictions:create` |
+| `captions` | Burns subtitles (SRT, VTT or ASS) into a video | `predictions:create` |
+| `subtitle_compose` | Creates animated, word-by-word captions from word timings and burns them in | `predictions:create` |
+| `extract_audio` | Extracts the audio track as mp3, wav or m4a | `predictions:create` |
+| `audio_replace` | Replaces a video's audio track, or mixes in a second one | `predictions:create` |
+| `audio_duck` | Lowers background music automatically while a voice speaks | `predictions:create` |
+| `audio_master` | Masters audio to a loudness target for publishing | `predictions:create` |
+| `loudnorm` | Normalises loudness to a target level | `predictions:create` |
+| `volume` | Changes the volume | `predictions:create` |
+| `audio_analysis` | Measures loudness, loudness range and peaks; returns numbers, not a file | `predictions:create` |
+| `silence_detect` | Finds silent parts; returns their times, not a file | `predictions:create` |
+| `silence_remove` | Keeps only the time ranges you give and joins them into one file | `predictions:create` |
+| `silence_split` | Splits a file at its silent parts | `predictions:create` |
+| `scene_detect` | Finds scene cuts; returns their times, not a file | `predictions:create` |
+| `stills` | Takes one frame as a jpg or png image | `predictions:create` |
+| `thumbnails` | Takes frames at a regular interval | `predictions:create` |
+| `poster` | Returns the video plus a poster image | `predictions:create` |
+| `storyboard_sprites` | Packs frames into one sprite sheet plus a thumbnail index for video players | `predictions:create` |
+| `gif` | Makes an animated GIF from a clip | `predictions:create` |
+| `slideshow` | Turns 2 to 50 images into a video | `predictions:create` |
+| `transcode` | Converts a video to another format, codec or quality | `predictions:create` |
+| `hls_ladder` | Encodes several quality levels for HLS streaming | `predictions:create` |
+| `package_abr` | Packages a video for streaming as HLS and DASH | `predictions:create` |
+| `package_abr_ladder` | Packages several quality levels for streaming as HLS and DASH | `predictions:create` |
+| `probe` | Reads a file's details: format, streams, length, resolution; returns numbers, not a file | `predictions:create` |
 | `run_ffmpeg` | Runs an ffmpeg command on the input URLs | `predictions:create` |
 | `get_job` | Returns the status and result of a prediction, or of several variants from one `run_model` call | `predictions:read` or `predictions:create` |
 
