@@ -1,6 +1,6 @@
 ---
 title: "MCP Server"
-description: "Use each::labs models, workflows and the Video API from Claude, Claude Code, Codex, Cursor and other MCP clients through the hosted server at mcp.eachlabs.ai. Sign in with your each::labs account; no API key."
+description: "Use each::labs models, workflows and the Video API from Claude, ChatGPT, Codex, Grok, Cursor and other MCP clients through the hosted server at mcp.eachlabs.ai. Sign in with your each::labs account; no API key."
 ---
 
 The each::labs MCP server is a hosted [Model Context Protocol](https://modelcontextprotocol.io) server at:
@@ -17,12 +17,32 @@ Any MCP client that supports the Streamable HTTP transport with OAuth can connec
 | --- | --- |
 | Claude (claude.ai, Claude Desktop, mobile) | Add the each::labs plugin, or add the URL as a custom connector. Steps are on [Use each::labs in Claude](/mcp/claude-chat). |
 | Claude Code | Install the plugin with `/plugin marketplace add eachlabs/claude-plugin` and `/plugin install eachlabs@eachlabs`, or add only the connector with `claude mcp add --transport http eachlabs https://mcp.eachlabs.ai/mcp`. Then run `/mcp` and approve the sign-in. Steps are on [Use each::labs in Claude](/mcp/claude-chat#add-the-plugin). |
-| Codex | `codex mcp add eachlabs --url https://mcp.eachlabs.ai/mcp --oauth-resource https://mcp.eachlabs.ai/mcp` |
+| Codex CLI | `codex mcp add eachlabs --url https://mcp.eachlabs.ai/mcp --oauth-resource https://mcp.eachlabs.ai/mcp` |
+| ChatGPT | Add the URL as a custom connector in developer mode. See [Works in other MCP apps](#works-in-other-mcp-apps). |
+| OpenAI Codex app | Add the URL as a custom MCP server under plugins, with the Streamable HTTP transport. See [Works in other MCP apps](#works-in-other-mcp-apps). |
+| Grok | Add the URL as a custom connector on grok.com. See [Works in other MCP apps](#works-in-other-mcp-apps). |
+| Mistral Le Chat | Add the URL as a custom MCP connector. Result cards show; input cards ask you to use the chat. See [Works in other MCP apps](#works-in-other-mcp-apps). |
 | Cursor and other MCP clients | Add `{ "url": "https://mcp.eachlabs.ai/mcp" }` to the client's `mcpServers` config. Per-client steps are in the [video MCP quickstart](/video/mcp/quickstart#connect-your-agent). |
 
 `eachlabs` is the name the server gets in your client; choose another if you prefer.
 
 Environments without a browser (CI, servers) can run the video tools locally with an API key instead. See [Headless and CI](/video/mcp/quickstart#headless-and-ci-api-key).
+
+## Works in other MCP apps
+
+The server and its tools work in any MCP app that supports OAuth sign-in. The [cards](#cards) are [MCP Apps](https://modelcontextprotocol.io/extensions/apps/overview), an open MCP extension, served by this server, so they do not depend on Claude.
+
+| App | Cards | How to connect |
+| --- | --- | --- |
+| Claude (web, Desktop, mobile) | All cards | Add the each::labs plugin, or the URL as a custom connector. See [Use each::labs in Claude](/mcp/claude-chat) |
+| ChatGPT | All cards | Turn on developer mode, then add the URL as a custom connector |
+| OpenAI Codex app | All cards | Under plugins, add a custom MCP server with the URL and the Streamable HTTP transport |
+| Grok | All cards | On grok.com, open **Connectors** and add a **Custom** connector with the URL |
+| Mistral Le Chat | Result cards. The input cards (upload, settings, trim and crop, workflow inputs, variant picker) ask you to use the chat instead | Open **Intelligence > Connectors**, add a **Custom MCP Connector** with the URL and choose OAuth 2.1 |
+
+Terminals such as Claude Code and the Codex CLI show no cards. The AI asks in the chat for what a card would collect: a public link to a file, the start and end times, the crop area, the settings or the choice of variant.
+
+The each::labs plugin, which adds twelve skills to the connector, is for Claude only. In other apps you connect the server alone and describe the task; the AI chooses the tools.
 
 ## Sign-in and billing
 
@@ -86,11 +106,11 @@ Billing happens once, when the job runs, not per check.
 
 ## Tools
 
-Tool names are lowercase with underscores. Every tool's schema is strict: a parameter the tool does not declare is rejected before submit, so nothing reaches the engine and nothing bills. Every tool carries a title and hints that tell the client whether it only reads or creates a billed job; Claude uses these to decide which calls need your confirmation. The full list with parameters, defaults and return values is the [MCP tool reference](/video/mcp/tools).
+Tool names are lowercase with underscores. Every tool's schema is strict: a parameter the tool does not declare is rejected before submit, so nothing reaches the engine and nothing bills. Every tool carries a title and hints that tell the client whether it only reads or creates a billed job; your app uses these to decide which calls need your confirmation. The full list with parameters, defaults and return values is the [MCP tool reference](/video/mcp/tools).
 
 ### Video
 
-One tool per [Video API capability](/video/capabilities): `transcode`, `trim`, `captions`, `concat`, `scale`, `overlay` and the rest, plus `run_ffmpeg` and `get_job`. 46 tools in all. Per-client setup is in the [video MCP quickstart](/video/mcp/quickstart).
+One tool per [Video API capability](/video/capabilities): `transcode`, `trim`, `captions`, `concat`, `scale`, `overlay` and the rest, plus `run_ffmpeg` and `get_job`: 46 tools on the hosted server. With the model catalog, workflow and card tools below, the hosted server offers 66 tools. Per-client setup is in the [video MCP quickstart](/video/mcp/quickstart).
 
 | Tool | Does | Scope |
 | --- | --- | --- |
@@ -123,13 +143,13 @@ Webhook settings are not exposed through these tools; the tool polls instead.
 
 ### Cards
 
-Tool inputs are URLs. A file attached to a Claude conversation cannot reach a connector tool, so the server provides small interactive cards that Claude shows inside the conversation: one to upload files, and others to pick settings, choose a variant, fill in a workflow's inputs or choose a range or crop. Each card hands its result back through a matching wait tool that Claude calls right after showing it, so the person sends nothing.
+Tool inputs are URLs. A file attached to a conversation cannot reach a connector tool, so the server provides small interactive cards that your app shows inside the conversation: one to upload files, and others to pick settings, choose a variant, fill in a workflow's inputs or choose a range or crop. Each card hands its result back through a matching wait tool that the AI calls right after showing it, so the person sends nothing. One wait lasts up to 60 seconds; then the AI reads any new message and waits again.
 
 | Tool | Does | Scope |
 | --- | --- | --- |
 | `request_file` | Shows the upload card with a one-line prompt and the kinds it accepts (`image`, `video`, `audio`). `count` is the number of files expected; `max` is the most the target model or tool takes. A card for several files takes up to `max`, or up to 50 | `uploads:create` |
 | `wait_for_upload` | Waits for the files the person uploads on the card and returns their public URLs | none |
-| `presign_upload` | Called by the card, not by Claude or by you: returns a signed upload URL for the picked file's type | `uploads:create` |
+| `presign_upload` | Called by the card, not by the AI or by you: returns a signed upload URL for the picked file's type | `uploads:create` |
 | `file_uploaded` | Called by the card after the upload: returns the file's `public_url` | none |
 | `request_parameters` | Shows a model's settings as a form, built from its input schema, with a Run button | `uploads:create` |
 | `wait_for_parameters` | Waits for Run and returns the model, version and input to pass to `run_model` | none |
@@ -139,13 +159,13 @@ Tool inputs are URLs. A file attached to a Claude conversation cannot reach a co
 | `request_crop` | Shows a video's first frame or an image with a rectangle to move and resize | `uploads:create` |
 | `wait_for_edit` | Waits for the person's range or rectangle and returns the values to pass to `trim` or `crop` | none |
 | `wait_for_choice` | After a run that asked for several results, waits for the variant the person submits and returns it | none |
-| `show_files` | Shows files Claude already has a URL for, such as an earlier result, on a result card | none |
+| `show_files` | Shows files the AI already has a URL for, such as an earlier result, on a result card | none |
 
 Every tool that returns media also carries the result card: the image, a video or audio player and download buttons. When a run asked for several results, the result card is a picker: the person selects a variant, as often as they like, and presses the button under the variants once; it reads **Use variant** and the number selected. A workflow's outputs show together as a gallery. An edit of a file the person gave gets a **Compare** button for a before-and-after view.
 
 One upload card takes up to 50 files of up to 100 MB each and uploads four at a time; too many files or a file over 100 MB is refused before anything uploads. The workflow form's file fields follow the same limits. A card used once keeps showing that choice when the conversation is reopened; the small record behind it is kept as long as other files.
 
-The cards render in Claude on claude.ai, Claude Desktop and mobile. Clients that do not render them, Claude Code among them, take a public URL in the message instead and show results as text. How to use the cards is on [Use each::labs in Claude](/mcp/claude-chat#give-a-file-as-input).
+Cards are MCP Apps served by this server. They show in Claude, ChatGPT, the Codex app and Grok; Mistral Le Chat shows the result cards. In terminals the AI asks in the chat instead, and results come back as text. A card that gets no setup from the app says to use the chat instead. See [Works in other MCP apps](#works-in-other-mcp-apps); how to use the cards is on [Use each::labs in Claude](/mcp/claude-chat#give-a-file-as-input).
 
 ## Searching this documentation
 
