@@ -3,7 +3,7 @@ title: "Use each::labs in Claude"
 description: "Connect each::labs to Claude on claude.ai, Claude Desktop, mobile and Claude Code. See what to ask, what the cards in the conversation do and how to sign in."
 ---
 
-This page is for people using Claude in the browser, in the Claude desktop app, on a phone, or in Claude Code. Other apps that support MCP connect as the [MCP Server](/mcp#connect) page describes.
+This page is for people using Claude in the browser, in the Claude desktop app, on a phone, or in Claude Code. Other apps that support MCP connect as the [MCP Server](/mcp-server#connect) page describes.
 
 ## What you get
 
@@ -189,7 +189,7 @@ Connecting opens the each::labs consent page in a new browser tab.
 
 1. If you are not signed in to the each::labs dashboard, the page sends you through [sign-in](https://www.eachlabs.ai/sign-in) and back to the consent page.
 2. Choose the **Organization**. The page states: *Predictions will run and bill as &lt;organization&gt;*. Every job you run from Claude is charged to this organization at the same prices as the API.
-3. Review the permissions listed (the [scopes](/mcp#scopes)) and click **Approve**.
+3. Review the permissions listed (the [scopes](/mcp-server#scopes)) and click **Approve**.
 
 Claude stores the resulting token and refreshes it in the background; you do not sign in again. The token never appears in the conversation. To bill a different organization, disconnect the connector under **Customize > Connectors** and connect again.
 
@@ -258,7 +258,7 @@ Claude can also look up your organization's recent runs, for example to pick up 
 
 Long videos can take 5 to 10 minutes. Claude keeps checking until yours is ready, and asks you before trying a different model.
 
-You are billed once, when the job runs, not for checking. Details are under [Long jobs](/mcp#long-jobs).
+You are billed once, when the job runs, not for checking. Details are under [Long jobs](/mcp-server#long-jobs).
 
 Results are URLs to files on each::labs storage, kept as long as [uploads](#give-a-file-as-input). Download anything you want to keep longer. A data result, such as a transcript or an analysis, comes back as text without a card.
 
