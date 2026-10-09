@@ -3,7 +3,7 @@ title: "Use each::labs in Claude"
 description: "Add the each::labs plugin to Claude on claude.ai, Claude Desktop, mobile and Claude Code. See what to ask, what the cards in the conversation do, how updates arrive and how to sign in."
 ---
 
-This page is for people using Claude in the browser, in the Claude desktop app, on a phone, or in Claude Code. Codex, Cursor and other clients are covered on the [MCP Server](/mcp#clients) page. ChatGPT, the Codex app, Grok and Mistral Le Chat are under [Works in other MCP apps](/mcp#works-in-other-mcp-apps).
+This page is for people using Claude in the browser, in the Claude desktop app, on a phone, or in Claude Code. Other apps that support MCP connect as the [MCP Server](/mcp#connect) page describes.
 
 ## What you get
 
@@ -14,13 +14,15 @@ The each::labs plugin bundles two things:
 | Connector | The hosted each::labs MCP server at `https://mcp.eachlabs.ai/mcp`, which lets Claude use each::labs tools: the model catalog, `run_model`, the workflow tools, the video tools and the cards. The [MCP Server](/mcp#tools) page lists them. |
 | Skills | Twelve recipes Claude follows for common media tasks: which model fits, which inputs it takes, which tool to call. See [Skills](#skills). |
 
-A **card** is a small interactive panel that Claude shows inside the conversation: you upload a file on it, adjust a model's settings, pick one of several results, or choose a range on a timeline. When you press a card's button, Claude continues on its own; there is nothing to type. Cards show in Claude on the web, in the desktop app and in the mobile apps. The cards are [MCP Apps](https://modelcontextprotocol.io/extensions/apps/overview) served by the each::labs MCP server, not by the plugin, so other MCP apps such as ChatGPT show them too. Claude Code and other terminals show no cards: Claude asks in the chat instead, and results come back as text.
+A **card** is a small interactive panel that Claude shows inside the conversation: you upload a file on it, adjust a model's settings, pick one of several results, or choose a range on a timeline. When you press a card's button, Claude continues on its own; there is nothing to type.
+
+Cards appear in claude.ai, Claude Desktop and the Claude mobile app. Claude Code runs in a terminal and has no cards: it shows results as text with links and asks you in the chat for files (as links), times, a crop area, settings or which variant you want. The cards are [MCP Apps](https://modelcontextprotocol.io/extensions/apps/overview) served by the each::labs MCP server, not by the plugin.
 
 You can also add the connector on its own without the plugin; see [Connector without the plugin](#connector-without-the-plugin). Either way the sign-in and the tools are the same.
 
 ## What you can ask
 
-Ask in your own words. Claude chooses the model, builds its input and runs it. Each job is billed to the each::labs organization you chose at [sign-in](#first-sign-in).
+Ask in your own words. Claude chooses the model, builds its input and runs it. Each job is billed to the each::labs organization you chose at [sign-in](#first-sign-in). The cards below appear in claude.ai, Claude Desktop and the mobile app; in Claude Code, Claude asks for the same things in the chat.
 
 ### Generate images and pick one
 
@@ -216,14 +218,6 @@ An Owner adds the plugin and its connector once for the organization, and each m
 
 Each member's each::labs account must belong to the each::labs organization that should pay for the runs, and the member picks that organization at sign-in. A member who signs in with a personal account and organization is billed there instead.
 
-```mermaid
-flowchart TD
-  P["Owner: Plugins & skills > Add > Upload a plugin"] --> A["Owner sets Default access"]
-  K["Owner: Connectors > Add > Custom"] --> C["Connector listed for every member"]
-  A --> M["Member connects, signs in and picks the organization"]
-  C --> M
-```
-
 <Tabs>
   <Tab title="Owner: plugin">
     <Steps>
@@ -294,14 +288,6 @@ You can turn the connector off for one conversation: click the **+** button in t
 ## Give a file as input
 
 Most recipes start from your own photo, video or audio file. Tool inputs are URLs, and a file attached with Claude's paperclip stays inside Claude: it cannot reach a connector tool. When a model needs a file, Claude shows the each::labs **upload card** instead. Put the file on the card, not on the paperclip.
-
-```mermaid
-flowchart LR
-  C["Claude shows the upload card and waits"] --> P["You drop files on the card or pick them"]
-  P --> U["The card uploads them from your browser to each::labs storage"]
-  U --> W["Claude receives the files' URLs"]
-  W --> R["Claude runs the model"]
-```
 
 | Step | What happens |
 | --- | --- |

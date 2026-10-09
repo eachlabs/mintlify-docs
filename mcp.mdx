@@ -1,61 +1,27 @@
 ---
 title: "MCP Server"
-description: "Use each::labs models, workflows and the Video API from Claude, ChatGPT, Codex, Grok, Cursor and other MCP clients through the hosted server at mcp.eachlabs.ai. Sign in with your each::labs account; no API key."
+description: "Use each::labs models, workflows and the Video API from any app that supports MCP, through the hosted server at mcp.eachlabs.ai. Sign in with your each::labs account; no API key."
 ---
 
-MCP ([Model Context Protocol](https://modelcontextprotocol.io)) is an open standard that lets AI apps such as Claude and ChatGPT use outside tools. The each::labs MCP server is hosted at:
+MCP ([Model Context Protocol](https://modelcontextprotocol.io)) is an open standard that lets AI apps use outside tools. The each::labs MCP server is hosted at:
 
 ```
 https://mcp.eachlabs.ai/mcp
 ```
 
-Any MCP client that supports the Streamable HTTP transport with OAuth can connect to it. You sign in with your each::labs account in the browser; there is no API key to create or paste. Jobs run and bill as the organization you choose when you sign in.
+## Connect
 
-## Clients
+Add `https://mcp.eachlabs.ai/mcp` as a remote MCP server, with the Streamable HTTP transport, in any app that supports MCP. The app opens the each::labs sign-in page, you choose your organization, and every run is billed to that organization. There is no API key to create or paste.
 
-| Client | How to connect |
-| --- | --- |
-| Claude (claude.ai, Claude Desktop, mobile) | Add the each::labs plugin, or add the URL as a custom connector. Steps are on [Use each::labs in Claude](/mcp/claude-chat). |
-| Claude Code | Install the plugin with `/plugin marketplace add eachlabs/claude-plugin` and `/plugin install eachlabs@eachlabs`, or add only the connector with `claude mcp add --transport http eachlabs https://mcp.eachlabs.ai/mcp`. Then run `/mcp` and approve the sign-in. Steps are on [Use each::labs in Claude](/mcp/claude-chat#add-the-plugin). |
-| Codex CLI | `codex mcp add eachlabs --url https://mcp.eachlabs.ai/mcp --oauth-resource https://mcp.eachlabs.ai/mcp` |
-| ChatGPT | Add the URL as a custom connector in developer mode. See [Works in other MCP apps](#works-in-other-mcp-apps). |
-| OpenAI Codex app | Add the URL as a custom MCP server under plugins, with the Streamable HTTP transport. See [Works in other MCP apps](#works-in-other-mcp-apps). |
-| Grok | Add the URL as a custom connector on grok.com. See [Works in other MCP apps](#works-in-other-mcp-apps). |
-| Mistral Le Chat | Add the URL as a custom MCP connector. Result cards show; input cards ask you to use the chat. See [Works in other MCP apps](#works-in-other-mcp-apps). |
-| Cursor and other MCP clients | Add `{ "url": "https://mcp.eachlabs.ai/mcp" }` to the client's `mcpServers` config. Per-client steps are in the [video MCP quickstart](/video/mcp/quickstart#connect-your-agent). |
+Apps with a chat interface can show interactive [cards](#cards). Apps without cards, such as terminals and editors that do not support them, return the same results as text and ask you in the chat for file links or values.
 
-`eachlabs` is the name the server gets in your client; choose another if you prefer.
+Using Claude? [Use each::labs in Claude](/mcp/claude-chat) adds the each::labs plugin, which bundles this server with twelve skills.
 
 Environments without a browser (CI, servers) can run the video tools locally with an API key instead. See [Headless and CI](/video/mcp/quickstart#headless-and-ci-api-key).
-
-## Works in other MCP apps
-
-The server and its tools work in any MCP app that supports OAuth sign-in. The [cards](#cards) are [MCP Apps](https://modelcontextprotocol.io/extensions/apps/overview), an open MCP extension, served by this server, so they do not depend on Claude.
-
-| App | Cards | How to connect |
-| --- | --- | --- |
-| Claude (web, Desktop, mobile) | All cards | Add the each::labs plugin, or the URL as a custom connector. See [Use each::labs in Claude](/mcp/claude-chat) |
-| ChatGPT | All cards | Turn on developer mode, then add the URL as a custom connector |
-| OpenAI Codex app | All cards | Under plugins, add a custom MCP server with the URL and the Streamable HTTP transport |
-| Grok | All cards | On grok.com, open **Connectors** and add a **Custom** connector with the URL |
-| Mistral Le Chat | Result cards. The input cards (upload, settings, trim and crop, workflow inputs, variant picker) ask you to use the chat instead | Open **Intelligence > Connectors**, add a **Custom MCP Connector** with the URL and choose OAuth 2.1 |
-
-Terminals such as Claude Code and the Codex CLI show no cards. The AI asks in the chat for what a card would collect: a public link to a file, the start and end times, the crop area, the settings or the choice of variant.
-
-The each::labs plugin, which adds twelve skills to the connector, is for Claude only. In other apps you connect the server alone and describe the task; the AI chooses the tools.
 
 ## Sign-in and billing
 
 The first call opens the each::labs consent page in your browser. If you are not signed in to the dashboard, the page sends you through [sign-in](https://www.eachlabs.ai/sign-in) and back.
-
-```mermaid
-flowchart LR
-  A["Client: Connect"] --> B["each::labs consent page"]
-  B --> C["Choose the organization"]
-  C --> D["Review the permissions"]
-  D --> E["Approve"]
-  E --> F["Client stores the token; tools are ready"]
-```
 
 On the consent page you:
 
@@ -87,16 +53,6 @@ The model catalog tools (`search_models`, `get_model_schema`) need no scope.
 ## Long jobs
 
 A tool that starts a job waits up to about 20 seconds for it. A job that finishes in that time returns its result in the same call. A longer job returns its id with `status: "running"` within those 20 seconds, and the AI keeps checking with that id until the job finishes. The job keeps running on each::labs the whole time. Returning early keeps your app from giving up on a call that waits too long.
-
-```mermaid
-flowchart LR
-  T["run_model, trigger_workflow or a video tool"] --> H{"Finished within about 20 s?"}
-  H -- yes --> R["Result"]
-  H -- no --> I["id, status: running"]
-  I --> S["get_job or get_workflow_execution with that id and wait: true"]
-  S -- still running --> S
-  S --> R
-```
 
 | The call that returned `running` | Continue with |
 | --- | --- |
@@ -172,7 +128,7 @@ Every tool that returns media also carries the result card: the image, a video o
 
 One upload card takes up to 50 files of up to 100 MB each and uploads four at a time; too many files or a file over 100 MB is refused before anything uploads. The workflow form's file fields follow the same limits. A card used once keeps showing that choice when the conversation is reopened.
 
-Cards are MCP Apps served by this server. They show in Claude, ChatGPT, the Codex app and Grok; Mistral Le Chat shows the result cards. In terminals the AI asks in the chat instead, and results come back as text. A card that cannot load in your app says to use the chat instead. See [Works in other MCP apps](#works-in-other-mcp-apps); how to use the cards is on [Use each::labs in Claude](/mcp/claude-chat#give-a-file-as-input).
+Cards are [MCP Apps](https://modelcontextprotocol.io/extensions/apps/overview) served by this server, so they show in any app that supports MCP Apps. In apps without card support the AI asks in the chat instead, and results come back as text. A card that cannot load in your app says to use the chat instead. How to use the cards is on [Use each::labs in Claude](/mcp/claude-chat#give-a-file-as-input).
 
 ## Searching this documentation
 
