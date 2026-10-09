@@ -1,0 +1,174 @@
+---
+title: "MCP Server"
+description: "Use each::labs models, workflows and the Video API from any app that supports MCP, through the hosted server at mcp.eachlabs.ai. Sign in with your each::labs account; no API key."
+---
+
+MCP ([Model Context Protocol](https://modelcontextprotocol.io)) is an open standard that lets AI apps use outside tools. The each::labs MCP server is hosted at:
+
+```
+https://mcp.eachlabs.ai/mcp
+```
+
+## Connect
+
+Add `https://mcp.eachlabs.ai/mcp` as a remote MCP server, with the Streamable HTTP transport, in any app that supports MCP. The app opens the each::labs sign-in page, you choose your organization, and every run is billed to that organization. There is no API key to create or paste.
+
+Apps with a chat interface can show interactive [cards](#cards). Apps without cards, such as terminals and editors that do not support them, return the same results as text and ask you in the chat for file links or values.
+
+Using Claude? [Use each::labs in Claude](/mcp-server/claude-chat) has the steps for claude.ai, Claude Desktop and Claude Code.
+
+Environments without a browser (CI, servers) can run the video tools locally with an API key instead. See [Headless and CI](/video/mcp/quickstart#headless-and-ci-api-key).
+
+## Sign-in and billing
+
+The first call opens the each::labs consent page in your browser. If you are not signed in to the dashboard, the page sends you through [sign-in](https://www.eachlabs.ai/sign-in) and back.
+
+On the consent page you:
+
+1. Choose the **Organization**. The page states it plainly: *Predictions will run and bill as &lt;organization&gt;*.
+2. Review the permissions the client asks for (the [scopes](#scopes) below).
+3. Click **Approve**.
+
+| What | Value |
+| --- | --- |
+| Credential | An OAuth token that your client stores. It never appears in the conversation and is never shown to the model. |
+| Billed organization | The one chosen on the consent page. Every job behaves as if that organization had called the API itself, at the same prices as the REST API. |
+| Signing in again | Not needed. The token is refreshed in the background. To bill a different organization, disconnect the server in your client and connect again. |
+| If sign-in fails | If the consent page shows *organization has no runner credential*, open the [dashboard](https://www.eachlabs.ai) once as that organization and try again. |
+
+## Scopes
+
+A scope is a permission your client asks for at sign-in. The consent page lists each one. A tool that needs a scope your token lacks is refused before anything is submitted, and nothing is billed for a refused call. A connection approved before a scope existed does not have it; disconnect and connect again to approve the full set.
+
+| Scope | Grants |
+| --- | --- |
+| `predictions:create` | Run models and video tools, check on their jobs, and list the organization's recent runs |
+| `predictions:read` | Read prediction status and results, and list the organization's recent runs |
+| `workflows:run` | Trigger workflow executions, and list and read workflows and executions |
+| `workflows:read` | List and read workflows and executions |
+| `uploads:create` | Show cards in the conversation, and upload the files you give on the [upload card](/mcp-server/claude-chat#give-a-file-as-input) |
+
+The model catalog tools (`search_models`, `get_model_schema`) need no scope.
+
+## Long jobs
+
+A tool that starts a job waits up to about 20 seconds for it. A job that finishes in that time returns its result in the same call. A longer job returns its id with `status: "running"` within those 20 seconds, and the AI keeps checking with that id until the job finishes. The job keeps running on each::labs the whole time. Returning early keeps your app from giving up on a call that waits too long.
+
+| The call that returned `running` | Continue with |
+| --- | --- |
+| `run_model` or a video tool | `get_job` with the `prediction_id` |
+| `run_model` with `count` above 1 | `get_job` with every id as `prediction_ids`; the variants show together once all finish |
+| `trigger_workflow` | `get_workflow_execution` with the `execution_id` |
+
+Billing happens once, when the job runs, not per check. Long videos can take 5 to 10 minutes. The AI keeps checking until yours is ready, and asks you before trying a different model.
+
+### Recent runs
+
+`list_recent_jobs` shows your organization's most recent runs, newest first: id, model, status, time and, once a run is done, its output link. The AI uses it to pick up a run it started earlier, for example after a brief connection interruption, and keeps checking that run with `get_job` rather than starting a new one. The list never includes prompts or inputs, and it shows the same runs as the runs list in your dashboard.
+
+## Tools
+
+Tool names are lowercase with underscores. A call with a parameter the tool does not have is refused before anything runs, and nothing is billed. Each tool also tells your app whether it only reads or starts a billed job; your app uses this to decide which calls need your confirmation. The full list with parameters, defaults and return values is the [MCP tool reference](/video/mcp/tools).
+
+### Video
+
+One tool per [Video API capability](/video/capabilities), plus `run_ffmpeg` and `get_job`: 46 tools on the hosted server. Each takes media by URL and returns the result by URL, except the four that measure or detect, which return numbers. With the eight model and workflow tools and the 13 card tools below, the hosted server offers 67 tools. Per-client setup is in the [video MCP quickstart](/video/mcp/quickstart).
+
+| Tool | Does | Scope |
+| --- | --- | --- |
+| `trim` | Cuts a clip by start time and length, without re-encoding | `predictions:create` |
+| `segment` | Splits a video into equal-length parts | `predictions:create` |
+| `concat` | Joins 2 to 10 clips into one video | `predictions:create` |
+| `concat_copy` | Joins 2 to 50 parts that share one format, without re-encoding | `predictions:create` |
+| `crossfade` | Joins two clips with a crossfade between them | `predictions:create` |
+| `speed` | Changes playback speed, from 0.25x to 4x | `predictions:create` |
+| `reverse` | Plays a video and its audio backwards | `predictions:create` |
+| `crop` | Crops a region of the frame | `predictions:create` |
+| `scale` | Resizes a video, keeping its proportions if you ask | `predictions:create` |
+| `pad` | Places a video on a larger canvas with a background colour | `predictions:create` |
+| `rotate` | Rotates a video by 90, 180 or 270 degrees | `predictions:create` |
+| `reframe` | Changes the aspect ratio for social formats (9:16, 1:1, 4:5, 16:9) by cropping or adding bars | `predictions:create` |
+| `reframe_track` | Reframes to a smaller frame that follows a subject over time | `predictions:create` |
+| `color` | Adjusts brightness, contrast, saturation and gamma | `predictions:create` |
+| `lut3d` | Colour-grades a video with a .cube LUT file | `predictions:create` |
+| `fade` | Fades a video and its audio in, out or both | `predictions:create` |
+| `overlay` | Places a second video over a base video at a corner or the centre | `predictions:create` |
+| `watermark` | Places an image or video over a video as a watermark | `predictions:create` |
+| `sticker_overlay` | Shows a sticker or logo over a video during a time window | `predictions:create` |
+| `title_card` | Draws a text title over a video | `predictions:create` |
+| `captions` | Burns subtitles (SRT, VTT or ASS) into a video | `predictions:create` |
+| `subtitle_compose` | Creates animated, word-by-word captions from word timings and burns them in | `predictions:create` |
+| `extract_audio` | Extracts the audio track as mp3, wav or m4a | `predictions:create` |
+| `audio_replace` | Replaces a video's audio track, or mixes in a second one | `predictions:create` |
+| `audio_duck` | Lowers background music automatically while a voice speaks | `predictions:create` |
+| `audio_master` | Masters audio to a loudness target for publishing | `predictions:create` |
+| `loudnorm` | Normalises loudness to a target level | `predictions:create` |
+| `volume` | Changes the volume | `predictions:create` |
+| `audio_analysis` | Measures loudness, loudness range and peaks; returns numbers, not a file | `predictions:create` |
+| `silence_detect` | Finds silent parts; returns their times, not a file | `predictions:create` |
+| `silence_remove` | Keeps only the time ranges you give and joins them into one file | `predictions:create` |
+| `silence_split` | Splits a file at its silent parts | `predictions:create` |
+| `scene_detect` | Finds scene cuts; returns their times, not a file | `predictions:create` |
+| `stills` | Takes one frame as a jpg or png image | `predictions:create` |
+| `thumbnails` | Takes frames at a regular interval | `predictions:create` |
+| `poster` | Returns the video plus a poster image | `predictions:create` |
+| `storyboard_sprites` | Packs frames into one sprite sheet plus a thumbnail index for video players | `predictions:create` |
+| `gif` | Makes an animated GIF from a clip | `predictions:create` |
+| `slideshow` | Turns 2 to 50 images into a video | `predictions:create` |
+| `transcode` | Converts a video to another format, codec or quality | `predictions:create` |
+| `hls_ladder` | Encodes several quality levels for HLS streaming | `predictions:create` |
+| `package_abr` | Packages a video for streaming as HLS and DASH | `predictions:create` |
+| `package_abr_ladder` | Packages several quality levels for streaming as HLS and DASH | `predictions:create` |
+| `probe` | Reads a file's details: format, streams, length, resolution; returns numbers, not a file | `predictions:create` |
+| `run_ffmpeg` | Runs an ffmpeg command on the input URLs | `predictions:create` |
+| `get_job` | Returns the status and result of a prediction, or of several variants from one `run_model` call | `predictions:read` or `predictions:create` |
+
+### Model catalog and any model
+
+Three tools cover the whole model catalog, not only video, and `list_recent_jobs` lists recent runs. The three use the same catalog and the same prediction as [List models](/api/models/list-models) and [Create prediction](/api/predictions/create-prediction).
+
+| Tool | Does | Scope |
+| --- | --- | --- |
+| `search_models` | Finds models by name; returns slug, name, type and pricing for each match | none |
+| `get_model_schema` | Returns a model's input schema, so an input can be built from it | none |
+| `run_model` | Runs a model by slug with an input matching its schema; returns the result, or the job id while it is still running. With `count` (1 to 8) it runs that many predictions of the same input and returns them together | `predictions:create` |
+| `list_recent_jobs` | Lists the organization's most recent runs, newest first: id, model, status, time and output link. Used to pick up a run the AI started earlier | `predictions:read` or `predictions:create` |
+
+### Workflows
+
+Run and read the [workflows](/workflows/overview) your organization built in the dashboard. Creating or editing a workflow stays in the dashboard.
+
+| Tool | Does | Scope |
+| --- | --- | --- |
+| `list_workflows` | Lists the organization's workflows: id, slug, name, status and counts | `workflows:read` or `workflows:run` |
+| `get_workflow` | Returns one workflow: its definition, versions and input schema | `workflows:read` or `workflows:run` |
+| `trigger_workflow` | Triggers a workflow version with inputs; returns the outputs, or the execution id while it is still running | `workflows:run` |
+| `get_workflow_execution` | Returns an execution's status and outputs | `workflows:read` or `workflows:run` |
+
+These tools do not set up webhooks; the AI checks on a run itself until it finishes.
+
+### Cards
+
+Tool inputs are URLs. A file attached to a conversation cannot reach a connector tool, so the server provides small interactive cards that your app shows inside the conversation: one to upload files, and others to pick settings, choose a variant, fill in a workflow's inputs or choose a range or crop. Each card has a matching wait tool that the AI calls right after showing it. When you press the card's button, the AI receives your choice and continues; you do not need to type anything.
+
+| Tool | Does | Scope |
+| --- | --- | --- |
+| `request_file` | Shows the upload card with a one-line prompt and the kinds it accepts (`image`, `video`, `audio`). `count` is the number of files expected; `max` is the most the target model or tool takes. A card for several files takes up to `max`, or up to 50 | `uploads:create` |
+| `wait_for_upload` | Waits for the files the person uploads on the card and returns their public URLs | none |
+| `presign_upload` | Called by the upload card, not by the AI or by you: prepares the upload of the file you picked | `uploads:create` |
+| `file_uploaded` | Called by the card after the upload: returns the file's `public_url` | none |
+| `request_parameters` | Shows a model's settings as a form, built from its input schema, with a Run button | `uploads:create` |
+| `wait_for_parameters` | Waits for Run and returns the model, version and input to pass to `run_model` | none |
+| `request_workflow_inputs` | Shows a workflow version's inputs as a form, with a file picker for each image, video or audio input | `uploads:create` |
+| `wait_for_workflow_inputs` | Waits for Run and returns the workflow, version and inputs to pass to `trigger_workflow` | none |
+| `request_trim` | Shows a video or audio file with a timeline and two handles | `uploads:create` |
+| `request_crop` | Shows a video's first frame or an image with a rectangle to move and resize | `uploads:create` |
+| `wait_for_edit` | Waits for the person's range or rectangle and returns the values to pass to `trim` or `crop` | none |
+| `wait_for_choice` | After a run that asked for several results, waits for the variant the person submits and returns it | none |
+| `show_files` | Shows files the AI already has a URL for, such as an earlier result, on a result card | none |
+
+Every tool that returns media also carries the result card: the image, a video or audio player and download buttons. When a run asked for several results, the result card is a picker: the person selects a variant, as often as they like, and presses the button under the variants once; it reads **Use variant** and the number selected. A workflow's outputs show together as a gallery. An edit of a file the person gave gets a **Compare** button for a before-and-after view.
+
+One upload card takes up to 50 files of up to 100 MB each and uploads four at a time; too many files or a file over 100 MB is refused before anything uploads. The workflow form's file fields follow the same limits. A card used once keeps showing that choice when the conversation is reopened.
+
+Cards are [MCP Apps](https://modelcontextprotocol.io/extensions/apps/overview) served by this server, so they show in any app that supports MCP Apps. In apps without card support the AI asks in the chat instead, and results come back as text. A card that cannot load in your app says to use the chat instead. How to use the cards is on [Use each::labs in Claude](/mcp-server/claude-chat#give-a-file-as-input).
