@@ -78,7 +78,7 @@ Claude shows the track on a timeline with two handles. Drag them, press **Previe
 
 > Turn this photo into a 5-second clip where the camera slowly pushes in.
 
-Claude asks for the photo on an upload card, runs a video model and shows the clip on a result card that plays in the conversation. A video can take a few minutes; Claude shows it as still running and checks again until it is done. See [When a tool says running](#when-a-tool-says-running).
+Claude asks for the photo on an upload card, runs a video model and shows the clip on a result card that plays in the conversation. A video often takes 5 to 10 minutes; Claude shows it as still running and checks again until it is done. See [When a tool says running](#when-a-tool-says-running).
 
 <Frame caption="A finished video in the conversation">
   <img style={{ maxWidth: "440px", width: "100%" }} src="/images/mcp/02b-result-video.webp" alt="each::labs result card with a video player showing a woman in a red coat on a reindeer sleigh at a Christmas market, and a download button." />
@@ -374,6 +374,8 @@ A tool waits about 20 seconds for its job. A job that takes longer, such as a lo
 When you asked for several variants, Claude checks on all of them together, and they arrive on one card with the picker once every variant is done.
 
 If a reply is cut off before Claude got the job's id, Claude can list your organization's recent runs and pick the job up from there instead of starting it again. That list shows only each run's id, model, status, time and result link.
+
+Long videos can take 5 to 10 minutes. Claude keeps checking until yours is ready, and asks you before trying a different model, so you are never charged for a run you did not ask for.
 
 You are billed once, when the job runs, not for checking. Details are under [Long jobs](/mcp#long-jobs).
 

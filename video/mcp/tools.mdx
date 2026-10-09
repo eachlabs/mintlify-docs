@@ -2574,7 +2574,7 @@ Upload a local file (max 100MB) to eachlabs storage and get a public URL usable 
 
 ## get_job
 
-Fetch the status and result of a prediction. With wait: true, waits up to the hold for it to finish; call it again while the result says running. Call it again with the same id to show a finished result again. For the predictions of one run_model call with count above 1, pass all their ids as prediction_ids to get them back together as one result.
+Fetch the status and result of a prediction. With wait: true, waits up to the hold for it to finish; call it again while the result says running. Call it again with the same id to show a finished result again. For the predictions of one run_model call with count above 1, pass all their ids as prediction_ids to get them back together as one result. A running job can take several minutes, video often 5 to 10; keep checking with get_job. Do not start another run, on this model or a different one, as a fallback unless the person asks for it: each run is billed. If a job fails or shows no progress for far longer than usual, you may suggest another model, but ask the person first.
 
 ```json
 {
@@ -2655,7 +2655,7 @@ Return a model's input schema (OpenAPI document) by slug, so a run_model input c
 
 ## run_model
 
-Run any each::labs model by slug with an input that matches its schema. Creates a billed prediction and returns the result, or, for a job that takes longer than about 20 s, its prediction id with status running: then check it with get_job and wait: true until it finishes. If a call ends without a result or an id, use list_recent_jobs before starting the run again. With count above 1, starts that many predictions of the same input and returns them together as one result, so several variants show on one card; while they are running, check them with get_job and all their ids as prediction_ids.
+Run any each::labs model by slug with an input that matches its schema. Creates a billed prediction and returns the result, or, for a job that takes longer than about 20 s, its prediction id with status running: then check it with get_job and wait: true until it finishes. If a call ends without a result or an id, use list_recent_jobs before starting the run again. With count above 1, starts that many predictions of the same input and returns them together as one result, so several variants show on one card; while they are running, check them with get_job and all their ids as prediction_ids. A running job can take several minutes, video often 5 to 10; keep checking with get_job. Do not start another run, on this model or a different one, as a fallback unless the person asks for it: each run is billed. If a job fails or shows no progress for far longer than usual, you may suggest another model, but ask the person first.
 
 ```json
 {
@@ -2738,7 +2738,7 @@ Return one workflow: its definition, versions and input schema.
 
 ## trigger_workflow
 
-Trigger a workflow version with its inputs. Creates a billed execution and returns its outputs, or, for a run that takes longer than about 20 s, its execution id with status running: then check it with get_workflow_execution and wait: true until it finishes. If a call ends without a result or an id, use list_recent_jobs before starting the run again.
+Trigger a workflow version with its inputs. Creates a billed execution and returns its outputs, or, for a run that takes longer than about 20 s, its execution id with status running: then check it with get_workflow_execution and wait: true until it finishes. If a call ends without a result or an id, use list_recent_jobs before starting the run again. A running job can take several minutes, video often 5 to 10; keep checking with get_workflow_execution. Do not start another run, on this model or a different one, as a fallback unless the person asks for it: each run is billed. If a job fails or shows no progress for far longer than usual, you may suggest another model, but ask the person first.
 
 ```json
 {
@@ -2770,7 +2770,7 @@ Trigger a workflow version with its inputs. Creates a billed execution and retur
 
 ## get_workflow_execution
 
-Fetch the status and outputs of a workflow execution. With wait: true, waits up to the hold for it to finish; call it again while the result says running. Call it again with the same id to show a finished result again.
+Fetch the status and outputs of a workflow execution. With wait: true, waits up to the hold for it to finish; call it again while the result says running. Call it again with the same id to show a finished result again. A running job can take several minutes, video often 5 to 10; keep checking with get_workflow_execution. Do not start another run, on this model or a different one, as a fallback unless the person asks for it: each run is billed. If a job fails or shows no progress for far longer than usual, you may suggest another model, but ask the person first.
 
 ```json
 {
