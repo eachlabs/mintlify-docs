@@ -16,7 +16,7 @@ Any MCP client that supports the Streamable HTTP transport with OAuth can connec
 | Client | How to connect |
 | --- | --- |
 | Claude (claude.ai, Claude Desktop, mobile) | Add the each::labs plugin, or add the URL as a custom connector. Steps are on [Use each::labs in Claude](/mcp/claude-chat). |
-| Claude Code | Install the plugin from the plugin zip file from each::labs, or add only the connector with `claude mcp add --transport http eachlabs https://mcp.eachlabs.ai/mcp`. Then run `/mcp` and approve the sign-in. Steps are on [Use each::labs in Claude](/mcp/claude-chat#add-the-plugin). |
+| Claude Code | Install the plugin with `/plugin marketplace add eachlabs/claude-plugin` and `/plugin install eachlabs@eachlabs`, or add only the connector with `claude mcp add --transport http eachlabs https://mcp.eachlabs.ai/mcp`. Then run `/mcp` and approve the sign-in. Steps are on [Use each::labs in Claude](/mcp/claude-chat#add-the-plugin). |
 | Codex CLI | `codex mcp add eachlabs --url https://mcp.eachlabs.ai/mcp --oauth-resource https://mcp.eachlabs.ai/mcp` |
 | ChatGPT | Add the URL as a custom connector in developer mode. See [Works in other MCP apps](#works-in-other-mcp-apps). |
 | OpenAI Codex app | Add the URL as a custom MCP server under plugins, with the Streamable HTTP transport. See [Works in other MCP apps](#works-in-other-mcp-apps). |

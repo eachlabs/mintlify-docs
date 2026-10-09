@@ -130,11 +130,11 @@ Pick the tab for where you use Claude. On a Team or Enterprise plan, read [Team 
       <Step title="Open Customize > Plugins">
         Go to **Customize > Plugins**.
       </Step>
-      <Step title="Upload the plugin">
-        Select **Add > Upload plugin** and choose the plugin zip file from each::labs.
+      <Step title="Add the each::labs marketplace">
+        Select **Add > Add marketplace** and enter `eachlabs/claude-plugin`.
       </Step>
       <Step title="Add the plugin">
-        Open the **each::labs** plugin and select **Add** if it is not added yet.
+        Open the **each::labs** plugin and select **Add**.
       </Step>
       <Step title="Connect the bundled connector">
         Adding a plugin does not sign you in to anything. Open the plugin's **Connectors** tab. If the `eachlabs` connector shows **Not added**, add it from this tab; then select **Connect**. The each::labs consent page opens; see [First sign-in](#first-sign-in).
@@ -146,35 +146,33 @@ Pick the tab for where you use Claude. On a Team or Enterprise plan, read [Team 
     | To | Do this |
     | --- | --- |
     | Turn the plugin off or on | Open it from **Customize > Plugins** and use its **Disable plugin** toggle |
-    | Get an update | A plugin added from a zip does not update by itself. Upload the newer zip the same way |
+    | Get an update | A plugin added from the marketplace updates by itself when a new version is published; there is nothing to accept. To pull it at once, select **Check for updates** on the marketplace, or turn on **Sync automatically**. A plugin added from a zip never updates; upload the newer zip the same way |
     | Remove it | Open the plugin, open its menu and select **Remove**. The connector stays under **Customize > Connectors** until you remove it there |
     | Use it on a phone | Add it on the web or in the desktop app. Plugins are saved to your account, so the mobile apps have it too |
 
     Anthropic describes these steps under [Plugins](https://claude.com/docs/plugins/overview).
   </Tab>
   <Tab title="Claude Code">
-    Unzip the plugin zip file from each::labs into a folder, then add that folder and install the plugin from a Claude Code session:
+    Add the marketplace and install the plugin from a Claude Code session:
 
     ```text
-    /plugin marketplace add ./eachlabs-plugin
+    /plugin marketplace add eachlabs/claude-plugin
     /plugin install eachlabs@eachlabs
     ```
-
-    Replace `./eachlabs-plugin` with the path of the folder you unzipped.
 
     Choose a scope when asked; **Install for you (user scope)** gives you the plugin in every project. Then run `/mcp`, select `eachlabs` and sign in when prompted; see [First sign-in](#first-sign-in).
 
     From your shell, the same install is:
 
     ```bash
-    claude plugin marketplace add ./eachlabs-plugin
+    claude plugin marketplace add eachlabs/claude-plugin
     claude plugin install eachlabs@eachlabs
     ```
 
     | To | Do this |
     | --- | --- |
     | Turn the plugin off or on | Run `/plugin`, open the **Installed** tab and press **Space** on the plugin. From your shell: `claude plugin disable eachlabs@eachlabs` and `claude plugin enable eachlabs@eachlabs` |
-    | Get an update | Unzip the newer zip into the same folder, then run `claude plugin marketplace update eachlabs` and `claude plugin update eachlabs@eachlabs` |
+    | Get an update | Auto-update is off for marketplaces other than Anthropic's own. Turn it on under `/plugin`, the **Marketplaces** tab, **Enable auto-update**, or update by hand with `claude plugin update eachlabs@eachlabs` |
     | Remove it | `claude plugin uninstall eachlabs@eachlabs` |
     | Use the plugin from claude.ai instead | A plugin added under **Customize > Plugins** also syncs to Claude Code when you sign in with the same account, as `eachlabs@synced`. Run `/reload-plugins` or start Claude Code again to load it |
 
@@ -186,7 +184,7 @@ Pick the tab for where you use Claude. On a Team or Enterprise plan, read [Team 
 
 | Client | After you add the plugin | After a new version |
 | --- | --- | --- |
-| claude.ai, Claude Desktop, mobile | Ready in your conversations, with no restart | Stays on its version until you upload a newer zip. The new version is then ready with no restart |
+| claude.ai, Claude Desktop, mobile | Ready in your conversations, with no restart | Arrives on your account when the marketplace syncs. A plugin added from a zip stays on its version until you upload a newer zip |
 | Claude Code | The install message says whether it is active now. If it says `Run /reload-plugins to apply.`, Claude Code reloads for you | The running session keeps its version and shows `Plugin updated: eachlabs · Run /reload-plugins to apply`. Run `/reload-plugins`, or the next session loads it |
 
 Changes to the cards come from the each::labs server, not from the plugin. A card always shows its current version, with no update or restart on your side.
