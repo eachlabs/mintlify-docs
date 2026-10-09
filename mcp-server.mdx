@@ -15,7 +15,7 @@ Add `https://mcp.eachlabs.ai/mcp` as a remote MCP server, with the Streamable HT
 
 Apps with a chat interface can show interactive [cards](#cards). Apps without cards, such as terminals and editors that do not support them, return the same results as text and ask you in the chat for file links or values.
 
-Using Claude? [Use each::labs in Claude](/mcp/claude-chat) has the steps for claude.ai, Claude Desktop and Claude Code.
+Using Claude? [Use each::labs in Claude](/mcp-server/claude-chat) has the steps for claude.ai, Claude Desktop and Claude Code.
 
 Environments without a browser (CI, servers) can run the video tools locally with an API key instead. See [Headless and CI](/video/mcp/quickstart#headless-and-ci-api-key).
 
@@ -46,7 +46,7 @@ A scope is a permission your client asks for at sign-in. The consent page lists 
 | `predictions:read` | Read prediction status and results, and list the organization's recent runs |
 | `workflows:run` | Trigger workflow executions, and list and read workflows and executions |
 | `workflows:read` | List and read workflows and executions |
-| `uploads:create` | Show cards in the conversation, and upload the files you give on the [upload card](/mcp/claude-chat#give-a-file-as-input) |
+| `uploads:create` | Show cards in the conversation, and upload the files you give on the [upload card](/mcp-server/claude-chat#give-a-file-as-input) |
 
 The model catalog tools (`search_models`, `get_model_schema`) need no scope.
 
@@ -171,4 +171,4 @@ Every tool that returns media also carries the result card: the image, a video o
 
 One upload card takes up to 50 files of up to 100 MB each and uploads four at a time; too many files or a file over 100 MB is refused before anything uploads. The workflow form's file fields follow the same limits. A card used once keeps showing that choice when the conversation is reopened.
 
-Cards are [MCP Apps](https://modelcontextprotocol.io/extensions/apps/overview) served by this server, so they show in any app that supports MCP Apps. In apps without card support the AI asks in the chat instead, and results come back as text. A card that cannot load in your app says to use the chat instead. How to use the cards is on [Use each::labs in Claude](/mcp/claude-chat#give-a-file-as-input).
+Cards are [MCP Apps](https://modelcontextprotocol.io/extensions/apps/overview) served by this server, so they show in any app that supports MCP Apps. In apps without card support the AI asks in the chat instead, and results come back as text. A card that cannot load in your app says to use the chat instead. How to use the cards is on [Use each::labs in Claude](/mcp-server/claude-chat#give-a-file-as-input).
