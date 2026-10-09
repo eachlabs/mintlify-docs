@@ -1,24 +1,17 @@
 ---
 title: "Use each::labs in Claude"
-description: "Add the each::labs plugin to Claude on claude.ai, Claude Desktop, mobile and Claude Code. See what to ask, what the cards in the conversation do, how updates arrive and how to sign in."
+description: "Connect each::labs to Claude on claude.ai, Claude Desktop, mobile and Claude Code. See what to ask, what the cards in the conversation do and how to sign in."
 ---
 
 This page is for people using Claude in the browser, in the Claude desktop app, on a phone, or in Claude Code. Other apps that support MCP connect as the [MCP Server](/mcp#connect) page describes.
 
 ## What you get
 
-The each::labs plugin bundles two things:
-
-| Part | What it is |
-| --- | --- |
-| Connector | The hosted each::labs MCP server at `https://mcp.eachlabs.ai/mcp`, which lets Claude use each::labs tools: the model catalog, `run_model`, the workflow tools, the video tools and the cards. The [MCP Server](/mcp#tools) page lists them. |
-| Skills | Twelve recipes Claude follows for common media tasks: which model fits, which inputs it takes, which tool to call. See [Skills](#skills). |
+You add the hosted each::labs MCP server at `https://mcp.eachlabs.ai/mcp` to Claude as a connector. It lets Claude use each::labs tools: the model catalog, `run_model`, the workflow tools, the video tools and the cards. The [MCP Server](/mcp#tools) page lists them. You describe the task and Claude chooses the tools.
 
 A **card** is a small interactive panel that Claude shows inside the conversation: you upload a file on it, adjust a model's settings, pick one of several results, or choose a range on a timeline. When you press a card's button, Claude continues on its own; there is nothing to type.
 
-Cards appear in claude.ai, Claude Desktop and the Claude mobile app. Claude Code runs in a terminal and has no cards: it shows results as text with links and asks you in the chat for files (as links), times, a crop area, settings or which variant you want. The cards are [MCP Apps](https://modelcontextprotocol.io/extensions/apps/overview) served by the each::labs MCP server, not by the plugin.
-
-You can also add the connector on its own without the plugin; see [Connector without the plugin](#connector-without-the-plugin). Either way the sign-in and the tools are the same.
+Cards appear in claude.ai, Claude Desktop and the Claude mobile app. Claude Code runs in a terminal and has no cards: it shows results as text with links and asks you in the chat for files (as links), times, a crop area, settings or which variant you want. The cards are [MCP Apps](https://modelcontextprotocol.io/extensions/apps/overview) served by the each::labs MCP server.
 
 ## What you can ask
 
@@ -120,124 +113,52 @@ Claude shows the first frame with a rectangle. Move and resize it, or lock it to
   <img style={{ maxWidth: "440px", width: "100%" }} src="/images/mcp/06d-crop-image.webp" alt="each::labs Choose a crop card showing a photo of a tote bag with a rectangle and eight handles, the shape buttons Free, 1:1, 16:9, 9:16 and 4:5 with 16:9 selected, the rectangle's position and size in pixels, and a Use this crop button." />
 </Frame>
 
-## Add the plugin
+## Add the connector
 
-Pick the tab for where you use Claude. On a Team or Enterprise plan, read [Team and Enterprise plans](#team-and-enterprise-plans) first: an Owner may already have added the plugin for you.
+Pick the tab for where you use Claude. On a Team or Enterprise plan, read [Team and Enterprise plans](#team-and-enterprise-plans) first: an Owner may already have added the connector for you.
 
 <Tabs>
   <Tab title="claude.ai and Claude Desktop">
-    Plugins are on the Pro, Max, Team and Enterprise plans. The steps are the same in the browser and in the desktop app's chat. **Customize** is the page that holds your connectors, skills and plugins.
+    The steps are the same in the browser and in the desktop app's chat. **Customize** is the page that holds your connectors.
 
     <Steps>
-      <Step title="Open Customize > Plugins">
-        Go to **Customize > Plugins**.
+      <Step title="Open Customize > Connectors">
+        Go to **Customize > Connectors**.
       </Step>
-      <Step title="Add the each::labs marketplace">
-        Select **Add > Add marketplace** and enter `eachlabs/claude-plugin`.
+      <Step title="Add a custom connector">
+        Click **Add custom connector**.
       </Step>
-      <Step title="Add the plugin">
-        Open the **each::labs** plugin and select **Add**.
+      <Step title="Enter the server URL">
+        Enter `https://mcp.eachlabs.ai/mcp`. Leave the OAuth client ID and secret empty; each::labs sets them up for you.
       </Step>
-      <Step title="Connect the bundled connector">
-        Adding a plugin does not sign you in to anything. Open the plugin's **Connectors** tab. If the `eachlabs` connector shows **Not added**, add it from this tab; then select **Connect**. The each::labs consent page opens; see [First sign-in](#first-sign-in).
+      <Step title="Add and connect">
+        Click **Add**, then **Connect**. The each::labs consent page opens; see [First sign-in](#first-sign-in).
       </Step>
     </Steps>
 
-    The plugin's skills load whether or not you connect. A skill cannot reach each::labs until the connector shows **Connected**. Once added, the connector also appears under **Customize > Connectors**.
-
-    | To | Do this |
-    | --- | --- |
-    | Turn the plugin off or on | Open it from **Customize > Plugins** and use its **Disable plugin** toggle |
-    | Get an update | A plugin added from the marketplace updates by itself when a new version is published; there is nothing to accept. To pull it at once, select **Check for updates** on the marketplace, or turn on **Sync automatically**. A plugin added from a zip never updates; upload the newer zip the same way |
-    | Remove it | Open the plugin, open its menu and select **Remove**. The connector stays under **Customize > Connectors** until you remove it there |
-    | Use it on a phone | Add it on the web or in the desktop app. Plugins are saved to your account, so the mobile apps have it too |
-
-    Anthropic describes these steps under [Plugins](https://claude.com/docs/plugins/overview).
+    On the Free plan you can add one custom connector. Connectors are saved to your account, so once you add it on the web or in the desktop app, the Claude mobile app has it too.
   </Tab>
   <Tab title="Claude Code">
-    Add the marketplace and install the plugin from a Claude Code session:
-
-    ```text
-    /plugin marketplace add eachlabs/claude-plugin
-    /plugin install eachlabs@eachlabs
-    ```
-
-    Choose a scope when asked; **Install for you (user scope)** gives you the plugin in every project. Then run `/mcp`, select `eachlabs` and sign in when prompted; see [First sign-in](#first-sign-in).
-
-    From your shell, the same install is:
+    Add the connector from your shell:
 
     ```bash
-    claude plugin marketplace add eachlabs/claude-plugin
-    claude plugin install eachlabs@eachlabs
+    claude mcp add --transport http eachlabs https://mcp.eachlabs.ai/mcp
     ```
 
-    | To | Do this |
-    | --- | --- |
-    | Turn the plugin off or on | Run `/plugin`, open the **Installed** tab and press **Space** on the plugin. From your shell: `claude plugin disable eachlabs@eachlabs` and `claude plugin enable eachlabs@eachlabs` |
-    | Get an update | Auto-update is off for marketplaces other than Anthropic's own. Turn it on under `/plugin`, the **Marketplaces** tab, **Enable auto-update**, or update by hand with `claude plugin update eachlabs@eachlabs` |
-    | Remove it | `claude plugin uninstall eachlabs@eachlabs` |
-    | Use the plugin from claude.ai instead | A plugin added under **Customize > Plugins** also syncs to Claude Code when you sign in with the same account, as `eachlabs@synced`. Run `/reload-plugins` or start Claude Code again to load it |
-
-    Anthropic describes these commands under [Install and manage plugins](https://code.claude.com/docs/en/plugins/install).
+    Then run `/mcp` inside Claude Code, select `eachlabs`, and sign in when prompted; see [First sign-in](#first-sign-in). The tools appear once the sign-in completes.
   </Tab>
 </Tabs>
 
-### Restarts and updates
-
-| Client | After you add the plugin | After a new version |
-| --- | --- | --- |
-| claude.ai, Claude Desktop, mobile | Ready in your conversations, with no restart | Arrives on your account when the marketplace syncs. A plugin added from a zip stays on its version until you upload a newer zip |
-| Claude Code | The install message says whether it is active now. If it says `Run /reload-plugins to apply.`, Claude Code reloads for you | The running session keeps its version and shows `Plugin updated: eachlabs · Run /reload-plugins to apply`. Run `/reload-plugins`, or the next session loads it |
-
-Changes to the cards come from the each::labs server, not from the plugin. A card always shows its current version, with no update or restart on your side.
-
-## Connector without the plugin
-
-Add the server URL as a custom connector. You get the same tools and the same sign-in, without the skills: you describe the task and Claude chooses the tools itself.
-
-<Steps>
-  <Step title="Open Customize > Connectors">
-    Go to **Customize > Connectors**.
-  </Step>
-  <Step title="Add a custom connector">
-    Click **Add custom connector**.
-  </Step>
-  <Step title="Enter the server URL">
-    Enter `https://mcp.eachlabs.ai/mcp`. Leave the OAuth client ID and secret empty; each::labs sets them up for you.
-  </Step>
-  <Step title="Add and connect">
-    Click **Add**, then **Connect**. The each::labs consent page opens; see [First sign-in](#first-sign-in).
-  </Step>
-</Steps>
-
-On the Free plan you can add one custom connector. In Claude Code, the connector alone is one command; see [Claude Code](#claude-code).
+Changes to the cards come from the each::labs server. A card always shows its current version, with no update or restart on your side.
 
 ## Team and Enterprise plans
 
-An Owner adds the plugin and its connector once for the organization, and each member then signs in with their own each::labs account. On Enterprise plans, a member whose custom role includes managing the organization's libraries can add them too.
+An Owner adds the connector once for the organization, and each member then connects it and signs in with their own each::labs account.
 
 Each member's each::labs account must belong to the each::labs organization that should pay for the runs, and the member picks that organization at sign-in. A member who signs in with a personal account and organization is billed there instead.
 
 <Tabs>
-  <Tab title="Owner: plugin">
-    <Steps>
-      <Step title="Open Plugins & skills">
-        Go to **Organization settings > Plugins & skills**.
-      </Step>
-      <Step title="Upload the plugin">
-        Select **Add**, then **Upload a plugin**, and choose the zip file from each::labs. The plugin appears on the **Inventory** tab.
-      </Step>
-      <Step title="Set who gets it">
-        Open the menu at the end of the plugin's row, select **Default access**, and choose **Available to install**, **Installed by default** or **Required**.
-      </Step>
-      <Step title="Add the connector too">
-        Availability does not add a plugin's bundled connector. Add the each::labs connector as the **Owner: connector** tab describes; members then connect it with their own account.
-      </Step>
-    </Steps>
-
-    To update the plugin for everyone, open the plugin's menu on the **Inventory** tab, select **Upload new version** and choose the newer zip. **Version history** on the plugin's page lists each version, and **Revert to this version** brings an earlier one back. Anthropic describes these settings under [Manage plugins for your organization](https://claude.com/docs/plugins/admin).
-  </Tab>
-  <Tab title="Owner: connector">
+  <Tab title="Owner">
     <Steps>
       <Step title="Open organization connectors">
         Go to **Organization settings > Connectors**.
@@ -254,16 +175,7 @@ Each member's each::labs account must belong to the each::labs organization that
     </Steps>
   </Tab>
   <Tab title="Member">
-    <Steps>
-      <Step title="Find the plugin">
-        Go to **Customize > Plugins**. With **Installed by default** or **Required**, the each::labs plugin is already in your list. With **Available to install**, find it under **Discover** and select **Add**.
-      </Step>
-      <Step title="Connect">
-        Open the plugin's **Connectors** tab and select **Connect**. The same **Connect** is under **Customize > Connectors**, on the connector with the **Custom** label. The each::labs consent page opens; see [First sign-in](#first-sign-in).
-      </Step>
-    </Steps>
-
-    A plugin your organization marks **Required** shows **This plugin is required by your organization**; you cannot turn it off or remove it.
+    Go to **Customize > Connectors**, find the each::labs connector with the **Custom** label and select **Connect**. The each::labs consent page opens; see [First sign-in](#first-sign-in).
   </Tab>
 </Tabs>
 
@@ -287,7 +199,7 @@ You can turn the connector off for one conversation: click the **+** button in t
 
 ## Give a file as input
 
-Most recipes start from your own photo, video or audio file. Tool inputs are URLs, and a file attached with Claude's paperclip stays inside Claude: it cannot reach a connector tool. When a model needs a file, Claude shows the each::labs **upload card** instead. Put the file on the card, not on the paperclip.
+Many requests start from your own photo, video or audio file. Tool inputs are URLs, and a file attached with Claude's paperclip stays inside Claude: it cannot reach a connector tool. When a model needs a file, Claude shows the each::labs **upload card** instead. Put the file on the card, not on the paperclip.
 
 | Step | What happens |
 | --- | --- |
@@ -306,14 +218,14 @@ If Claude does not pick the upload up on its own, the card shows **Send to the c
 
 | Limit | Value |
 | --- | --- |
-| File kinds | Image, video or audio, as the recipe asks for |
+| File kinds | Image, video or audio, as the model needs |
 | Files per card | One card takes a whole set: up to 50 files, or fewer when the chosen model accepts fewer. A card for one specific file, such as the face to use, takes exactly one |
 | File size | 100 MB per file |
 | Upload | Four files upload at a time; the rest wait their turn. Choosing more files than the card takes, or a file over 100 MB, is refused before anything uploads |
 | Time to pick | Claude waits for the card up to 60 seconds at a time. After each wait it reads any new message from you, then waits again. If it stops waiting before you are done, tell Claude when the upload is finished |
 | Storage | The file is kept for 180 days, or for your organization's own retention period, as with [Upload file](/storage/upload-file). Anyone who has the file's link can open it; links are long random addresses that are not listed anywhere |
 | Already have a URL | Paste a public URL in the message instead; no card is needed |
-| Claude Code | Does not show cards. Claude asks in the chat for a public link to the file instead; see [Claude Code](#claude-code) |
+| Claude Code | Does not show cards. Claude asks in the chat for a public link to the file instead |
 
 ## Cards in the conversation
 
@@ -332,27 +244,6 @@ A card that cannot load in your app says so and tells you what to give in the ch
 
 A card you already used stays locked on your choice when you come back to the conversation later. To see a result again, ask Claude to show it; it shows the file on a card without running anything.
 
-## Skills
-
-Claude loads a skill when your request matches its description. To pick one yourself, type `/` in the message box and choose it.
-
-| Skill | Use it for |
-| --- | --- |
-| `eachlabs-image-generation` | New images from a text prompt: Flux, GPT Image, Gemini, Imagen, Seedream and other model families |
-| `eachlabs-image-edit` | Editing an existing image: style transfer, background removal, upscaling, inpainting, virtual try-on, 3D, analysis |
-| `eachlabs-video-generation` | New videos from text, images or reference inputs: transitions, motion control, talking head, avatars |
-| `eachlabs-video-edit` | Editing an existing video: lip sync, translation, subtitles, audio merge, style transfer, extension |
-| `eachlabs-music` | Songs, instrumentals, lyrics and podcasts; song extension, stem separation, song recognition |
-| `eachlabs-voice-audio` | Text to speech, transcription with speaker labels, voice conversion |
-| `eachlabs-face-swap` | Swapping faces between images |
-| `eachlabs-fashion-ai` | Fashion model imagery, virtual try-on, runway videos, campaign visuals |
-| `eachlabs-product-visuals` | Product photography and videos for e-commerce: product shots, background replacement, lifestyle scenes, 360-degree views |
-| `eachlabs-workflows` | Running a workflow your organization built and reading its executions |
-| `gpt-image-v2` | OpenAI GPT Image v2 for text to image and instruction-based edits |
-| `bytedance-seedance-2-0` | ByteDance Seedance 2.0 for video with native audio, from text or from an image |
-
-The public [eachlabs/skills](https://github.com/eachlabs/skills) collection also has skills that run through each::sense, the each::labs agent. Access to each::sense is limited to specific organizations, so the plugin does not include those skills. Most of their tasks, such as background removal, upscaling or trimming, work through the skills and tools above.
-
 ## When a tool says running
 
 A tool waits about 20 seconds for its job. A job that takes longer, such as a long video or a multi-step workflow, shows as still running, and Claude checks again until the job is done, then shows the result. The job keeps running on each::labs the whole time. You do not need to ask; if Claude stops before the job is done, ask "is that job done?" and it checks again.
@@ -367,30 +258,11 @@ You are billed once, when the job runs, not for checking. Details are under [Lon
 
 Results are URLs to files on each::labs storage, kept as long as [uploads](#give-a-file-as-input). Download anything you want to keep longer. A data result, such as a transcript or an analysis, comes back as text without a card.
 
-## Claude Code
-
-The plugin installs as the **Claude Code** tab under [Add the plugin](#add-the-plugin) shows. To add only the connector, without the skills:
-
-```bash
-claude mcp add --transport http eachlabs https://mcp.eachlabs.ai/mcp
-```
-
-Run `/mcp` inside Claude Code, select `eachlabs`, and sign in when prompted. The tools appear once the sign-in completes.
-
-| Difference from Claude in the browser | What to do |
-| --- | --- |
-| Cards do not show | Claude asks in the chat for what a card would collect: a public link to the file, the start and end times, the crop area, the settings or your choice of variant. Results come back as text with their URLs |
-| A plugin update waits for a reload | Run `/reload-plugins`, or start Claude Code again |
-
 ## Remove it
 
 | What | Where |
 | --- | --- |
-| The plugin in claude.ai or Claude Desktop | **Customize > Plugins**, open the plugin, open its menu, select **Remove** |
 | The connector | **Customize > Connectors**, open the connector's menu, select **Remove**. A Team or Enterprise Owner removes the organization's copy under **Organization settings > Connectors** |
-| The plugin in Claude Code | `claude plugin uninstall eachlabs@eachlabs` |
 | The connector in Claude Code | `claude mcp remove eachlabs` |
-
-Removing the plugin keeps the connector, and removing the connector keeps the plugin's skills. Remove both to remove everything.
 
 Policies: [Acceptable Use](/video/acceptable-use) · [Abuse & Takedown](/video/abuse-and-takedown) · [Billing & Limits](/video/billing-limits)
