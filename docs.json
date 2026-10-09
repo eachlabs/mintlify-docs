@@ -41,14 +41,11 @@
         "groups": [
           {
             "group": "Getting Started",
-            "pages": [
-              "introduction",
-              "authentication",
-              {
-                "group": "MCP Server",
-                "pages": ["mcp-server", "mcp/claude-chat", "mcp/docs-search"]
-              }
-            ]
+            "pages": ["introduction", "authentication", "mcp/docs-search"]
+          },
+          {
+            "group": "MCP Server",
+            "pages": ["mcp-server", "mcp/claude-chat"]
           },
           {
             "group": "Reference",
