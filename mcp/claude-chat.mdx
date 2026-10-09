@@ -1,9 +1,9 @@
 ---
 title: "Use each::labs in Claude"
-description: "Connect each::labs to Claude on claude.ai, Claude Desktop, mobile and Claude Code. See what to ask, what the cards in the conversation do and how to sign in."
+description: "Connect each::labs to Claude on claude.ai, Claude Desktop and Claude Code. See what to ask, what the cards in the conversation do and how to sign in."
 ---
 
-This page is for people using Claude in the browser, in the Claude desktop app, on a phone, or in Claude Code. Other apps that support MCP connect as the [MCP Server](/mcp-server#connect) page describes.
+This page is for people using Claude in the browser, in the Claude desktop app, or in Claude Code. Other apps that support MCP connect as the [MCP Server](/mcp-server#connect) page describes.
 
 ## What you get
 
@@ -12,14 +12,14 @@ You add the hosted each::labs MCP server at `https://mcp.eachlabs.ai/mcp` to Cla
 A **card** is a small interactive panel that Claude shows inside the conversation: you upload a file on it, adjust a model's settings, pick one of several results, or choose a range on a timeline. When you press a card's button, Claude continues on its own; there is nothing to type.
 
 <Note>
-**Cards work only in AI apps with a chat interface**: claude.ai, Claude Desktop and the Claude mobile app. Terminal apps such as Claude Code show no cards. There, Claude gives you results as text with links, and asks you in the chat for anything a card would collect: a file link, times, a crop area, settings or which variant you want.
+**Cards work only in AI apps with a chat interface**, such as claude.ai and Claude Desktop. Terminal apps such as Claude Code show no cards. There, Claude gives you results as text with links, and asks you in the chat for anything a card would collect: a file link, times, a crop area, settings or which variant you want.
 </Note>
 
 The cards are [MCP Apps](https://modelcontextprotocol.io/extensions/apps/overview) served by the each::labs MCP server.
 
 ## What you can ask
 
-Ask in your own words. Claude chooses the model, builds its input and runs it. Each job is billed to the each::labs organization you chose at [sign-in](#first-sign-in). The examples below show cards, which appear in claude.ai, Claude Desktop and the mobile app. Claude Code has no cards, so for the same requests it shows results as links, and asks you to type in the chat what a card would let you click: a link to your file instead of uploading it, start and end times instead of dragging a timeline, a crop area in pixels instead of drawing a rectangle, setting values instead of a form, and the number of the variant you want instead of pressing **Use variant**.
+Ask in your own words. Claude chooses the model, builds its input and runs it. Each job is billed to the each::labs organization you chose at [sign-in](#first-sign-in). The examples below show cards, which appear in claude.ai and Claude Desktop. Claude Code has no cards, so for the same requests it shows results as links, and asks you to type in the chat what a card would let you click: a link to your file instead of uploading it, start and end times instead of dragging a timeline, a crop area in pixels instead of drawing a rectangle, setting values instead of a form, and the number of the variant you want instead of pressing **Use variant**.
 
 ### Generate images and pick one right in your AI conversation
 
@@ -140,7 +140,7 @@ Pick the tab for where you use Claude. On a Team or Enterprise plan, read [Team 
       </Step>
     </Steps>
 
-    On the Free plan you can add one custom connector. Connectors are saved to your account, so once you add it on the web or in the desktop app, the Claude mobile app has it too.
+    On the Free plan you can add one custom connector.
   </Tab>
   <Tab title="Claude Code">
     Add the connector from your shell:
@@ -209,7 +209,7 @@ Many requests start from your own photo, video or audio file. Tool inputs are UR
 | --- | --- |
 | 1 | You ask for the result you want: "turn this photo into a short clip". |
 | 2 | Claude shows the upload card and waits for your files. |
-| 3 | Drop the files on the card, or pick them with its button, such as **Choose a photo**. On a phone the button opens the photo library. |
+| 3 | Drop the files on the card, or pick them with its button, such as **Choose a photo**. |
 | 4 | The card uploads each file from your browser to each::labs storage and shows a thumbnail and progress. Nothing passes through Claude. |
 | 5 | When the card has every file it asked for, it hands them to Claude by itself. If you upload fewer than it takes, press **Done, send to the chat**. |
 | 6 | Claude receives the files' URLs and runs the model. |
