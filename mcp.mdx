@@ -62,9 +62,9 @@ A tool that starts a job waits up to about 20 seconds for it. A job that finishe
 
 Billing happens once, when the job runs, not per check. Long videos can take 5 to 10 minutes. The AI keeps checking until yours is ready, and asks you before trying a different model, so you are never charged for a run you did not ask for.
 
-### If a run's id gets lost
+### Recent runs
 
-A call that starts a job can still end without an answer: the connection drops or the reply is cut off. The job may be running and billed all the same. Instead of starting it again, the AI calls `list_recent_jobs`, finds the job among the organization's most recent runs and continues checking it with `get_job`. The list shows only each run's id, model, status, time and, once it is done, the output link; it never shows prompts or inputs. It covers the whole organization, as the runs list in the dashboard does.
+`list_recent_jobs` shows your organization's most recent runs, newest first: id, model, status, time and, once a run is done, its output link. The AI uses it to pick up a run it started earlier, for example after a brief connection interruption, and keeps checking that run with `get_job` rather than starting a new one. The list never includes prompts or inputs, and it shows the same runs as the runs list in your dashboard.
 
 ## Tools
 
@@ -82,14 +82,14 @@ One tool per [Video API capability](/video/capabilities): `transcode`, `trim`, `
 
 ### Model catalog and any model
 
-Three tools cover the whole model catalog, not only video, and `list_recent_jobs` finds a run whose id was lost. The three use the same catalog and the same prediction as [List models](/api/models/list-models) and [Create prediction](/api/predictions/create-prediction).
+Three tools cover the whole model catalog, not only video, and `list_recent_jobs` lists recent runs. The three use the same catalog and the same prediction as [List models](/api/models/list-models) and [Create prediction](/api/predictions/create-prediction).
 
 | Tool | Does | Scope |
 | --- | --- | --- |
 | `search_models` | Finds models by name; returns slug, name, type and pricing for each match | none |
 | `get_model_schema` | Returns a model's input schema, so an input can be built from it | none |
 | `run_model` | Runs a model by slug with an input matching its schema; returns the result, or the job id while it is still running. With `count` (1 to 8) it runs that many predictions of the same input and returns them together | `predictions:create` |
-| `list_recent_jobs` | Lists the organization's most recent runs, newest first: id, model, status, time and output link. Used only to find a run whose id was lost | `predictions:read` or `predictions:create` |
+| `list_recent_jobs` | Lists the organization's most recent runs, newest first: id, model, status, time and output link. Used to pick up a run the AI started earlier | `predictions:read` or `predictions:create` |
 
 ### Workflows
 
