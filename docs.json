@@ -46,7 +46,7 @@
               "authentication",
               {
                 "group": "MCP Server",
-                "pages": ["mcp-server", "mcp/claude-chat"]
+                "pages": ["mcp-server", "mcp/claude-chat", "mcp/docs-search"]
               }
             ]
           },
