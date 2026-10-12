@@ -45,7 +45,7 @@
           },
           {
             "group": "MCP Server",
-            "pages": ["mcp-server", "mcp-server/claude-chat"]
+            "pages": ["mcp-server", "mcp-server/claude-chat", "mcp-server/plugin"]
           },
           {
             "group": "Reference",
