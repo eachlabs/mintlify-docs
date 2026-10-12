@@ -501,7 +501,7 @@
           "Uploads"
         ],
         "summary": "Delete File",
-        "description": "Permanently delete a file you previously uploaded via the presign flow. Pass the `id`\nreturned by `POST /v1/upload/presign`. A successful delete removes the stored object, so the\nfile's `public_url` stops resolving. Deletes are idempotent — deleting a file that is already\ngone also returns `204`.\n",
+        "description": "Permanently delete a file in your organization: one you uploaded with `POST /v1/upload/presign`\nor one a model generated. Pass the file's `id`. A successful delete removes the stored object, so the\nfile's `public_url` stops resolving. Deletes are idempotent — deleting a file that is already\ngone also returns `204`.\n",
         "operationId": "deleteFile",
         "security": [
           {
@@ -513,7 +513,7 @@
             "name": "id",
             "in": "path",
             "required": true,
-            "description": "The file id returned by the presign step (the `id` field of the presign response).",
+            "description": "The file id: the `id` field of the presign response, or the File ID shown on the storage page.",
             "schema": {
               "type": "string",
               "format": "uuid"
