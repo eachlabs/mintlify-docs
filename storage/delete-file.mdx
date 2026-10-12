@@ -62,7 +62,7 @@ A successful delete returns `204 No Content` with an empty body.
 |--------|------|-------------|
 | `400` | `{"error": "invalid argument"}` | `id` is not a valid UUID. |
 | `401` | `{}` | Missing or invalid API key. |
-| `404` | `{"error": "file not found"}` | The file is not available to your organization. |
+| `404` | `{"error": "file not found"}` | No such file in your organization. |
 | `409` | `{"error": "conflict"}` | The file is still being processed and isn't in a deletable state yet. Retry once the upload has finished. |
 
 <Note>
