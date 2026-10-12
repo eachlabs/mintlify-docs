@@ -33,7 +33,7 @@ On the consent page you:
 | --- | --- |
 | Credential | An OAuth token that your client stores. It never appears in the conversation and is never shown to the model. |
 | Billed organization | The one chosen on the consent page. Every job behaves as if that organization had called the API itself, at the same prices as the REST API. |
-| Signing in again | Not needed. The token is refreshed in the background. To bill a different organization, disconnect the server in your client and connect again. |
+| Signing in again | The token is refreshed in the background while you use it. You sign in again after 30 days without use, or 90 days after you signed in, whichever comes first. To bill a different organization, disconnect the server in your client and connect again. |
 | If sign-in fails | If the consent page shows *organization has no runner credential*, open the [dashboard](https://www.eachlabs.ai) once as that organization and try again. |
 
 ## Scopes

@@ -18,20 +18,20 @@ One OAuth login — approve access in the browser and your agent is ready. No AP
 <Tabs>
   <Tab title="Claude Code">
     ```bash
-    claude mcp add --transport http eachlabs-video https://mcp.eachlabs.ai/mcp
+    claude mcp add --transport http eachlabs https://mcp.eachlabs.ai/mcp
     ```
 
-    Adding registers the server but does not connect it — it waits as pending approval. Run `/mcp` inside Claude Code, approve `eachlabs-video`, and log in when prompted; the video tools appear once the login completes.
+    Adding registers the server but does not connect it — it waits as pending approval. Run `/mcp` inside Claude Code, approve `eachlabs`, and log in when prompted; the video tools appear once the login completes.
   </Tab>
   <Tab title="Codex">
     ```bash
-    codex mcp add eachlabs-video --url https://mcp.eachlabs.ai/mcp --oauth-resource https://mcp.eachlabs.ai/mcp
+    codex mcp add eachlabs --url https://mcp.eachlabs.ai/mcp --oauth-resource https://mcp.eachlabs.ai/mcp
     ```
 
     The `add` command opens the OAuth flow in your browser. If you need to re-authenticate later:
 
     ```bash
-    codex mcp login eachlabs-video --scopes predictions:create,predictions:read
+    codex mcp login eachlabs --scopes predictions:create,predictions:read,workflows:run,workflows:read,uploads:create
     ```
   </Tab>
   <Tab title="Cursor">
@@ -40,7 +40,7 @@ One OAuth login — approve access in the browser and your agent is ready. No AP
     ```json
     {
       "mcpServers": {
-        "eachlabs-video": { "url": "https://mcp.eachlabs.ai/mcp" }
+        "eachlabs": { "url": "https://mcp.eachlabs.ai/mcp" }
       }
     }
     ```
@@ -54,7 +54,7 @@ One OAuth login — approve access in the browser and your agent is ready. No AP
     ```json
     {
       "mcpServers": {
-        "eachlabs-video": { "url": "https://mcp.eachlabs.ai/mcp" }
+        "eachlabs": { "url": "https://mcp.eachlabs.ai/mcp" }
       }
     }
     ```
@@ -63,7 +63,7 @@ One OAuth login — approve access in the browser and your agent is ready. No AP
 
 ## Headless and CI (API key)
 
-Environments without a browser (CI runners, servers) run the same MCP server locally over stdio, authenticated with an API key from **Settings → API Keys** in your [each::labs dashboard](https://www.eachlabs.ai/); jobs bill to the key's account. The local server is named `video` so it can coexist with the hosted `eachlabs-video`. Add the `mcpServers` entry to your client's stdio config — for Claude Code, `.mcp.json` in the project root:
+Environments without a browser (CI runners, servers) run the same MCP server locally over stdio, authenticated with an API key from **Settings → API Keys** in your [each::labs dashboard](https://www.eachlabs.ai/); jobs bill to the key's account. The local server is named `video` so it can coexist with the hosted `eachlabs`. Add the `mcpServers` entry to your client's stdio config — for Claude Code, `.mcp.json` in the project root:
 
 ```json
 {

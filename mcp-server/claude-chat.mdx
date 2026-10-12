@@ -191,7 +191,7 @@ Connecting opens the each::labs consent page in a new browser tab.
 2. Choose the **Organization**. The page states: *Predictions will run and bill as &lt;organization&gt;*. Every job you run from Claude is charged to this organization at the same prices as the API.
 3. Review the permissions listed (the [scopes](/mcp-server#scopes)) and click **Approve**.
 
-Claude stores the resulting token and refreshes it in the background; you do not sign in again. The token never appears in the conversation. To bill a different organization, disconnect the connector under **Customize > Connectors** and connect again.
+Claude stores the resulting token and refreshes it in the background while you use it. You sign in again after 30 days without use, or 90 days after you signed in, whichever comes first. The token never appears in the conversation. To bill a different organization, disconnect the connector under **Customize > Connectors** and connect again.
 
 If the page fails with *organization has no runner credential*, open the [dashboard](https://www.eachlabs.ai) once as that organization, then connect again.
 
