@@ -1,0 +1,47 @@
+---
+title: "each::labs plugin"
+description: "The each::labs plugin adds the each::labs MCP connector and skills for common media tasks to Claude and Codex, from the eachlabs/plugin marketplace."
+---
+
+The each::labs plugin adds each::labs to your AI app in one step. It bundles two things:
+
+| Part | What it is |
+| --- | --- |
+| Connector | The hosted each::labs MCP server at `https://mcp.eachlabs.ai/mcp`, with the model catalog, `run_model`, the workflow tools, the video tools and the cards. The [MCP Server](/mcp-server#tools) page lists them |
+| Skills | Twelve sets of instructions the AI follows for common media tasks: which model fits, which inputs it takes, which tool to call. See [Skills](#skills) |
+
+The connector alone gives you every tool and card; the skills help the AI choose the right model and inputs. To add only the connector, see [MCP Server](/mcp-server#connect).
+
+## Add the plugin
+
+The plugin is installed from its own marketplace, [`eachlabs/plugin`](https://github.com/eachlabs/plugin) on GitHub. Pick the page for your AI app:
+
+<CardGroup cols={2}>
+  <Card title="Claude" href="/plugin/claude">
+    claude.ai, Claude Desktop and Claude Code
+  </Card>
+  <Card title="Codex" href="/plugin/codex">
+    The Codex app and Codex CLI
+  </Card>
+</CardGroup>
+
+Every run is billed to the each::labs organization you choose at sign-in, as with the connector alone. Changes to the cards and tools come from the each::labs server, not from the plugin, so they reach you without a plugin update.
+
+## Skills
+
+The AI loads a skill when your request matches its description.
+
+| Skill | Use it for |
+| --- | --- |
+| `eachlabs-image-generation` | New images from a text prompt: Flux, GPT Image, Gemini, Imagen, Seedream and other model families |
+| `eachlabs-image-edit` | Editing an existing image: style transfer, background removal, upscaling, inpainting, virtual try-on, 3D, analysis |
+| `eachlabs-video-generation` | New videos from text, images or reference inputs: transitions, motion control, talking head, avatars |
+| `eachlabs-video-edit` | Editing an existing video: lip sync, translation, subtitles, audio merge, style transfer, extension |
+| `eachlabs-music` | Songs, instrumentals, lyrics and podcasts; song extension, stem separation, song recognition |
+| `eachlabs-voice-audio` | Text to speech, transcription with speaker labels, voice conversion |
+| `eachlabs-face-swap` | Swapping faces between images |
+| `eachlabs-fashion-ai` | Fashion model imagery, virtual try-on, runway videos, campaign visuals |
+| `eachlabs-product-visuals` | Product photography and videos for e-commerce: product shots, background replacement, lifestyle scenes, 360-degree views |
+| `eachlabs-workflows` | Running a workflow your organization built and reading its executions |
+| `gpt-image-v2` | OpenAI GPT Image v2 for text to image and instruction-based edits |
+| `bytedance-seedance-2-0` | ByteDance Seedance 2.0 for video with native audio, from text or from an image |
