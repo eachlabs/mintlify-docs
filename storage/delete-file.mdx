@@ -1,7 +1,7 @@
 ---
 title: "Delete File (each::storage)"
 sidebarTitle: "Delete File"
-description: "Permanently delete a file you previously uploaded."
+description: "Permanently delete a file in your organization."
 ---
 
 ## Overview
@@ -20,7 +20,7 @@ DELETE https://api.eachlabs.ai/v1/files/{id}
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `id` | string (UUID) | Yes | The file id returned by [Upload File](/storage/upload-file) — the `id` field of the presign response. |
+| `id` | string (UUID) | Yes | The file id: the `id` field of the [Upload File](/storage/upload-file) presign response, or the File ID shown on the storage page. |
 
 ### Code Examples
 
