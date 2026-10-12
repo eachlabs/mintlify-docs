@@ -48,8 +48,14 @@
             "pages": ["mcp-server", "mcp-server/claude-chat"]
           },
           {
-            "group": "each::labs plugin",
-            "pages": ["plugin", "plugin/claude", "plugin/codex"]
+            "group": "Plugins",
+            "pages": [
+              {
+                "group": "each::labs plugin",
+                "root": "plugin",
+                "pages": ["plugin/claude", "plugin/codex"]
+              }
+            ]
           },
           {
             "group": "Reference",
