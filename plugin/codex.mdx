@@ -1,0 +1,52 @@
+---
+title: "each::labs plugin for Codex"
+sidebarTitle: "Codex"
+description: "Add the each::labs plugin to the Codex app and Codex CLI from the eachlabs/plugin marketplace, sign in, keep it updated and remove it."
+---
+
+This page is for the Codex app and Codex CLI. What the plugin contains is on the [each::labs plugin](/plugin) page.
+
+## Add the plugin
+
+<Tabs>
+  <Tab title="Codex app">
+    Add the marketplace from your shell:
+
+    ```bash
+    codex plugin marketplace add eachlabs/plugin
+    ```
+
+    Then open **Plugins** in the Codex app and install the **each::labs** plugin. If Codex does not ask you to sign in, run `codex mcp login eachlabs`.
+  </Tab>
+  <Tab title="Codex CLI">
+    ```bash
+    codex plugin marketplace add eachlabs/plugin
+    codex plugin add eachlabs@eachlabs
+    codex mcp login eachlabs
+    ```
+
+    The last command opens the each::labs sign-in page in your browser.
+  </Tab>
+</Tabs>
+
+## Sign in
+
+Signing in opens the each::labs consent page in your browser.
+
+1. If you are not signed in to the each::labs dashboard, the page sends you through [sign-in](https://www.eachlabs.ai/sign-in) and back to the consent page.
+2. Choose the **Organization**. Every job you run from Codex is charged to this organization at the same prices as the API.
+3. Review the permissions listed (the [scopes](/mcp-server#scopes)) and click **Approve**.
+
+The sign-in lasts until 30 days without use, or 90 days after you signed in, whichever comes first. Then run `codex mcp login eachlabs` again.
+
+Cards show in the Codex app. Codex CLI runs in a terminal and has no cards; there Codex gives results as links and asks you in the chat for anything a card would collect.
+
+## Updates
+
+Run `codex plugin marketplace upgrade` to get the latest version from the marketplace.
+
+## Remove it
+
+```bash
+codex plugin remove eachlabs@eachlabs
+```
