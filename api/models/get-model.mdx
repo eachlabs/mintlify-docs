@@ -109,8 +109,8 @@ When `cost` is non-null, it contains these fields:
 | `description` | string | `Pricing is an estimate and may change as rates are updated.` |
 | `min` | number \| null | Minimum estimated USD amount per unit for usage-based pricing; otherwise `null` |
 | `max` | number \| null | Maximum estimated USD amount per unit for usage-based pricing; otherwise `null` |
-| `depends_on` | string[] | Public pricing dimensions, such as resolution or token type; may be empty |
-| `rows` | object[] | Price breakdown as `{label, value}` entries in USD per `unit`; may be empty |
+| `depends_on` | string[] | Inputs that change the price, such as resolution or duration, in the order row labels list them; may be empty |
+| `rows` | object[] | Price per option combination as `{label, value}` entries in USD per `unit`; see [Reading rows](#reading-rows); may be empty |
 
 <CodeGroup>
 ```json Fixed
@@ -134,14 +134,16 @@ When `cost` is non-null, it contains these fields:
   "type": "usage_based",
   "amount": null,
   "unit": "second",
-  "estimate": "$0.03–$0.12 per second, depending on resolution",
+  "estimate": "$0.03–$0.14 per second, depending on resolution and audio",
   "description": "Pricing is an estimate and may change as rates are updated.",
   "min": 0.03,
-  "max": 0.12,
-  "depends_on": ["resolution"],
+  "max": 0.14,
+  "depends_on": ["resolution", "audio"],
   "rows": [
     {"label": "480p", "value": 0.03},
-    {"label": "1080p", "value": 0.12}
+    {"label": "720p (default)", "value": 0.06},
+    {"label": "1080p", "value": 0.12},
+    {"label": "+ audio", "value": 0.02}
   ]
 }
 ```
@@ -152,6 +154,16 @@ charge. For usage-based pricing, `min` and `max` are rates per `unit`, not the
 minimum and maximum total price of a request. Estimates may change when model
 pricing changes. Use `metrics.cost` on the resulting prediction or workflow
 execution for the settled value.
+
+### Reading rows
+
+`rows` gives the price of each option combination, so you can estimate a request before you send it.
+
+- A base row's label lists the option values in `depends_on` order, joined by ` · `, such as `720p · 5 s`. Its `value` is the price per `unit` for that combination.
+- A label that starts with `+ ` is an add-on, such as `+ audio`. Its `value` is added to the base row when the request turns that option on. When an add-on has its own unit, the label names it, such as `+ each input image`.
+- The label that ends in ` (default)` is the combination used when you leave the inputs unset.
+
+To estimate a request, take the base row that matches its options (or the default row), add each `+ ` row the request turns on, and multiply by the quantity of `unit`: seconds of output, images, or one generation or execution. With the usage-based example above, 10 seconds at 1080p with audio is about (0.12 + 0.02) × 10 = $1.40. Some models still show older labels, such as `default`, while their rows are updated.
 
 `Usage-based pricing` with `unit`, `amount`, `min`, and `max` all `null` means
 no reliable public rate is listed. It does not mean the model is free. A free
