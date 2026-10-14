@@ -2931,8 +2931,8 @@
           },
           "expires_in_seconds": {
             "type": "integer",
-            "description": "How long the stored file is retained before automatic deletion, in seconds. Sets `expires_at` in the response. Defaults to 180 days when omitted; clamped to a minimum of 60 seconds and a maximum of 365 days (31536000). Does not affect the 15-minute upload-URL lifetime.",
-            "minimum": 60,
+            "description": "Requested retention for the stored file, in seconds. Used only when the organization has no saved storage retention policy; a saved policy (a custom duration or Never expires) overrides it in both directions. Without a saved policy: omitted means the 180-day platform default; 60 to 31536000 (365 days) is used as given; other positive values are clamped to that range; `0` and other values below 60 become 60 seconds, not no expiry; `-1` requests no expiry (no automatic retention deletion, not a guarantee the file stays available). Check `expires_at` in the response for the effective result. Does not affect the 15-minute upload-URL lifetime.",
+            "minimum": -1,
             "maximum": 31536000,
             "example": 604800
           }
@@ -2961,7 +2961,7 @@
           "expires_at": {
             "type": "string",
             "format": "date-time",
-            "description": "When the stored file is automatically deleted (its retention deadline). Defaults to 180 days out; controlled by `expires_in_seconds`. Not the upload-URL deadline — the presigned URL only accepts uploads for 15 minutes after issuance.",
+            "description": "When the stored file is automatically deleted (its effective retention deadline), counted from when the presign request is created. Present when the file has a deadline and omitted when the effective retention is no expiry. It reflects the organization policy, `expires_in_seconds` and the 180-day default, whichever applied; read it rather than assuming `expires_in_seconds: -1` achieved no expiry. Not the upload-URL deadline: the presigned URL only accepts uploads for 15 minutes after issuance.",
             "example": "2026-12-08T18:15:00Z"
           },
           "required_headers": {
