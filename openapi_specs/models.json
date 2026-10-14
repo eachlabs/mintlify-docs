@@ -2105,7 +2105,7 @@
               },
               "depends_on": {
                 "type": "array",
-                "description": "Public pricing dimensions, such as resolution or token type. May be empty.",
+                "description": "Inputs that change the price, such as resolution or duration, in the order row labels list them. May be empty.",
                 "items": {
                   "type": "string"
                 },
@@ -2115,7 +2115,7 @@
               },
               "rows": {
                 "type": "array",
-                "description": "Optional price breakdown in USD per unit. May be empty.",
+                "description": "Price per option combination in USD per unit. A base row's label lists the option values in depends_on order joined by \" · \"; a label starting with \"+ \" is an add-on added to the base row when the request turns it on; the label ending in \" (default)\" is the combination used when inputs are omitted. May be empty.",
                 "items": {
                   "type": "object",
                   "required": [
@@ -2125,7 +2125,8 @@
                   "properties": {
                     "label": {
                       "type": "string",
-                      "example": "480p"
+                      "description": "Option values joined by \" · \", an add-on starting with \"+ \", or a combination ending in \" (default)\".",
+                      "example": "720p · 5 s"
                     },
                     "value": {
                       "type": "number",
