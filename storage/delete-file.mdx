@@ -1,12 +1,12 @@
 ---
 title: "Delete File (each::storage)"
 sidebarTitle: "Delete File"
-description: "Permanently delete a file you previously uploaded."
+description: "Permanently delete a file in your organization."
 ---
 
 ## Overview
 
-Permanently deletes a file you uploaded with [Upload File](/storage/upload-file). Pass the `id` returned by the presign step. A successful delete removes the stored object, so the file's `public_url` stops resolving.
+Permanently deletes a file in your organization: one you uploaded with [Upload File](/storage/upload-file) or one a model generated. Pass the file's `id`, returned by the presign step for uploads and listed on the storage page for every file. A successful delete removes the stored object, so the file's `public_url` stops resolving.
 
 Deletes are **idempotent** — deleting a file that's already gone returns the same `204 No Content`.
 
@@ -20,7 +20,7 @@ DELETE https://api.eachlabs.ai/v1/files/{id}
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `id` | string (UUID) | Yes | The file id returned by [Upload File](/storage/upload-file) — the `id` field of the presign response. |
+| `id` | string (UUID) | Yes | The file id: the `id` field of the [Upload File](/storage/upload-file) presign response, or the File ID shown on the storage page. |
 
 ### Code Examples
 
@@ -66,5 +66,5 @@ A successful delete returns `204 No Content` with an empty body.
 | `409` | `{"error": "conflict"}` | The file is still being processed and isn't in a deletable state yet. Retry once the upload has finished. |
 
 <Note>
-  Deletes are permanent and idempotent. A successful delete removes the stored object, so any `public_url` for the file stops resolving. Deleting a file that was already deleted — or never existed in your account — also returns `204`.
+  Deletes are permanent and idempotent. A successful delete removes the stored object, so any `public_url` for the file stops resolving. Deleting a file that was already deleted, or an id that never existed, also returns `204`.
 </Note>
