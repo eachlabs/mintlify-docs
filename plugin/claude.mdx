@@ -1,0 +1,68 @@
+---
+title: "each::labs plugin for Claude"
+sidebarTitle: "Claude"
+description: "Add the each::labs plugin to claude.ai, Claude Desktop and Claude Code from the eachlabs/plugin marketplace, connect it, keep it updated and remove it."
+---
+
+This page is for claude.ai, Claude Desktop and Claude Code. What the plugin contains is on the [each::labs plugin](/plugin) page; what to ask and what the cards do is on [Use each::labs in Claude](/mcp-server/claude-chat#what-you-can-ask).
+
+On a Team or Enterprise plan, read [Team and Enterprise plans](#team-and-enterprise-plans) first.
+
+## Add the plugin
+
+<Tabs>
+  <Tab title="claude.ai and Claude Desktop">
+    The steps are the same in the browser and in the desktop app. **Customize** is the page that holds your connectors, skills and plugins.
+
+    <Steps>
+      <Step title="Open Customize > Plugins">
+        Go to **Customize > Plugins**.
+      </Step>
+      <Step title="Add the each::labs marketplace">
+        Select **Add > Add marketplace** and enter `eachlabs/plugin`.
+      </Step>
+      <Step title="Add the plugin">
+        Open the **each::labs** plugin and select **Add**.
+      </Step>
+      <Step title="Connect the connector">
+        Adding a plugin does not sign you in. Open the plugin's **Connectors** tab. If the each::labs connector shows **Not added**, add it there, then select **Connect**. The each::labs consent page opens; see [First sign-in](/mcp-server/claude-chat#first-sign-in).
+      </Step>
+    </Steps>
+
+    The skills load whether or not you connect, but they cannot reach each::labs until the connector shows **Connected**. A plugin added here is saved to your account, so it is also available in Claude Code when you sign in there with the same account.
+  </Tab>
+  <Tab title="Claude Code">
+    From your shell:
+
+    ```bash
+    claude plugin marketplace add eachlabs/plugin
+    claude plugin install eachlabs@eachlabs
+    ```
+
+    Inside a Claude Code session, the same commands are `/plugin marketplace add eachlabs/plugin` and `/plugin install eachlabs@eachlabs`. Then run `/mcp`, select `eachlabs` and sign in when prompted; see [First sign-in](/mcp-server/claude-chat#first-sign-in).
+  </Tab>
+</Tabs>
+
+Cards show in claude.ai and Claude Desktop. Claude Code runs in a terminal and has no cards; there Claude gives results as links and asks you in the chat for anything a card would collect.
+
+To pick a skill yourself, type `/` in the message box and choose it.
+
+## Updates
+
+| App | How a new version arrives |
+| --- | --- |
+| claude.ai, Claude Desktop | Select **Check for updates** on the each::labs marketplace under **Customize > Plugins**, or turn on **Sync automatically** for it. Once a new version has synced, your account has it, with nothing to accept |
+| Claude Code | Auto-update is off for marketplaces other than Anthropic's own. Turn it on for `eachlabs` under `/plugin`, on the **Marketplaces** tab, or update by hand with `claude plugin update eachlabs@eachlabs`, then run `/reload-plugins` |
+
+## Team and Enterprise plans
+
+An Owner can add the connector `https://mcp.eachlabs.ai/mcp` once for the whole organization, as [Team and Enterprise plans](/mcp-server/claude-chat#team-and-enterprise-plans) describes. Each member then adds the `eachlabs/plugin` marketplace and the plugin themselves, and signs in with their own each::labs account.
+
+That account must belong to the each::labs organization that should pay for the runs. A member who signs in with a personal account is billed there instead.
+
+## Remove it
+
+| App | How |
+| --- | --- |
+| claude.ai, Claude Desktop | **Customize > Plugins**, open the plugin, open its menu and select **Remove**. The connector stays under **Customize > Connectors** until you remove it there |
+| Claude Code | `claude plugin uninstall eachlabs@eachlabs` |
