@@ -2931,8 +2931,8 @@
           },
           "expires_in_seconds": {
             "type": "integer",
-            "description": "How long the stored file is retained before automatic deletion, in seconds. Sets `expires_at` in the response. Defaults to 180 days when omitted; clamped to a minimum of 60 seconds and a maximum of 365 days (31536000). Does not affect the 15-minute upload-URL lifetime.",
-            "minimum": 60,
+            "description": "How long the stored file is retained before automatic deletion, in seconds. Sets `expires_at` in the response. Defaults to 180 days when omitted; values from 60 to 31536000 (365 days) are used as given, and other values are clamped to that range (so `0` becomes 60 seconds, not no expiry). Send `-1` to store the file with no expiry; `expires_at` is then omitted from the response. An organization-wide storage retention policy, if set, takes precedence. Does not affect the 15-minute upload-URL lifetime.",
+            "minimum": -1,
             "maximum": 31536000,
             "example": 604800
           }
@@ -2961,7 +2961,7 @@
           "expires_at": {
             "type": "string",
             "format": "date-time",
-            "description": "When the stored file is automatically deleted (its retention deadline). Defaults to 180 days out; controlled by `expires_in_seconds`. Not the upload-URL deadline — the presigned URL only accepts uploads for 15 minutes after issuance.",
+            "description": "When the stored file is automatically deleted (its retention deadline). Defaults to 180 days out; controlled by `expires_in_seconds`. Omitted when the file has no expiry (`expires_in_seconds` of `-1`, or an organization policy of Never expires). Not the upload-URL deadline — the presigned URL only accepts uploads for 15 minutes after issuance.",
             "example": "2026-12-08T18:15:00Z"
           },
           "required_headers": {

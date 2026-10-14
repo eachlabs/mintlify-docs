@@ -32,7 +32,7 @@ POST https://api.eachlabs.ai/v1/upload/presign
 |-------|------|----------|-------------|
 | `content_type` | string | Yes | MIME type of the file (e.g., `image/png`, `video/mp4`, `audio/mpeg`). |
 | `file_type` | string | No | High-level category. One of `image`, `video`, `audio`, `other`. |
-| `expires_in_seconds` | integer | No | How long the stored file is retained before it's automatically deleted, in **seconds**. Sets the `expires_at` in the response. Defaults to **180 days** when omitted; clamped to a minimum of **60 seconds** and a maximum of **365 days** (`31536000`). Does **not** affect the 15-minute upload-URL lifetime. |
+| `expires_in_seconds` | integer | No | How long the stored file is retained before it's automatically deleted, in **seconds**. Omit it for the default of **180 days**. Send an integer from `60` to `31536000` (365 days) for a custom window — smaller or larger values are clamped to that range. Send **`-1`** to store the file with **no expiry** (see [Keep a file with no expiry](#keep-a-file-with-no-expiry)). Any other value below `60`, including `0`, is clamped to `60` seconds — it does **not** mean "never". An organization-wide [storage retention policy](#organization-wide-retention-policy) overrides this field. Does **not** affect the 15-minute upload-URL lifetime. |
 
 ### Code Examples
 
@@ -102,8 +102,90 @@ const { presigned_url, public_url, required_headers } = await resp.json();
 | `id` | string | Internal upload identifier. |
 | `presigned_url` | string | Short-lived URL to `PUT` the file to. |
 | `public_url` | string | Stable URL to pass as a model input once the upload succeeds. |
-| `expires_at` | string | ISO-8601 timestamp when the **stored file** is automatically deleted (its retention deadline). Defaults to 180 days out; set a custom window with `expires_in_seconds`. This is **not** the upload-URL deadline — `presigned_url` itself only accepts uploads for 15 minutes after issuance (see [Limits](#limits)). |
+| `expires_at` | string | ISO-8601 timestamp when the **stored file** is automatically deleted (its retention deadline). Defaults to 180 days out; set a custom window with `expires_in_seconds`. **Omitted** when the file has no expiry (`expires_in_seconds: -1` or an organization policy of *Never expires*). This is **not** the upload-URL deadline — `presigned_url` itself only accepts uploads for 15 minutes after issuance (see [Limits](#limits)). |
 | `required_headers` | object | Headers that **must** be sent verbatim on the `PUT` request. The presigned URL is signed for these exact values — missing or modified headers will fail with a signature mismatch. May be empty. |
+
+## Keep a file with no expiry
+
+By default an uploaded file is deleted automatically after 180 days. To keep a file until you delete it yourself, send `expires_in_seconds` with the value **`-1`** when you request the presigned URL:
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.eachlabs.ai/v1/upload/presign \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer ***" \
+  -d '{
+    "content_type": "image/png",
+    "file_type": "image",
+    "expires_in_seconds": -1
+  }'
+```
+
+```python Python
+import requests
+
+resp = requests.post(
+    "https://api.eachlabs.ai/v1/upload/presign",
+    headers={
+        "Content-Type": "application/json",
+        "Authorization": "Bearer ***",
+    },
+    json={
+        "content_type": "image/png",
+        "file_type": "image",
+        "expires_in_seconds": -1,
+    },
+)
+data = resp.json()
+print(data["public_url"])
+```
+
+```javascript JavaScript
+const resp = await fetch("https://api.eachlabs.ai/v1/upload/presign", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    "Authorization": "Bearer ***",
+  },
+  body: JSON.stringify({
+    content_type: "image/png",
+    file_type: "image",
+    expires_in_seconds: -1,
+  }),
+});
+const { presigned_url, public_url, required_headers } = await resp.json();
+```
+</CodeGroup>
+
+The response has no `expires_at` field, because the file has no deletion deadline:
+
+```json
+{
+  "id": "0dce0f44-b8a5-4f30-91d4-5f6b0c221bf0",
+  "presigned_url": "https://eachlabs-storage.s3.amazonaws.com/uploads/...?X-Amz-Algorithm=...&X-Amz-Signature=***",
+  "public_url": "https://cdn-us.eachlabs.ai/uploads/0dce0f44-b8a5-4f30-91d4-5f6b0c221bf0.png",
+  "required_headers": {
+    "x-amz-meta-file-id": "0dce0f44-b8a5-4f30-91d4-5f6b0c221bf0"
+  }
+}
+```
+
+Then upload the bytes as usual in step 2 below.
+
+<Warning>
+  Only `-1` means "no expiry". `0` and other values below `60` are clamped to **60 seconds**, so the file is deleted after about a minute. Omitting `expires_in_seconds` keeps the 180-day default.
+</Warning>
+
+A file with no expiry stays until you remove it with [Delete File](/storage/delete-file). The presigned upload URL still lasts only 15 minutes, so complete the `PUT` right away — a presign request whose file is never uploaded is cleaned up after about a day, even when it was requested with `-1`.
+
+### Organization-wide retention policy
+
+Organization owners can also set a retention policy for all future uploads in **Organization settings → Storage file retention** in the [dashboard](https://www.eachlabs.ai): choose a custom duration (up to 365 days) or **Never expires**.
+
+- When your organization has a policy, it **takes precedence** over `expires_in_seconds` on every new upload. For example, if the policy is a custom 30-day window, a request with `expires_in_seconds: -1` is still stored for 30 days. If you want every new file kept with no expiry, set the policy to **Never expires**.
+- A policy applies to **future** files only. Files that already exist keep the expiry they were stored with, and changing the policy does not extend them.
+- The policy also governs files generated by your model and workflow runs. Per-request `expires_in_seconds` applies only to files you upload with this endpoint.
+- Some upload paths, such as video compression, have their own expiry handling.
 
 ## Step 2 — Upload the file
 
@@ -160,7 +242,7 @@ A `200 OK` from the `PUT` means the file is live. Use `public_url` as the input 
 |-------|-------|-------|
 | Max file size | **100 MB** per upload | |
 | Presigned URL lifetime | **15 minutes** | How long `presigned_url` accepts the `PUT`, measured from issuance. This is **not** returned in the response; request a new presign if it lapses. |
-| Stored file retention | **180 days** (default) | How long the uploaded file is kept before automatic deletion — the value reported by `expires_at`. Override per upload with `expires_in_seconds` (min 60 seconds, max 365 days). |
+| Stored file retention | **180 days** (default) | How long the uploaded file is kept before automatic deletion — the value reported by `expires_at`. Override per upload with `expires_in_seconds` (min 60 seconds, max 365 days), or send `-1` for no expiry. An [organization retention policy](#organization-wide-retention-policy), if set, takes precedence. |
 
 ## Error Responses
 
@@ -171,5 +253,5 @@ A `200 OK` from the `PUT` means the file is live. Use `public_url` as the input 
 | `500` | `{"error": "Failed to generate presigned URL"}` | Server error. |
 
 <Note>
-  The presigned URL expires **15 minutes** after it's issued — this is separate from `expires_at`, which reports when the **stored file** is deleted (default 180 days), not the upload deadline. Upload soon after requesting; if the URL lapses, just request a new one.
+  The presigned URL expires **15 minutes** after it's issued — this is separate from `expires_at`, which reports when the **stored file** is deleted (default 180 days; absent when the file has no expiry), not the upload deadline. Upload soon after requesting; if the URL lapses, just request a new one.
 </Note>
