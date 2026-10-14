@@ -34,6 +34,17 @@ It's also the layer each::labs uses to deliver results: model and workflow outpu
 
 Every file you upload or that a model generates shows up on the [storage page](https://www.eachlabs.ai/storage) in your dashboard. Filter by **model**, file type, source (uploaded inputs vs. generated outputs), execution, or date range to find exactly what you need.
 
+## Delete a file from the dashboard
+
+Organization owners can delete files from the dashboard:
+
+- **Storage page**: open the **⋯** menu on a file and choose **Delete**.
+- **A run's page**: choose the delete button under the output, next to **Download** and **Copy**. If the run produced several files, pick the one to delete.
+
+Every delete asks you to confirm first. Deleting is permanent: the file's link stops working everywhere, including in runs and workflows that reused it.
+
+Members who are not owners don't see delete controls in the dashboard. To delete files from your code, use [Delete File](/storage/delete-file).
+
 ## Limits
 
 | Limit | Value |
