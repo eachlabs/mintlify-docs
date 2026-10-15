@@ -32,21 +32,27 @@ corresponding OpenAI SDK method. Call it directly over HTTP.
 
 ### Supported models
 
-The following models are enabled on the production Decisions endpoint:
+The list of decision models changes as models are added or retired, so read it
+from the API instead of hard-coding it:
 
-| Model | Model ID |
-|-------|----------|
-| TypeSafe Jev 1.13 | `typesafe/jev-1.13` |
-| OpenAI GPT-6 Luna Decisions | `openai/gpt-6-luna-decisions` |
-| LiquidAI d1 | `liquid/d1` |
-| Perplexity Decider V1 27B | `perplexity/pplx-decider-v1-27b` |
-| Upstage Solar Decide | `upstage/solar-decide` |
-| Inception Mercury Decide (free) | `inception/mercury-decide:free` |
-| Cloudflare Clef Flash | `cloudflare/clef-flash` |
-| Cloudflare Clef | `cloudflare/clef` |
+```bash
+curl https://api.eachlabs.ai/v1/decisions/models \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
 
-Use the model ID exactly as shown. The examples below use `typesafe/jev-1.13`;
-replace it with another listed ID to select that model.
+```json
+{
+  "models": [
+    { "id": "cloudflare/clef" },
+    { "id": "liquid/d1" },
+    { "id": "typesafe/jev-1.13" }
+  ]
+}
+```
+
+Every `id` in the response is accepted as `model`. Use it exactly as returned.
+The examples below use `typesafe/jev-1.13`; replace it with another listed ID to
+select that model.
 
 ## Endpoint
 
@@ -90,7 +96,8 @@ array. The response preserves your question names as the keys of `answers`.
 
 <Warning>
   Streaming, asynchronous mode, provider overrides, webhooks, and client-supplied
-  `metadata` or `source` are not supported on this endpoint. Sending them — or an
+  `metadata` or `source` are not supported on this endpoint. For asynchronous
+  runs and webhooks, [run Decisions as a model](#run-as-a-model) instead. Sending them — or an
   `X-Provider` or webhook header — returns `400`. Organization, user, execution,
   and source identity are always taken from the authenticated key.
 </Warning>
@@ -212,6 +219,107 @@ Every answer carries the question's `type`. The remaining fields depend on it:
 
 When the upstream returns a decision `id`, it is included in the response.
 
+## Run as a model
+
+Decisions is also available as the `eachlabs-decisions` model, so you can run it
+like any other each::labs model: through `POST /v1/prediction`, in the
+playground, and as a step in a workflow. The `input` takes the same `model`,
+`state`, and `questions` fields as the request body above.
+
+<CodeGroup>
+```bash cURL
+curl -X POST https://api.eachlabs.ai/v1/prediction \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -d '{
+    "model": "eachlabs-decisions",
+    "input": {
+      "model": "typesafe/jev-1.13",
+      "state": "The sky is blue today.",
+      "questions": {
+        "relevant": {
+          "type": "noul",
+          "instructions": "Does this mention the sky?"
+        }
+      }
+    }
+  }'
+```
+
+```python Python
+import requests
+
+response = requests.post(
+    "https://api.eachlabs.ai/v1/prediction",
+    headers={
+        "Authorization": "Bearer YOUR_API_KEY",
+        "Content-Type": "application/json",
+    },
+    json={
+        "model": "eachlabs-decisions",
+        "input": {
+            "model": "typesafe/jev-1.13",
+            "state": "The sky is blue today.",
+            "questions": {
+                "relevant": {
+                    "type": "noul",
+                    "instructions": "Does this mention the sky?",
+                },
+            },
+        },
+    },
+    timeout=30,
+)
+response.raise_for_status()
+
+print(response.json()["predictionID"])
+```
+</CodeGroup>
+
+The call returns a prediction ID. Poll `GET /v1/prediction/{id}`, or pass a
+`webhook_url`, until `status` is `success`. The `output` has the same `answers`,
+`model`, and `usage` fields as a [direct response](#response):
+
+```json
+{
+  "status": "success",
+  "output": {
+    "answers": { "relevant": { "type": "noul", "noul": 1 } },
+    "model": "typesafe/jev-1.13",
+    "usage": { "input_tokens": 278, "output_tokens": 22, "cost": 0.0000123 }
+  }
+}
+```
+
+An unsupported `input.model` returns `400` with a message naming the ID.
+
+### In a workflow
+
+Add an `eachlabs-decisions` model step, then branch on or pass along its answers
+with a [`$.` reference](/workflows/concepts/parameter-references) to
+`$.<step_id>.primary.answers.<question>`:
+
+```json
+{
+  "id": "decide",
+  "type": "model",
+  "model": "eachlabs-decisions",
+  "params": {
+    "model": "typesafe/jev-1.13",
+    "state": "$.inputs.ticket",
+    "questions": {
+      "color": {
+        "type": "choice",
+        "instructions": "Which color does the ticket ask for?",
+        "criteria": { "red": null, "blue": null }
+      }
+    }
+  }
+}
+```
+
+A later step reads the selected option with `$.decide.primary.answers.color.choice`.
+
 ## Error responses
 
 Errors use the same shape as the rest of each::api:
@@ -228,7 +336,7 @@ Errors use the same shape as the rest of each::api:
 
 | Status | `type` | Description |
 |--------|--------|-------------|
-| `400` | `invalid_request_error` | The body is not a JSON object, contains an unsupported field, or has no valid questions. |
+| `400` | `invalid_request_error` | The body is not a JSON object, contains an unsupported field, has no valid questions, or names a model that is not in [the supported list](#supported-models). |
 | `401` | `authentication_error` | The API key is missing or invalid. |
 | `402` | `insufficient_quota` | The organization's balance is below the minimum for an execution. |
 | `404` | `not_found_error` | The Decisions API is not enabled for your account or environment. |
