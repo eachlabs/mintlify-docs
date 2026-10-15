@@ -4,6 +4,14 @@ description: "Product updates and releases from each::labs"
 rss: true
 ---
 
+<Update label="October 15, 2026" description="LLM Router" rss={{ title: "Run Decisions as a model and in workflows", description: "LLM Router" }}>
+  ## [Run Decisions as a model](/llm-router/decisions#run-as-a-model)
+
+  - The Decisions API is now available as the `eachlabs-decisions` model: run it with `POST /v1/prediction`, from the playground, or as a workflow step that later steps branch on.
+  - Runs through `/v1/prediction` are asynchronous, so you can poll the prediction or receive a webhook.
+  - `GET /v1/decisions/models` lists the supported decision model IDs, and the playground's model dropdown uses the same list.
+</Update>
+
 <Update label="October 14, 2026" description="each::storage" rss={{ title: "Delete files from the dashboard", description: "each::storage" }}>
   ## [Delete files from the dashboard](/storage/overview#delete-a-file-from-the-dashboard)
 
