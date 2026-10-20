@@ -176,28 +176,6 @@ Make HTTP requests to external APIs or services.
 
 ---
 
-## Python Steps
-
-Execute Python code within the workflow.
-
-```json
-{
-  "id": "transform_data",
-  "type": "python",
-  "code": "result = inputs['text'].upper()",
-  "inputs": {
-    "text": "{{step1.primary}}"
-  }
-}
-```
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `code` | string | Yes | Python code to execute |
-| `inputs` | object | No | Input variables available in the code (supports template variables) |
-
----
-
 ## Parallel Steps (Branching)
 
 Use `type: "parallel"` to run multiple branches concurrently. Each branch contains its own sequence of steps that execute independently.
