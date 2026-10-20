@@ -54,7 +54,8 @@
                 "group": "each::labs plugin",
                 "root": "plugin",
                 "pages": ["plugin/claude", "plugin/codex"]
-              }
+              },
+              "integrations/blender"
             ]
           },
           {
