@@ -324,7 +324,7 @@ Tested, complete examples: https://docs.eachlabs.ai/workflows/overview
 | `choice` | Route to `condition_met_branch` or `default_branch` |
 | `pass` | Return a fixed `result` (no `$.` resolution inside it) |
 
-HTTP requests and Python code are not step types: they run as model steps through `eachlabs-http-step` (`url`, `method`, `headers`, `query_params`, `body`, `timeout_seconds`, `fail_on_status: "non_2xx"`) and `eachlabs-python-step` (private beta).
+HTTP requests are not a step type: they run as model steps through `eachlabs-http-step` (`url`, `method`, `headers`, `query_params`, `body`, `timeout_seconds`, `fail_on_status: "non_2xx"`).
 
 ```json
 {

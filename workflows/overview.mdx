@@ -50,9 +50,9 @@ Follow these and a workflow runs on the first try.
 4. **Prompt fields quote whole references.** If a `prompt`-like field (`prompt`, `text`, `content`,
    `message`, `caption`, `title`, `description`) is exactly `$.step.primary` or `$.step.output`, the
    value arrives wrapped in quotes. Reference a deeper field or embed it in a sentence.
-5. **Step types are `model`, `parallel`, `choice` and `pass`.** HTTP requests and Python code are
-   not step types; they run as model steps through `eachlabs-http-step` and `eachlabs-python-step`
-   (private beta). See [HTTP steps](/workflows/concepts/workflow-structure#http-steps).
+5. **Step types are `model`, `parallel`, `choice` and `pass`.** HTTP requests are not a step type;
+   they run as model steps through `eachlabs-http-step`. See
+   [HTTP steps](/workflows/concepts/workflow-structure#http-steps).
 6. **Every step needs a unique `id`**, including steps inside branches. A step can only reference
    inputs and steps that ran before it.
 7. **Inputs** live in `input_schema.properties`. Each field takes `type` (`string`, `number`,
@@ -477,8 +477,7 @@ Inputs: `{"product_id": "27"}`
   `POST`, `PUT` or `PATCH`), `timeout_seconds` (up to 30 recommended) and `fail_on_status`.
 - Set `fail_on_status` to `"non_2xx"` so an error response stops the run.
 - To run your own code, deploy it as an HTTPS endpoint (a serverless function is enough), `POST`
-  the inputs to it, and read its JSON reply in the next step. Organizations in the private beta can
-  use the `eachlabs-python-step` model instead.
+  the inputs to it, and read its JSON reply in the next step.
 - Only public URLs are reachable. Definitions are stored, so use scoped, read-only tokens in `headers`.
 
 ### 7. Let AI choose the path
