@@ -73,14 +73,15 @@ Authorization: Bearer YOUR_API_KEY
 
 ## Request body
 
-The body has exactly three fields: `model`, `state`, and `questions`. Any other
-field is rejected.
+The body takes `model`, `state`, `questions`, and an optional `images` field.
+Any other field is rejected.
 
 | Field | Type | Description |
 |-------|------|-------------|
 | `model` | string | The decision model ID. See [Supported models](#supported-models). |
 | `state` | string \| object \| array | The shared context every question is evaluated against. |
 | `questions` | object | A map of question names to typed questions. At least one is required. |
+| `images` | array of strings | Optional images to evaluate with `state`. See [Images](#images). |
 
 Each question is an object with a `type`, `instructions`, and — depending on the
 type — `criteria`:
@@ -101,6 +102,48 @@ array. The response preserves your question names as the keys of `answers`.
   `X-Provider` or webhook header — returns `400`. Organization, user, execution,
   and source identity are always taken from the authenticated key.
 </Warning>
+
+## Images
+
+Models that read images also evaluate images sent with the request. Pass them in
+`images`. Each entry can be an image URL, a base64 data URL, or plain base64:
+
+```json
+{
+  "model": "cloudflare/clef",
+  "state": "Analyze the person in the image.",
+  "images": ["https://example.com/photo.jpg"],
+  "questions": {
+    "hair_color": {
+      "type": "choice",
+      "instructions": "What is the person's hair color? Choose unknown if unclear.",
+      "criteria": { "black": null, "blonde": null, "brown": null, "unknown": null }
+    }
+  }
+}
+```
+
+each::labs downloads URLs and sends every image to the model as a base64 data
+URL. You can also put images inside a `state` array as `image_url` items; text
+items are plain strings:
+
+```json
+"state": [
+  "Analyze the person in the image.",
+  { "type": "image_url", "image_url": { "url": "data:image/jpeg;base64,/9j/4AAQ..." } }
+]
+```
+
+- Send `state` as a JSON array, not as a string that contains JSON. A string is
+  read as text, so the model never sees the image and the base64 is billed as
+  input tokens. Such a request returns `400`.
+- Images must be PNG, JPEG, or WebP. Send up to 16 images per request, each under
+  5 MB and 12 MB in total. A URL must be public `http` or `https`.
+- Only some decision models read images, for example `cloudflare/clef`,
+  `cloudflare/clef-flash`, `typesafe/jev-1.13`, and `liquid/d1`. A text-only
+  model reads the image as text. Model limits also apply: Clef works best with
+  images under about 300 KB, and Jev accepts PNG and JPEG with each side between
+  256 and 1568 px.
 
 ## Example
 
@@ -204,7 +247,7 @@ Every answer carries the question's `type`. The remaining fields depend on it:
 
 | `type` | Fields |
 |--------|--------|
-| `noul` | `noul` — the probability that the answer is "no", between `0` and `1`. |
+| `noul` | `noul` — the probability that the answer is "yes", between `0` and `1`. |
 | `choice` | `choice` — the selected option name. Optional `confidence` and `probabilities`, keyed by option name. |
 | `score` | `score` — the chosen level's index. Optional `confidence`, `probabilities`, and `legend`, which maps each level index to its description. |
 
@@ -224,7 +267,8 @@ When the upstream returns a decision `id`, it is included in the response.
 Decisions is also available as the `eachlabs-decisions` model, so you can run it
 like any other each::labs model: through `POST /v1/prediction`, in the
 playground, and as a step in a workflow. The `input` takes the same `model`,
-`state`, and `questions` fields as the request body above.
+`state`, `questions`, and `images` fields as the request body above. In the
+playground, upload files in the **Images** field.
 
 <CodeGroup>
 ```bash cURL
