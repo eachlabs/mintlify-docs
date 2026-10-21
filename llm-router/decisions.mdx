@@ -134,6 +134,16 @@ items are plain strings:
 ]
 ```
 
+The `url` can be an image URL, a base64 data URL, or plain base64. each::labs
+also accepts these shapes and converts them before calling the model:
+
+- A Responses-style part: `{ "type": "input_image", "image_url": "https://..." }`.
+- `image_url` given as a plain string instead of an object.
+- An image part nested inside an object, such as
+  `"state": { "photo": { "type": "image_url", ... } }`. The image moves to its
+  own `state` item, and `[image 1]` is left in its place so your text can still
+  refer to it.
+
 - Send `state` as a JSON array, not as a string that contains JSON. A string is
   read as text, so the model never sees the image and the base64 is billed as
   input tokens. Such a request returns `400`.
@@ -142,8 +152,9 @@ items are plain strings:
 - Only some decision models read images, for example `cloudflare/clef`,
   `cloudflare/clef-flash`, `typesafe/jev-1.13`, and `liquid/d1`. A text-only
   model reads the image as text. Model limits also apply: Clef works best with
-  images under about 300 KB, and Jev accepts PNG and JPEG with each side between
-  256 and 1568 px.
+  images under about 300 KB. Jev accepts PNG and JPEG with each side between
+  256 and 1568 px and 78,400 to 2,458,624 px in total; smaller images return
+  `400`.
 
 ## Example
 
