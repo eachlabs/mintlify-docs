@@ -80,7 +80,7 @@
           },
           {
             "group": "Billing",
-            "pages": ["api/billing/get-balance"]
+            "pages": ["api/billing/get-balance", "api/billing/get-usage"]
           },
           {
             "group": "Content Safety",
