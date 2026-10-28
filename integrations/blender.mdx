@@ -1,0 +1,217 @@
+---
+title: "each::labs extension for Blender"
+sidebarTitle: "Blender"
+description: "Generate images and videos from your Blender scenes with the each::labs extension for Blender 4.2 and later."
+---
+
+{/* The screenshots come from scripts/tutorial-shots.sh in eachlabs/blender-extension; regenerate them when the UI changes. */}
+
+The each::labs extension sends what you already make in Blender to each::labs models and workflows, then brings the results back into your file:
+
+- **Generate Image from View** renders the current frame, or snapshots the viewport, and sends it with your prompt. The result opens in the Image Editor and can sit behind the camera for comparison.
+- **Generate Video from Camera Move** renders your frame range as a clip, sends it with your prompt, and adds the generated video, with its sound, to the Video Sequencer at the right frame.
+- **Re-run** sends the last rendered inputs again with another model, prompt or setting, without rendering.
+- **Export movie** renders the sequencer, picture and sound, to one MP4.
+
+Everything lives in an **Eachlabs** tab in the sidebar of the 3D Viewport and the Video Sequencer.
+
+<Frame>
+  <img src="/images/blender/overview.png" alt="Blender's 3D Viewport with the Eachlabs tab open in the sidebar, highlighted" />
+</Frame>
+
+## Requirements
+
+- Blender 4.2 or later.
+- An each::labs account with credits, and an API key. See [Authentication](/authentication) to create one.
+- Online access allowed in Blender. Blender asks the first time it starts; you can change it later in **Edit > Preferences > System > Network > Allow Online Access**. Without it, the Eachlabs tab tells you what to enable and makes no requests.
+
+## Install the extension
+
+<Tabs>
+  <Tab title="From the each::labs repository">
+    Adding the repository once lets Blender install the extension and update it along with your other extensions.
+
+    <Steps>
+      <Step title="Add the repository">
+        Open **Edit > Preferences > Get Extensions**, open the **Repositories** menu, press **+** and choose **Add Remote Repository**. Paste this URL and press **OK**:
+
+        ```
+        https://github.com/eachlabs/blender-extension/releases/latest/download/index.json
+        ```
+      </Step>
+      <Step title="Install">
+        Search for **Eachlabs** and press **Install**. The listing shows the two permissions the extension asks for: **Network**, to send renders and download results, and **Files**, to save them next to your `.blend` file.
+
+        <Frame>
+          <img src="/images/blender/get-extensions.png" alt="Get Extensions listing the Eachlabs extension with its Install button and permissions" />
+        </Frame>
+      </Step>
+    </Steps>
+  </Tab>
+  <Tab title="From a downloaded file">
+    <Steps>
+      <Step title="Download the extension">
+        Download the latest `eachlabs-<version>.zip` from [GitHub Releases](https://github.com/eachlabs/blender-extension/releases/latest). Keep it zipped.
+      </Step>
+      <Step title="Install it">
+        Drag the zip into a Blender window and confirm, or open **Edit > Preferences > Get Extensions**, open the menu in the top-right corner and choose **Install from Disk**.
+      </Step>
+    </Steps>
+
+    A file install does not update itself. Install a newer zip the same way to upgrade.
+  </Tab>
+</Tabs>
+
+## Connect your API key
+
+<Steps>
+  <Step title="Paste the key">
+    Open **Edit > Preferences > Add-ons**, expand **Eachlabs** and paste your key into **API key**.
+  </Step>
+  <Step title="Test it">
+    Press **Test connection**. A working key shows your balance; a rejected one shows the error the API returned.
+  </Step>
+</Steps>
+
+<Frame>
+  <img src="/images/blender/preferences.png" alt="The Eachlabs add-on preferences with the API key field, Test connection and the default video model" />
+</Frame>
+
+<Warning>
+  Blender stores add-on preferences, including this key, unencrypted in its `userpref.blend` file. To keep the key out of Blender, leave the field empty and set the `EACHLABS_API_KEY` environment variable before you start Blender.
+</Warning>
+
+The same page sets the **Default video model**, its inputs and its parameters. Change it if you prefer another model for video.
+
+## Open the Eachlabs tab
+
+In the 3D Viewport or the Video Sequencer, press `N` to open the sidebar and select the **Eachlabs** tab. Press the refresh button next to **Models not loaded** once per session. It loads the model list and, with a key, your workflows.
+
+<Frame>
+  <img src="/images/blender/first-open.png" alt="The Eachlabs tab before an API key is set, with Set API key and the refresh button" width="440" />
+</Frame>
+
+The tab has four panels:
+
+| Panel | What it does |
+|---|---|
+| **Eachlabs** | Shows whether online access and your key are set, and how many models and workflows are loaded. |
+| **Generate Image from View** | Sends one frame to an image model or workflow. |
+| **Generate Video from Camera Move** | Sends a frame range to a video model or workflow, and holds **Export movie**. |
+| **Jobs** | Lists every run with its state, elapsed time and settled cost. |
+
+<Tip>
+  Save your `.blend` file before you generate. Inputs and results are then kept in an `eachlabs/<file name>/` folder next to it; an unsaved file uses a temporary folder.
+</Tip>
+
+## Generate an image from your view
+
+<Frame>
+  <img src="/images/blender/image-panel.png" alt="Generate Image from View with Nano Banana Pro selected, its listed price, a prompt and Rendered still bound to image_urls" width="440" />
+</Frame>
+
+<Steps>
+  <Step title="Pick a model">
+    Type in the search field under **Generate Image from View**. Only models and workflows that take an image and return an image are listed; tick **All URL-input models** to see more. The model's listed price appears under it.
+  </Step>
+  <Step title="Write the prompt">
+    Describe the result you want. If the model takes a seed, tick **Seed** to fix it.
+  </Step>
+  <Step title="Check where your frame goes">
+    Under **Send render to**, the model input that receives your frame should read **Rendered still**. It is set for you when the model has one image input. Use **File…** to send another image, such as a style reference.
+  </Step>
+  <Step title="Generate">
+    Choose **Render** to use your render engine at scene resolution, or **Viewport** for a fast snapshot of the view, then press **Generate Image**.
+  </Step>
+</Steps>
+
+The job appears under **Jobs**. When it finishes, the result opens in an Image Editor. With **Camera background** on, it also shows behind the camera: look through the camera with `Numpad 0` and set its opacity in the camera's **Background Images**.
+
+<Frame>
+  <img src="/images/blender/image-result.jpg" alt="The generated image open in Blender's Image Editor" />
+</Frame>
+
+## Generate a video from a camera move
+
+<Frame>
+  <img src="/images/blender/video-panel.png" alt="Generate Video from Camera Move with Seedance 2.5 reference-to-video, the clip bound to video_urls, draft and 480p ticked" width="440" />
+</Frame>
+
+<Steps>
+  <Step title="Animate your camera">
+    Keyframe the camera over the range you want. The scene range is used unless you untick **Scene range** and set your own start and end.
+  </Step>
+  <Step title="Check the model">
+    Once the model list loads, the default video model is selected: **Seedance 2.5 reference-to-video**, with your camera move as its reference video, at 480p in draft mode. Draft gives a faster, cheaper preview. The ★ button restores the default after you try other models.
+  </Step>
+  <Step title="Write the prompt">
+    Seedance refers to its inputs by token: `@Video1` is your camera move and `@Image1` the first image you send. For example:
+
+    ```
+    Follow the camera movement of @Video1. A bronze statue on a stone plinth in a museum courtyard at golden hour. Sound: quiet courtyard ambience and distant birds; no music, no dialogue.
+    ```
+
+    Seedance also generates sound, so describe it, for example *Sound: quiet courtyard ambience; no music, no dialogue.* A prompt without a sound direction can be refused when the generated audio resembles copyrighted music.
+
+    Avoid the words *add*, *remove*, *replace*, *extend* and *continue*. They switch Seedance to video editing, which ignores the requested length.
+  </Step>
+  <Step title="Bind your inputs">
+    Under **Send render to**, choose what fills each model input: **Clip (MP4)**, **First frame**, **Last frame**, or **File…** for anything else, such as a character sheet in `image_urls` or music in `audio_urls`. For models with separate first- and last-frame inputs, set each one yourself.
+  </Step>
+  <Step title="Set the timing">
+    **Preview** sets the resolution of the clip you send. **Match duration** asks the model for the length you rendered, so the result fits your range. If it still differs, **Timing** decides: **Fit to range** stretches the result to your frames, **Keep timing** plays it in real time.
+  </Step>
+  <Step title="Generate">
+    Press **Generate Video**. Blender renders the range, and the result lands on the first free sequencer channel at your start frame, with its sound on the next channel when **Import audio** is on.
+  </Step>
+</Steps>
+
+<Frame>
+  <img src="/images/blender/video-result.png" alt="The generated clip on the Video Sequencer timeline, with the Eachlabs tab in the sequencer's sidebar" />
+</Frame>
+
+The Eachlabs tab is also in the Video Sequencer's sidebar, so you can generate, re-run and follow jobs while you edit.
+
+**Parameters** lists the model's other options, such as resolution, duration and aspect ratio. Tick an option to send your value; unticked options use the model's defaults. **JSON** takes extra inputs the list cannot show, such as several reference images:
+
+```json
+{"image_urls": ["https://example.com/character.png", "https://example.com/style.png"]}
+```
+
+## Follow, re-run and cancel jobs
+
+<Frame>
+  <img src="/images/blender/jobs.png" alt="The Jobs panel with a finished video and image job, their run time and settled cost" width="440" />
+</Frame>
+
+- **Jobs** shows each run's state and elapsed time, and its settled cost once it finishes. The ▶ button opens a finished result in your system player or viewer, and **Open folder** shows the files.
+- The ↺ button next to **Generate Image** and **Generate Video** sends the last rendered inputs again with whatever is now selected: another model, prompt, seed or parameter. Nothing is rendered again, and uploaded files are reused for up to six days.
+- The **×** button stops a running job. Work the provider has already started may still finish and be billed. Workflow runs cannot be cancelled yet, so cancelling only stops waiting for them.
+- **Export movie** renders everything in the sequencer, with sound, to `eachlabs/<file name>/<id>_movie.mp4` and lists it under **Jobs**.
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="The tab says online access is disabled">
+    Enable **Edit > Preferences > System > Network > Allow Online Access**, or start Blender without `--offline-mode`.
+  </Accordion>
+  <Accordion title="Invalid or missing API key (HTTP 401)">
+    Paste the key again in the add-on preferences and press **Test connection**. If you use `EACHLABS_API_KEY`, leave the field empty, or the field wins.
+  </Accordion>
+  <Accordion title="A model is missing from the list">
+    Press refresh in the Eachlabs panel, then tick **All URL-input models**. The default list shows only models whose inputs and outputs match the action.
+  </Accordion>
+  <Accordion title="A job failed with a provider message">
+    The message under the job comes from the model provider, for example a content or copyright refusal. Change the prompt or inputs and press ↺.
+  </Accordion>
+  <Accordion title="The video was stretched and its sound is muted">
+    With **Fit to range**, a result that is not the rendered length is stretched to fit, and its sound is added muted because Blender cannot stretch sound strips. Unmute it, or use **Keep timing**.
+  </Accordion>
+</AccordionGroup>
+
+## Limitations
+
+- Uploads are limited to 100 MB per file. Lower **Preview** or shorten the range for long shots.
+- Workflows are listed only when their inputs declare image or video types, and they have no listed price.
+- The panel shows each model's listed price, not a quote for your exact settings; the settled cost appears on the job.
+- Seedance drafts are not finished at full resolution from Blender yet.
