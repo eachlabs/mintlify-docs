@@ -21,6 +21,12 @@ Using Claude or Codex, you can also add the [each::labs plugin](/plugin): the sa
 
 Environments without a browser (CI, servers) can run the video tools locally with an API key instead. See [Headless and CI](/video/mcp/quickstart#headless-and-ci-api-key).
 
+### Not the documentation server
+
+each::labs also offers a separate MCP server that searches this documentation, at `https://docs.eachlabs.ai/mcp` (the **Documentation as MCP** link in the sidebar). It is a different server from the one on this page. It needs no sign-in, it does not run models, workflows or video tools, and it does not bill an organization. Apart from a tool for sending feedback on a documentation page, it only reads this site.
+
+To have an app run models, workflows or the video tools, add `https://mcp.eachlabs.ai/mcp`, the address above.
+
 ## Sign-in and billing
 
 The first call opens the each::labs consent page in your browser. If you are not signed in to the dashboard, the page sends you through [sign-in](https://www.eachlabs.ai/sign-in) and back.
