@@ -1,0 +1,132 @@
+---
+title: "Agent setup"
+description: "Instructions for an AI coding agent to connect itself to each::labs: add the MCP server, install skills, sign in through the browser and verify with a free read."
+---
+
+These instructions are written for an AI agent. A person pasted this page's address and asked you to connect them to each::labs. Follow the steps below.
+
+each::labs is a generative media platform: image, video, audio and 3D models behind one API. You will add the each::labs MCP server (`https://mcp.eachlabs.ai/mcp`, streamable HTTP, OAuth) and, where your client supports them, the public skills. The person signs in through a browser the first time a tool is used.
+
+## Rules
+
+- Run the commands yourself where you can. Ask the person only for things you cannot do, such as clicking through a browser sign-in or a settings screen.
+- Never ask for, print or paste an API key. The MCP server uses browser sign-in, not a key.
+- Never run a paid generation during setup. `run_model` and `trigger_workflow` spend money; do not call them.
+- Verify only with a free read: `search_models`.
+
+## 1. Add the MCP server
+
+Find your client below and do that section only.
+
+### Claude Code
+
+```bash
+claude mcp add --transport http eachlabs https://mcp.eachlabs.ai/mcp
+npx skills add eachlabs/skills
+```
+
+Then run `/mcp`, select `eachlabs` and choose to authenticate. From a shell, `claude mcp login eachlabs` does the same.
+
+### Codex CLI
+
+```bash
+codex mcp add eachlabs --url https://mcp.eachlabs.ai/mcp
+codex mcp login eachlabs
+npx skills add eachlabs/skills
+```
+
+The same server in `~/.codex/config.toml`:
+
+```toml
+[mcp_servers.eachlabs]
+url = "https://mcp.eachlabs.ai/mcp"
+```
+
+### Cursor
+
+Add to `~/.cursor/mcp.json` (or `.cursor/mcp.json` in a project), keeping any servers already there:
+
+```json
+{
+  "mcpServers": {
+    "eachlabs": { "url": "https://mcp.eachlabs.ai/mcp" }
+  }
+}
+```
+
+Cursor starts the sign-in when it first connects. Then run `npx skills add eachlabs/skills`.
+
+### VS Code / GitHub Copilot
+
+Add to `.vscode/mcp.json` in the workspace, keeping existing servers:
+
+```json
+{
+  "servers": {
+    "eachlabs": { "type": "http", "url": "https://mcp.eachlabs.ai/mcp" }
+  }
+}
+```
+
+Start the server from the editor; a browser window opens for sign-in on first connection.
+
+### OpenCode
+
+Add to `opencode.json`, keeping existing entries:
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "eachlabs": { "type": "remote", "url": "https://mcp.eachlabs.ai/mcp" }
+  }
+}
+```
+
+Then run `opencode mcp auth eachlabs`. Also run `npx skills add eachlabs/skills`.
+
+### Claude Desktop and claude.ai
+
+You cannot do this yourself. Tell the person: open **Customize > Connectors**, click **+ Add**, then **Add custom connector**, enter the name `each::labs` and the URL `https://mcp.eachlabs.ai/mcp`, and finish. On Team and Enterprise plans an organization Owner adds it under **Organization settings > Connectors**.
+
+### Any other client
+
+If it supports remote MCP servers over streamable HTTP with OAuth, add `https://mcp.eachlabs.ai/mcp` using its own method. If it does not support OAuth for remote servers, say so (see Troubleshooting) rather than improvising.
+
+## 2. Sign in
+
+On the first tool call, or when you run the client's login command, a browser opens the each::labs consent page. The person signs in if needed, chooses the **organization** (that organization is billed for every run) and clicks **Approve**. The token stays in the client; you never see it.
+
+Consent needs the chosen organization to have a runner key. If the page says the organization has no runner credential, ask the person to create a key at https://www.eachlabs.ai/api-keys as that organization, then retry. Do not ask them to share the key with you.
+
+## 3. Verify
+
+Call `search_models` with a query such as "a fast text-to-image model" and report one result by name. This is free. If the tool is not listed, restart or reload the client and check the server's status in its MCP screen.
+
+## 4. Report back
+
+Fill in and show this to the person:
+
+```text
+each::labs setup
+- Client: <name>
+- MCP server added: <yes/no> (https://mcp.eachlabs.ai/mcp)
+- Skills installed: <yes/no/not supported>
+- Signed in as organization: <name, or "pending: person must approve in browser">
+- search_models check: <one model name, or the error>
+- Next: <restart the client / nothing / action for the person>
+No generation was run and no API key was used.
+```
+
+## Troubleshooting
+
+| Symptom | What to do |
+| --- | --- |
+| `401` or "needs authentication" | Sign in again with the client's login command or MCP screen. |
+| Consent fails: no runner credential | Create a key at https://www.eachlabs.ai/api-keys as the chosen organization, then retry. |
+| Client has no OAuth for remote servers | Tell the person. They can use a client from the list above. Scripts can call the [API with a key](/authentication) instead. |
+| Tools missing after sign-in | Restart or reload the client. |
+
+More on tools, scopes and billing: [MCP Server](/mcp-server).
+
+Sources: [Claude Code MCP](https://code.claude.com/docs/en/mcp), [Codex MCP](https://learn.chatgpt.com/docs/extend/mcp?surface=cli), [Cursor MCP](https://cursor.com/docs/context/mcp), [VS Code MCP configuration](https://code.visualstudio.com/docs/agents/reference/mcp-configuration), [OpenCode MCP servers](https://opencode.ai/docs/mcp-servers/), [Claude custom connectors](https://support.claude.com/en/articles/11175166-get-started-with-custom-connectors-using-remote-mcp).
