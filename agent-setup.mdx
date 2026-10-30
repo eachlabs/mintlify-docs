@@ -97,7 +97,7 @@ If it supports remote MCP servers over streamable HTTP with OAuth, add `https://
 
 On the first tool call, or when you run the client's login command, a browser opens the each::labs consent page. The person signs in if needed, chooses the **organization** (that organization is billed for every run) and clicks **Approve**. The token stays in the client; you never see it.
 
-Consent needs the chosen organization to have a runner key. If the page says the organization has no runner credential, ask the person to create a key at https://www.eachlabs.ai/api-keys as that organization, then retry. Do not ask them to share the key with you.
+Consent needs the chosen organization to have a runner key. If the page says the organization has no runner credential, ask the person to open the dashboard at https://www.eachlabs.ai once as that organization, then retry. Nothing needs to be copied or shared with you.
 
 ## 3. Verify
 
@@ -123,7 +123,7 @@ No generation was run and no API key was used.
 | Symptom | What to do |
 | --- | --- |
 | `401` or "needs authentication" | Sign in again with the client's login command or MCP screen. |
-| Consent fails: no runner credential | Create a key at https://www.eachlabs.ai/api-keys as the chosen organization, then retry. |
+| Consent fails: no runner credential | Open the dashboard at https://www.eachlabs.ai once as the chosen organization, then retry. |
 | Client has no OAuth for remote servers | Tell the person. They can use a client from the list above. Scripts can call the [API with a key](/authentication) instead. |
 | Tools missing after sign-in | Restart or reload the client. |
 
