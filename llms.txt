@@ -6,6 +6,8 @@ Platform: https://www.eachlabs.ai
 API Keys: https://www.eachlabs.ai/api-keys
 GitHub: https://github.com/eachlabs
 Discord: https://discord.gg/eachlabs
+Agent setup: https://docs.eachlabs.ai/agent-setup.md (instructions for an AI agent to connect itself to each::labs)
+MCP server: https://mcp.eachlabs.ai/mcp (streamable HTTP, OAuth sign-in, no API key)
 
 ---
 
