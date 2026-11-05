@@ -51,7 +51,7 @@ Members who are not owners don't see delete controls in the dashboard. To delete
 |-------|-------|
 | Max file size | 100 MB per upload |
 | Presigned URL lifetime | 15 minutes |
-| Stored file retention | 180 days (default, configurable per upload via `expires_in_seconds`) |
+| Stored file retention | 180 days (default). Set `expires_in_seconds` per upload — 60 seconds to 365 days, or `-1` to keep the file permanently. |
 | Supported file types | `image`, `video`, `audio`, `other` |
 
 ## Where your data resides

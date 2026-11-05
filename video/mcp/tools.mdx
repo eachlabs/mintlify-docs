@@ -2555,10 +2555,18 @@ Upload a local file (max 100MB) to eachlabs storage and get a public URL usable 
       "type": "string"
     },
     "expires_in_seconds": {
-      "description": "Public URL lifetime in seconds, 60 to 31536000 (365 days); server default is 180 days",
-      "maximum": 31536000,
-      "minimum": 60,
-      "type": "integer"
+      "anyOf": [
+        {
+          "const": -1,
+          "type": "number"
+        },
+        {
+          "maximum": 31536000,
+          "minimum": 60,
+          "type": "integer"
+        }
+      ],
+      "description": "How long the stored file is kept in seconds: 60 to 31536000 (365 days), or -1 to keep it until deleted; server default is 180 days"
     },
     "file_path": {
       "description": "Path to the local file to upload",

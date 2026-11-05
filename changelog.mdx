@@ -4,6 +4,14 @@ description: "Product updates and releases from each::labs"
 rss: true
 ---
 
+<Update label="November 4, 2026" description="each::storage" rss={{ title: "Keep uploaded files permanently", description: "each::storage" }}>
+  ## Keep uploaded files permanently
+
+  - Pass `expires_in_seconds: -1` when you [upload a file](/storage/upload-file) to keep it with no expiry. The response omits `expires_at`, and the file stays until you delete it.
+  - The default is still 180 days, and you can keep choosing any window from 60 seconds to 365 days.
+  - An organization storage retention policy set in the dashboard still takes precedence over the per-upload value.
+</Update>
+
 <Update label="October 15, 2026" description="LLM Router" rss={{ title: "Run Decisions as a model and in workflows", description: "LLM Router" }}>
   ## [Run Decisions as a model](/llm-router/decisions#run-as-a-model)
 
