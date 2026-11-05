@@ -73,8 +73,8 @@ Authorization: Bearer YOUR_API_KEY
 
 ## Request body
 
-The body takes `model`, `state`, `questions`, and an optional `images` field.
-Any other field is rejected.
+The body takes `model`, `state`, `questions`, and optional `images` and `assets`
+fields. Any other field is rejected.
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -82,18 +82,37 @@ Any other field is rejected.
 | `state` | string \| object \| array | The shared context every question is evaluated against. |
 | `questions` | object | A map of question names to typed questions. At least one is required. |
 | `images` | array of strings | Optional images to evaluate with `state`. See [Images](#images). |
+| `assets` | object | Optional named images that `state` refers to by name. See [Assets](#assets). |
 
-Each question is an object with a `type`, `instructions`, and — depending on the
-type — `criteria`:
+Each question is an object with a `type`, optional `instructions`, and —
+depending on the type — `criteria`:
 
 | `type` | Meaning | `criteria` |
 |--------|---------|------------|
-| `noul` | A yes/no probability. | Optional object with exactly `true` and `false` keys describing each side. |
+| `noul` | A yes/no probability. | Optional. An object with a `true` key, a `false` key, or both, describing each side. Either side may be `null` or left out. |
 | `choice` | Choose one of a named set of options. | Required object mapping each option name to an optional description (a value may be `null`). |
 | `score` | Rate on an ordered scale. | Required array of level descriptions, lowest first. |
+| `box` | Locate something in an image. | Not allowed. The request must include an image. |
 
 `instructions` and every `criteria` value accept a string, an object, or an
-array. The response preserves your question names as the keys of `answers`.
+array. `instructions` may be left out or `null` when the criteria describe the
+question. A `noul` question needs `instructions` or at least one non-null
+criteria side. The response preserves your question names as the keys of
+`answers`.
+
+```json
+"questions": {
+  "refund": { "type": "noul", "criteria": { "true": "The message asks for a refund" } },
+  "topic": { "type": "choice", "criteria": { "billing": "payment or refund", "other": null } }
+}
+```
+
+<Note>
+  `typesafe/jev-1.13` and `typesafe/jev-1.14` accept questions without
+  `instructions`. Other models may require `instructions` and return `400`
+  without them. `box` questions need `typesafe/jev-1.14`; `typesafe/jev-1.13`
+  returns `400`.
+</Note>
 
 <Warning>
   Streaming, asynchronous mode, provider overrides, webhooks, and client-supplied
@@ -150,11 +169,31 @@ also accepts these shapes and converts them before calling the model:
 - Images must be PNG, JPEG, or WebP. Send up to 16 images per request, each under
   5 MB and 12 MB in total. A URL must be public `http` or `https`.
 - Only some decision models read images, for example `cloudflare/clef`,
-  `cloudflare/clef-flash`, `typesafe/jev-1.13`, and `liquid/d1`. A text-only
+  `cloudflare/clef-flash`, `typesafe/jev-1.13`, `typesafe/jev-1.14`, and
+  `liquid/d1`. A text-only
   model reads the image as text. Model limits also apply: Clef works best with
   images under about 300 KB. Jev accepts PNG and JPEG with each side between
   256 and 1568 px and 78,400 to 2,458,624 px in total; smaller images return
   `400`.
+
+### Assets
+
+`assets` maps a name to an image, and `state` refers to the image by that name.
+Each asset is `{ "format": "png" | "jpg" | "jpeg", "data_base64": "...", "type": "image" }`,
+where `type` is optional and `data_base64` is padded standard base64 on one line
+with no `data:` prefix. Assets are sent to the model as written and count toward
+the image limits above.
+
+```json
+{
+  "model": "typesafe/jev-1.14",
+  "state": { "photo": "receipt" },
+  "assets": { "receipt": { "type": "image", "format": "png", "data_base64": "iVBORw0KGgo..." } },
+  "questions": {
+    "total": { "type": "box", "instructions": "the total amount in `photo`" }
+  }
+}
+```
 
 ## Example
 
@@ -261,6 +300,7 @@ Every answer carries the question's `type`. The remaining fields depend on it:
 | `noul` | `noul` — the probability that the answer is "yes", between `0` and `1`. |
 | `choice` | `choice` — the selected option name. Optional `confidence` and `probabilities`, keyed by option name. |
 | `score` | `score` — the chosen level's index. Optional `confidence`, `probabilities`, and `legend`, which maps each level index to its description. |
+| `box` | `box` — `top`, `bottom`, `left`, and `right`, each a fraction from `0` to `1` measured from the image's top-left corner. `confidence` may be `null`. |
 
 ### Usage
 
@@ -278,7 +318,7 @@ When the upstream returns a decision `id`, it is included in the response.
 Decisions is also available as the `eachlabs-decisions` model, so you can run it
 like any other each::labs model: through `POST /v1/prediction`, in the
 playground, and as a step in a workflow. The `input` takes the same `model`,
-`state`, `questions`, and `images` fields as the request body above. In the
+`state`, `questions`, `images`, and `assets` fields as the request body above. In the
 playground, upload files in the **Images** field.
 
 <CodeGroup>

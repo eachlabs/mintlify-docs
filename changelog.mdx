@@ -4,6 +4,15 @@ description: "Product updates and releases from each::labs"
 rss: true
 ---
 
+<Update label="November 5, 2026" description="LLM Router" rss={{ title: "Decisions: optional instructions, one-sided noul criteria, box questions and assets", description: "LLM Router" }}>
+  ## [Decisions question contract](/llm-router/decisions#request-body)
+
+  - `instructions` is optional and may be `null` when the criteria describe the question. Jev models accept this; other models may still require `instructions`.
+  - `noul` criteria may describe one side only, or set a side to `null`. A `noul` question needs `instructions` or at least one non-null side.
+  - `box` questions locate something in an image and return its edges as fractions of the image size. They need `typesafe/jev-1.14`.
+  - [`assets`](/llm-router/decisions#assets) sends named base64 images that `state` refers to by name.
+</Update>
+
 <Update label="October 15, 2026" description="LLM Router" rss={{ title: "Run Decisions as a model and in workflows", description: "LLM Router" }}>
   ## [Run Decisions as a model](/llm-router/decisions#run-as-a-model)
 
