@@ -23,6 +23,7 @@ Run the same workflow with up to **10 different inputs** in parallel. All execut
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `inputs` | array | Yes | Array of input objects (1–10 items) |
+| `end_user_id` | string | No | Stable, opaque ID of your own end user (1–256 characters), applied to every run in the batch. See [End-user identifiers](/api/end-user-identifiers). |
 | `webhook_url` | string | No | URL to receive completion notifications |
 | `webhook_secret` | string | No | Shared secret used to sign webhook deliveries. When set, each delivery carries `X-Webhook-Signature` and `X-Webhook-Timestamp` — see [Verifying Webhook Signatures](/api/webhooks/verifying-signatures) |
 
