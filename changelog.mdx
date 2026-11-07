@@ -4,6 +4,14 @@ description: "Product updates and releases from each::labs"
 rss: true
 ---
 
+<Update label="November 7, 2026" description="API" rss={{ title: "Name your end users on each request", description: "API" }}>
+  ## [Name your end users on each request](/api/end-user-identifiers)
+
+  - Send the optional top-level `end_user_id` on `POST /v1/prediction`, workflow triggers, bulk triggers and public workflow triggers: a stable, opaque ID of your own end user, never personal data.
+  - It is stored with the run and changes nothing about billing, routing, the model's input, the output, webhooks or rate limits.
+  - If content is flagged, a report can name the specific user instead of only your account. See [End-user identifiers](/api/end-user-identifiers).
+</Update>
+
 <Update label="October 15, 2026" description="LLM Router" rss={{ title: "Run Decisions as a model and in workflows", description: "LLM Router" }}>
   ## [Run Decisions as a model](/llm-router/decisions#run-as-a-model)
 

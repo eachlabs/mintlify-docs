@@ -84,7 +84,7 @@
           },
           {
             "group": "Content Safety",
-            "pages": ["api/nsfw-content"]
+            "pages": ["api/nsfw-content", "api/end-user-identifiers"]
           },
           {
             "group": "Webhooks",

@@ -2254,6 +2254,11 @@
               "prompt": "A cinematic establishing shot of a mountain lake"
             }
           },
+          "end_user_id": {
+            "type": "string",
+            "maxLength": 256,
+            "description": "Optional. Stable, opaque ID of your own end user; never personal data."
+          },
           "webhook_url": {
             "type": "string",
             "format": "uri",
@@ -2448,6 +2453,11 @@
                 "prompt": "A close-up of dew on a spider web at sunrise"
               }
             ]
+          },
+          "end_user_id": {
+            "type": "string",
+            "maxLength": 256,
+            "description": "Optional. Stable, opaque ID of your own end user; never personal data."
           },
           "webhook_url": {
             "type": "string",
@@ -2705,6 +2715,11 @@
               "prompt": "A beautiful sunset over the ocean with vibrant colors",
               "aspect_ratio": "16:9"
             }
+          },
+          "end_user_id": {
+            "type": "string",
+            "maxLength": 256,
+            "description": "Optional. Stable, opaque ID of your own end user; never personal data."
           },
           "webhook_url": {
             "type": "string",

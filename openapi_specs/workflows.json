@@ -962,6 +962,11 @@
               "text": "tell me a story"
             }
           },
+          "end_user_id": {
+            "type": "string",
+            "maxLength": 256,
+            "description": "Optional. Stable, opaque ID of your own end user; never personal data."
+          },
           "webhook_url": {
             "type": "string",
             "format": "uri",

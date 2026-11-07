@@ -82,6 +82,7 @@ Same as Get Public Workflow Version above.
 |-------|------|----------|-------------|
 | `api_key` | string | Yes | Your API key — this endpoint authenticates via the request body |
 | `inputs` | object | No | Input parameters matching the workflow's input schema |
+| `end_user_id` | string | No | Stable, opaque ID of your own end user (1–256 characters). See [End-user identifiers](/api/end-user-identifiers). |
 | `webhook_url` | string | No | URL to receive completion notification |
 | `webhook_secret` | string | No | Shared secret used to sign webhook deliveries. When set, each delivery carries `X-Webhook-Signature` and `X-Webhook-Timestamp` — see [Verifying Webhook Signatures](/api/webhooks/verifying-signatures) |
 

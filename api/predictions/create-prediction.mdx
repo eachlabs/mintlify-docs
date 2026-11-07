@@ -17,6 +17,7 @@ POST https://api.eachlabs.ai/v1/prediction
 | `version` | string | Yes | Model version (e.g., `1.0.0`) |
 | `input` | object | Yes | Input parameters (varies by model) |
 | `fallback_selector` | string | No | Slug of an enabled, saved fallback configuration for your organization and the primary model. Omit to run only the primary model. |
+| `end_user_id` | string | No | Stable, opaque ID of your own end user (1–256 characters). See [End-user identifiers](/api/end-user-identifiers). |
 | `webhook_url` | string | No | URL to receive prediction result via webhook |
 | `webhook_secret` | string | No | Secret used to sign webhook requests. When set, each delivery carries `X-Webhook-Signature` and `X-Webhook-Timestamp` — see [Verifying Webhook Signatures](/api/webhooks/verifying-signatures) |
 
@@ -57,6 +58,7 @@ curl -X POST https://api.eachlabs.ai/v1/prediction \
   -d '{
     "model": "flux-1-1-pro",
     "version": "1.0.0",
+    "end_user_id": "user_8f14e45fceea",
     "input": {
       "prompt": "A beautiful sunset over the ocean with vibrant colors",
       "aspect_ratio": "16:9"
@@ -78,6 +80,7 @@ response = requests.post(
     json={
         "model": "flux-1-1-pro",
         "version": "1.0.0",
+        "end_user_id": "user_8f14e45fceea",
         "input": {
             "prompt": "A beautiful sunset over the ocean with vibrant colors",
             "aspect_ratio": "16:9"
@@ -99,6 +102,7 @@ const response = await fetch("https://api.eachlabs.ai/v1/prediction", {
   body: JSON.stringify({
     model: "flux-1-1-pro",
     version: "1.0.0",
+    end_user_id: "user_8f14e45fceea",
     input: {
       prompt: "A beautiful sunset over the ocean with vibrant colors",
       aspect_ratio: "16:9",
