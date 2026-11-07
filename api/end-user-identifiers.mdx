@@ -5,7 +5,7 @@ description: "Name the person on your side a request is for, using an opaque ID 
 
 ## Why send it
 
-`end_user_id` is a stable, opaque ID of **your own** end user — the person in your product the request is for. If our safety systems flag content, it tells us which of your users a flagged request came from, so we can act on that user instead of your whole account.
+`end_user_id` is a stable, opaque ID of **your own** end user — the person in your product the request is for. If our safety systems flag content, it tells us which of your users a flagged request came from, so a report can name that user instead of only your account.
 
 ## What to send
 
@@ -41,7 +41,7 @@ In a workflow, every step of the run carries the same `end_user_id`.
 
 ## How we use and keep it
 
-We store it with the run. It never changes billing, routing, the model's input, the output, webhooks, or rate limits. It is deleted together with the run's inputs and outputs under your retention settings, except where we must preserve a record by law.
+We store it with the run. It never changes billing, routing, the model's input, the output, webhooks, or rate limits. For model runs it is deleted together with the run's inputs and outputs under your retention settings, except where we must preserve a record by law. Workflow runs keep it with the run record for now.
 
 Where the law requires us to report illegal content, we refer to the user by your ID.
 
